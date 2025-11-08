@@ -280,7 +280,7 @@ const AnimatedHero = () => {
             >
               <div className="w-1 h-8 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full"></div>
               <p className="text-sm sm:text-base text-slate-600 font-medium">
-                — The NexusBlog Community
+                — The Nexus Blog Community
               </p>
             </motion.div>
           </motion.div>

@@ -34,13 +34,21 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* Brand */}
           <div className="col-span-1 sm:col-span-2 lg:col-span-2">
-            <Link to="/" className="flex items-center space-x-2 mb-4">
-              <img 
-                src="/nexus-logo-icon.svg" 
-                alt="The Nexus Blog Logo" 
-                className="w-8 h-8"
-              />
-              <span className="text-xl font-bold">The NexusBlog</span>
+            <Link to="/" className="flex items-center space-x-2 mb-4 group">
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              >
+                <img 
+                  src="/nexus-logo-icon.svg" 
+                  alt="The Nexus Blog Logo" 
+                  className="w-8 h-8"
+                />
+              </motion.div>
+              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent group-hover:from-indigo-300 group-hover:via-purple-300 group-hover:to-pink-300 transition-all">
+                The Nexus Blog
+              </span>
             </Link>
             <p className="text-slate-300 mb-2 max-w-md text-sm">
               Connecting Ideas Across Worlds
@@ -118,7 +126,7 @@ const Footer = () => {
 
         <div className="border-t border-white/10 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-slate-300 text-sm">
-            © 2025 The NexusBlog. All rights reserved.
+            © 2025 The Nexus Blog. All rights reserved.
           </p>
           <div className="flex items-center space-x-4 mt-4 md:mt-0">
             <button className="text-slate-300 hover:text-white transition-colors">

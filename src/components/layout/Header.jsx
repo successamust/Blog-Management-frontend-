@@ -48,8 +48,8 @@ const Header = () => {
                 className="w-7 h-7"
               />
             </motion.div>
-            <span className="hidden sm:inline text-base font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              The NexusBlog
+            <span className="hidden sm:inline text-base font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              The Nexus Blog
             </span>
           </Link>
 

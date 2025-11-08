@@ -1,6 +1,14 @@
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/v1';
+
+if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
+  console.error(
+    '⚠️ VITE_API_BASE_URL is not set in production! ' +
+    'Please set it in your hosting platform environment variables.'
+  );
+}
+
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {

@@ -85,9 +85,14 @@ const Register = () => {
           <div className="flex justify-center">
             <motion.div
               whileHover={{ scale: 1.1, rotate: 5 }}
-              className="w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25"
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             >
-              <span className="text-white font-bold text-lg">B</span>
+              <img 
+                src="/nexus-logo-icon.svg" 
+                alt="The Nexus Blog Logo" 
+                className="w-12 h-12"
+              />
             </motion.div>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900">
