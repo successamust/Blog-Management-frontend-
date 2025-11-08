@@ -1,0 +1,11 @@
+# robots.txt for The NexusBlog
+User-agent: *
+Allow: /
+
+# Disallow admin and dashboard routes
+Disallow: /admin/
+Disallow: /dashboard/
+
+# Sitemap (update with your actual domain)
+# Sitemap: https://your-domain.com/sitemap.xml
+

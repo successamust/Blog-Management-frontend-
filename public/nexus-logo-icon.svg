@@ -1,0 +1,85 @@
+<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 3D Gradient for white elements -->
+    <linearGradient id="white3D" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#e5e7eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d1d5db;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Shadow gradient -->
+    <linearGradient id="shadowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:0.1" />
+    </linearGradient>
+    
+    <!-- Highlight gradient -->
+    <linearGradient id="highlightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.2" />
+    </linearGradient>
+    
+    <!-- Drop shadow filter -->
+    <filter id="dropshadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="2" dy="2" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Inner shadow for depth -->
+    <filter id="innerShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
+      <feOffset dx="1" dy="1"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="-0.5"/>
+      </feComponentTransfer>
+      <feComposite in="SourceGraphic" operator="arithmetic" k2="-1" k3="1"/>
+    </filter>
+  </defs>
+  
+  <!-- Black background with 3D depth -->
+  <rect width="60" height="60" rx="12" fill="#000000"/>
+  <rect x="2" y="2" width="56" height="56" rx="10" fill="url(#shadowGrad)"/>
+  
+  <!-- 3D Geometric "N" -->
+  <g id="nexus-logo" filter="url(#dropshadow)">
+    <!-- Left vertical bar - 3D effect -->
+    <rect x="14" y="14" width="3.5" height="32" rx="1.75" fill="url(#white3D)"/>
+    <!-- Left bar highlight -->
+    <rect x="14" y="14" width="1.5" height="32" rx="0.75" fill="url(#highlightGrad)"/>
+    <!-- Left bar shadow -->
+    <rect x="16.5" y="14" width="1" height="32" rx="0.5" fill="#000000" opacity="0.2"/>
+    
+    <!-- Diagonal connection - 3D effect -->
+    <path d="M 17.5 14 L 42.5 46" stroke="url(#white3D)" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+    <!-- Diagonal highlight -->
+    <path d="M 17.5 14 L 42.5 46" stroke="url(#highlightGrad)" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <!-- Diagonal shadow -->
+    <path d="M 18.5 15 L 43.5 47" stroke="#000000" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.2"/>
+    
+    <!-- Right vertical bar - 3D effect -->
+    <rect x="42.5" y="14" width="3.5" height="32" rx="1.75" fill="url(#white3D)"/>
+    <!-- Right bar highlight -->
+    <rect x="42.5" y="14" width="1.5" height="32" rx="0.75" fill="url(#highlightGrad)"/>
+    <!-- Right bar shadow -->
+    <rect x="45" y="14" width="1" height="32" rx="0.5" fill="#000000" opacity="0.2"/>
+    
+    <!-- 3D Nexus point with depth -->
+    <circle cx="30" cy="30" r="3" fill="url(#white3D)"/>
+    <circle cx="29" cy="29" r="2" fill="url(#highlightGrad)" opacity="0.8"/>
+    <circle cx="31" cy="31" r="1.5" fill="#000000" opacity="0.15"/>
+    
+    <!-- Subtle connection accent lines with 3D effect -->
+    <line x1="30" y1="30" x2="22" y2="22" stroke="white" stroke-width="1.5" opacity="0.3" stroke-linecap="round"/>
+    <line x1="30" y1="30" x2="38" y2="38" stroke="white" stroke-width="1.5" opacity="0.3" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Additional depth layer -->
+  <rect x="3" y="3" width="54" height="54" rx="11" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.05"/>
+</svg>
