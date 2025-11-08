@@ -303,5 +303,5 @@ For issues or questions:
 
 ---
 
-**Built with ❤️ using React and Vite**
+**Happy Coding 🫡**
 
