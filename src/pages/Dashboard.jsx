@@ -20,10 +20,11 @@ import {
   Image as ImageIcon,
   ArrowUpRight,
   ArrowDownRight,
-  UserCheck
+  UserCheck,
+  Bookmark
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { dashboardAPI } from '../services/api';
+import { dashboardAPI, postsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ProfileSettings from '../components/dashboard/ProfileSettings';
 import AuthorApplication from '../components/dashboard/AuthorApplication';
@@ -40,6 +41,7 @@ const Dashboard = () => {
     comments: [],
     likes: [],
     history: [],
+    bookmarks: [],
   });
   const [tabLoading, setTabLoading] = useState(false);
   const { user, isAdmin } = useAuth();
@@ -71,11 +73,67 @@ const Dashboard = () => {
           break;
         case 'likes':
           response = await dashboardAPI.getLikes({ limit: 20 });
-          setTabData(prev => ({ ...prev, likes: response.data.likes || [] }));
+          setTabData(prev => ({ ...prev, likes: response.data.posts || [] }));
           break;
         case 'history':
           response = await dashboardAPI.getHistory({ limit: 20 });
-          setTabData(prev => ({ ...prev, history: response.data.history || [] }));
+          setTabData(prev => ({ ...prev, history: response.data.posts || [] }));
+          break;
+        case 'bookmarks':
+          try {
+            response = await dashboardAPI.getBookmarks({ limit: 20 });
+            const bookmarkedPosts = response.data.posts || [];
+            
+            // If API returns empty but we have saved posts in localStorage, use fallback
+            if (bookmarkedPosts.length === 0) {
+              const savedPostsIds = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+              const userBookmarkedPosts = user?.bookmarkedPosts || [];
+              const allSavedIds = [...new Set([...savedPostsIds, ...userBookmarkedPosts])];
+              
+              if (allSavedIds.length > 0) {
+                // Fetch all posts and filter by saved IDs
+                try {
+                  const allPostsResponse = await postsAPI.getAll({ limit: 1000 });
+                  const allPosts = allPostsResponse.data.posts || [];
+                  const savedPosts = allPosts.filter(post => allSavedIds.includes(post._id));
+                  setTabData(prev => ({ ...prev, bookmarks: savedPosts }));
+                } catch (postsError) {
+                  console.error('Error fetching posts for bookmarks:', postsError);
+                  setTabData(prev => ({ ...prev, bookmarks: [] }));
+                }
+              } else {
+                setTabData(prev => ({ ...prev, bookmarks: [] }));
+              }
+            } else {
+              setTabData(prev => ({ ...prev, bookmarks: bookmarkedPosts }));
+            }
+          } catch (bookmarkError) {
+            // If API fails (404 or other error), fallback to localStorage
+            if (bookmarkError.response?.status === 404 || bookmarkError.response?.status >= 500) {
+              const savedPostsIds = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+              const userBookmarkedPosts = user?.bookmarkedPosts || [];
+              
+              // Combine both sources of saved post IDs
+              const allSavedIds = [...new Set([...savedPostsIds, ...userBookmarkedPosts])];
+              
+              if (allSavedIds.length > 0) {
+                // Fetch all posts and filter by saved IDs
+                try {
+                  const allPostsResponse = await postsAPI.getAll({ limit: 1000 });
+                  const allPosts = allPostsResponse.data.posts || [];
+                  const savedPosts = allPosts.filter(post => allSavedIds.includes(post._id));
+                  setTabData(prev => ({ ...prev, bookmarks: savedPosts }));
+                } catch (postsError) {
+                  console.error('Error fetching posts for bookmarks:', postsError);
+                  setTabData(prev => ({ ...prev, bookmarks: [] }));
+                }
+              } else {
+                setTabData(prev => ({ ...prev, bookmarks: [] }));
+              }
+            } else {
+              throw bookmarkError; // Re-throw if it's not a 404/500
+            }
+          }
           break;
         default:
           break;
@@ -97,6 +155,7 @@ const Dashboard = () => {
         const iconMap = {
           'Browse Posts': <BookOpen className="w-5 h-5" />,
           'Liked Posts': <Heart className="w-5 h-5" />,
+          'Bookmarked Posts': <Bookmark className="w-5 h-5" />,
           'My Comments': <MessageCircle className="w-5 h-5" />,
           'Create Post': <Plus className="w-5 h-5" />,
           'Manage Categories': <Folder className="w-5 h-5" />,
@@ -109,6 +168,7 @@ const Dashboard = () => {
         const pathMapping = {
           '/v1/posts': action.title === 'Create Post' ? '/admin/posts/create' : '/posts',
           '/v1/dashboard/likes': '/dashboard?tab=likes',
+          '/v1/dashboard/bookmarks': '/dashboard?tab=bookmarks',
           '/v1/dashboard/comments': '/dashboard?tab=comments',
           '/v1/categories': action.title === 'Manage Categories' ? '/admin/categories' : '/categories',
           '/v1/images/upload': '/admin/posts/create',
@@ -167,7 +227,8 @@ const Dashboard = () => {
         recentActivity: {
           posts: [],
           comments: [],
-          likedPosts: []
+          likedPosts: [],
+          bookmarkedPosts: []
         },
         quickActions: []
       });
@@ -211,7 +272,8 @@ const Dashboard = () => {
     recentActivity: {
       posts: [],
       comments: [],
-      likedPosts: []
+      likedPosts: [],
+      bookmarkedPosts: []
     },
     quickActions: []
   };
@@ -221,6 +283,7 @@ const Dashboard = () => {
     { id: 'posts', label: 'My Posts', icon: <FileText className="w-4 h-4" /> },
     { id: 'comments', label: 'My Comments', icon: <MessageCircle className="w-4 h-4" /> },
     { id: 'likes', label: 'Liked Posts', icon: <Heart className="w-4 h-4" /> },
+    { id: 'bookmarks', label: 'Saved Posts', icon: <Bookmark className="w-4 h-4" /> },
     { id: 'history', label: 'History', icon: <History className="w-4 h-4" /> },
     ...(user?.role !== 'author' && user?.role !== 'admin' ? [{ id: 'author', label: 'Become Author', icon: <UserCheck className="w-4 h-4" /> }] : []),
     { id: 'settings', label: 'Profile Settings', icon: <User className="w-4 h-4" /> },
@@ -371,10 +434,11 @@ const Dashboard = () => {
               )}
             </div>
             <div className="space-y-4">
-              {recentActivity.posts.map((post) => (
-                <PostItem key={post._id} post={post} />
-              ))}
-              {recentActivity.posts.length === 0 && (
+              {recentActivity.posts && recentActivity.posts.length > 0 ? (
+                recentActivity.posts.map((post) => (
+                  <PostItem key={post._id} post={post} />
+                ))
+              ) : (
                 <div className="text-center py-8 text-gray-500">
                   <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                   <p>No posts yet</p>
@@ -400,10 +464,11 @@ const Dashboard = () => {
           >
             <h2 className="text-xl font-bold text-slate-900 mb-6">Recent Comments</h2>
             <div className="space-y-4">
-              {recentActivity.comments.map((comment) => (
-                <CommentItem key={comment._id} comment={comment} />
-              ))}
-              {recentActivity.comments.length === 0 && (
+              {recentActivity.comments && recentActivity.comments.length > 0 ? (
+                recentActivity.comments.map((comment) => (
+                  <CommentItem key={comment._id} comment={comment} />
+                ))
+              ) : (
                 <div className="text-center py-8 text-gray-500">
                   <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                   <p>No comments yet</p>
@@ -469,23 +534,56 @@ const Dashboard = () => {
           >
             <h2 className="text-xl font-bold text-slate-900 mb-4">Liked Posts</h2>
             <div className="space-y-3">
-              {recentActivity.likedPosts.map((post) => (
-                <Link
-                  key={post._id}
-                  to={`/posts/${post.slug}`}
-                  className="block p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-                >
-                  <h3 className="font-medium text-gray-900 group-hover:text-blue-600 line-clamp-2">
-                    {post.title}
-                  </h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    by {post.author?.username}
-                  </p>
-                </Link>
-              ))}
-              {recentActivity.likedPosts.length === 0 && (
+              {recentActivity.likedPosts && recentActivity.likedPosts.length > 0 ? (
+                recentActivity.likedPosts.map((post) => (
+                  <Link
+                    key={post._id}
+                    to={`/posts/${post.slug}`}
+                    className="block p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                  >
+                    <h3 className="font-medium text-gray-900 group-hover:text-blue-600 line-clamp-2">
+                      {post.title}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      by {post.author?.username}
+                    </p>
+                  </Link>
+                ))
+              ) : (
                 <p className="text-gray-500 text-center py-4">
                   No liked posts yet
+                </p>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Bookmarked Posts */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="card-elevated card-elevated-hover p-6"
+          >
+            <h2 className="text-xl font-bold text-slate-900 mb-4">Saved Posts</h2>
+            <div className="space-y-3">
+              {recentActivity.bookmarkedPosts && recentActivity.bookmarkedPosts.length > 0 ? (
+                recentActivity.bookmarkedPosts.map((post) => (
+                  <Link
+                    key={post._id}
+                    to={`/posts/${post.slug}`}
+                    className="block p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                  >
+                    <h3 className="font-medium text-gray-900 group-hover:text-blue-600 line-clamp-2">
+                      {post.title}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      by {post.author?.username}
+                    </p>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-4">
+                  No saved posts yet
                 </p>
               )}
             </div>
@@ -560,14 +658,40 @@ const Dashboard = () => {
             </div>
           ) : tabData.likes.length > 0 ? (
             <div className="space-y-4">
-              {tabData.likes.map((like) => (
-                <PostItem key={like.post?._id || like._id} post={like.post || like} />
+              {tabData.likes.map((post) => (
+                <PostItem key={post._id} post={post} />
               ))}
             </div>
           ) : (
             <div className="text-center py-12 text-gray-500">
               <Heart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
               <p>No liked posts yet</p>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {activeTab === 'bookmarks' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card-elevated p-6"
+        >
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Saved Posts</h2>
+          {tabLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          ) : tabData.bookmarks.length > 0 ? (
+            <div className="space-y-4">
+              {tabData.bookmarks.map((post) => (
+                <PostItem key={post._id} post={post} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <Bookmark className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>No saved posts yet</p>
             </div>
           )}
         </motion.div>
@@ -586,19 +710,8 @@ const Dashboard = () => {
             </div>
           ) : tabData.history.length > 0 ? (
             <div className="space-y-4">
-              {tabData.history.map((item, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="p-4 rounded-xl glass-card-hover"
-                >
-                  <p className="text-slate-700 font-medium">{item.action || item.description}</p>
-                  <p className="text-xs text-slate-500 mt-2">
-                    {format(new Date(item.timestamp || item.createdAt), 'MMM d, yyyy HH:mm')}
-                  </p>
-                </motion.div>
+              {tabData.history.map((post) => (
+                <PostItem key={post._id} post={post} />
               ))}
             </div>
           ) : (

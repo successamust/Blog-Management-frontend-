@@ -14,7 +14,9 @@ import {
   Edit,
   Trash2,
   X,
-  Check
+  Check,
+  Copy,
+  CheckCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
@@ -35,9 +37,13 @@ const PostDetail = () => {
   const [interactionLoading, setInteractionLoading] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editCommentText, setEditCommentText] = useState('');
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
   useEffect(() => {
     fetchPostData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   const fetchPostData = async () => {
@@ -46,7 +52,30 @@ const PostDetail = () => {
       const postRes = await postsAPI.getBySlug(slug);
       const post = postRes.data;
       
+      // Check localStorage for saved posts if backend doesn't have bookmarks
+      if (isAuthenticated && user?._id) {
+        const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+        if (savedPosts.includes(post._id)) {
+          // If saved in localStorage but not in user.bookmarkedPosts, add it
+          if (!user.bookmarkedPosts || !user.bookmarkedPosts.includes(post._id)) {
+            const updatedUser = { ...user };
+            if (!updatedUser.bookmarkedPosts) {
+              updatedUser.bookmarkedPosts = [];
+            }
+            if (!updatedUser.bookmarkedPosts.includes(post._id)) {
+              updatedUser.bookmarkedPosts.push(post._id);
+            }
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          }
+        }
+      }
+      
       setPost(post);
+      
+      // Set initial bookmark state
+      const bookmarked = user?.bookmarkedPosts?.includes(post._id) || 
+                        JSON.parse(localStorage.getItem('savedPosts') || '[]').includes(post._id);
+      setIsBookmarked(bookmarked);
       
       const [commentsRes, relatedRes] = await Promise.all([
         commentsAPI.getByPost(post._id).catch(() => ({ data: { comments: [] } })),
@@ -72,7 +101,27 @@ const PostDetail = () => {
     try {
       setInteractionLoading(true);
       await postsAPI.like(post._id);
-      await fetchPostData(); // Refresh post data
+      
+      // Update post state directly without refetching all data
+      setPost(prevPost => {
+        if (!prevPost) return prevPost;
+        const isLiked = prevPost.likes?.includes(user?._id);
+        const newLikes = isLiked 
+          ? prevPost.likes.filter(id => id !== user?._id)
+          : [...(prevPost.likes || []), user?._id];
+        
+        // Remove from dislikes if it was disliked
+        const newDislikes = prevPost.dislikes?.includes(user?._id)
+          ? prevPost.dislikes.filter(id => id !== user?._id)
+          : prevPost.dislikes || [];
+        
+        return {
+          ...prevPost,
+          likes: newLikes,
+          dislikes: newDislikes
+        };
+      });
+      
       toast.success('Post liked!');
     } catch (error) {
       toast.error('Failed to like post');
@@ -90,7 +139,27 @@ const PostDetail = () => {
     try {
       setInteractionLoading(true);
       await postsAPI.dislike(post._id);
-      await fetchPostData(); // Refresh post data
+      
+      // Update post state directly without refetching all data
+      setPost(prevPost => {
+        if (!prevPost) return prevPost;
+        const isDisliked = prevPost.dislikes?.includes(user?._id);
+        const newDislikes = isDisliked 
+          ? prevPost.dislikes.filter(id => id !== user?._id)
+          : [...(prevPost.dislikes || []), user?._id];
+        
+        // Remove from likes if it was liked
+        const newLikes = prevPost.likes?.includes(user?._id)
+          ? prevPost.likes.filter(id => id !== user?._id)
+          : prevPost.likes || [];
+        
+        return {
+          ...prevPost,
+          dislikes: newDislikes,
+          likes: newLikes
+        };
+      });
+      
       toast.success('Post disliked!');
     } catch (error) {
       toast.error('Failed to dislike post');
@@ -101,21 +170,139 @@ const PostDetail = () => {
 
   const handleShare = async () => {
     try {
-      await postsAPI.share(post._id);
+      // Track share on backend (fire and forget)
+      postsAPI.share(post._id).catch(() => {});
+      
+      // Update shares count optimistically
+      setPost(prevPost => {
+        if (!prevPost) return prevPost;
+        return {
+          ...prevPost,
+          shares: (prevPost.shares || 0) + 1
+        };
+      });
+      
+      // Show share modal
+      setShowShareModal(true);
+      setLinkCopied(false);
+    } catch (error) {
+      toast.error('Failed to share post');
+    }
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      toast.success('Link copied to clipboard!');
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (error) {
+      toast.error('Failed to copy link');
+    }
+  };
+
+  const handleNativeShare = async () => {
+    try {
       if (navigator.share) {
         await navigator.share({
           title: post.title,
           text: post.excerpt,
           url: window.location.href,
         });
-      } else {
-        navigator.clipboard.writeText(window.location.href);
-        toast.success('Link copied to clipboard!');
+        setShowShareModal(false);
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
-        toast.error('Failed to share post');
+        toast.error('Failed to share');
       }
+    }
+  };
+
+  const handleSave = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to save posts');
+      return;
+    }
+
+    try {
+      setInteractionLoading(true);
+      const wasBookmarked = isBookmarked;
+      
+      try {
+        const response = await postsAPI.bookmark(post._id);
+        const { bookmarked } = response.data;
+        
+        // Update local state immediately
+        setIsBookmarked(bookmarked);
+        
+        // Update user's bookmarkedPosts array in context
+        if (user) {
+          const updatedUser = { ...user };
+          if (bookmarked) {
+            if (!updatedUser.bookmarkedPosts) {
+              updatedUser.bookmarkedPosts = [];
+            }
+            if (!updatedUser.bookmarkedPosts.includes(post._id)) {
+              updatedUser.bookmarkedPosts.push(post._id);
+            }
+          } else {
+            updatedUser.bookmarkedPosts = updatedUser.bookmarkedPosts?.filter(
+              id => id !== post._id
+            ) || [];
+          }
+          
+          // Update localStorage
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        }
+        
+        toast.success(wasBookmarked ? 'Post removed from saved!' : 'Post saved!');
+      } catch (apiError) {
+        // If 404, the endpoint doesn't exist yet - use localStorage as fallback
+        if (apiError.response?.status === 404) {
+          const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+          const newBookmarkedState = !wasBookmarked;
+          
+          // Update local state immediately
+          setIsBookmarked(newBookmarkedState);
+          
+          if (wasBookmarked) {
+            const updated = savedPosts.filter(id => id !== post._id);
+            localStorage.setItem('savedPosts', JSON.stringify(updated));
+            toast.success('Post removed from saved!');
+          } else {
+            if (!savedPosts.includes(post._id)) {
+              savedPosts.push(post._id);
+              localStorage.setItem('savedPosts', JSON.stringify(savedPosts));
+            }
+            toast.success('Post saved! (Saved locally until backend is updated)');
+          }
+          
+          // Update user's bookmarkedPosts array in localStorage for UI consistency
+          if (user) {
+            const updatedUser = { ...user };
+            if (!updatedUser.bookmarkedPosts) {
+              updatedUser.bookmarkedPosts = [];
+            }
+            if (wasBookmarked) {
+              updatedUser.bookmarkedPosts = updatedUser.bookmarkedPosts.filter(
+                id => id !== post._id
+              );
+            } else {
+              if (!updatedUser.bookmarkedPosts.includes(post._id)) {
+                updatedUser.bookmarkedPosts.push(post._id);
+              }
+            }
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          }
+        } else {
+          throw apiError; // Re-throw if it's not a 404
+        }
+      }
+    } catch (error) {
+      console.error('Error saving post:', error);
+      toast.error(error.response?.data?.message || 'Failed to save post');
+    } finally {
+      setInteractionLoading(false);
     }
   };
 
@@ -152,7 +339,24 @@ const PostDetail = () => {
 
     try {
       await commentsAPI.like(commentId);
-      await fetchPostData(); // Refresh comments
+      
+      // Update comment state directly without refetching all data
+      setComments(prevComments => 
+        prevComments.map(comment => {
+          if (comment._id === commentId) {
+            const isLiked = comment.likes?.includes(user?._id);
+            const newLikes = isLiked
+              ? comment.likes.filter(id => id !== user?._id)
+              : [...(comment.likes || []), user?._id];
+            
+            return {
+              ...comment,
+              likes: newLikes
+            };
+          }
+          return comment;
+        })
+      );
     } catch (error) {
       toast.error('Failed to like comment');
     }
@@ -226,6 +430,7 @@ const PostDetail = () => {
 
   const hasLiked = post.likes?.includes(user?._id);
   const hasDisliked = post.dislikes?.includes(user?._id);
+  const hasBookmarked = isBookmarked;
 
   return (
     <>
@@ -337,12 +542,18 @@ const PostDetail = () => {
                 </div>
 
                 <motion.button
+                  onClick={handleSave}
+                  disabled={interactionLoading}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 glass-card text-slate-700 rounded-xl hover:bg-white/80 transition-all text-sm sm:text-base"
+                  className={`flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
+                    hasBookmarked
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/25'
+                      : 'glass-card text-slate-700 hover:bg-white/80'
+                  }`}
                 >
-                  <Bookmark className="w-4 h-4" />
-                  <span className="hidden sm:inline">Save</span>
+                  <Bookmark className={`w-4 h-4 ${hasBookmarked ? 'fill-current' : ''}`} />
+                  <span className="hidden sm:inline">{hasBookmarked ? 'Saved' : 'Save'}</span>
                 </motion.button>
               </div>
             </div>
@@ -465,9 +676,13 @@ const PostDetail = () => {
                             onClick={() => handleCommentLike(comment._id)}
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            className="flex items-center space-x-1 text-slate-500 hover:text-indigo-600 transition-colors"
+                            className={`flex items-center space-x-1 transition-colors ${
+                              comment.likes?.includes(user?._id)
+                                ? 'text-rose-500 hover:text-rose-600'
+                                : 'text-slate-500 hover:text-indigo-600'
+                            }`}
                           >
-                            <Heart className="w-4 h-4" />
+                            <Heart className={`w-4 h-4 ${comment.likes?.includes(user?._id) ? 'fill-current' : ''}`} />
                             <span className="text-sm">{comment.likes?.length || 0}</span>
                           </motion.button>
                         </>
@@ -570,6 +785,82 @@ const PostDetail = () => {
         </div>
       </div>
     </div>
+
+    {/* Share Modal */}
+    {showShareModal && (
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        onClick={() => setShowShareModal(false)}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          onClick={(e) => e.stopPropagation()}
+          className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative"
+        >
+          <button
+            onClick={() => setShowShareModal(false)}
+            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Share Post</h2>
+            <p className="text-slate-600">Share this post with others</p>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Post Link
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={window.location.href}
+                className="flex-1 px-4 py-2 glass-card rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300/50"
+              />
+              <motion.button
+                onClick={copyToClipboard}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`px-4 py-2 rounded-xl transition-all ${
+                  linkCopied
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg hover:shadow-indigo-500/25'
+                }`}
+              >
+                {linkCopied ? (
+                  <CheckCircle className="w-5 h-5" />
+                ) : (
+                  <Copy className="w-5 h-5" />
+                )}
+              </motion.button>
+            </div>
+            {linkCopied && (
+              <p className="mt-2 text-sm text-emerald-600 flex items-center gap-1">
+                <CheckCircle className="w-4 h-4" />
+                Link copied!
+              </p>
+            )}
+          </div>
+
+          {navigator.share && (
+            <motion.button
+              onClick={handleNativeShare}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all font-medium flex items-center justify-center gap-2"
+            >
+              <Share2 className="w-5 h-5" />
+              Share via Device
+            </motion.button>
+          )}
+        </motion.div>
+      </div>
+    )}
     </>
   );
 };

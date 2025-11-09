@@ -63,6 +63,7 @@ export const postsAPI = {
   like: (id) => api.post(`/interactions/${id}/like`),
   dislike: (id) => api.post(`/interactions/${id}/dislike`),
   share: (id) => api.post(`/interactions/${id}/share`),
+  bookmark: (id) => api.post(`/interactions/${id}/bookmark`),
   getRelated: (id) => api.get(`/posts/${id}/related`),
 };
 
@@ -70,8 +71,10 @@ export const interactionsAPI = {
   like: (postId) => api.post(`/interactions/${postId}/like`),
   dislike: (postId) => api.post(`/interactions/${postId}/dislike`),
   share: (postId) => api.post(`/interactions/${postId}/share`),
+  bookmark: (postId) => api.post(`/interactions/${postId}/bookmark`),
   getPostInteractions: (postId) => api.get(`/interactions/${postId}/interactions`),
   getUserLikedPosts: (params) => api.get('/interactions/me/likes', { params }),
+  getUserBookmarkedPosts: (params) => api.get('/interactions/me/bookmarks', { params }),
 };
 
 export const categoriesAPI = {
@@ -109,6 +112,7 @@ export const dashboardAPI = {
   getComments: (params) => api.get('/dashboard/comments', { params }),
   getLikes: (params) => api.get('/dashboard/likes', { params }),
   getHistory: (params) => api.get('/dashboard/history', { params }),
+  getBookmarks: (params) => api.get('/interactions/me/bookmarks', { params }),
 };
 
 export const adminAPI = {
