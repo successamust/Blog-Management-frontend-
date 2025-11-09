@@ -46,6 +46,22 @@ const PostDetail = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
+  // Update bookmark state when user or post changes
+  useEffect(() => {
+    if (post && isAuthenticated) {
+      // Check both user.bookmarkedPosts and localStorage
+      const userFromStorage = JSON.parse(localStorage.getItem('user') || '{}');
+      const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+      const bookmarked = 
+        user?.bookmarkedPosts?.includes(post._id) ||
+        userFromStorage?.bookmarkedPosts?.includes(post._id) ||
+        savedPosts.includes(post._id);
+      setIsBookmarked(bookmarked);
+    } else if (post && !isAuthenticated) {
+      setIsBookmarked(false);
+    }
+  }, [post, user, isAuthenticated]);
+
   const fetchPostData = async () => {
     try {
       setLoading(true);
@@ -72,9 +88,13 @@ const PostDetail = () => {
       
       setPost(post);
       
-      // Set initial bookmark state
-      const bookmarked = user?.bookmarkedPosts?.includes(post._id) || 
-                        JSON.parse(localStorage.getItem('savedPosts') || '[]').includes(post._id);
+      // Set initial bookmark state - check multiple sources
+      const userFromStorage = JSON.parse(localStorage.getItem('user') || '{}');
+      const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+      const bookmarked = 
+        user?.bookmarkedPosts?.includes(post._id) ||
+        userFromStorage?.bookmarkedPosts?.includes(post._id) ||
+        savedPosts.includes(post._id);
       setIsBookmarked(bookmarked);
       
       const [commentsRes, relatedRes] = await Promise.all([
