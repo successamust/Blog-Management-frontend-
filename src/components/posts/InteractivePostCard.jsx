@@ -108,7 +108,11 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
             </div>
           </div>
           <div className="p-6">
-            <p className="text-slate-600 mb-4 line-clamp-2">{postExcerpt}</p>
+            <div className="relative mb-4 bg-slate-50 border-l-4 border-indigo-500 rounded-r-lg p-4 shadow-sm">
+              <p className="text-slate-700 text-base leading-relaxed line-clamp-2 font-normal tracking-normal">
+                {postExcerpt}
+              </p>
+            </div>
             <div className="flex items-center justify-between text-sm text-slate-500">
               <div className="flex items-center space-x-4">
                 <span className="flex items-center">
@@ -180,7 +184,11 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
           >
             {postTitle}
           </motion.h3>
-          <p className="text-slate-600 mb-4 line-clamp-2 leading-relaxed">{postExcerpt}</p>
+          <div className="relative mb-4 bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-lg p-3 shadow-sm group-hover:shadow-md transition-shadow">
+            <p className="text-slate-700 text-sm leading-relaxed line-clamp-2 font-medium tracking-normal">
+              {postExcerpt}
+            </p>
+          </div>
           
           <div className="flex items-center justify-between text-sm text-slate-500 mb-4">
             <span className="flex items-center">

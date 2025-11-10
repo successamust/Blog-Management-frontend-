@@ -101,7 +101,12 @@ const Dashboard = () => {
       }
     };
     
-    fetchPostsCount();
+    // Add a small delay on mobile to ensure proper rendering
+    const timer = setTimeout(() => {
+      fetchPostsCount();
+    }, typeof window !== 'undefined' && window.innerWidth < 768 ? 100 : 0);
+    
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, dashboardData, user, isAdmin]);
 
@@ -904,6 +909,18 @@ const Dashboard = () => {
 };
 
 const StatCard = ({ icon, title, value, change, color, trend }) => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const colorConfig = {
     indigo: {
       bg: 'from-indigo-500/10 to-indigo-600/5',
@@ -938,30 +955,33 @@ const StatCard = ({ icon, title, value, change, color, trend }) => {
     Math.random() * 100 + (isPositive ? 50 : 30)
   );
 
+  // Ensure value is a number and has a fallback
+  const displayValue = typeof value === 'number' ? value : Number(value) || 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3 }}
-      className="card-elevated card-elevated-hover p-6 relative overflow-hidden group"
+      className="card-elevated card-elevated-hover p-4 sm:p-6 relative overflow-hidden group"
     >
       {/* Gradient background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${config.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
       
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-sm font-medium text-slate-600">{title}</p>
-          <div className={`p-2.5 rounded-xl ${config.icon} transition-transform group-hover:scale-110`}>
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <p className="text-xs sm:text-sm font-medium text-slate-600">{title}</p>
+          <div className={`p-2 sm:p-2.5 rounded-xl ${config.icon} transition-transform group-hover:scale-110`}>
             {icon}
           </div>
         </div>
         
         <div className="mb-3">
-          <p className="text-3xl font-bold text-slate-900 mb-1">
-            <AnimatedCounter value={value} />
+          <p className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">
+            <AnimatedCounter value={displayValue} />
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <p className="text-xs text-slate-500">{change}</p>
             {trend !== undefined && (
               <div className={`flex items-center gap-1 text-xs font-medium ${
@@ -978,9 +998,9 @@ const StatCard = ({ icon, title, value, change, color, trend }) => {
           </div>
         </div>
 
-        {/* Sparkline */}
-        <div className="mt-4 -mx-6 -mb-6">
-          <Sparkline data={sparklineData} color={config.sparkline} height={50} />
+        {/* Sparkline - responsive height for mobile */}
+        <div className="mt-4 -mx-4 sm:-mx-6 -mb-4 sm:-mb-6">
+          <Sparkline data={sparklineData} color={config.sparkline} height={isMobile ? 40 : 50} />
         </div>
       </div>
     </motion.div>

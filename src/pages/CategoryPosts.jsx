@@ -378,7 +378,11 @@ const PostCard = ({ post }) => {
             {post.title}
           </h3>
           {post.excerpt && (
-            <p className="text-slate-600 mb-4 line-clamp-3 text-sm leading-relaxed">{post.excerpt}</p>
+            <div className="relative mb-4 bg-gradient-to-br from-purple-50 to-pink-50 border-l-4 border-purple-400 rounded-r-md p-3 shadow-sm group-hover:shadow-md transition-all">
+              <p className="text-slate-700 text-sm leading-relaxed line-clamp-3 font-medium">
+                {post.excerpt}
+              </p>
+            </div>
           )}
           
           <div className="flex items-center justify-between text-xs text-slate-500">
