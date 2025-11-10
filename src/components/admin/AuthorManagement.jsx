@@ -50,13 +50,40 @@ const AuthorManagement = () => {
     }
 
     try {
-      await authorsAPI.reviewApplication(applicationId, reviewData);
+      // Prepare data for backend - only send non-empty fields
+      const submitData = {
+        status: reviewData.action === 'approve' ? 'approved' : 'rejected',
+        adminNotes: reviewData.adminNotes?.trim() || undefined,
+      };
+
+      // Remove undefined fields
+      Object.keys(submitData).forEach(key => {
+        if (submitData[key] === undefined) {
+          delete submitData[key];
+        }
+      });
+
+      await authorsAPI.reviewApplication(applicationId, submitData);
       toast.success(`Application ${reviewData.action}d successfully`);
       setReviewingId(null);
       setReviewData({ action: 'approve', adminNotes: '' });
       fetchApplications();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to review application');
+      console.error('Review application error:', error);
+      if (error.response?.status === 400) {
+        // Handle validation errors from backend
+        const errorData = error.response.data;
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const errorMessages = errorData.errors.map(err => 
+            typeof err === 'string' ? err : err.msg || err.message || 'Validation error'
+          ).join(', ');
+          toast.error(errorMessages);
+        } else {
+          toast.error(errorData.message || 'Invalid request. Please check your input.');
+        }
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to review application');
+      }
     }
   };
 

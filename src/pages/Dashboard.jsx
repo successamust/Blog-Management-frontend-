@@ -24,12 +24,14 @@ import {
   Bookmark
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { dashboardAPI, postsAPI } from '../services/api';
+import { dashboardAPI, postsAPI, categoriesAPI, imagesAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ProfileSettings from '../components/dashboard/ProfileSettings';
 import AuthorApplication from '../components/dashboard/AuthorApplication';
 import AnimatedCounter from '../components/common/AnimatedCounter';
 import Sparkline from '../components/common/Sparkline';
+import RichTextEditor from '../components/admin/RichTextEditor';
+import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -175,6 +177,15 @@ const Dashboard = () => {
         };
         
         if (action.title === 'Create Post' || action.title?.includes('Create')) {
+          // For authors, use dashboard create post tab instead of admin route
+          if (user?.role === 'author' && !isAdmin()) {
+            return {
+              ...action,
+              path: '/dashboard?tab=create-post',
+              icon: getActionIcon(action.title),
+              onClick: () => setActiveTab('create-post'),
+            };
+          }
           return {
             ...action,
             path: '/admin/posts/create',
@@ -280,6 +291,7 @@ const Dashboard = () => {
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <TrendingUp className="w-4 h-4" /> },
+    ...(user?.role === 'author' || user?.role === 'admin' ? [{ id: 'create-post', label: 'Create Post', icon: <Plus className="w-4 h-4" /> }] : []),
     { id: 'posts', label: 'My Posts', icon: <FileText className="w-4 h-4" /> },
     { id: 'comments', label: 'My Comments', icon: <MessageCircle className="w-4 h-4" /> },
     { id: 'likes', label: 'Liked Posts', icon: <Heart className="w-4 h-4" /> },
@@ -421,15 +433,15 @@ const Dashboard = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-slate-900">Recent Posts</h2>
-              {isAdmin() && (
+              {(isAdmin() || user?.role === 'author') && (
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Link
-                    to="/admin/posts/create"
+                  <button
+                    onClick={() => setActiveTab('create-post')}
                     className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
                   >
                     <Plus className="w-4 h-4" />
                     <span>New Post</span>
-                  </Link>
+                  </button>
                 </motion.div>
               )}
             </div>
@@ -442,13 +454,13 @@ const Dashboard = () => {
                 <div className="text-center py-8 text-gray-500">
                   <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                   <p>No posts yet</p>
-                  {isAdmin() && (
-                    <Link
-                      to="/admin/posts/create"
+                  {(isAdmin() || user?.role === 'author') && (
+                    <button
+                      onClick={() => setActiveTab('create-post')}
                       className="text-blue-600 hover:text-blue-700 mt-2 inline-block"
                     >
                       Create your first post
-                    </Link>
+                    </button>
                   )}
                 </div>
               )}
@@ -495,6 +507,9 @@ const Dashboard = () => {
                     e.preventDefault();
                     const tab = action.path.split('tab=')[1];
                     setActiveTab(tab);
+                  } else if (action.onClick) {
+                    e.preventDefault();
+                    action.onClick();
                   }
                 };
                 
@@ -504,21 +519,37 @@ const Dashboard = () => {
                     whileHover={{ x: 4 }}
                     transition={{ type: 'spring', stiffness: 300 }}
                   >
-                    <Link
-                      to={action.path}
-                      onClick={handleClick}
-                      className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all group glass-card-hover"
-                    >
-                      <div className="flex-shrink-0 text-slate-600 group-hover:text-indigo-600 transition-colors">
-                        {action.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-slate-900 group-hover:text-indigo-600">
-                          {action.title}
+                    {action.onClick ? (
+                      <button
+                        onClick={handleClick}
+                        className="w-full text-left p-3 rounded-lg hover:bg-white/50 transition-colors group"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="text-indigo-600 group-hover:text-indigo-700">
+                            {action.icon}
+                          </div>
+                          <span className="font-medium text-slate-700 group-hover:text-indigo-600">
+                            {action.title}
+                          </span>
                         </div>
-                        <div className="text-sm text-slate-500 truncate">{action.description}</div>
-                      </div>
-                    </Link>
+                      </button>
+                    ) : (
+                      <Link
+                        to={action.path}
+                        onClick={handleClick}
+                        className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all group glass-card-hover"
+                      >
+                        <div className="flex-shrink-0 text-slate-600 group-hover:text-indigo-600 transition-colors">
+                          {action.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-slate-900 group-hover:text-indigo-600">
+                            {action.title}
+                          </div>
+                          <div className="text-sm text-slate-500 truncate">{action.description}</div>
+                        </div>
+                      </Link>
+                    )}
                   </motion.div>
                 );
               })}
@@ -723,6 +754,10 @@ const Dashboard = () => {
         </motion.div>
       )}
 
+      {activeTab === 'create-post' && (
+        <CreatePostTab />
+      )}
+
       {activeTab === 'author' && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -824,40 +859,68 @@ const StatCard = ({ icon, title, value, change, color, trend }) => {
   );
 };
 
-const PostItem = ({ post }) => (
-  <motion.div
-    whileHover={{ x: 4 }}
-    transition={{ type: 'spring', stiffness: 300 }}
-  >
-    <Link
-      to={`/posts/${post.slug}`}
+const PostItem = ({ post }) => {
+  const { user, isAdmin } = useAuth();
+  const isAuthor = user?.role === 'author' || isAdmin();
+  const isPostOwner = post.author?._id === user?._id || post.author === user?._id || isAdmin();
+  
+  return (
+    <motion.div
+      whileHover={{ x: 4 }}
+      transition={{ type: 'spring', stiffness: 300 }}
       className="flex items-center justify-between p-4 rounded-xl glass-card-hover group"
     >
-      <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-slate-900 group-hover:text-indigo-600 truncate mb-2">
-          {post.title}
-        </h3>
-        <div className="flex items-center space-x-4 text-xs text-slate-500">
-          <span className="flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            {format(new Date(post.publishedAt), 'MMM d, yyyy')}
-          </span>
-          <span className="flex items-center gap-1">
-            <Eye className="w-3 h-3" />
-            {post.viewCount || 0}
-          </span>
-          <span className="flex items-center gap-1">
-            <Heart className="w-3 h-3" />
-            {post.likes?.length || 0}
-          </span>
+      <Link
+        to={`/posts/${post.slug}`}
+        className="flex-1 min-w-0"
+      >
+        <div>
+          <h3 className="font-semibold text-slate-900 group-hover:text-indigo-600 truncate mb-2">
+            {post.title}
+          </h3>
+          <div className="flex items-center space-x-4 text-xs text-slate-500">
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {format(new Date(post.publishedAt || post.createdAt), 'MMM d, yyyy')}
+            </span>
+            <span className="flex items-center gap-1">
+              <Eye className="w-3 h-3" />
+              {post.viewCount || 0}
+            </span>
+            <span className="flex items-center gap-1">
+              <Heart className="w-3 h-3" />
+              {post.likes?.length || 0}
+            </span>
+            {post.isPublished === false && (
+              <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded text-xs">
+                Draft
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="ml-4 flex-shrink-0">
-        <TrendingUp className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
-      </div>
-    </Link>
-  </motion.div>
-);
+      </Link>
+      {isAuthor && isPostOwner && (
+        <div className="ml-4 flex-shrink-0 flex items-center gap-2">
+          <Link
+            to={`/admin/posts/edit/${post._id}`}
+            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            title="Edit Post"
+          >
+            <Edit className="w-4 h-4" />
+          </Link>
+          <div className="text-slate-400 group-hover:text-indigo-600 transition-colors">
+            <TrendingUp className="w-4 h-4" />
+          </div>
+        </div>
+      )}
+      {!isPostOwner && (
+        <div className="ml-4 flex-shrink-0">
+          <TrendingUp className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+        </div>
+      )}
+    </motion.div>
+  );
+};
 
 const CommentItem = ({ comment }) => (
   <motion.div
@@ -883,5 +946,291 @@ const CommentItem = ({ comment }) => (
     </div>
   </motion.div>
 );
+
+// Create Post Component for Authors
+const CreatePostTab = () => {
+  const [formData, setFormData] = useState({
+    title: '',
+    excerpt: '',
+    content: '',
+    category: '',
+    tags: '',
+    featuredImage: '',
+    status: 'published',
+  });
+  const [categories, setCategories] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  useEffect(() => {
+    fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoriesAPI.getAll();
+      setCategories(response.data.categories || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', file);
+      const response = await imagesAPI.upload(uploadFormData);
+      const imageUrl = response.data.image?.url || response.data.url || response.data.imageUrl;
+      if (!imageUrl) {
+        toast.error('Failed to get image URL from response');
+        return;
+      }
+      setFormData(prev => ({
+        ...prev,
+        featuredImage: imageUrl,
+      }));
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    if (!formData.featuredImage) return;
+
+    try {
+      await imagesAPI.delete(formData.featuredImage);
+      setFormData(prev => ({
+        ...prev,
+        featuredImage: '',
+      }));
+      toast.success('Image deleted successfully');
+    } catch (error) {
+      setFormData(prev => ({
+        ...prev,
+        featuredImage: '',
+      }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const postData = {
+        title: formData.title,
+        excerpt: formData.excerpt,
+        content: formData.content,
+        category: formData.category || undefined,
+        tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
+        featuredImage: formData.featuredImage || undefined,
+        isPublished: formData.status === 'published',
+      };
+      
+      const response = await postsAPI.create(postData);
+      const newPost = response.data.post || response.data;
+      
+      if (!newPost || !newPost._id) {
+        console.error('Post creation response:', response);
+        toast.error('Post created but response format unexpected. Please refresh the page.');
+        return;
+      }
+      
+      toast.success('Post created successfully');
+      
+      // Reset form
+      setFormData({
+        title: '',
+        excerpt: '',
+        content: '',
+        category: '',
+        tags: '',
+        featuredImage: '',
+        status: 'published',
+      });
+    } catch (error) {
+      console.error('Error creating post:', error);
+      toast.error(error.response?.data?.message || 'Failed to create post');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="card-elevated p-6"
+    >
+      <h2 className="text-2xl font-bold text-slate-900 mb-6">Create New Post</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Excerpt</label>
+          <textarea
+            name="excerpt"
+            value={formData.excerpt}
+            onChange={handleChange}
+            rows="3"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+          <RichTextEditor
+            value={formData.content}
+            onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+            placeholder="Write your post content here..."
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Select a category</option>
+              {categories.map((cat) => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tags (comma-separated)</label>
+            <input
+              type="text"
+              name="tags"
+              value={formData.tags}
+              onChange={handleChange}
+              placeholder="tag1, tag2, tag3"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Featured Image</label>
+          {formData.featuredImage ? (
+            <div className="space-y-2">
+              <img
+                src={formData.featuredImage}
+                alt="Featured"
+                className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                onError={() => toast.error('Failed to load image')}
+              />
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600 truncate">{formData.featuredImage}</span>
+                <button
+                  type="button"
+                  onClick={handleDeleteImage}
+                  className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploadingImage}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              {uploadingImage && (
+                <p className="text-sm text-gray-500 mt-2">Uploading image...</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+          <select
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+          </select>
+        </div>
+
+        <div className="flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={() => {
+              setFormData({
+                title: '',
+                excerpt: '',
+                content: '',
+                category: '',
+                tags: '',
+                featuredImage: '',
+                status: 'published',
+              });
+            }}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+          >
+            Reset
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:shadow-lg hover:shadow-indigo-500/25 transition-all disabled:opacity-50"
+          >
+            {submitting ? 'Creating...' : 'Create Post'}
+          </button>
+        </div>
+      </form>
+    </motion.div>
+  );
+};
 
 export default Dashboard;

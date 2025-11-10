@@ -57,10 +57,11 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
+            {/* Admin routes - allow authors to access posts management */}
             <Route 
               path="/admin/*" 
               element={
-                <ProtectedRoute requireAdmin>
+                <ProtectedRoute requireAuthorOrAdmin>
                   <PageTransition><Admin /></PageTransition>
                 </ProtectedRoute>
               } 

@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import { FileText, Plus, Edit, Trash2, Eye, Search, Upload, X } from 'lucide-react';
 import { postsAPI, categoriesAPI, adminAPI, imagesAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import RichTextEditor from './RichTextEditor';
 
 const PostManagement = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     fetchPosts();
@@ -19,7 +22,19 @@ const PostManagement = () => {
     try {
       setLoading(true);
       const response = await postsAPI.getAll({ limit: 100 });
-      setPosts(response.data.posts || []);
+      const allPosts = response.data.posts || [];
+      
+      // If user is author (not admin), filter to only show their own posts
+      if (user?.role === 'author' && !isAdmin()) {
+        const userPosts = allPosts.filter(post => {
+          const postAuthorId = post.author?._id || post.author || post.authorId;
+          const userId = user._id || user.id;
+          return String(postAuthorId) === String(userId);
+        });
+        setPosts(userPosts);
+      } else {
+        setPosts(allPosts);
+      }
     } catch (error) {
       console.error('Error fetching posts:', error);
       toast.error('Failed to load posts');
@@ -67,17 +82,24 @@ const PostManagement = () => {
 };
 
 const PostList = ({ posts, searchQuery, setSearchQuery, onDelete }) => {
+  const { user, isAdmin } = useAuth();
+  const isAuthor = user?.role === 'author' || isAdmin();
+  
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Posts Management</h2>
-        <Link
-          to="/admin/posts/create"
-          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Create Post</span>
-        </Link>
+        <h2 className="text-2xl font-bold text-gray-900">
+          {isAuthor && !isAdmin() ? 'My Posts' : 'Posts Management'}
+        </h2>
+        {isAuthor && (
+          <Link
+            to="/admin/posts/create"
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Post</span>
+          </Link>
+        )}
       </div>
 
       {/* Search */}
@@ -135,33 +157,38 @@ const PostList = ({ posts, searchQuery, setSearchQuery, onDelete }) => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        post.status === 'published'
+                        post.isPublished
                           ? 'bg-green-100 text-green-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}
                     >
-                      {post.status || 'draft'}
+                      {post.isPublished ? 'published' : 'draft'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <Link
                       to={`/posts/${post.slug}`}
                       className="text-blue-600 hover:text-blue-900 transition-colors"
+                      title="View Post"
                     >
                       <Eye className="w-4 h-4 inline" />
                     </Link>
                     <Link
                       to={`/admin/posts/edit/${post._id}`}
                       className="text-green-600 hover:text-green-900 transition-colors"
+                      title="Edit Post"
                     >
                       <Edit className="w-4 h-4 inline" />
                     </Link>
-                    <button
-                      onClick={() => onDelete(post._id)}
-                      className="text-red-600 hover:text-red-900 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4 inline" />
-                    </button>
+                    {isAdmin() && (
+                      <button
+                        onClick={() => onDelete(post._id)}
+                        className="text-red-600 hover:text-red-900 transition-colors"
+                        title="Delete Post"
+                      >
+                        <Trash2 className="w-4 h-4 inline" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -234,9 +261,15 @@ const CreatePost = ({ onSuccess }) => {
       const uploadFormData = new FormData();
       uploadFormData.append('image', file);
       const response = await imagesAPI.upload(uploadFormData);
+      // Backend returns { message, image: { url, publicId, ... } }
+      const imageUrl = response.data.image?.url || response.data.url || response.data.imageUrl;
+      if (!imageUrl) {
+        toast.error('Failed to get image URL from response');
+        return;
+      }
       setFormData(prev => ({
         ...prev,
-        featuredImage: response.data.url || response.data.imageUrl,
+        featuredImage: imageUrl,
       }));
       toast.success('Image uploaded successfully');
     } catch (error) {
@@ -270,14 +303,29 @@ const CreatePost = ({ onSuccess }) => {
 
     try {
       const postData = {
-        ...formData,
-        tags: formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+        title: formData.title,
+        excerpt: formData.excerpt,
+        content: formData.content,
+        category: formData.category || undefined,
+        tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
+        featuredImage: formData.featuredImage || undefined,
+        isPublished: formData.status === 'published', // Convert status to isPublished boolean
       };
+      
       const response = await postsAPI.create(postData);
-      const newPost = response.data.post;
+      // Backend returns the post directly, not wrapped in { post: ... }
+      const newPost = response.data.post || response.data;
+      
+      if (!newPost || !newPost._id) {
+        console.error('Post creation response:', response);
+        toast.error('Post created but response format unexpected. Please refresh the page.');
+        onSuccess(); // Refresh the list anyway
+        return;
+      }
+      
       toast.success('Post created successfully');
       
-      if (postData.status === 'published' && newPost?._id) {
+      if (postData.isPublished && newPost._id) {
         try {
           await adminAPI.notifyNewPost(newPost._id);
         } catch (error) {
@@ -285,7 +333,7 @@ const CreatePost = ({ onSuccess }) => {
         }
       }
       
-      onSuccess();
+      // Reset form
       setFormData({
         title: '',
         excerpt: '',
@@ -295,7 +343,11 @@ const CreatePost = ({ onSuccess }) => {
         featuredImage: '',
         status: 'published',
       });
+      
+      // Refresh the posts list
+      onSuccess();
     } catch (error) {
+      console.error('Error creating post:', error);
       toast.error(error.response?.data?.message || 'Failed to create post');
     } finally {
       setSubmitting(false);
@@ -331,13 +383,10 @@ const CreatePost = ({ onSuccess }) => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
-          <textarea
-            name="content"
+          <RichTextEditor
             value={formData.content}
-            onChange={handleChange}
-            rows="10"
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+            placeholder="Write your post content here..."
           />
         </div>
 
@@ -424,7 +473,15 @@ const CreatePost = ({ onSuccess }) => {
                   src={formData.featuredImage}
                   alt="Featured"
                   className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                  onError={(e) => {
+                    console.error('Image failed to load:', formData.featuredImage);
+                    e.target.style.display = 'none';
+                    toast.error('Failed to load image. Please check the URL.');
+                  }}
                 />
+                <div className="mt-2 text-xs text-gray-500 break-all">
+                  {formData.featuredImage}
+                </div>
               </div>
             )}
           </div>
@@ -453,6 +510,7 @@ const CreatePost = ({ onSuccess }) => {
 const EditPost = ({ onSuccess }) => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     excerpt: '',
@@ -494,6 +552,17 @@ const EditPost = ({ onSuccess }) => {
         return;
       }
 
+      // Check if author can edit this post
+      if (user?.role === 'author' && !isAdmin()) {
+        const postAuthorId = post.author?._id || post.author || post.authorId;
+        const userId = user._id || user.id;
+        if (String(postAuthorId) !== String(userId)) {
+          toast.error('You can only edit your own posts');
+          navigate('/admin/posts');
+          return;
+        }
+      }
+
       setFormData({
         title: post.title || '',
         excerpt: post.excerpt || '',
@@ -501,7 +570,7 @@ const EditPost = ({ onSuccess }) => {
         category: post.category?._id || post.category || '',
         tags: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || ''),
         featuredImage: post.featuredImage || '',
-        status: post.isPublished ? 'published' : (post.status || 'draft'),
+        status: post.isPublished ? 'published' : 'draft', // Map isPublished to status for form
       });
     } catch (error) {
       console.error('Error fetching post:', error);
@@ -547,9 +616,15 @@ const EditPost = ({ onSuccess }) => {
       const uploadFormData = new FormData();
       uploadFormData.append('image', file);
       const response = await imagesAPI.upload(uploadFormData);
+      // Backend returns { message, image: { url, publicId, ... } }
+      const imageUrl = response.data.image?.url || response.data.url || response.data.imageUrl;
+      if (!imageUrl) {
+        toast.error('Failed to get image URL from response');
+        return;
+      }
       setFormData(prev => ({
         ...prev,
-        featuredImage: response.data.url || response.data.imageUrl,
+        featuredImage: imageUrl,
       }));
       toast.success('Image uploaded successfully');
     } catch (error) {
@@ -582,18 +657,33 @@ const EditPost = ({ onSuccess }) => {
     setSubmitting(true);
 
     try {
+      const isPublished = formData.status === 'published';
+      
+      // Build postData object, only including defined values
       const postData = {
-        ...formData,
+        title: formData.title,
+        excerpt: formData.excerpt,
+        content: formData.content,
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
-        isPublished: formData.status === 'published',
+        isPublished: isPublished, // Convert status to isPublished boolean - ALWAYS send this
       };
-      await postsAPI.update(id, postData);
+      
+      // Only add optional fields if they have values
+      if (formData.category) {
+        postData.category = formData.category;
+      }
+      if (formData.featuredImage) {
+        postData.featuredImage = formData.featuredImage;
+      }
+      
+      const response = await postsAPI.update(id, postData);
+      
       toast.success('Post updated successfully');
       onSuccess();
       navigate('/admin/posts');
     } catch (error) {
       console.error('Error updating post:', error);
-      toast.error(error.response?.data?.message || 'Failed to update post');
+      toast.error(error.response?.data?.message || error.response?.data?.error || 'Failed to update post');
     } finally {
       setSubmitting(false);
     }
@@ -636,13 +726,10 @@ const EditPost = ({ onSuccess }) => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
-          <textarea
-            name="content"
+          <RichTextEditor
             value={formData.content}
-            onChange={handleChange}
-            rows="10"
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+            placeholder="Write your post content here..."
           />
         </div>
 
@@ -729,7 +816,15 @@ const EditPost = ({ onSuccess }) => {
                   src={formData.featuredImage}
                   alt="Featured"
                   className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                  onError={(e) => {
+                    console.error('Image failed to load:', formData.featuredImage);
+                    e.target.style.display = 'none';
+                    toast.error('Failed to load image. Please check the URL.');
+                  }}
                 />
+                <div className="mt-2 text-xs text-gray-500 break-all">
+                  {formData.featuredImage}
+                </div>
               </div>
             )}
           </div>

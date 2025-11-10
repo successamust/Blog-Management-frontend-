@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
+import DOMPurify from 'dompurify';
 import { postsAPI, commentsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -552,7 +553,23 @@ const PostDetail = () => {
 
               {/* Post Content */}
               <div className="prose prose-lg max-w-none mb-8">
-                <ReactMarkdown>{post.content}</ReactMarkdown>
+                {(() => {
+                  // Check if content is HTML (contains HTML tags)
+                  const isHTML = /<[a-z][\s\S]*>/i.test(post.content);
+                  
+                  if (isHTML) {
+                    // Render HTML content (from rich text editor)
+                    const sanitizedHTML = DOMPurify.sanitize(post.content, {
+                      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'video', 'div', 'span'],
+                      ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel'],
+                      ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
+                    });
+                    return <div dangerouslySetInnerHTML={{ __html: sanitizedHTML }} />;
+                  } else {
+                    // Render Markdown content (legacy posts)
+                    return <ReactMarkdown>{post.content}</ReactMarkdown>;
+                  }
+                })()}
               </div>
 
               {/* Interaction Buttons */}
