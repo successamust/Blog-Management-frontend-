@@ -105,6 +105,18 @@ const Header = () => {
                     </Link>
                   </motion.div>
                 )}
+                {canApplyForAuthor && (
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Link
+                      to="/dashboard?tab=author"
+                      className="flex items-center space-x-1.5 text-slate-600 hover:text-indigo-600 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all hover:bg-white/50"
+                      title="Become Author"
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      <span>Become Author</span>
+                    </Link>
+                  </motion.div>
+                )}
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link
                     to="/dashboard"
