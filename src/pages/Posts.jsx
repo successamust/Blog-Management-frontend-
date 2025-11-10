@@ -33,6 +33,7 @@ const Posts = () => {
       const params = {
         page: currentPage,
         limit: pagination.limit,
+        status: 'published',
       };
 
       if (category) params.category = category;

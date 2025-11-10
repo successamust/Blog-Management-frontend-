@@ -11,6 +11,7 @@ const PostManagement = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const { user, isAdmin } = useAuth();
 
   useEffect(() => {
@@ -21,7 +22,7 @@ const PostManagement = () => {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await postsAPI.getAll({ limit: 100 });
+      const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
       const allPosts = response.data.posts || [];
       
       // If user is author (not admin), filter to only show their own posts
@@ -57,10 +58,17 @@ const PostManagement = () => {
     }
   };
 
-  const filteredPosts = posts.filter((post) =>
-    post.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    post.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPosts = posts.filter((post) => {
+    const matchesSearch =
+      post.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.excerpt?.toLowerCase().includes(searchQuery.toLowerCase());
+    const status = (post.status || post.state || (post.isPublished ? 'published' : 'draft'))
+      .toString()
+      .trim()
+      .toLowerCase();
+    const matchesStatus = statusFilter === 'all' ? true : status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   if (loading) {
     return (
@@ -73,7 +81,19 @@ const PostManagement = () => {
   return (
     <div className="space-y-6">
       <Routes>
-        <Route index element={<PostList posts={filteredPosts} searchQuery={searchQuery} setSearchQuery={setSearchQuery} onDelete={handleDelete} />} />
+        <Route
+          index
+          element={
+            <PostList
+              posts={filteredPosts}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              onDelete={handleDelete}
+            />
+          }
+        />
         <Route path="create" element={<CreatePost onSuccess={fetchPosts} />} />
         <Route path="edit/:id" element={<EditPost onSuccess={fetchPosts} />} />
       </Routes>
@@ -81,7 +101,7 @@ const PostManagement = () => {
   );
 };
 
-const PostList = ({ posts, searchQuery, setSearchQuery, onDelete }) => {
+const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusFilter, onDelete }) => {
   const { user, isAdmin } = useAuth();
   const isAuthor = user?.role === 'author' || isAdmin();
   
@@ -104,15 +124,28 @@ const PostList = ({ posts, searchQuery, setSearchQuery, onDelete }) => {
 
       {/* Search */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search posts..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search posts..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent md:w-60"
+          >
+            <option value="all">All statuses</option>
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="archived">Archived</option>
+          </select>
         </div>
       </div>
 

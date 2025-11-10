@@ -69,6 +69,15 @@ const AdminOverview = () => {
 
       const getData = (res) => res?.value?.data ?? res?.value ?? null;
 
+      const toNumber = (value) => {
+        if (typeof value === 'number' && Number.isFinite(value)) return value;
+        if (typeof value === 'string' && value.trim() !== '') {
+          const num = Number(value);
+          return Number.isNaN(num) ? 0 : num;
+        }
+        return 0;
+      };
+
       if (userStatsRes.status === 'fulfilled') {
         const userData = getData(userStatsRes) || {};
 
@@ -80,38 +89,93 @@ const AdminOverview = () => {
           userData?.count ??
           0;
 
-        const totalAdmins =
+        const roleArrays = [
+          userData.roleDistribution,
+          userData.roles,
+          userData.roleStats,
+          userData.stats?.roleDistribution,
+          userData.stats?.roles,
+          userData.stats?.roleStats,
+          userData.overview?.roleDistribution,
+        ].filter(Boolean);
+
+        const findRoleCount = (roleKey) => {
+          const synonyms = {
+            admin: ['admin', 'admins', 'administrator', 'administrators'],
+            author: ['author', 'authors', 'writer', 'writers'],
+            user: ['user', 'users', 'reader', 'readers', 'regular', 'regular users', 'regularusers'],
+          }[roleKey];
+
+          for (const source of roleArrays) {
+            if (Array.isArray(source)) {
+              const match = source.find((item) => {
+                const key = (item?.role || item?.name || item?.label || item?.type || '').toString().toLowerCase();
+                return synonyms?.some((syn) => key === syn);
+              });
+              if (match) {
+                const value =
+                  match.count ??
+                  match.value ??
+                  match.total ??
+                  match.quantity ??
+                  match.users ??
+                  match.number ??
+                  match.amount;
+                const numberValue = toNumber(value);
+                if (numberValue) return numberValue;
+              }
+            } else if (typeof source === 'object') {
+              for (const [key, value] of Object.entries(source)) {
+                const normalizedKey = key.toString().toLowerCase();
+                if (synonyms?.some((syn) => normalizedKey === syn)) {
+                  const numberValue = toNumber(value);
+                  if (numberValue) return numberValue;
+                }
+              }
+            }
+          }
+          return 0;
+        };
+
+        const totalAdminsRaw =
           userData.totalAdmins ??
           userData.admins ??
           userData?.roles?.admins ??
           userData?.roles?.admin ??
           userData?.roleCounts?.admins ??
-          userData?.roleDistribution?.admins ??
+          userData?.roleCounts?.admin ??
           userData?.stats?.totalAdmins ??
           0;
 
-        const totalAuthors =
+        const totalAuthorsRaw =
           userData.totalAuthors ??
           userData.authors ??
           userData?.roles?.authors ??
           userData?.roles?.author ??
           userData?.roleCounts?.authors ??
-          userData?.roleDistribution?.authors ??
+          userData?.roleCounts?.author ??
           userData?.stats?.totalAuthors ??
           0;
 
-        const totalRegularUsers =
+        const totalUsersRaw =
           userData.totalRegularUsers ??
           userData.regularUsers ??
           userData?.roles?.users ??
           userData?.roles?.user ??
           userData?.roleCounts?.users ??
-          userData?.roleDistribution?.users ??
+          userData?.roleCounts?.user ??
           userData?.stats?.totalRegularUsers ??
-          Math.max(totalUsers - totalAdmins - totalAuthors, 0);
+          0;
+
+        const totalAdmins = toNumber(totalAdminsRaw) || findRoleCount('admin');
+        const totalAuthors = toNumber(totalAuthorsRaw) || findRoleCount('author');
+        const totalRegularUsers =
+          toNumber(totalUsersRaw) ||
+          findRoleCount('user') ||
+          Math.max(toNumber(totalUsers) - totalAdmins - totalAuthors, 0);
 
         const normalizedUsers = {
-          totalUsers,
+          totalUsers: toNumber(totalUsers),
           totalAdmins,
           totalAuthors,
           totalRegularUsers,
@@ -303,30 +367,61 @@ const AdminOverview = () => {
       roleData.push({ name: 'Users', value: totalUsers });
     }
 
-    return roleData;
+    // Hide zero-value entries to prevent 0% labels/legend clutter
+    return roleData.filter((item) => Number(item.value) > 0);
   };
 
   const getPostStatusData = () => {
     if (!posts.length) return [];
 
+    const toTitleCase = (str) =>
+      str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substring(1));
+
+    const normalizeKey = (value) =>
+      value?.toString().trim().replace(/[_\s]+/g, ' ').toLowerCase() || '';
+
     const normalizeStatus = (post) => {
       const status = (post?.status || post?.state || '').toString().trim();
-      if (status) return status.replace(/_/g, ' ');
+      if (status) return normalizeKey(status);
       if (post?.published || post?.isPublished) return 'published';
       if (post?.scheduled) return 'scheduled';
       return 'draft';
     };
 
-    const statusCounts = posts.reduce((acc, post) => {
-      const status = normalizeStatus(post);
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {});
+    const mergedCounts = new Map();
 
-    const entries = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
+    posts.forEach((post) => {
+      const status = normalizeStatus(post);
+      if (!status) return;
+      mergedCounts.set(status, (mergedCounts.get(status) || 0) + 1);
+    });
+
+    const statStatusCounts = stats.posts?.statusCounts;
+    if (statStatusCounts && typeof statStatusCounts === 'object') {
+      Object.entries(statStatusCounts).forEach(([key, value]) => {
+        const normalized = normalizeKey(key);
+        if (!normalized) return;
+        if (!mergedCounts.has(normalized)) {
+          const numeric = Number(value) || 0;
+          mergedCounts.set(normalized, numeric);
+        }
+      });
+    }
+
+    const entries = Array.from(mergedCounts.entries())
+      .map(([key, value]) => ({
+        name: toTitleCase(key),
+        value,
+      }))
+      .filter((item) => Number(item.value) > 0);
 
     if (!entries.length && stats.posts?.statusCounts) {
-      return Object.entries(stats.posts.statusCounts).map(([name, value]) => ({ name, value }));
+      return Object.entries(stats.posts.statusCounts)
+        .map(([name, value]) => ({
+          name: toTitleCase(name.replace(/[_\s]+/g, ' ').toLowerCase()),
+          value,
+        }))
+        .filter((item) => Number(item.value) > 0);
     }
 
     return entries;
@@ -453,7 +548,9 @@ const AdminOverview = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, value, percent }) =>
+                      Number(value) > 0 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''
+                    }
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
@@ -482,7 +579,9 @@ const AdminOverview = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, value, percent }) =>
+                      Number(value) > 0 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''
+                    }
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
