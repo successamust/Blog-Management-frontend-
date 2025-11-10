@@ -34,6 +34,18 @@ import AnimatedCard from '../common/AnimatedCard';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
 
+const formatRoleLabel = (value) => {
+  if (!value && value !== 0) return 'Unknown';
+  const cleaned = value
+    .toString()
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+  return cleaned || 'Unknown';
+};
+
 const AdminOverview = () => {
   const [stats, setStats] = useState({
     users: null,
@@ -53,15 +65,118 @@ const AdminOverview = () => {
   const fetchAllStats = async () => {
     try {
       setLoading(true);
+      const fetchComprehensivePosts = async () => {
+        const normalizePosts = (response) => {
+          if (!response?.data) return [];
+          return (
+            response.data.posts ||
+            response.data.data ||
+            (Array.isArray(response.data) ? response.data : []) ||
+            []
+          );
+        };
+
+        const dedupeById = (list) => {
+          const map = new Map();
+          const fallback = [];
+          list.forEach((post) => {
+            if (!post) return;
+            const key = post._id || post.id || post.slug;
+            if (!key) {
+              fallback.push(post);
+              return;
+            }
+            if (!map.has(key)) {
+              map.set(key, post);
+            }
+          });
+          return [...map.values(), ...fallback];
+        };
+
+        const isUnpublished = (post) => {
+          if (!post) return false;
+          const status = (post.status || post.state || '').toString().toLowerCase();
+          if (status) {
+            if (['draft', 'scheduled', 'archived', 'unpublished', 'pending'].includes(status)) return true;
+            if (['published', 'live', 'active'].includes(status)) return false;
+          }
+          if (post.isDraft === true) return true;
+          if (post.isPublished === false) return true;
+          if (post.published === false) return true;
+          if (post.isPublished === true || post.published === true) return false;
+          return false;
+        };
+
+        try {
+          const baseParams = { limit: 1000, status: 'all', includeDrafts: true };
+          const primaryRes = await postsAPI.getAll(baseParams).catch((err) => {
+            console.error('Primary posts fetch failed in AdminOverview:', err);
+            return null;
+          });
+          const primaryPosts = normalizePosts(primaryRes);
+          let aggregatedPosts = primaryPosts;
+
+          if (!primaryPosts.length || !primaryPosts.some(isUnpublished)) {
+            const extraQueries = [
+              { status: 'draft', includeDrafts: true },
+              { status: 'scheduled', includeDrafts: true },
+              { status: 'archived', includeDrafts: true },
+              { status: 'unpublished', includeDrafts: true },
+              { isPublished: false, includeDrafts: true },
+              { isPublished: 'false', includeDrafts: true },
+              { published: false, includeDrafts: true },
+              { published: 'false', includeDrafts: true },
+            ];
+
+            const extraResponses = await Promise.all(
+              extraQueries.map((params) =>
+                postsAPI
+                  .getAll({ limit: 1000, ...params })
+                  .then((res) => normalizePosts(res))
+                  .catch((err) => {
+                    console.warn(`AdminOverview: failed to fetch posts with params ${JSON.stringify(params)}:`, err);
+                    return [];
+                  })
+              )
+            );
+
+            aggregatedPosts = dedupeById([
+              ...primaryPosts,
+              ...extraResponses.flat(),
+            ]);
+          }
+
+          if (!aggregatedPosts.some(isUnpublished)) {
+            const dashboardRes = await dashboardAPI
+              .getPosts({ limit: 1000, status: 'all', includeDrafts: true })
+              .catch((err) => {
+                console.warn('AdminOverview: dashboard posts fallback failed:', err);
+                return null;
+              });
+            const dashboardPosts = normalizePosts(dashboardRes);
+            if (dashboardPosts.length) {
+              aggregatedPosts = dedupeById([...aggregatedPosts, ...dashboardPosts]);
+            }
+          }
+
+          return dedupeById(aggregatedPosts);
+        } catch (error) {
+          console.error('AdminOverview: error fetching comprehensive posts:', error);
+          return [];
+        }
+      };
+
+      const postsPromise = fetchComprehensivePosts();
+
       const [
         userStatsRes,
-        postsRes,
+        usersRes,
         categoriesRes,
         newsletterStatsRes,
         dashboardRes,
       ] = await Promise.allSettled([
         adminAPI.getUserStats(),
-        postsAPI.getAll({ limit: 1000 }),
+        adminAPI.getUsers({ limit: 1000 }),
         categoriesAPI.getAll(),
         adminAPI.getNewsletterStats(),
         dashboardAPI.getOverview(),
@@ -78,8 +193,11 @@ const AdminOverview = () => {
         return 0;
       };
 
+      let userData = null;
+      let normalizedUsers = null;
+
       if (userStatsRes.status === 'fulfilled') {
-        const userData = getData(userStatsRes) || {};
+        userData = getData(userStatsRes) || {};
 
         const totalUsers =
           userData.totalUsers ??
@@ -174,62 +292,272 @@ const AdminOverview = () => {
           findRoleCount('user') ||
           Math.max(toNumber(totalUsers) - totalAdmins - totalAuthors, 0);
 
-        const normalizedUsers = {
+        normalizedUsers = {
           totalUsers: toNumber(totalUsers),
           totalAdmins,
           totalAuthors,
           totalRegularUsers,
           raw: userData,
         };
+      }
+
+      if (usersRes.status === 'fulfilled') {
+        const usersPayload = getData(usersRes) || {};
+        const extractedUsers =
+          usersPayload?.users ||
+          usersPayload?.data ||
+          (Array.isArray(usersPayload) ? usersPayload : []) ||
+          [];
+        const usersList = Array.isArray(extractedUsers) ? extractedUsers.filter(Boolean) : [];
+
+        if (usersList.length) {
+          const normalizeRoleValue = (value) => {
+            if (!value) return null;
+            if (typeof value === 'string') return value;
+            if (typeof value === 'object') {
+              return (
+                value.role ??
+                value.name ??
+                value.label ??
+                value.type ??
+                value.slug ??
+                value.title ??
+                null
+              );
+            }
+            return null;
+          };
+
+          const aliasMap = {
+            admins: 'admin',
+            authors: 'author',
+            editors: 'editor',
+            contributors: 'contributor',
+            writers: 'writer',
+            publishers: 'publisher',
+            bloggers: 'blogger',
+            creators: 'creator',
+            users: 'user',
+            'regular user': 'user',
+            'regular users': 'user',
+            'basic user': 'user',
+            'basic users': 'user',
+            members: 'member',
+            subscribers: 'subscriber',
+            readers: 'reader',
+            customers: 'customer',
+            viewers: 'viewer',
+            followers: 'follower',
+            guests: 'guest',
+            moderators: 'moderator',
+          };
+
+          const seedRoleCounts =
+            normalizedUsers?.roleCountsDetailed &&
+            typeof normalizedUsers.roleCountsDetailed === 'object'
+              ? Object.entries(normalizedUsers.roleCountsDetailed).reduce((acc, [key, value]) => {
+                  const sanitizedKey = key
+                    .toString()
+                    .toLowerCase()
+                    .replace(/[_-]+/g, ' ')
+                    .trim();
+                  if (!sanitizedKey) return acc;
+                  const canonicalSeed = aliasMap[sanitizedKey] || sanitizedKey;
+                  acc[canonicalSeed] = (acc[canonicalSeed] || 0) + (Number(value) || 0);
+                  return acc;
+                }, {})
+              : {};
+
+          const roleCountsDetailed = usersList.reduce((acc, user) => {
+            const rolesSet = new Set();
+
+            const addRole = (rawRole) => {
+              const roleString = normalizeRoleValue(rawRole);
+              if (!roleString) return;
+              const sanitized = roleString
+                .toString()
+                .toLowerCase()
+                .replace(/[_-]+/g, ' ')
+                .trim();
+              if (!sanitized) return;
+              const canonical = aliasMap[sanitized] || sanitized;
+              rolesSet.add(canonical);
+            };
+
+            addRole(user?.role);
+            if (Array.isArray(user?.roles)) {
+              user.roles.forEach((roleValue) => addRole(roleValue));
+            }
+
+            if (rolesSet.size === 0) {
+              rolesSet.add('user');
+            }
+
+            rolesSet.forEach((roleKey) => {
+              acc[roleKey] = (acc[roleKey] || 0) + 1;
+            });
+
+            return acc;
+          }, seedRoleCounts);
+
+          const countFromRoles = (keys) =>
+            keys.reduce((sum, key) => sum + (roleCountsDetailed[key] || 0), 0);
+
+          const listTotalUsers = usersList.length;
+          const adminsFromList = countFromRoles([
+            'admin',
+            'administrator',
+            'administrators',
+            'super admin',
+            'super admins',
+            'superadmin',
+            'superadmins',
+          ]);
+          const authorsFromList = countFromRoles([
+            'author',
+            'writer',
+            'editor',
+            'contributor',
+            'publisher',
+            'creator',
+            'blogger',
+          ]);
+          const regularUsersFromList = countFromRoles([
+            'user',
+            'member',
+            'subscriber',
+            'reader',
+            'customer',
+            'viewer',
+            'follower',
+            'guest',
+          ]);
+
+          const fallbackRegular = Math.max(
+            listTotalUsers - adminsFromList - authorsFromList,
+            0
+          );
+
+          const resolveValue = (current, fallback) => {
+            const currentNumber = toNumber(current);
+            const fallbackNumber = toNumber(fallback);
+            if (fallbackNumber > 0 && fallbackNumber > currentNumber) {
+              return fallbackNumber;
+            }
+            return currentNumber > 0 ? currentNumber : fallbackNumber;
+          };
+
+          normalizedUsers = normalizedUsers || {
+            totalUsers: 0,
+            totalAdmins: 0,
+            totalAuthors: 0,
+            totalRegularUsers: 0,
+            raw: userData,
+          };
+
+          normalizedUsers.totalUsers = resolveValue(
+            normalizedUsers.totalUsers,
+            listTotalUsers
+          );
+          normalizedUsers.totalAdmins = resolveValue(
+            normalizedUsers.totalAdmins,
+            adminsFromList
+          );
+          normalizedUsers.totalAuthors = resolveValue(
+            normalizedUsers.totalAuthors,
+            authorsFromList
+          );
+
+          const bestRegular = [regularUsersFromList, fallbackRegular].reduce(
+            (best, value) =>
+              toNumber(value) > toNumber(best) ? value : best,
+            normalizedUsers.totalRegularUsers
+          );
+
+          normalizedUsers.totalRegularUsers = toNumber(bestRegular);
+          if (!Number.isFinite(normalizedUsers.totalRegularUsers)) {
+            normalizedUsers.totalRegularUsers = Math.max(
+              normalizedUsers.totalUsers -
+                normalizedUsers.totalAdmins -
+                normalizedUsers.totalAuthors,
+              0
+            );
+          }
+
+          normalizedUsers.roleCountsDetailed = roleCountsDetailed;
+          normalizedUsers.totalUsersFromList = listTotalUsers;
+        }
+      }
+
+      if (normalizedUsers) {
+        if (
+          typeof normalizedUsers.totalRegularUsers !== 'number' ||
+          Number.isNaN(normalizedUsers.totalRegularUsers)
+        ) {
+          normalizedUsers.totalRegularUsers = Math.max(
+            toNumber(normalizedUsers.totalUsers) -
+              toNumber(normalizedUsers.totalAdmins) -
+              toNumber(normalizedUsers.totalAuthors),
+            0
+          );
+        }
 
         setStats((prev) => ({ ...prev, users: normalizedUsers }));
       }
 
-      if (postsRes.status === 'fulfilled') {
-        const rawPosts = getData(postsRes);
-        const postsData = rawPosts?.posts || rawPosts?.data || (Array.isArray(rawPosts) ? rawPosts : []) || [];
-        setPosts(Array.isArray(postsData) ? postsData : []);
+      const postsData = await postsPromise;
+      setPosts(Array.isArray(postsData) ? postsData : []);
 
-        if (Array.isArray(postsData)) {
-          const normalizeStatus = (post) => {
-            const status = (post?.status || post?.state || '').toString().toLowerCase();
-            if (status) return status;
-            if (post?.published || post?.isPublished) return 'published';
-            if (post?.scheduled) return 'scheduled';
-            return 'draft';
-          };
+      if (Array.isArray(postsData)) {
+        const normalizeStatus = (post) => {
+          const status = (post?.status || post?.state || '').toString().toLowerCase();
+          if (status) return status;
+          if (post?.isDraft === true) return 'draft';
+          if (post?.published || post?.isPublished) return 'published';
+          if (post?.scheduled) return 'scheduled';
+          return 'draft';
+        };
 
-          const counts = postsData.reduce(
-            (acc, post) => {
-              const status = normalizeStatus(post);
-              acc[status] = (acc[status] || 0) + 1;
-              return acc;
-            },
-            {}
-          );
+        const counts = postsData.reduce(
+          (acc, post) => {
+            const status = normalizeStatus(post);
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+          },
+          {}
+        );
 
-          const published = counts.published || 0;
-          const drafts = counts.draft || counts.drafts || 0;
-          const scheduled = counts.scheduled || 0;
-          const archived = counts.archived || counts.archive || 0;
-          const totalViews = postsData.reduce((sum, p) => sum + (Number(p?.viewCount) || 0), 0);
-          const totalLikes = postsData.reduce((sum, p) => sum + (Array.isArray(p?.likes) ? p.likes.length : 0), 0);
+        const published = counts.published || counts.live || counts.active || 0;
+        const drafts = counts.draft || counts.drafts || 0;
+        const scheduled = counts.scheduled || counts.pending || 0;
+        const archived = counts.archived || counts.archive || 0;
+        const totalViews = postsData.reduce((sum, p) => sum + (Number(p?.viewCount) || Number(p?.views) || 0), 0);
+        const totalLikes = postsData.reduce((sum, p) => {
+          if (Array.isArray(p?.likes)) return sum + p.likes.length;
+          if (Number(p?.likeCount) || Number(p?.likes)) return sum + (Number(p?.likeCount) || Number(p?.likes) || 0);
+          return sum;
+        }, 0);
+        const totalComments = postsData.reduce((sum, p) => {
+          if (Array.isArray(p?.comments)) return sum + p.comments.length;
+          if (Number(p?.commentCount) || Number(p?.comments)) return sum + (Number(p?.commentCount) || Number(p?.comments) || 0);
+          return sum;
+        }, 0);
 
-          setStats((prev) => ({
-            ...prev,
-            posts: {
-              total: postsData.length,
-              published,
-              drafts,
-              scheduled,
-              archived,
-              totalViews,
-              totalLikes,
-              statusCounts: counts,
-              raw: postsData,
-            },
-          }));
-        }
+        setStats((prev) => ({
+          ...prev,
+          posts: {
+            total: postsData.length,
+            published,
+            drafts,
+            scheduled,
+            archived,
+            totalViews,
+            totalLikes,
+            totalComments,
+            statusCounts: counts,
+            raw: postsData,
+          },
+        }));
       }
 
       if (categoriesRes.status === 'fulfilled') {
@@ -349,26 +677,42 @@ const AdminOverview = () => {
 
   const getUserRoleData = () => {
     if (!stats.users) return [];
-    const roleData = [];
 
+    if (
+      stats.users.roleCountsDetailed &&
+      typeof stats.users.roleCountsDetailed === 'object'
+    ) {
+      const detailedEntries = Object.entries(stats.users.roleCountsDetailed)
+        .map(([roleKey, value]) => ({
+          name: formatRoleLabel(roleKey),
+          value: Number(value) || 0,
+        }))
+        .filter((item) => item.value > 0)
+        .sort((a, b) => b.value - a.value);
+
+      if (detailedEntries.length) {
+        return detailedEntries;
+      }
+    }
+
+    const roleData = [];
     const { totalAdmins, totalAuthors, totalRegularUsers, totalUsers } = stats.users;
 
-    if (typeof totalAdmins === 'number') {
-      roleData.push({ name: 'Admins', value: totalAdmins });
+    if (typeof totalAdmins === 'number' && totalAdmins > 0) {
+      roleData.push({ name: formatRoleLabel('admin'), value: totalAdmins });
     }
-    if (typeof totalAuthors === 'number') {
-      roleData.push({ name: 'Authors', value: totalAuthors });
+    if (typeof totalAuthors === 'number' && totalAuthors > 0) {
+      roleData.push({ name: formatRoleLabel('author'), value: totalAuthors });
     }
-    if (typeof totalRegularUsers === 'number') {
-      roleData.push({ name: 'Users', value: totalRegularUsers });
+    if (typeof totalRegularUsers === 'number' && totalRegularUsers > 0) {
+      roleData.push({ name: formatRoleLabel('user'), value: totalRegularUsers });
     }
 
     if (!roleData.length && typeof totalUsers === 'number') {
-      roleData.push({ name: 'Users', value: totalUsers });
+      roleData.push({ name: formatRoleLabel('user'), value: totalUsers });
     }
 
-    // Hide zero-value entries to prevent 0% labels/legend clutter
-    return roleData.filter((item) => Number(item.value) > 0);
+    return roleData;
   };
 
   const getPostStatusData = () => {
@@ -433,9 +777,31 @@ const AdminOverview = () => {
   const postsByMonthData = getPostsByMonthData();
   const topPostsData = getTopPostsData();
 
-  const totalViews = stats.engagement?.totalViews ?? stats.engagement?.engagement?.totalViews ?? stats.posts?.totalViews ?? 0;
-  const totalLikes = stats.engagement?.totalLikes ?? stats.engagement?.engagement?.totalLikes ?? stats.posts?.totalLikes ?? 0;
-  const totalComments = stats.engagement?.comments?.total ?? stats.engagement?.totalComments ?? 0;
+  const engagementTotals = stats.engagement?.engagement || stats.engagement || {};
+  const viewsFromEngagement = Number(
+    engagementTotals.totalViews ??
+      stats.engagement?.totalViews ??
+      0
+  );
+  const likesFromEngagement = Number(
+    engagementTotals.totalLikes ??
+      stats.engagement?.totalLikes ??
+      0
+  );
+  const commentsFromEngagement = Number(
+    stats.engagement?.comments?.total ??
+      stats.engagement?.totalComments ??
+      engagementTotals.totalComments ??
+      0
+  );
+
+  const viewsFromPosts = Number(stats.posts?.totalViews ?? 0);
+  const likesFromPosts = Number(stats.posts?.totalLikes ?? 0);
+  const commentsFromPosts = Number(stats.posts?.totalComments ?? 0);
+
+  const totalViews = Math.max(viewsFromEngagement, viewsFromPosts);
+  const totalLikes = Math.max(likesFromEngagement, likesFromPosts);
+  const totalComments = Math.max(commentsFromEngagement, commentsFromPosts);
   const publishedEntry = statusData.find((item) => item?.name?.toLowerCase?.() === 'published');
   const publishedPostsCount =
     stats.posts?.published ??
@@ -536,11 +902,11 @@ const AdminOverview = () => {
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* User Role Distribution */}
+        {/* Roles Distribution */}
         {roleData.length > 0 && (
           <AnimatedCard delay={0.6}>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">User Role Distribution</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Roles Distribution</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -549,7 +915,9 @@ const AdminOverview = () => {
                     cy="50%"
                     labelLine={false}
                     label={({ name, value, percent }) =>
-                      Number(value) > 0 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''
+                      Number(value) > 0
+                        ? `${formatRoleLabel(name)}: ${(percent * 100).toFixed(0)}%`
+                        : ''
                     }
                     outerRadius={80}
                     fill="#8884d8"

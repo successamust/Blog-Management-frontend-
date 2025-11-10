@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import { FileText, Plus, Edit, Trash2, Eye, Search, Upload, X } from 'lucide-react';
-import { postsAPI, categoriesAPI, adminAPI, imagesAPI } from '../../services/api';
+import { postsAPI, categoriesAPI, adminAPI, imagesAPI, dashboardAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -22,8 +22,105 @@ const PostManagement = () => {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
-      const allPosts = response.data.posts || [];
+      const normalizePosts = (response) => {
+        if (!response?.data) return [];
+        return (
+          response.data.posts ||
+          response.data.data ||
+          (Array.isArray(response.data) ? response.data : []) ||
+          []
+        );
+      };
+
+      const dedupeById = (list) => {
+        const map = new Map();
+        const fallback = [];
+        list.forEach((post) => {
+          if (!post) return;
+          const key = post._id || post.id || post.slug;
+          if (!key) {
+            fallback.push(post);
+            return;
+          }
+          if (!map.has(key)) {
+            map.set(key, post);
+          }
+        });
+        return [...map.values(), ...fallback];
+      };
+
+      const requestParams = { limit: 1000, status: 'all', includeDrafts: true };
+      const primaryRes = await postsAPI.getAll(requestParams).catch((err) => {
+        console.error('Primary posts fetch failed:', err);
+        return null;
+      });
+      const primaryPosts = normalizePosts(primaryRes);
+
+      const isUnpublished = (post) => {
+        if (!post) return false;
+        const status = (post.status || post.state || '').toString().toLowerCase();
+        if (status) {
+          if (['draft', 'scheduled', 'archived', 'unpublished', 'pending'].includes(status)) return true;
+          if (['published', 'live', 'active'].includes(status)) return false;
+        }
+        if (post.isDraft === true) return true;
+        if (post.isPublished === false) return true;
+        if (post.published === false) return true;
+        if (post.isPublished === true || post.published === true) return false;
+        return false;
+      };
+
+      const needsAdditionalStatuses = () => {
+        if (!primaryPosts.length) return true;
+        return !primaryPosts.some(isUnpublished);
+      };
+
+      let aggregatedPosts = primaryPosts;
+
+      if (needsAdditionalStatuses()) {
+        const extraQueries = [
+          { status: 'draft', includeDrafts: true },
+          { status: 'scheduled', includeDrafts: true },
+          { status: 'archived', includeDrafts: true },
+          { status: 'unpublished', includeDrafts: true },
+          { isPublished: false, includeDrafts: true },
+          { isPublished: 'false', includeDrafts: true },
+          { published: false, includeDrafts: true },
+          { published: 'false', includeDrafts: true },
+        ];
+
+        const extraResponses = await Promise.all(
+          extraQueries.map((params) =>
+            postsAPI
+              .getAll({ limit: 1000, ...params })
+              .then((res) => normalizePosts(res))
+              .catch((err) => {
+                console.warn(`Failed to fetch posts with params ${JSON.stringify(params)}:`, err);
+                return [];
+              })
+          )
+        );
+
+        aggregatedPosts = dedupeById([
+          ...primaryPosts,
+          ...extraResponses.flat(),
+        ]);
+      } else {
+        aggregatedPosts = dedupeById(primaryPosts);
+      }
+
+      if (!aggregatedPosts.some(isUnpublished)) {
+        const dashboardRes = await dashboardAPI.getPosts({ limit: 1000, status: 'all', includeDrafts: true }).catch((err) => {
+          console.warn('Dashboard posts fallback failed:', err);
+          return null;
+        });
+        const dashboardPosts = normalizePosts(dashboardRes);
+        if (dashboardPosts.length) {
+          aggregatedPosts = dedupeById([...aggregatedPosts, ...dashboardPosts]);
+        }
+      }
+
+      const allPosts = aggregatedPosts;
       
       // If user is author (not admin), filter to only show their own posts
       if (user?.role === 'author' && !isAdmin()) {
@@ -184,7 +281,12 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">
-                      {format(new Date(post.publishedAt), 'MMM d, yyyy')}
+                      {(() => {
+                        const dateSource = post.publishedAt || post.updatedAt || post.createdAt;
+                        if (!dateSource) return '—';
+                        const parsed = new Date(dateSource);
+                        return Number.isNaN(parsed.getTime()) ? '—' : format(parsed, 'MMM d, yyyy');
+                      })()}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
