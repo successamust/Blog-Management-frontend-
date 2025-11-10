@@ -367,12 +367,23 @@ const PostDetail = () => {
 
     try {
       setSubmittingComment(true);
-      await commentsAPI.create(post._id, { content: commentText });
+      const response = await commentsAPI.create(post._id, { content: commentText });
+      const newComment = response.data.comment;
+      
+      // Add the new comment to the comments state directly (optimistic update)
+      if (newComment) {
+        setComments(prevComments => [newComment, ...prevComments]);
+      } else {
+        // If backend doesn't return the comment, fetch only comments
+        const commentsRes = await commentsAPI.getByPost(post._id);
+        setComments(commentsRes.data.comments || []);
+      }
+      
       setCommentText('');
-      await fetchPostData(); // Refresh comments
       toast.success('Comment added!');
     } catch (error) {
-      toast.error('Failed to add comment');
+      console.error('Error adding comment:', error);
+      toast.error(error.response?.data?.message || 'Failed to add comment');
     } finally {
       setSubmittingComment(false);
     }
