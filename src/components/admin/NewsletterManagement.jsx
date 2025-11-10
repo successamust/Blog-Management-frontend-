@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Mail, Send, Users, TrendingUp, FileText } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Mail, Send, Users, TrendingUp, FileText, Eye, Pencil, Loader2 } from 'lucide-react';
 import { adminAPI, newsletterAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import RichTextEditor from './RichTextEditor';
 
 const NewsletterManagement = () => {
   const [stats, setStats] = useState(null);
   const [subscribers, setSubscribers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSendForm, setShowSendForm] = useState(false);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [sending, setSending] = useState(false);
   const [sendFormData, setSendFormData] = useState({
     subject: '',
     content: '',
@@ -22,11 +25,57 @@ const NewsletterManagement = () => {
     try {
       setLoading(true);
       const [statsRes, subscribersRes] = await Promise.all([
-        adminAPI.getNewsletterStats(),
-        adminAPI.getNewsletterSubscribers(),
+        adminAPI.getNewsletterStats().catch(() => null),
+        adminAPI.getNewsletterSubscribers().catch(() => null),
       ]);
-      setStats(statsRes.data || {});
-      setSubscribers(subscribersRes.data?.subscribers || []);
+
+      const statsData = statsRes?.data || statsRes || {};
+      const normalizedStats = {
+        totalSubscribers:
+          statsData.totalSubscribers ??
+          statsData.subscriberCount ??
+          statsData?.stats?.totalSubscribers ??
+          0,
+        totalNewslettersSent:
+          statsData.totalNewslettersSent ??
+          statsData.newslettersSent ??
+          statsData?.stats?.totalNewslettersSent ??
+          0,
+        openRate:
+          statsData.openRate ??
+          statsData.averageOpenRate ??
+          statsData?.stats?.openRate ??
+          null,
+        clickRate:
+          statsData.clickRate ??
+          statsData.averageClickRate ??
+          statsData?.stats?.clickRate ??
+          null,
+        lastNewsletter:
+          statsData.lastNewsletter ??
+          statsData.mostRecentNewsletter ??
+          null,
+        raw: statsData,
+      };
+
+      setStats(normalizedStats);
+
+      const subscriberData =
+        subscribersRes?.data?.subscribers ||
+        subscribersRes?.data ||
+        subscribersRes ||
+        [];
+
+      const normalizedSubscribers = Array.isArray(subscriberData)
+        ? subscriberData.map((subscriber) => ({
+            _id: subscriber?._id || subscriber?.id || subscriber?.email,
+            email: subscriber?.email || 'unknown@example.com',
+            status: subscriber?.status || subscriber?.state || 'active',
+            subscribedAt: subscriber?.subscribedAt || subscriber?.createdAt || subscriber?.updatedAt || Date.now(),
+          }))
+        : [];
+
+      setSubscribers(normalizedSubscribers);
     } catch (error) {
       console.error('Error fetching newsletter data:', error);
       toast.error('Failed to load newsletter data');
@@ -37,15 +86,61 @@ const NewsletterManagement = () => {
 
   const handleSendNewsletter = async (e) => {
     e.preventDefault();
+    if (!sendFormData.subject.trim()) {
+      toast.error('Please provide a subject for the newsletter');
+      return;
+    }
+
+    if (!sendFormData.content || sendFormData.content.replace(/<[^>]*>/g, '').trim().length === 0) {
+      toast.error('Newsletter content cannot be empty');
+      return;
+    }
+
+    setSending(true);
+
     try {
-      await adminAPI.sendNewsletter(sendFormData);
+      await adminAPI.sendNewsletter({
+        subject: sendFormData.subject.trim(),
+        content: sendFormData.content,
+      });
       toast.success('Newsletter sent successfully');
       setSendFormData({ subject: '', content: '' });
       setShowSendForm(false);
+      setPreviewMode(false);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to send newsletter');
+    } finally {
+      setSending(false);
     }
   };
+
+  const statsCards = useMemo(() => {
+    if (!stats) return [];
+    return [
+      {
+        title: 'Total Subscribers',
+        value: stats.totalSubscribers || 0,
+        icon: <Users className="w-8 h-8 text-blue-600" />,
+        description: stats.lastNewsletter?.subject
+          ? `Last: ${new Date(stats.lastNewsletter.sentAt || stats.lastNewsletter.date || Date.now()).toLocaleDateString()}`
+          : 'Latest totals',
+      },
+      {
+        title: 'Newsletters Sent',
+        value: stats.totalNewslettersSent || 0,
+        icon: <Send className="w-8 h-8 text-green-600" />,
+        description: stats.lastNewsletter?.subject
+          ? `Latest: ${stats.lastNewsletter.subject}`
+          : 'Campaign history',
+      },
+      {
+        title: 'Average Open Rate',
+        value: stats.openRate != null ? `${stats.openRate}%` : 'N/A',
+        icon: <TrendingUp className="w-8 h-8 text-purple-600" />,
+        description: stats.clickRate != null ? `Click rate: ${stats.clickRate}%` : 'Click rate pending',
+      },
+    ];
+  }, [stats]);
 
   if (loading) {
     return (
@@ -60,35 +155,20 @@ const NewsletterManagement = () => {
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Subscribers</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalSubscribers || 0}</p>
+          {statsCards.map((card) => (
+            <div key={card.title} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">{card.title}</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{card.value}</p>
+                  <p className="text-xs text-gray-500 mt-1 truncate" title={card.description}>
+                    {card.description}
+                  </p>
+                </div>
+                {card.icon}
               </div>
-              <Users className="w-8 h-8 text-blue-600" />
             </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Newsletters Sent</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalNewslettersSent || 0}</p>
-              </div>
-              <Send className="w-8 h-8 text-green-600" />
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Open Rate</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats.openRate ? `${stats.openRate}%` : 'N/A'}
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-purple-600" />
-            </div>
-          </div>
+          ))}
         </div>
       )}
 
@@ -96,17 +176,32 @@ const NewsletterManagement = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-gray-900">Send Newsletter</h2>
-          <button
-            onClick={() => setShowSendForm(!showSendForm)}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Send className="w-4 h-4" />
-            <span>{showSendForm ? 'Cancel' : 'New Newsletter'}</span>
-          </button>
+          <div className="flex items-center gap-3">
+            {showSendForm && (
+              <button
+                type="button"
+                onClick={() => setPreviewMode((prev) => !prev)}
+                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                {previewMode ? <Pencil className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <span>{previewMode ? 'Back to Editor' : 'Preview Newsletter'}</span>
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setShowSendForm((prev) => !prev);
+                setPreviewMode(false);
+              }}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Send className="w-4 h-4" />
+              <span>{showSendForm ? 'Cancel' : 'New Newsletter'}</span>
+            </button>
+          </div>
         </div>
 
         {showSendForm && (
-          <form onSubmit={handleSendNewsletter} className="space-y-4 mt-4">
+          <form onSubmit={handleSendNewsletter} className="space-y-6 mt-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
               <input
@@ -118,20 +213,33 @@ const NewsletterManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
-              <textarea
-                value={sendFormData.content}
-                onChange={(e) => setSendFormData({ ...sendFormData, content: e.target.value })}
-                required
-                rows="10"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">Content</label>
+                <span className="text-xs text-gray-500">
+                  {previewMode ? 'Previewing final email' : 'Use the editor to compose rich content'}
+                </span>
+              </div>
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                {previewMode ? (
+                  <div className="prose max-w-none p-6 bg-white" dangerouslySetInnerHTML={{
+                    __html: sendFormData.content || '<p class="text-gray-400">No content yet.</p>',
+                  }} />
+                ) : (
+                  <RichTextEditor
+                    value={sendFormData.content}
+                    onChange={(value) => setSendFormData((prev) => ({ ...prev, content: value }))}
+                    placeholder="Compose your newsletter..."
+                  />
+                )}
+              </div>
             </div>
             <button
               type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              disabled={sending}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
-              Send Newsletter
+              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              <span>{sending ? 'Sending...' : 'Send Newsletter'}</span>
             </button>
           </form>
         )}
@@ -159,18 +267,24 @@ const NewsletterManagement = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {subscribers.map((subscriber) => (
-                <tr key={subscriber._id} className="hover:bg-gray-50">
+                <tr key={subscriber._id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{subscriber.email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">
-                      {new Date(subscriber.subscribedAt).toLocaleDateString()}
+                      {new Date(subscriber.subscribedAt).toLocaleString()}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                      Active
+                    <span
+                      className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${
+                        subscriber.status === 'unsubscribed'
+                          ? 'bg-rose-100 text-rose-700'
+                          : 'bg-green-100 text-green-700'
+                      }`}
+                    >
+                      {subscriber.status || 'active'}
                     </span>
                   </td>
                 </tr>

@@ -25,8 +25,29 @@ const AuthorManagement = () => {
     try {
       setLoading(true);
       setEndpointError(false);
-      const response = await authorsAPI.getApplications({ status: statusFilter });
-      setApplications(response.data.applications || []);
+      const response = await authorsAPI.getApplications({ status: statusFilter }).catch((e) => {
+        throw e;
+      });
+
+      const raw = response?.data ?? response;
+      const list = raw?.applications || raw?.data || (Array.isArray(raw) ? raw : []) || [];
+
+      const normalized = Array.isArray(list)
+        ? list.map((item) => ({
+            _id: item?._id || item?.id,
+            username: item?.username || item?.user?.username || item?.applicant?.username || 'Unknown User',
+            email: item?.email || item?.user?.email || item?.applicant?.email || 'unknown@example.com',
+            authorApplication: {
+              status: (item?.authorApplication?.status || item?.status || 'pending').toLowerCase(),
+              message: item?.authorApplication?.message || item?.message || '',
+              submittedAt: item?.authorApplication?.submittedAt || item?.createdAt || item?.submittedAt || null,
+              adminNotes: item?.authorApplication?.adminNotes || item?.adminNotes || '',
+            },
+            authorProfile: item?.authorProfile || item?.profile || null,
+          }))
+        : [];
+
+      setApplications(normalized);
     } catch (error) {
       console.error('Error fetching applications:', error);
       if (error.response?.status === 404) {
