@@ -37,7 +37,7 @@ const initialState = {
   user: null,
   token: null,
   isAuthenticated: false,
-  loading: false,
+  loading: true, // Start with loading true to prevent premature redirects
   error: null,
 };
 
@@ -93,6 +93,9 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('user');
           dispatch({ type: 'LOGOUT' });
         }
+      } else {
+        // No token/user found, set loading to false
+        dispatch({ type: 'LOGOUT' });
       }
     };
     

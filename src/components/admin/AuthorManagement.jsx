@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 
 const AuthorManagement = () => {
   const [applications, setApplications] = useState([]);
+  const [allApplications, setAllApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('pending');
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,36 +19,99 @@ const AuthorManagement = () => {
   });
 
   useEffect(() => {
-    fetchApplications();
-  }, [statusFilter]);
+    fetchAllApplications();
+  }, []);
 
-  const fetchApplications = async () => {
+  useEffect(() => {
+    filterApplications();
+  }, [statusFilter, allApplications]);
+
+  const normalizeApplication = (item) => ({
+    _id: item?._id || item?.id,
+    username: item?.username || item?.user?.username || item?.applicant?.username || 'Unknown User',
+    email: item?.email || item?.user?.email || item?.applicant?.email || 'unknown@example.com',
+    authorApplication: {
+      status: (item?.authorApplication?.status || item?.status || 'pending').toLowerCase(),
+      message: item?.authorApplication?.message || item?.message || '',
+      submittedAt: item?.authorApplication?.submittedAt || item?.createdAt || item?.submittedAt || null,
+      adminNotes: item?.authorApplication?.adminNotes || item?.adminNotes || '',
+    },
+    authorProfile: item?.authorProfile || item?.profile || null,
+  });
+
+  const fetchAllApplications = async () => {
     try {
       setLoading(true);
       setEndpointError(false);
-      const response = await authorsAPI.getApplications({ status: statusFilter }).catch((e) => {
-        throw e;
+      
+      // Try fetching all applications without status filter first
+      let allApps = [];
+      try {
+        const allRes = await authorsAPI.getApplications().catch(() => null);
+        if (allRes) {
+          const raw = allRes?.data ?? allRes;
+          const list = raw?.applications || raw?.data || (Array.isArray(raw) ? raw : []) || [];
+          allApps = Array.isArray(list) ? list.map(normalizeApplication) : [];
+        }
+      } catch (e) {
+        // If that fails, fetch by status
+      }
+
+      // If we didn't get all apps, fetch by status in parallel
+      if (allApps.length === 0) {
+        const [pendingRes, approvedRes, rejectedRes] = await Promise.allSettled([
+          authorsAPI.getApplications({ status: 'pending' }).catch((e) => ({ data: null, error: e })),
+          authorsAPI.getApplications({ status: 'approved' }).catch((e) => ({ data: null, error: e })),
+          authorsAPI.getApplications({ status: 'rejected' }).catch((e) => ({ data: null, error: e })),
+        ]);
+
+        const extractApplications = (res, defaultStatus) => {
+          if (res.status === 'rejected' || res.value?.error) return [];
+          const raw = res.value?.data ?? res.value;
+          const list = raw?.applications || raw?.data || (Array.isArray(raw) ? raw : []) || [];
+          return Array.isArray(list) 
+            ? list.map(item => {
+                const normalized = normalizeApplication(item);
+                // Always set status from the fetch parameter since we're fetching by status
+                normalized.authorApplication.status = defaultStatus;
+                return normalized;
+              })
+            : [];
+        };
+
+        const pendingApps = extractApplications(pendingRes, 'pending');
+        const approvedApps = extractApplications(approvedRes, 'approved');
+        const rejectedApps = extractApplications(rejectedRes, 'rejected');
+
+        allApps = [...pendingApps, ...approvedApps, ...rejectedApps];
+      }
+      
+      // Deduplicate by _id
+      const uniqueApps = Array.from(
+        new Map(allApps.map(app => [app._id, app])).values()
+      );
+
+      console.log('Fetched applications:', {
+        total: uniqueApps.length,
+        pending: uniqueApps.filter(a => a.authorApplication?.status === 'pending').length,
+        approved: uniqueApps.filter(a => a.authorApplication?.status === 'approved').length,
+        rejected: uniqueApps.filter(a => a.authorApplication?.status === 'rejected').length,
+        apps: uniqueApps.map(a => ({ id: a._id, status: a.authorApplication?.status }))
       });
 
-      const raw = response?.data ?? response;
-      const list = raw?.applications || raw?.data || (Array.isArray(raw) ? raw : []) || [];
-
-      const normalized = Array.isArray(list)
-        ? list.map((item) => ({
-            _id: item?._id || item?.id,
-            username: item?.username || item?.user?.username || item?.applicant?.username || 'Unknown User',
-            email: item?.email || item?.user?.email || item?.applicant?.email || 'unknown@example.com',
-            authorApplication: {
-              status: (item?.authorApplication?.status || item?.status || 'pending').toLowerCase(),
-              message: item?.authorApplication?.message || item?.message || '',
-              submittedAt: item?.authorApplication?.submittedAt || item?.createdAt || item?.submittedAt || null,
-              adminNotes: item?.authorApplication?.adminNotes || item?.adminNotes || '',
-            },
-            authorProfile: item?.authorProfile || item?.profile || null,
-          }))
-        : [];
-
-      setApplications(normalized);
+      setAllApplications(uniqueApps);
+      
+      // Check if we got any applications
+      if (uniqueApps.length === 0) {
+        // Only show error if we actually got a 404
+        const has404 = allApps.length === 0;
+        if (has404) {
+          setEndpointError(true);
+          toast.error('Author applications endpoint not found. Backend needs to be updated.', {
+            duration: 5000,
+          });
+        }
+      }
     } catch (error) {
       console.error('Error fetching applications:', error);
       if (error.response?.status === 404) {
@@ -58,10 +122,17 @@ const AuthorManagement = () => {
       } else {
         toast.error(error.response?.data?.message || 'Failed to load author applications');
       }
-      setApplications([]);
+      setAllApplications([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const filterApplications = () => {
+    const filtered = allApplications.filter(
+      (app) => app.authorApplication?.status === statusFilter
+    );
+    setApplications(filtered);
   };
 
   const handleReview = async (applicationId) => {
@@ -88,7 +159,7 @@ const AuthorManagement = () => {
       toast.success(`Application ${reviewData.action}d successfully`);
       setReviewingId(null);
       setReviewData({ action: 'approve', adminNotes: '' });
-      fetchApplications();
+      fetchAllApplications();
     } catch (error) {
       console.error('Review application error:', error);
       if (error.response?.status === 400) {
@@ -115,6 +186,17 @@ const AuthorManagement = () => {
       app.authorApplication?.message?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
+
+  // Calculate counts from allApplications (case-insensitive)
+  const getStatus = (app) => (app.authorApplication?.status || '').toString().toLowerCase().trim();
+  const pendingCount = allApplications.filter(a => getStatus(a) === 'pending').length;
+  const approvedCount = allApplications.filter(a => getStatus(a) === 'approved').length;
+  const rejectedCount = allApplications.filter(a => getStatus(a) === 'rejected').length;
+  
+  // Debug logging
+  if (allApplications.length > 0) {
+    console.log('Counts calculated:', { pendingCount, approvedCount, rejectedCount, total: allApplications.length });
+  }
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -174,7 +256,7 @@ const AuthorManagement = () => {
               <button
                 onClick={() => {
                   setEndpointError(false);
-                  fetchApplications();
+                  fetchAllApplications();
                 }}
                 className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
               >
@@ -202,7 +284,7 @@ const AuthorManagement = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Pending</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
-                {applications.filter(a => a.authorApplication?.status === 'pending').length}
+                {pendingCount}
               </p>
             </div>
             <Clock className="w-8 h-8 text-yellow-600" />
@@ -213,7 +295,7 @@ const AuthorManagement = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Approved</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
-                {applications.filter(a => a.authorApplication?.status === 'approved').length}
+                {approvedCount}
               </p>
             </div>
             <CheckCircle className="w-8 h-8 text-green-600" />
@@ -224,7 +306,7 @@ const AuthorManagement = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Rejected</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
-                {applications.filter(a => a.authorApplication?.status === 'rejected').length}
+                {rejectedCount}
               </p>
             </div>
             <XCircle className="w-8 h-8 text-red-600" />

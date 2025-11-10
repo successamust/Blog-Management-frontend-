@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart,
@@ -55,26 +55,83 @@ const AdminOverview = () => {
     engagement: null,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  useEffect(() => {
-    fetchAllStats();
+  // Helper function to normalize posts from various response structures
+  const normalizePosts = useCallback((response) => {
+    // Handle null/undefined response
+    if (!response) return [];
+    
+    // Try different response structures
+    // Case 1: response.data.posts
+    if (response?.data?.posts && Array.isArray(response.data.posts)) {
+      return response.data.posts;
+    }
+    
+    // Case 2: response.data.data
+    if (response?.data?.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    
+    // Case 3: response.data is an array
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    // Case 4: response.posts
+    if (response?.posts && Array.isArray(response.posts)) {
+      return response.posts;
+    }
+    
+    // Case 5: response is an array
+    if (Array.isArray(response)) {
+      return response;
+    }
+    
+    // Case 6: response.overview.posts (dashboard API structure)
+    if (response?.overview?.posts && Array.isArray(response.overview.posts)) {
+      return response.overview.posts;
+    }
+    
+    // Case 7: response.overview.data.posts
+    if (response?.overview?.data?.posts && Array.isArray(response.overview.data.posts)) {
+      return response.overview.data.posts;
+    }
+    
+    // Case 8: response.overview.data is an array
+    if (response?.overview?.data && Array.isArray(response.overview.data)) {
+      return response.overview.data;
+    }
+    
+    // Case 9: response.data exists but is not an array - try to extract
+    if (response?.data) {
+      // Try to find any array property
+      for (const key in response.data) {
+        if (Array.isArray(response.data[key])) {
+          return response.data[key];
+        }
+      }
+    }
+    
+    // Case 10: response.overview exists - try to find any array property
+    if (response?.overview) {
+      for (const key in response.overview) {
+        if (Array.isArray(response.overview[key])) {
+          return response.overview[key];
+        }
+      }
+    }
+    
+    return [];
   }, []);
 
-  const fetchAllStats = async () => {
+  const fetchAllStats = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const fetchComprehensivePosts = async () => {
-        const normalizePosts = (response) => {
-          if (!response?.data) return [];
-          return (
-            response.data.posts ||
-            response.data.data ||
-            (Array.isArray(response.data) ? response.data : []) ||
-            []
-          );
-        };
 
         const dedupeById = (list) => {
           const map = new Map();
@@ -113,7 +170,20 @@ const AdminOverview = () => {
             console.error('Primary posts fetch failed in AdminOverview:', err);
             return null;
           });
+          
+          // Log the raw API response for debugging
+          console.log('AdminOverview: Primary posts API response', {
+            primaryRes,
+            responseStructure: primaryRes ? Object.keys(primaryRes) : null,
+            dataStructure: primaryRes?.data ? Object.keys(primaryRes.data) : null,
+          });
+          
           const primaryPosts = normalizePosts(primaryRes);
+          console.log('AdminOverview: Normalized primary posts', {
+            count: primaryPosts.length,
+            sample: primaryPosts[0] || null,
+          });
+          
           let aggregatedPosts = primaryPosts;
 
           if (!primaryPosts.length || !primaryPosts.some(isUnpublished)) {
@@ -506,59 +576,89 @@ const AdminOverview = () => {
       }
 
       const postsData = await postsPromise;
-      setPosts(Array.isArray(postsData) ? postsData : []);
+      const normalizedPostsData = Array.isArray(postsData) ? postsData : [];
+      
+      // Log raw posts data for debugging
+      console.log('AdminOverview: Raw posts data', {
+        postsData,
+        normalizedPostsDataLength: normalizedPostsData.length,
+        samplePost: normalizedPostsData[0] || null,
+      });
+      
+      setPosts(normalizedPostsData);
 
-      if (Array.isArray(postsData)) {
-        const normalizeStatus = (post) => {
-          const status = (post?.status || post?.state || '').toString().toLowerCase();
-          if (status) return status;
-          if (post?.isDraft === true) return 'draft';
-          if (post?.published || post?.isPublished) return 'published';
-          if (post?.scheduled) return 'scheduled';
-          return 'draft';
-        };
+      // Always set posts stats, even if empty
+      const normalizeStatus = (post) => {
+        if (!post) return 'draft';
+        const status = (post?.status || post?.state || '').toString().toLowerCase();
+        if (status) return status;
+        if (post?.isDraft === true) return 'draft';
+        if (post?.published || post?.isPublished) return 'published';
+        if (post?.scheduled) return 'scheduled';
+        return 'draft';
+      };
 
-        const counts = postsData.reduce(
-          (acc, post) => {
-            const status = normalizeStatus(post);
-            acc[status] = (acc[status] || 0) + 1;
-            return acc;
-          },
-          {}
-        );
+      const counts = normalizedPostsData.reduce(
+        (acc, post) => {
+          const status = normalizeStatus(post);
+          acc[status] = (acc[status] || 0) + 1;
+          return acc;
+        },
+        {}
+      );
 
-        const published = counts.published || counts.live || counts.active || 0;
-        const drafts = counts.draft || counts.drafts || 0;
-        const scheduled = counts.scheduled || counts.pending || 0;
-        const archived = counts.archived || counts.archive || 0;
-        const totalViews = postsData.reduce((sum, p) => sum + (Number(p?.viewCount) || Number(p?.views) || 0), 0);
-        const totalLikes = postsData.reduce((sum, p) => {
-          if (Array.isArray(p?.likes)) return sum + p.likes.length;
-          if (Number(p?.likeCount) || Number(p?.likes)) return sum + (Number(p?.likeCount) || Number(p?.likes) || 0);
-          return sum;
-        }, 0);
-        const totalComments = postsData.reduce((sum, p) => {
-          if (Array.isArray(p?.comments)) return sum + p.comments.length;
-          if (Number(p?.commentCount) || Number(p?.comments)) return sum + (Number(p?.commentCount) || Number(p?.comments) || 0);
-          return sum;
-        }, 0);
+      const published = counts.published || counts.live || counts.active || 0;
+      const drafts = counts.draft || counts.drafts || 0;
+      const scheduled = counts.scheduled || counts.pending || 0;
+      const archived = counts.archived || counts.archive || 0;
+      
+      // Calculate total as sum of all status counts to ensure accuracy
+      const totalFromCounts = Object.values(counts).reduce((sum, count) => sum + (Number(count) || 0), 0);
+      const totalFromArray = normalizedPostsData.length;
+      // Use the larger value to ensure we don't miss any posts
+      const totalPosts = Math.max(totalFromCounts, totalFromArray);
+      
+      const totalViews = normalizedPostsData.reduce((sum, p) => sum + (Number(p?.viewCount) || Number(p?.views) || 0), 0);
+      const totalLikes = normalizedPostsData.reduce((sum, p) => {
+        if (Array.isArray(p?.likes)) return sum + p.likes.length;
+        if (Number(p?.likeCount) || Number(p?.likes)) return sum + (Number(p?.likeCount) || Number(p?.likes) || 0);
+        return sum;
+      }, 0);
+      const totalComments = normalizedPostsData.reduce((sum, p) => {
+        if (Array.isArray(p?.comments)) return sum + p.comments.length;
+        if (Number(p?.commentCount) || Number(p?.comments)) return sum + (Number(p?.commentCount) || Number(p?.comments) || 0);
+        return sum;
+      }, 0);
 
-        setStats((prev) => ({
-          ...prev,
-          posts: {
-            total: postsData.length,
-            published,
-            drafts,
-            scheduled,
-            archived,
-            totalViews,
-            totalLikes,
-            totalComments,
-            statusCounts: counts,
-            raw: postsData,
-          },
-        }));
-      }
+      // Log for debugging
+      console.log('AdminOverview: Posts data', {
+        totalFromArray,
+        totalFromCounts,
+        totalPosts,
+        published,
+        drafts,
+        scheduled,
+        archived,
+        counts,
+        samplePost: normalizedPostsData[0] || null,
+      });
+
+      // Always update posts stats - the total should match the sum of all status counts
+      setStats((prev) => ({
+        ...prev,
+        posts: {
+          total: totalPosts,
+          published,
+          drafts,
+          scheduled,
+          archived,
+          totalViews,
+          totalLikes,
+          totalComments,
+          statusCounts: counts,
+          raw: normalizedPostsData,
+        },
+      }));
 
       if (categoriesRes.status === 'fulfilled') {
         const rawCategories = getData(categoriesRes);
@@ -586,14 +686,202 @@ const AdminOverview = () => {
           ...prev,
           engagement: engagementStats,
         }));
+        
+        // Check for total posts count in dashboard response
+        const dashboardTotalPosts = 
+          dashboardData?.overview?.stats?.totalPosts ||
+          dashboardData?.overview?.totalPosts ||
+          dashboardData?.stats?.totalPosts ||
+          dashboardData?.totalPosts ||
+          null;
+        
+        // Fallback: Try to get posts from dashboard if we didn't get any posts or if total is 0
+        const currentPostsTotal = normalizedPostsData.length;
+        const hasValidPosts = currentPostsTotal > 0;
+        
+        if (!hasValidPosts && dashboardData) {
+          const dashboardPosts = normalizePosts(dashboardData);
+          if (dashboardPosts.length > 0) {
+            console.log('AdminOverview: Using posts from dashboard API fallback', dashboardPosts.length);
+            setPosts(dashboardPosts);
+            
+            // Recalculate stats with dashboard posts
+            const normalizeStatus = (post) => {
+              if (!post) return 'draft';
+              const status = (post?.status || post?.state || '').toString().toLowerCase();
+              if (status) return status;
+              if (post?.isDraft === true) return 'draft';
+              if (post?.published || post?.isPublished) return 'published';
+              if (post?.scheduled) return 'scheduled';
+              return 'draft';
+            };
+
+            const counts = dashboardPosts.reduce(
+              (acc, post) => {
+                const status = normalizeStatus(post);
+                acc[status] = (acc[status] || 0) + 1;
+                return acc;
+              },
+              {}
+            );
+
+            const published = counts.published || counts.live || counts.active || 0;
+            const drafts = counts.draft || counts.drafts || 0;
+            const scheduled = counts.scheduled || counts.pending || 0;
+            const archived = counts.archived || counts.archive || 0;
+            
+            // Calculate total as sum of all status counts to ensure accuracy
+            const totalFromCounts = Object.values(counts).reduce((sum, count) => sum + (Number(count) || 0), 0);
+            const totalFromArray = dashboardPosts.length;
+            // Use dashboard total if available, otherwise use calculated value
+            const totalPosts = dashboardTotalPosts 
+              ? Math.max(Number(dashboardTotalPosts), totalFromCounts, totalFromArray)
+              : Math.max(totalFromCounts, totalFromArray);
+            
+            const totalViews = dashboardPosts.reduce((sum, p) => sum + (Number(p?.viewCount) || Number(p?.views) || 0), 0);
+            const totalLikes = dashboardPosts.reduce((sum, p) => {
+              if (Array.isArray(p?.likes)) return sum + p.likes.length;
+              if (Number(p?.likeCount) || Number(p?.likes)) return sum + (Number(p?.likeCount) || Number(p?.likes) || 0);
+              return sum;
+            }, 0);
+            const totalComments = dashboardPosts.reduce((sum, p) => {
+              if (Array.isArray(p?.comments)) return sum + p.comments.length;
+              if (Number(p?.commentCount) || Number(p?.comments)) return sum + (Number(p?.commentCount) || Number(p?.comments) || 0);
+              return sum;
+            }, 0);
+
+            console.log('AdminOverview: Dashboard fallback posts', {
+              totalFromArray,
+              totalFromCounts,
+              dashboardTotalPosts,
+              totalPosts,
+              published,
+              counts,
+            });
+
+            setStats((prev) => ({
+              ...prev,
+              posts: {
+                total: totalPosts,
+                published,
+                drafts,
+                scheduled,
+                archived,
+                totalViews,
+                totalLikes,
+                totalComments,
+                statusCounts: counts,
+                raw: dashboardPosts,
+              },
+            }));
+          } else if (dashboardTotalPosts && Number(dashboardTotalPosts) > 0) {
+            // If we have a total posts count from dashboard but no posts array, use the count
+            console.log('AdminOverview: Using total posts count from dashboard API', dashboardTotalPosts);
+            setStats((prev) => ({
+              ...prev,
+              posts: {
+                ...prev.posts,
+                total: Number(dashboardTotalPosts),
+              },
+            }));
+          }
+        } else if (hasValidPosts) {
+          // If we have posts but total might be wrong, recalculate from counts
+          setStats((prev) => {
+            if (prev.posts && prev.posts.statusCounts) {
+              const totalFromCounts = Object.values(prev.posts.statusCounts).reduce((sum, count) => sum + (Number(count) || 0), 0);
+              const totalFromArray = normalizedPostsData.length;
+              const recalculatedTotal = Math.max(totalFromCounts, totalFromArray);
+              
+              // Only update if the total is different and we have a valid count
+              if (recalculatedTotal > 0 && prev.posts.total !== recalculatedTotal) {
+                console.log('AdminOverview: Recalculating total posts', {
+                  oldTotal: prev.posts.total,
+                  newTotal: recalculatedTotal,
+                  totalFromCounts,
+                  totalFromArray,
+                  statusCounts: prev.posts.statusCounts,
+                });
+                
+                return {
+                  ...prev,
+                  posts: {
+                    ...prev.posts,
+                    total: recalculatedTotal,
+                  },
+                };
+              }
+            }
+            return prev;
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
+      setError(error.response?.data?.message || error.message || 'Failed to load statistics');
       toast.error('Failed to load statistics');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchAllStats();
+  }, [fetchAllStats]);
+
+  // Ensure total posts is always correct based on status counts
+  useEffect(() => {
+    if (stats.posts) {
+      const totalFromCounts = stats.posts.statusCounts
+        ? Object.values(stats.posts.statusCounts).reduce(
+            (sum, count) => sum + (Number(count) || 0),
+            0
+          )
+        : 0;
+      const totalFromArray = posts.length;
+      
+      // Also check if we have published/drafts/scheduled/archived counts
+      const published = stats.posts.published || 0;
+      const drafts = stats.posts.drafts || 0;
+      const scheduled = stats.posts.scheduled || 0;
+      const archived = stats.posts.archived || 0;
+      const totalFromIndividualCounts = published + drafts + scheduled + archived;
+      
+      // Use the maximum of all calculations to ensure accuracy
+      const recalculatedTotal = Math.max(
+        totalFromCounts,
+        totalFromArray,
+        totalFromIndividualCounts
+      );
+      
+      // Only update if the total is wrong (either 0 when it should be > 0, or different value)
+      if (
+        (recalculatedTotal > 0 && stats.posts.total !== recalculatedTotal) ||
+        (stats.posts.total === 0 && (published > 0 || drafts > 0 || scheduled > 0 || archived > 0))
+      ) {
+        console.log('AdminOverview: Correcting total posts in useEffect', {
+          oldTotal: stats.posts.total,
+          newTotal: recalculatedTotal,
+          totalFromCounts,
+          totalFromArray,
+          totalFromIndividualCounts,
+          published,
+          drafts,
+          scheduled,
+          archived,
+          statusCounts: stats.posts.statusCounts,
+        });
+        
+        setStats((prev) => ({
+          ...prev,
+          posts: {
+            ...prev.posts,
+            total: recalculatedTotal,
+          },
+        }));
+      }
+    }
+  }, [stats.posts, posts.length]);
 
   const getPostsByCategoryData = () => {
     if (!categories.length || !posts.length) return [];
@@ -809,10 +1097,82 @@ const AdminOverview = () => {
     publishedEntry?.value ??
     0;
 
+  // Calculate total posts directly from multiple sources to ensure accuracy
+  const calculateTotalPosts = () => {
+    // Method 1: From status counts
+    const totalFromStatusCounts = stats.posts?.statusCounts
+      ? Object.values(stats.posts.statusCounts).reduce(
+          (sum, count) => sum + (Number(count) || 0),
+          0
+        )
+      : 0;
+
+    // Method 2: From individual counts
+    const published = stats.posts?.published || 0;
+    const drafts = stats.posts?.drafts || 0;
+    const scheduled = stats.posts?.scheduled || 0;
+    const archived = stats.posts?.archived || 0;
+    const totalFromIndividualCounts = published + drafts + scheduled + archived;
+
+    // Method 3: From posts array
+    const totalFromArray = posts.length;
+
+    // Method 4: From stored total (if valid)
+    const totalFromStored = stats.posts?.total || 0;
+
+    // Use the maximum of all methods to ensure accuracy
+    const calculatedTotal = Math.max(
+      totalFromStatusCounts,
+      totalFromIndividualCounts,
+      totalFromArray,
+      totalFromStored
+    );
+
+    // Log if there's a discrepancy
+    if (calculatedTotal > 0 && totalFromStored !== calculatedTotal) {
+      console.log('AdminOverview: Total posts discrepancy detected', {
+        calculatedTotal,
+        totalFromStored,
+        totalFromStatusCounts,
+        totalFromIndividualCounts,
+        totalFromArray,
+        published,
+        drafts,
+        scheduled,
+        archived,
+        statusCounts: stats.posts?.statusCounts,
+      });
+    }
+
+    return calculatedTotal;
+  };
+
+  const totalPosts = calculateTotalPosts();
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-red-900 mb-2">Error Loading Overview</h3>
+          <p className="text-red-800 mb-4">{error}</p>
+          <button
+            onClick={() => {
+              setError(null);
+              fetchAllStats();
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -843,7 +1203,7 @@ const AdminOverview = () => {
         <AnimatedCard delay={0.2}>
           <StatCard
             title="Total Posts"
-            value={stats.posts?.total || 0}
+            value={totalPosts}
             icon={<FileText className="w-6 h-6" />}
             color="purple"
             subtitle={`${stats.posts?.published || 0} published`}
