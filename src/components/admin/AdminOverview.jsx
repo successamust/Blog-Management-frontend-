@@ -67,49 +67,132 @@ const AdminOverview = () => {
         dashboardAPI.getOverview(),
       ]);
 
+      const getData = (res) => res?.value?.data ?? res?.value ?? null;
+
       if (userStatsRes.status === 'fulfilled') {
-        setStats((prev) => ({ ...prev, users: userStatsRes.value.data }));
+        const userData = getData(userStatsRes) || {};
+
+        const totalUsers =
+          userData.totalUsers ??
+          userData.usersTotal ??
+          userData?.overview?.totalUsers ??
+          userData?.stats?.totalUsers ??
+          userData?.count ??
+          0;
+
+        const totalAdmins =
+          userData.totalAdmins ??
+          userData.admins ??
+          userData?.roles?.admins ??
+          userData?.roles?.admin ??
+          userData?.roleCounts?.admins ??
+          userData?.roleDistribution?.admins ??
+          userData?.stats?.totalAdmins ??
+          0;
+
+        const totalAuthors =
+          userData.totalAuthors ??
+          userData.authors ??
+          userData?.roles?.authors ??
+          userData?.roles?.author ??
+          userData?.roleCounts?.authors ??
+          userData?.roleDistribution?.authors ??
+          userData?.stats?.totalAuthors ??
+          0;
+
+        const totalRegularUsers =
+          userData.totalRegularUsers ??
+          userData.regularUsers ??
+          userData?.roles?.users ??
+          userData?.roles?.user ??
+          userData?.roleCounts?.users ??
+          userData?.roleDistribution?.users ??
+          userData?.stats?.totalRegularUsers ??
+          Math.max(totalUsers - totalAdmins - totalAuthors, 0);
+
+        const normalizedUsers = {
+          totalUsers,
+          totalAdmins,
+          totalAuthors,
+          totalRegularUsers,
+          raw: userData,
+        };
+
+        setStats((prev) => ({ ...prev, users: normalizedUsers }));
       }
 
       if (postsRes.status === 'fulfilled') {
-        const postsData = postsRes.value.data.posts || [];
-        setPosts(postsData);
-        const published = postsData.filter((p) => p.status === 'published').length;
-        const drafts = postsData.filter((p) => p.status === 'draft').length;
-        const totalViews = postsData.reduce((sum, p) => sum + (p.viewCount || 0), 0);
-        const totalLikes = postsData.reduce((sum, p) => sum + (p.likes?.length || 0), 0);
-        setStats((prev) => ({
-          ...prev,
-          posts: {
-            total: postsData.length,
-            published,
-            drafts,
-            totalViews,
-            totalLikes,
-          },
-        }));
+        const rawPosts = getData(postsRes);
+        const postsData = rawPosts?.posts || rawPosts?.data || (Array.isArray(rawPosts) ? rawPosts : []) || [];
+        setPosts(Array.isArray(postsData) ? postsData : []);
+
+        if (Array.isArray(postsData)) {
+          const normalizeStatus = (post) => {
+            const status = (post?.status || post?.state || '').toString().toLowerCase();
+            if (status) return status;
+            if (post?.published || post?.isPublished) return 'published';
+            if (post?.scheduled) return 'scheduled';
+            return 'draft';
+          };
+
+          const counts = postsData.reduce(
+            (acc, post) => {
+              const status = normalizeStatus(post);
+              acc[status] = (acc[status] || 0) + 1;
+              return acc;
+            },
+            {}
+          );
+
+          const published = counts.published || 0;
+          const drafts = counts.draft || counts.drafts || 0;
+          const scheduled = counts.scheduled || 0;
+          const archived = counts.archived || counts.archive || 0;
+          const totalViews = postsData.reduce((sum, p) => sum + (Number(p?.viewCount) || 0), 0);
+          const totalLikes = postsData.reduce((sum, p) => sum + (Array.isArray(p?.likes) ? p.likes.length : 0), 0);
+
+          setStats((prev) => ({
+            ...prev,
+            posts: {
+              total: postsData.length,
+              published,
+              drafts,
+              scheduled,
+              archived,
+              totalViews,
+              totalLikes,
+              statusCounts: counts,
+              raw: postsData,
+            },
+          }));
+        }
       }
 
       if (categoriesRes.status === 'fulfilled') {
-        const categoriesData = categoriesRes.value.data.categories || [];
-        setCategories(categoriesData);
+        const rawCategories = getData(categoriesRes);
+        const categoriesData = rawCategories?.categories || rawCategories?.data || (Array.isArray(rawCategories) ? rawCategories : []) || [];
+        const normalizedCategories = Array.isArray(categoriesData) ? categoriesData.filter(Boolean) : [];
+        setCategories(normalizedCategories);
         setStats((prev) => ({
           ...prev,
           categories: {
-            total: categoriesData.length,
-            categories: categoriesData,
+            total: normalizedCategories.length,
+            categories: normalizedCategories,
           },
         }));
       }
 
       if (newsletterStatsRes.status === 'fulfilled') {
-        setStats((prev) => ({ ...prev, newsletter: newsletterStatsRes.value.data }));
+        const newsletterData = getData(newsletterStatsRes);
+        setStats((prev) => ({ ...prev, newsletter: newsletterData || null }));
       }
 
       if (dashboardRes.status === 'fulfilled') {
+        const dashboardData = getData(dashboardRes);
+        const engagementStats = dashboardData?.overview?.stats || dashboardData?.stats || dashboardData || null;
         setStats((prev) => ({
           ...prev,
-          engagement: dashboardRes.value.data.overview?.stats || null,
+          engagement: engagementStats,
         }));
       }
     } catch (error) {
@@ -122,29 +205,76 @@ const AdminOverview = () => {
 
   const getPostsByCategoryData = () => {
     if (!categories.length || !posts.length) return [];
-    return categories.map((cat) => ({
-      name: cat.name,
-      posts: posts.filter((p) => p.category?._id === cat._id || p.category === cat._id).length,
-    }));
+    return categories.map((cat) => {
+      const categoryId = cat?._id || cat?.id || cat?.categoryId;
+      const categorySlug = cat?.slug;
+
+      const postCount = posts.filter((p) => {
+        if (!p) return false;
+
+        const postCategory = p.category;
+        const postCategories = Array.isArray(p.categories) ? p.categories : [];
+
+        const matchesSingle = () => {
+          if (!postCategory) return false;
+          const postCategoryId = postCategory?._id || postCategory?.id || postCategory;
+          const postCategorySlug = postCategory?.slug;
+          return (
+            (categoryId && String(postCategoryId) === String(categoryId)) ||
+            (categorySlug && postCategorySlug && postCategorySlug === categorySlug)
+          );
+        };
+
+        const matchesMultiple = () => {
+          if (!postCategories.length) return false;
+          return postCategories.some((pcat) => {
+            const catId = pcat?._id || pcat?.id || pcat;
+            const catSlug = pcat?.slug;
+            return (
+              (categoryId && String(catId) === String(categoryId)) ||
+              (categorySlug && catSlug && catSlug === categorySlug)
+            );
+          });
+        };
+
+        return matchesSingle() || matchesMultiple();
+      }).length;
+
+      return {
+        name: cat?.name || 'Unnamed',
+        posts: postCount,
+      };
+    });
   };
 
   const getPostsByMonthData = () => {
     if (!posts.length) return [];
-    const monthMap = {};
+    const monthMap = new Map();
+
     posts.forEach((post) => {
-      const date = new Date(post.publishedAt || post.createdAt);
-      const month = date.toLocaleString('default', { month: 'short' });
-      monthMap[month] = (monthMap[month] || 0) + 1;
+      const dateValue = post?.publishedAt || post?.createdAt || post?.updatedAt;
+      const date = dateValue ? new Date(dateValue) : null;
+      if (!date || Number.isNaN(date.getTime())) return;
+
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const label = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+      const currentCount = monthMap.get(key)?.posts || 0;
+      monthMap.set(key, { month: label, posts: currentCount + 1, date });
     });
-    return Object.entries(monthMap)
-      .map(([month, count]) => ({ month, posts: count }))
-      .slice(-6); // Last 6 months
+
+    const sorted = Array.from(monthMap.values())
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .slice(-6)
+      .map(({ month, posts }) => ({ month, posts }));
+
+    return sorted;
   };
 
   const getTopPostsData = () => {
     if (!posts.length) return [];
-    return posts
-      .sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
+    return [...posts]
+      .filter((post) => post?.title)
+      .sort((a, b) => (b?.viewCount || 0) - (a?.viewCount || 0))
       .slice(0, 5)
       .map((post) => ({
         name: post.title.length > 20 ? post.title.substring(0, 20) + '...' : post.title,
@@ -155,19 +285,68 @@ const AdminOverview = () => {
 
   const getUserRoleData = () => {
     if (!stats.users) return [];
-    return [
-      { name: 'Admins', value: stats.users.totalAdmins || 0 },
-      { name: 'Users', value: stats.users.totalRegularUsers || 0 },
-    ];
+    const roleData = [];
+
+    const { totalAdmins, totalAuthors, totalRegularUsers, totalUsers } = stats.users;
+
+    if (typeof totalAdmins === 'number') {
+      roleData.push({ name: 'Admins', value: totalAdmins });
+    }
+    if (typeof totalAuthors === 'number') {
+      roleData.push({ name: 'Authors', value: totalAuthors });
+    }
+    if (typeof totalRegularUsers === 'number') {
+      roleData.push({ name: 'Users', value: totalRegularUsers });
+    }
+
+    if (!roleData.length && typeof totalUsers === 'number') {
+      roleData.push({ name: 'Users', value: totalUsers });
+    }
+
+    return roleData;
   };
 
   const getPostStatusData = () => {
-    if (!stats.posts) return [];
-    return [
-      { name: 'Published', value: stats.posts.published || 0 },
-      { name: 'Drafts', value: stats.posts.drafts || 0 },
-    ];
+    if (!posts.length) return [];
+
+    const normalizeStatus = (post) => {
+      const status = (post?.status || post?.state || '').toString().trim();
+      if (status) return status.replace(/_/g, ' ');
+      if (post?.published || post?.isPublished) return 'published';
+      if (post?.scheduled) return 'scheduled';
+      return 'draft';
+    };
+
+    const statusCounts = posts.reduce((acc, post) => {
+      const status = normalizeStatus(post);
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {});
+
+    const entries = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
+
+    if (!entries.length && stats.posts?.statusCounts) {
+      return Object.entries(stats.posts.statusCounts).map(([name, value]) => ({ name, value }));
+    }
+
+    return entries;
   };
+
+  const roleData = getUserRoleData();
+  const statusData = getPostStatusData();
+  const postsByCategoryData = getPostsByCategoryData();
+  const postsByMonthData = getPostsByMonthData();
+  const topPostsData = getTopPostsData();
+
+  const totalViews = stats.engagement?.totalViews ?? stats.engagement?.engagement?.totalViews ?? stats.posts?.totalViews ?? 0;
+  const totalLikes = stats.engagement?.totalLikes ?? stats.engagement?.engagement?.totalLikes ?? stats.posts?.totalLikes ?? 0;
+  const totalComments = stats.engagement?.comments?.total ?? stats.engagement?.totalComments ?? 0;
+  const publishedEntry = statusData.find((item) => item?.name?.toLowerCase?.() === 'published');
+  const publishedPostsCount =
+    stats.posts?.published ??
+    stats.posts?.statusCounts?.published ??
+    publishedEntry?.value ??
+    0;
 
   if (loading) {
     return (
@@ -230,37 +409,29 @@ const AdminOverview = () => {
       </div>
 
       {/* Engagement Metrics */}
-      {stats.engagement && (
+      {(stats.engagement || posts.length) && (
         <AnimatedCard delay={0.5}>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-6">Engagement Metrics</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-blue-50 rounded-lg">
                 <Eye className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.engagement.engagement?.totalViews || stats.posts?.totalViews || 0}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{totalViews}</p>
                 <p className="text-sm text-gray-600">Total Views</p>
               </div>
               <div className="text-center p-4 bg-red-50 rounded-lg">
                 <Heart className="w-8 h-8 text-red-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.engagement.engagement?.totalLikes || stats.posts?.totalLikes || 0}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{totalLikes}</p>
                 <p className="text-sm text-gray-600">Total Likes</p>
               </div>
               <div className="text-center p-4 bg-green-50 rounded-lg">
                 <MessageCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.engagement.comments?.total || 0}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{totalComments}</p>
                 <p className="text-sm text-gray-600">Total Comments</p>
               </div>
               <div className="text-center p-4 bg-purple-50 rounded-lg">
                 <TrendingUp className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.posts?.published || 0}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{publishedPostsCount}</p>
                 <p className="text-sm text-gray-600">Published Posts</p>
               </div>
             </div>
@@ -271,14 +442,14 @@ const AdminOverview = () => {
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* User Role Distribution */}
-        {stats.users && (
+        {roleData.length > 0 && (
           <AnimatedCard delay={0.6}>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-6">User Role Distribution</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={getUserRoleData()}
+                    data={roleData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -287,7 +458,7 @@ const AdminOverview = () => {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {getUserRoleData().map((entry, index) => (
+                    {roleData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -300,14 +471,14 @@ const AdminOverview = () => {
         )}
 
         {/* Post Status Distribution */}
-        {stats.posts && (
+        {statusData.length > 0 && (
           <AnimatedCard delay={0.7}>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-6">Post Status Distribution</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={getPostStatusData()}
+                    data={statusData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -316,8 +487,8 @@ const AdminOverview = () => {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {getPostStatusData().map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index + 2 % COLORS.length]} />
+                    {statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -332,12 +503,12 @@ const AdminOverview = () => {
       {/* Charts Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Posts by Category */}
-        {getPostsByCategoryData().length > 0 && (
+        {postsByCategoryData.length > 0 && (
           <AnimatedCard delay={0.8}>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-6">Posts by Category</h3>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={getPostsByCategoryData()}>
+                <BarChart data={postsByCategoryData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
@@ -351,12 +522,12 @@ const AdminOverview = () => {
         )}
 
         {/* Posts Over Time */}
-        {getPostsByMonthData().length > 0 && (
+        {postsByMonthData.length > 0 && (
           <AnimatedCard delay={0.9}>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-6">Posts Over Time</h3>
               <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={getPostsByMonthData()}>
+                <AreaChart data={postsByMonthData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
@@ -371,12 +542,12 @@ const AdminOverview = () => {
       </div>
 
       {/* Top Posts */}
-      {getTopPostsData().length > 0 && (
+      {topPostsData.length > 0 && (
         <AnimatedCard delay={1.0}>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-6">Top 5 Posts by Views</h3>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={getTopPostsData()} layout="vertical">
+              <BarChart data={topPostsData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={150} />

@@ -217,6 +217,7 @@ const CreatePost = ({ onSuccess }) => {
     status: 'published',
   });
   const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -228,10 +229,25 @@ const CreatePost = ({ onSuccess }) => {
 
   const fetchCategories = async () => {
     try {
+      setCategoriesLoading(true);
       const response = await categoriesAPI.getAll();
-      setCategories(response.data.categories || []);
+      console.log('Categories API response:', response);
+      
+      // Handle different possible response structures
+      const categoriesData = response.data?.categories || 
+                            response.data?.data || 
+                            response.data || 
+                            [];
+      
+      console.log('Categories data:', categoriesData);
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+      console.error('Error response:', error.response);
+      toast.error('Failed to load categories. Please try again.');
+      setCategories([]);
+    } finally {
+      setCategoriesLoading(false);
     }
   };
 
@@ -393,19 +409,30 @@ const CreatePost = ({ onSuccess }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+            {categoriesLoading ? (
+              <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span className="text-sm text-gray-500">Loading categories...</span>
+              </div>
+            ) : (
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select a category</option>
+                {categories.length > 0 ? (
+                  categories.map((cat) => (
+                    <option key={cat._id || cat.id} value={cat._id || cat.id}>
+                      {cat.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>No categories available</option>
+                )}
+              </select>
+            )}
           </div>
 
           <div>
@@ -521,6 +548,7 @@ const EditPost = ({ onSuccess }) => {
     status: 'published',
   });
   const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -583,10 +611,25 @@ const EditPost = ({ onSuccess }) => {
 
   const fetchCategories = async () => {
     try {
+      setCategoriesLoading(true);
       const response = await categoriesAPI.getAll();
-      setCategories(response.data.categories || []);
+      console.log('Categories API response:', response);
+      
+      // Handle different possible response structures
+      const categoriesData = response.data?.categories || 
+                            response.data?.data || 
+                            response.data || 
+                            [];
+      
+      console.log('Categories data:', categoriesData);
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+      console.error('Error response:', error.response);
+      toast.error('Failed to load categories. Please try again.');
+      setCategories([]);
+    } finally {
+      setCategoriesLoading(false);
     }
   };
 
@@ -736,19 +779,30 @@ const EditPost = ({ onSuccess }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+            {categoriesLoading ? (
+              <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span className="text-sm text-gray-500">Loading categories...</span>
+              </div>
+            ) : (
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select a category</option>
+                {categories.length > 0 ? (
+                  categories.map((cat) => (
+                    <option key={cat._id || cat.id} value={cat._id || cat.id}>
+                      {cat.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>No categories available</option>
+                )}
+              </select>
+            )}
           </div>
 
           <div>

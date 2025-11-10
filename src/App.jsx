@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
+import { CheckCircle2, AlertTriangle, Info, Loader2 } from 'lucide-react';
 import { AuthProvider } from './context/AuthContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -29,6 +30,9 @@ import './styles/globals.css';
 
 function AppContent() {
   const location = useLocation();
+
+  const baseToastClasses = 'flex items-start gap-3 w-full max-w-sm rounded-2xl px-4 py-3 sm:px-5 sm:py-4 shadow-xl shadow-indigo-500/10 border border-white/30 bg-white/95 backdrop-blur-md text-slate-900';
+  const iconBadgeClasses = 'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/20 to-purple-50/30 flex flex-col">
@@ -75,10 +79,44 @@ function AppContent() {
       <Toaster 
         position="top-right"
         toastOptions={{
-          duration: 4000,
+          duration: 4200,
           style: {
-            background: '#363636',
-            color: '#fff',
+            background: 'transparent',
+            boxShadow: 'none',
+            padding: 0,
+          },
+          className: `${baseToastClasses} border-l-4 border-indigo-400`,
+          icon: (
+            <span className={`${iconBadgeClasses} bg-indigo-100 text-indigo-600`}>
+              <Info className="h-4 w-4" />
+            </span>
+          ),
+          success: {
+            duration: 3600,
+            className: `${baseToastClasses} border-l-4 border-emerald-400`,
+            icon: (
+              <span className={`${iconBadgeClasses} bg-emerald-100 text-emerald-600`}>
+                <CheckCircle2 className="h-4 w-4" />
+              </span>
+            ),
+          },
+          error: {
+            duration: 4800,
+            className: `${baseToastClasses} border-l-4 border-rose-500`,
+            icon: (
+              <span className={`${iconBadgeClasses} bg-rose-100 text-rose-600`}>
+                <AlertTriangle className="h-4 w-4" />
+              </span>
+            ),
+          },
+          loading: {
+            duration: 6000,
+            className: `${baseToastClasses} border-l-4 border-amber-400`,
+            icon: (
+              <span className={`${iconBadgeClasses} bg-amber-100 text-amber-500`}>
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </span>
+            ),
           },
         }}
       />

@@ -9,17 +9,39 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-50px' });
 
+  // Early return if post is invalid
+  if (!post || !post.title) {
+    return null;
+  }
+
+  const postSlugValue = post.slug || post._id || post.id || '';
+  const postHref = postSlugValue ? `/posts/${postSlugValue}` : '#';
+  const postTitle = post.title || 'Untitled Post';
+  const postExcerpt = post.excerpt || 'No excerpt available';
+  const postDate = post.publishedAt || post.createdAt || new Date();
+
+  const toSafeDate = (value) => {
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime()) ? new Date() : value;
+    }
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? new Date() : date;
+  };
+
+  const postDateObject = toSafeDate(postDate);
+
   const cardVariants = {
     hidden: { opacity: 0, y: 50, scale: 0.95 },
-    visible: {
+    visible: (custom = 0) => ({
       opacity: 1,
       y: 0,
       scale: 1,
       transition: {
         duration: 0.5,
         ease: [0.22, 1, 0.36, 1],
+        delay: custom,
       },
-    },
+    }),
   };
 
   const hoverVariants = {
@@ -50,22 +72,26 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
       <motion.div
         ref={ref}
         variants={cardVariants}
+        custom={delay}
         initial="hidden"
         animate={isInView ? 'visible' : 'hidden'}
         whileHover="hover"
         className="group"
       >
         <Link
-          to={`/posts/${post.slug}`}
+          to={postHref}
           className="block card-elevated card-elevated-hover overflow-hidden"
         >
           <div className="relative h-64 overflow-hidden">
             {post.featuredImage ? (
               <motion.img
                 src={post.featuredImage}
-                alt={post.title}
+                alt={postTitle}
                 className="w-full h-full object-cover"
                 variants={imageVariants}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500" />
@@ -77,17 +103,17 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
                 initial={{ opacity: 0, y: 20 }}
                 whileHover={{ opacity: 1, y: 0 }}
               >
-                {post.title}
+                {postTitle}
               </motion.h3>
             </div>
           </div>
           <div className="p-6">
-            <p className="text-slate-600 mb-4 line-clamp-2">{post.excerpt}</p>
+            <p className="text-slate-600 mb-4 line-clamp-2">{postExcerpt}</p>
             <div className="flex items-center justify-between text-sm text-slate-500">
               <div className="flex items-center space-x-4">
                 <span className="flex items-center">
                   <Calendar className="w-4 h-4 mr-1" />
-                  {format(new Date(post.publishedAt), 'MMM d, yyyy')}
+                  {format(postDateObject, 'MMM d, yyyy')}
                 </span>
                 <span className="flex items-center">
                   <Eye className="w-4 h-4 mr-1" />
@@ -119,13 +145,14 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
     <motion.div
       ref={ref}
       variants={cardVariants}
+      custom={delay}
       initial="hidden"
       animate={isInView ? 'visible' : 'hidden'}
       whileHover="hover"
       className="group"
     >
       <Link
-        to={`/posts/${post.slug}`}
+        to={postHref}
         className="block card-elevated card-elevated-hover p-6 overflow-hidden relative"
       >
         {/* Gradient overlay on hover */}
@@ -136,10 +163,13 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
             <div className="mb-4 rounded-lg overflow-hidden">
               <motion.img
                 src={post.featuredImage}
-                alt={post.title}
+                alt={postTitle}
                 className="w-full h-40 object-cover"
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.3 }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
               />
             </div>
           )}
@@ -148,14 +178,14 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
             className="text-xl font-bold text-slate-900 mb-3 group-hover:text-indigo-600 transition-colors"
             whileHover={{ x: 5 }}
           >
-            {post.title}
+            {postTitle}
           </motion.h3>
-          <p className="text-slate-600 mb-4 line-clamp-2 leading-relaxed">{post.excerpt || 'No excerpt available'}</p>
+          <p className="text-slate-600 mb-4 line-clamp-2 leading-relaxed">{postExcerpt}</p>
           
           <div className="flex items-center justify-between text-sm text-slate-500 mb-4">
             <span className="flex items-center">
               <Calendar className="w-4 h-4 mr-1" />
-              {format(new Date(post.publishedAt || post.createdAt), 'MMM d, yyyy')}
+              {format(postDateObject, 'MMM d, yyyy')}
             </span>
             <div className="flex items-center space-x-4">
               <span className="flex items-center">

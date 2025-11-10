@@ -59,6 +59,52 @@ const Dashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
+  // Fetch posts count if overview data doesn't include it
+  useEffect(() => {
+    const fetchPostsCount = async () => {
+      // Only fetch if we don't have total posts and we're on overview tab
+      if (activeTab === 'overview' && dashboardData && (!dashboardData.overview?.stats?.posts?.total || dashboardData.overview?.stats?.posts?.total === 0)) {
+        try {
+          const response = await dashboardAPI.getPosts({ limit: 1000 });
+          const allPosts = response.data.posts || [];
+          
+          // Filter to user's own posts if author
+          let userPosts = allPosts;
+          if (user?.role === 'author' && !isAdmin()) {
+            const userId = user?._id || user?.id;
+            userPosts = allPosts.filter(post => {
+              const postAuthorId = post.author?._id || post.author || post.authorId;
+              return postAuthorId && userId && String(postAuthorId) === String(userId);
+            });
+          }
+          
+          // Update dashboard data with calculated counts
+          if (userPosts.length > 0) {
+            setDashboardData(prev => ({
+              ...prev,
+              overview: {
+                ...prev.overview,
+                stats: {
+                  ...prev.overview?.stats,
+                  posts: {
+                    total: userPosts.length,
+                    published: userPosts.filter(p => p.isPublished !== false).length,
+                  }
+                }
+              }
+            }));
+          }
+        } catch (error) {
+          // Silently fail - we already have fallback logic
+          console.error('Error fetching posts count:', error);
+        }
+      }
+    };
+    
+    fetchPostsCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, dashboardData, user, isAdmin]);
+
   const fetchTabData = async () => {
     try {
       setTabLoading(true);
@@ -289,6 +335,52 @@ const Dashboard = () => {
     quickActions: []
   };
 
+  // Safely access nested properties with fallbacks
+  let postsTotal = overview?.stats?.posts?.total ?? 0;
+  let postsPublished = overview?.stats?.posts?.published ?? 0;
+  const commentsTotal = overview?.stats?.comments?.total ?? 0;
+  const commentsApproved = overview?.stats?.comments?.approved ?? 0;
+  const totalLikes = overview?.stats?.engagement?.totalLikes ?? 0;
+  const totalViews = overview?.stats?.engagement?.totalViews ?? 0;
+  const recentPosts = recentActivity?.posts ?? [];
+  const recentComments = recentActivity?.comments ?? [];
+  const likedPosts = recentActivity?.likedPosts ?? [];
+  const bookmarkedPosts = recentActivity?.bookmarkedPosts ?? [];
+
+  // Fallback: Calculate total posts from recent posts if backend doesn't return it
+  // This is especially important for authors who should see their own post count
+  if (postsTotal === 0 && recentPosts.length > 0) {
+    // Filter to user's own posts if author
+    if (user?.role === 'author' && !isAdmin()) {
+      const userId = user?._id || user?.id;
+      const userPosts = recentPosts.filter(post => {
+        const postAuthorId = post.author?._id || post.author || post.authorId;
+        return postAuthorId && userId && String(postAuthorId) === String(userId);
+      });
+      postsTotal = userPosts.length;
+      postsPublished = userPosts.filter(p => p.isPublished !== false).length;
+    } else {
+      postsTotal = recentPosts.length;
+      postsPublished = recentPosts.filter(p => p.isPublished !== false).length;
+    }
+  }
+
+  // If still 0, try to get from tabData.posts (if already loaded)
+  if (postsTotal === 0 && tabData.posts.length > 0) {
+    if (user?.role === 'author' && !isAdmin()) {
+      const userId = user?._id || user?.id;
+      const userPosts = tabData.posts.filter(post => {
+        const postAuthorId = post.author?._id || post.author || post.authorId;
+        return postAuthorId && userId && String(postAuthorId) === String(userId);
+      });
+      postsTotal = userPosts.length;
+      postsPublished = userPosts.filter(p => p.isPublished !== false).length;
+    } else {
+      postsTotal = tabData.posts.length;
+      postsPublished = tabData.posts.filter(p => p.isPublished !== false).length;
+    }
+  }
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <TrendingUp className="w-4 h-4" /> },
     ...(user?.role === 'author' || user?.role === 'admin' ? [{ id: 'create-post', label: 'Create Post', icon: <Plus className="w-4 h-4" /> }] : []),
@@ -390,23 +482,23 @@ const Dashboard = () => {
             <StatCard
               icon={<FileText className="w-5 h-5" />}
               title="Total Posts"
-              value={overview.stats.posts.total}
-              change={`${overview.stats.posts.published} published`}
+              value={postsTotal}
+              change={`${postsPublished} published`}
               color="indigo"
               trend={5}
             />
             <StatCard
               icon={<MessageCircle className="w-5 h-5" />}
               title="Comments"
-              value={overview.stats.comments.total}
-              change={`${overview.stats.comments.approved} approved`}
+              value={commentsTotal}
+              change={`${commentsApproved} approved`}
               color="emerald"
               trend={12}
             />
             <StatCard
               icon={<Heart className="w-5 h-5" />}
               title="Total Likes"
-              value={overview.stats.engagement.totalLikes}
+              value={totalLikes}
               change="Across all posts"
               color="rose"
               trend={8}
@@ -414,7 +506,7 @@ const Dashboard = () => {
             <StatCard
               icon={<Eye className="w-5 h-5" />}
               title="Total Views"
-              value={overview.stats.engagement.totalViews}
+              value={totalViews}
               change="All time"
               color="purple"
               trend={15}
@@ -446,8 +538,8 @@ const Dashboard = () => {
               )}
             </div>
             <div className="space-y-4">
-              {recentActivity.posts && recentActivity.posts.length > 0 ? (
-                recentActivity.posts.map((post) => (
+              {recentPosts && recentPosts.length > 0 ? (
+                recentPosts.map((post) => (
                   <PostItem key={post._id} post={post} />
                 ))
               ) : (
@@ -476,8 +568,8 @@ const Dashboard = () => {
           >
             <h2 className="text-xl font-bold text-slate-900 mb-6">Recent Comments</h2>
             <div className="space-y-4">
-              {recentActivity.comments && recentActivity.comments.length > 0 ? (
-                recentActivity.comments.map((comment) => (
+              {recentComments && recentComments.length > 0 ? (
+                recentComments.map((comment) => (
                   <CommentItem key={comment._id} comment={comment} />
                 ))
               ) : (
@@ -565,8 +657,8 @@ const Dashboard = () => {
           >
             <h2 className="text-xl font-bold text-slate-900 mb-4">Liked Posts</h2>
             <div className="space-y-3">
-              {recentActivity.likedPosts && recentActivity.likedPosts.length > 0 ? (
-                recentActivity.likedPosts.map((post) => (
+              {likedPosts && likedPosts.length > 0 ? (
+                likedPosts.map((post) => (
                   <Link
                     key={post._id}
                     to={`/posts/${post.slug}`}
@@ -597,8 +689,8 @@ const Dashboard = () => {
           >
             <h2 className="text-xl font-bold text-slate-900 mb-4">Saved Posts</h2>
             <div className="space-y-3">
-              {recentActivity.bookmarkedPosts && recentActivity.bookmarkedPosts.length > 0 ? (
-                recentActivity.bookmarkedPosts.map((post) => (
+              {bookmarkedPosts && bookmarkedPosts.length > 0 ? (
+                bookmarkedPosts.map((post) => (
                   <Link
                     key={post._id}
                     to={`/posts/${post.slug}`}
@@ -630,7 +722,27 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           className="card-elevated p-6"
         >
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">My Posts</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-slate-900">My Posts</h2>
+            {(isAdmin() || user?.role === 'author') && (
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/admin/posts"
+                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Manage Posts</span>
+                </Link>
+                <button
+                  onClick={() => setActiveTab('create-post')}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create Post</span>
+                </button>
+              </div>
+            )}
+          </div>
           {tabLoading ? (
             <div className="flex items-center justify-center py-16">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -645,6 +757,22 @@ const Dashboard = () => {
             <div className="text-center py-12 text-gray-500">
               <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
               <p>No posts yet</p>
+              {(isAdmin() || user?.role === 'author') && (
+                <div className="mt-4 flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => setActiveTab('create-post')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Create your first post
+                  </button>
+                  <Link
+                    to="/admin/posts"
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Manage Posts
+                  </Link>
+                </div>
+              )}
             </div>
           )}
         </motion.div>
@@ -862,7 +990,13 @@ const StatCard = ({ icon, title, value, change, color, trend }) => {
 const PostItem = ({ post }) => {
   const { user, isAdmin } = useAuth();
   const isAuthor = user?.role === 'author' || isAdmin();
-  const isPostOwner = post.author?._id === user?._id || post.author === user?._id || isAdmin();
+  
+  // Better author ID comparison - handle both object and string formats
+  const postAuthorId = post.author?._id || post.author || post.authorId;
+  const userId = user?._id || user?.id;
+  const isPostOwner = postAuthorId && userId && (
+    String(postAuthorId) === String(userId) || isAdmin()
+  );
   
   return (
     <motion.div
@@ -959,6 +1093,7 @@ const CreatePostTab = () => {
     status: 'published',
   });
   const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -969,10 +1104,25 @@ const CreatePostTab = () => {
 
   const fetchCategories = async () => {
     try {
+      setCategoriesLoading(true);
       const response = await categoriesAPI.getAll();
-      setCategories(response.data.categories || []);
+      console.log('Categories API response:', response);
+      
+      // Handle different possible response structures
+      const categoriesData = response.data?.categories || 
+                            response.data?.data || 
+                            response.data || 
+                            [];
+      
+      console.log('Categories data:', categoriesData);
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+      console.error('Error response:', error.response);
+      toast.error('Failed to load categories. Please try again.');
+      setCategories([]);
+    } finally {
+      setCategoriesLoading(false);
     }
   };
 
@@ -1124,19 +1274,30 @@ const CreatePostTab = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+            {categoriesLoading ? (
+              <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span className="text-sm text-gray-500">Loading categories...</span>
+              </div>
+            ) : (
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select a category</option>
+                {categories.length > 0 ? (
+                  categories.map((cat) => (
+                    <option key={cat._id || cat.id} value={cat._id || cat.id}>
+                      {cat.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>No categories available</option>
+                )}
+              </select>
+            )}
           </div>
 
           <div>

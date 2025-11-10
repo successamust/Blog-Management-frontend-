@@ -111,15 +111,40 @@ const Header = () => {
                   </Link>
                 </motion.div>
                 {/* Profile Avatar */}
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative"
-                >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all">
-                    {user?.username?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                </motion.div>
+                <Link to="/dashboard?tab=settings">
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative"
+                  >
+                    {user?.profilePicture || user?.avatar ? (
+                      <>
+                        <img
+                          src={user.profilePicture || user.avatar}
+                          alt={user?.username || 'User'}
+                          className="w-8 h-8 rounded-full object-cover border-2 border-indigo-300 cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            if (e.target.nextSibling) {
+                              e.target.nextSibling.style.display = 'flex';
+                            }
+                          }}
+                        />
+                        <div 
+                          className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all hidden"
+                        >
+                          {user?.username?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                      </>
+                    ) : (
+                      <div 
+                        className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all"
+                      >
+                        {user?.username?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                    )}
+                  </motion.div>
+                </Link>
                 <motion.button
                   onClick={handleLogout}
                   whileHover={{ scale: 1.05 }}

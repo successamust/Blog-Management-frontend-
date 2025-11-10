@@ -12,6 +12,7 @@ const Home = () => {
   const [recentPosts, setRecentPosts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [popularTags, setPopularTags] = useState([]);
+  const [totalPosts, setTotalPosts] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,17 +20,130 @@ const Home = () => {
       try {
         setLoading(true);
         const [postsRes, categoriesRes, tagsRes] = await Promise.all([
-          postsAPI.getAll({ page: 1, limit: 6 }),
-          categoriesAPI.getAll(),
-          searchAPI.getPopularTags()
+          postsAPI.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { posts: [] } })),
+          categoriesAPI.getAll().catch(() => ({ data: { categories: [] } })),
+          searchAPI.getPopularTags().catch(() => ({ data: { tags: [] } }))
         ]);
 
-        setFeaturedPosts(postsRes.data.posts.slice(0, 2));
-        setRecentPosts(postsRes.data.posts.slice(2));
-        setCategories(categoriesRes.data.categories.slice(0, 6));
-        setPopularTags(tagsRes.data.tags.slice(0, 10));
+        // Handle different possible response structures for posts
+        const postsData = postsRes.data?.posts || 
+                         postsRes.data?.data || 
+                         (Array.isArray(postsRes.data) ? postsRes.data : []) || 
+                         [];
+
+        // Normalize date helper
+        const normalizeDate = (value) => {
+          if (!value) return null;
+          try {
+            const date = new Date(value);
+            return Number.isNaN(date.getTime()) ? null : date;
+          } catch {
+            return null;
+          }
+        };
+
+        // Get the most relevant date for sorting (prefer publishedAt, then createdAt)
+        const getPostDate = (post) => {
+          if (!post) return new Date(0);
+          // Prioritize publishedAt, then createdAt, then updatedAt
+          const date = normalizeDate(post.publishedAt) || 
+                      normalizeDate(post.createdAt) || 
+                      normalizeDate(post.updatedAt);
+          return date || new Date(0);
+        };
+
+        // Filter and sort posts by date (newest first)
+        const sortedPosts = Array.isArray(postsData)
+          ? [...postsData]
+              .filter(post => post && (post.publishedAt || post.createdAt)) // Only include posts with dates
+              .sort((a, b) => {
+                const dateA = getPostDate(a);
+                const dateB = getPostDate(b);
+                // Sort descending (newest first)
+                return dateB.getTime() - dateA.getTime();
+              })
+          : [];
+
+        console.log('Total posts fetched:', postsData.length);
+        console.log('Sorted posts count:', sortedPosts.length);
+        if (sortedPosts.length > 0) {
+          console.log('Latest post date:', getPostDate(sortedPosts[0]));
+          console.log('First 3 posts:', sortedPosts.slice(0, 3).map(p => ({
+            title: p.title,
+            date: getPostDate(p),
+            publishedAt: p.publishedAt,
+            createdAt: p.createdAt
+          })));
+        }
+        
+        // Handle different possible response structures for categories
+        const categoriesData = categoriesRes.data?.categories || 
+                               categoriesRes.data?.data || 
+                               (Array.isArray(categoriesRes.data) ? categoriesRes.data : []) || 
+                               [];
+        
+        // Handle different possible response structures for tags
+        const tagsData = tagsRes.data?.tags || 
+                        tagsRes.data?.data || 
+                        (Array.isArray(tagsRes.data) ? tagsRes.data : []) || 
+                        [];
+
+        // Calculate post counts for categories if not present
+        const categoriesWithCounts = (Array.isArray(categoriesData) ? categoriesData : [])
+          .filter(Boolean)
+          .map(category => {
+          const categoryId = category?._id ?? category?.id ?? category?.categoryId ?? null;
+          const categorySlug = category?.slug ?? null;
+
+          const categoryPostCount = sortedPosts.filter(post => {
+            if (!post) return false;
+
+            const postCategory = post.category;
+            const postCategories = post.categories;
+
+            const matchesSingleCategory = () => {
+              if (!postCategory) return false;
+              const postCategoryId = postCategory._id || postCategory.id || postCategory;
+              const postCategorySlug = postCategory.slug;
+              return (
+                (categoryId && String(postCategoryId) === String(categoryId)) ||
+                (categorySlug && postCategorySlug && postCategorySlug === categorySlug)
+              );
+            };
+
+            const matchesCategoryArray = () => {
+              if (!Array.isArray(postCategories)) return false;
+              return postCategories.some(cat => {
+                const catId = cat?._id || cat?.id || cat;
+                const catSlug = cat?.slug;
+                return (
+                  (categoryId && String(catId) === String(categoryId)) ||
+                  (categorySlug && catSlug && catSlug === categorySlug)
+                );
+              });
+            };
+
+            return matchesSingleCategory() || matchesCategoryArray();
+          }).length;
+
+          return {
+            ...category,
+            postCount: categoryPostCount,
+          };
+        });
+
+        setFeaturedPosts(sortedPosts.slice(0, 2));
+        setRecentPosts(sortedPosts.slice(0, 8));
+        setCategories(Array.isArray(categoriesWithCounts) ? categoriesWithCounts.slice(0, 6) : []);
+        setPopularTags(Array.isArray(tagsData) ? tagsData.slice(0, 10) : []);
+        setTotalPosts(sortedPosts.length);
       } catch (error) {
         console.error('Error fetching home data:', error);
+        // Set empty arrays on error to prevent crashes
+        setFeaturedPosts([]);
+        setRecentPosts([]);
+        setCategories([]);
+        setPopularTags([]);
       } finally {
         setLoading(false);
       }
@@ -94,7 +208,7 @@ const Home = () => {
             </motion.div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
               {featuredPosts.map((post, index) => (
-                <InteractivePostCard key={post._id} post={post} featured delay={index * 0.1} />
+                <InteractivePostCard key={post._id || post.id || index} post={post} featured delay={index * 0.1} />
               ))}
             </div>
           </section>
@@ -152,7 +266,7 @@ const Home = () => {
               {recentPosts.length > 0 ? (
                 <div className="space-y-6">
                   {recentPosts.map((post, index) => (
-                    <InteractivePostCard key={post._id} post={post} delay={index * 0.1} />
+                    <InteractivePostCard key={post._id || post.id || index} post={post} delay={index * 0.1} />
                   ))}
                 </div>
               ) : (
@@ -220,27 +334,33 @@ const Home = () => {
               </div>
               {categories.length > 0 ? (
                 <div className="space-y-2">
-                  {categories.map((category, index) => (
-                    <motion.div
-                      key={category._id}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <Link
-                        to={`/categories/${category.slug}`}
-                        className="flex items-center justify-between p-4 rounded-xl hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 group border border-transparent hover:border-indigo-200"
+                  {categories.map((category, index) => {
+                    const categoryId = category._id || category.id;
+                    const categorySlug = category.slug || categoryId;
+                    const categoryName = category.name || 'Unnamed Category';
+                    
+                    return (
+                      <motion.div
+                        key={categoryId || index}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: index * 0.05 }}
                       >
-                        <span className="text-slate-700 font-medium group-hover:text-indigo-600 transition-colors">
-                          {category.name}
-                        </span>
-                        <span className="text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-3 py-1 rounded-full group-hover:scale-110 transition-transform shadow-sm">
-                          {category.postCount || 0}
-                        </span>
-                      </Link>
-                    </motion.div>
-                  ))}
+                        <Link
+                          to={`/categories/${categorySlug}`}
+                          className="flex items-center justify-between p-4 rounded-xl hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 group border border-transparent hover:border-indigo-200"
+                        >
+                          <span className="text-slate-700 font-medium group-hover:text-indigo-600 transition-colors">
+                            {categoryName}
+                          </span>
+                          <span className="text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-3 py-1 rounded-full group-hover:scale-110 transition-transform shadow-sm">
+                            {category.postCount ?? 0}
+                          </span>
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-gray-500 text-sm text-center py-4">No categories available</p>
@@ -261,9 +381,14 @@ const Home = () => {
               </div>
               {popularTags.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {popularTags.map((tag, index) => (
+                  {popularTags.map((tag, index) => {
+                    const tagName = typeof tag === 'string' ? tag : tag?.name;
+                    if (!tagName) {
+                      return null;
+                    }
+                    return (
                     <motion.div
-                      key={tag.name}
+                      key={tagName}
                       initial={{ opacity: 0, scale: 0.8 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true }}
@@ -272,13 +397,14 @@ const Home = () => {
                       whileTap={{ scale: 0.95 }}
                     >
                       <Link
-                        to={`/search?tags=${tag.name}`}
+                        to={`/search?tags=${encodeURIComponent(tagName)}`}
                         className="px-4 py-2 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-full text-sm font-medium hover:from-indigo-100 hover:to-purple-100 hover:text-indigo-700 transition-all duration-300 shadow-sm hover:shadow-md"
                       >
-                        #{tag.name}
+                        #{tagName}
                       </Link>
                     </motion.div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-gray-500 text-sm text-center py-4">No popular tags yet</p>
@@ -297,7 +423,7 @@ const Home = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-2">
                   <span className="text-indigo-100 font-medium">Total Posts</span>
-                  <span className="text-2xl sm:text-3xl font-bold">{featuredPosts.length + recentPosts.length}</span>
+                  <span className="text-2xl sm:text-3xl font-bold">{totalPosts}</span>
                 </div>
                 <div className="flex items-center justify-between py-2">
                   <span className="text-indigo-100 font-medium">Categories</span>

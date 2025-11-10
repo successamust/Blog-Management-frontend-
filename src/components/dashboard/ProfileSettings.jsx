@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { User, Mail, Edit2, Save, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, Mail, Edit2, Save, X, Upload, Camera, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { authAPI } from '../../services/api';
+import { authAPI, imagesAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import ChangePassword from './ChangePassword';
 
@@ -12,14 +12,18 @@ const ProfileSettings = () => {
     username: '',
     email: '',
     bio: '',
+    profilePicture: '',
   });
   const [originalData, setOriginalData] = useState({
     username: '',
     email: '',
     bio: '',
+    profilePicture: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
   const [loading, setLoading] = useState(true);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (user) {
@@ -27,11 +31,13 @@ const ProfileSettings = () => {
         username: user.username || '',
         email: user.email || '',
         bio: user.bio || '',
+        profilePicture: user.profilePicture || user.avatar || '',
       });
       setOriginalData({
         username: user.username || '',
         email: user.email || '',
         bio: user.bio || '',
+        profilePicture: user.profilePicture || user.avatar || '',
       });
       setLoading(false);
     } else {
@@ -44,11 +50,13 @@ const ProfileSettings = () => {
               username: parsedUser.username || '',
               email: parsedUser.email || '',
               bio: parsedUser.bio || '',
+              profilePicture: parsedUser.profilePicture || parsedUser.avatar || '',
             });
             setOriginalData({
               username: parsedUser.username || '',
               email: parsedUser.email || '',
               bio: parsedUser.bio || '',
+              profilePicture: parsedUser.profilePicture || parsedUser.avatar || '',
             });
           }
         } catch (error) {
@@ -75,6 +83,70 @@ const ProfileSettings = () => {
     setIsEditing(false);
   };
 
+  const handlePictureUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    setUploadingPicture(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', file);
+      const response = await imagesAPI.upload(uploadFormData);
+      const imageUrl = response.data.image?.url || response.data.url || response.data.imageUrl;
+      
+      if (!imageUrl) {
+        toast.error('Failed to get image URL from response');
+        return;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        profilePicture: imageUrl,
+      }));
+      toast.success('Profile picture uploaded successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to upload profile picture');
+    } finally {
+      setUploadingPicture(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemovePicture = async () => {
+    if (!formData.profilePicture) return;
+
+    try {
+      // Try to delete the old image from server
+      if (formData.profilePicture && !formData.profilePicture.startsWith('data:')) {
+        try {
+          await imagesAPI.delete(formData.profilePicture);
+        } catch (error) {
+          console.warn('Could not delete old image:', error);
+        }
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        profilePicture: '',
+      }));
+      toast.success('Profile picture removed');
+    } catch (error) {
+      console.error('Error removing picture:', error);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -96,6 +168,7 @@ const ProfileSettings = () => {
         username: updatedUser.username || '',
         email: updatedUser.email || '',
         bio: updatedUser.bio || '',
+        profilePicture: updatedUser.profilePicture || updatedUser.avatar || '',
       });
       
       // Reload page to refresh auth context
@@ -122,7 +195,8 @@ const ProfileSettings = () => {
   const hasChanges = 
     formData.username !== originalData.username ||
     formData.email !== originalData.email ||
-    formData.bio !== originalData.bio;
+    formData.bio !== originalData.bio ||
+    formData.profilePicture !== originalData.profilePicture;
 
   return (
     <div className="space-y-6">
@@ -162,12 +236,71 @@ const ProfileSettings = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Profile Picture */}
           <div className="flex items-center space-x-6">
-            <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <User className="w-10 h-10 text-white" />
+            <div className="relative">
+              {formData.profilePicture ? (
+                <div className="relative group">
+                  <img
+                    src={formData.profilePicture}
+                    alt="Profile"
+                    className="w-20 h-20 rounded-full object-cover border-4 border-indigo-100 shadow-lg"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                  <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center border-4 border-indigo-100 shadow-lg hidden">
+                    <User className="w-10 h-10 text-white" />
+                  </div>
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePicture}
+                      className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-lg"
+                      title="Remove picture"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center border-4 border-indigo-100 shadow-lg">
+                  <User className="w-10 h-10 text-white" />
+                </div>
+              )}
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-700">Profile Picture</p>
-              <p className="text-sm text-gray-500">Avatar functionality coming soon</p>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-700 mb-2">Profile Picture</p>
+              {isEditing ? (
+                <div className="space-y-2">
+                  <label className="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer transition-colors text-sm font-medium">
+                    <Camera className="w-4 h-4" />
+                    <span>{uploadingPicture ? 'Uploading...' : formData.profilePicture ? 'Change Picture' : 'Upload Picture'}</span>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePictureUpload}
+                      disabled={uploadingPicture}
+                      className="hidden"
+                    />
+                  </label>
+                  {formData.profilePicture && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePicture}
+                      className="ml-2 inline-flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Remove</span>
+                    </button>
+                  )}
+                  <p className="text-xs text-gray-500">JPG, PNG or GIF. Max size 5MB</p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  {formData.profilePicture ? 'Click Edit to change your profile picture' : 'No profile picture set'}
+                </p>
+              )}
             </div>
           </div>
 

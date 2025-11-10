@@ -65,6 +65,14 @@ export const AuthProvider = ({ children }) => {
             freshUser.createdAt = storedUser.createdAt;
           }
           
+          // Preserve profilePicture from localStorage if backend doesn't return it
+          if (storedUser?.profilePicture && !freshUser.profilePicture && !freshUser.avatar) {
+            freshUser.profilePicture = storedUser.profilePicture;
+          }
+          if (storedUser?.avatar && !freshUser.profilePicture && !freshUser.avatar) {
+            freshUser.profilePicture = storedUser.avatar;
+          }
+          
           // Also check savedPosts array and merge
           const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
           if (savedPosts.length > 0) {
