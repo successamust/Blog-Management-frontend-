@@ -54,6 +54,22 @@ export const AuthProvider = ({ children }) => {
           const response = await authAPI.getMe();
           const freshUser = response.data.user;
           
+          // Preserve bookmarkedPosts from localStorage if backend doesn't return it
+          const storedUser = JSON.parse(user);
+          if (storedUser?.bookmarkedPosts && !freshUser.bookmarkedPosts) {
+            freshUser.bookmarkedPosts = storedUser.bookmarkedPosts;
+          }
+          
+          // Also check savedPosts array and merge
+          const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+          if (savedPosts.length > 0) {
+            if (!freshUser.bookmarkedPosts) {
+              freshUser.bookmarkedPosts = [];
+            }
+            // Merge savedPosts with bookmarkedPosts, removing duplicates
+            freshUser.bookmarkedPosts = [...new Set([...freshUser.bookmarkedPosts, ...savedPosts])];
+          }
+          
           localStorage.setItem('user', JSON.stringify(freshUser));
           dispatch({
             type: 'LOGIN_SUCCESS',

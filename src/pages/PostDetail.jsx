@@ -49,13 +49,23 @@ const PostDetail = () => {
   // Update bookmark state when user or post changes
   useEffect(() => {
     if (post && isAuthenticated) {
+      // Normalize post ID to string for comparison
+      const postId = String(post._id || post.id);
+      
       // Check both user.bookmarkedPosts and localStorage
       const userFromStorage = JSON.parse(localStorage.getItem('user') || '{}');
       const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+      
+      // Normalize all IDs to strings for comparison
+      const userBookmarked = user?.bookmarkedPosts?.map(id => String(id)) || [];
+      const storageBookmarked = userFromStorage?.bookmarkedPosts?.map(id => String(id)) || [];
+      const savedPostsNormalized = savedPosts.map(id => String(id));
+      
       const bookmarked = 
-        user?.bookmarkedPosts?.includes(post._id) ||
-        userFromStorage?.bookmarkedPosts?.includes(post._id) ||
-        savedPosts.includes(post._id);
+        userBookmarked.includes(postId) ||
+        storageBookmarked.includes(postId) ||
+        savedPostsNormalized.includes(postId);
+      
       setIsBookmarked(bookmarked);
     } else if (post && !isAuthenticated) {
       setIsBookmarked(false);
@@ -89,12 +99,21 @@ const PostDetail = () => {
       setPost(post);
       
       // Set initial bookmark state - check multiple sources
+      // Normalize post ID to string for comparison
+      const postId = String(post._id || post.id);
       const userFromStorage = JSON.parse(localStorage.getItem('user') || '{}');
       const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+      
+      // Normalize all IDs to strings for comparison
+      const userBookmarked = user?.bookmarkedPosts?.map(id => String(id)) || [];
+      const storageBookmarked = userFromStorage?.bookmarkedPosts?.map(id => String(id)) || [];
+      const savedPostsNormalized = savedPosts.map(id => String(id));
+      
       const bookmarked = 
-        user?.bookmarkedPosts?.includes(post._id) ||
-        userFromStorage?.bookmarkedPosts?.includes(post._id) ||
-        savedPosts.includes(post._id);
+        userBookmarked.includes(postId) ||
+        storageBookmarked.includes(postId) ||
+        savedPostsNormalized.includes(postId);
+      
       setIsBookmarked(bookmarked);
       
       const [commentsRes, relatedRes] = await Promise.all([
@@ -247,9 +266,10 @@ const PostDetail = () => {
     try {
       setInteractionLoading(true);
       const wasBookmarked = isBookmarked;
+      const postId = post._id || post.id;
       
       try {
-        const response = await postsAPI.bookmark(post._id);
+        const response = await postsAPI.bookmark(postId);
         const { bookmarked } = response.data;
         
         // Update local state immediately
@@ -262,12 +282,14 @@ const PostDetail = () => {
             if (!updatedUser.bookmarkedPosts) {
               updatedUser.bookmarkedPosts = [];
             }
-            if (!updatedUser.bookmarkedPosts.includes(post._id)) {
-              updatedUser.bookmarkedPosts.push(post._id);
+            // Normalize IDs to strings for comparison
+            const normalizedIds = updatedUser.bookmarkedPosts.map(id => String(id));
+            if (!normalizedIds.includes(String(postId))) {
+              updatedUser.bookmarkedPosts.push(postId);
             }
           } else {
             updatedUser.bookmarkedPosts = updatedUser.bookmarkedPosts?.filter(
-              id => id !== post._id
+              id => String(id) !== String(postId)
             ) || [];
           }
           
@@ -285,13 +307,17 @@ const PostDetail = () => {
           // Update local state immediately
           setIsBookmarked(newBookmarkedState);
           
+          // Normalize IDs to strings for comparison
+          const normalizedSavedPosts = savedPosts.map(id => String(id));
+          const normalizedPostId = String(postId);
+          
           if (wasBookmarked) {
-            const updated = savedPosts.filter(id => id !== post._id);
+            const updated = savedPosts.filter(id => String(id) !== normalizedPostId);
             localStorage.setItem('savedPosts', JSON.stringify(updated));
             toast.success('Post removed from saved!');
           } else {
-            if (!savedPosts.includes(post._id)) {
-              savedPosts.push(post._id);
+            if (!normalizedSavedPosts.includes(normalizedPostId)) {
+              savedPosts.push(postId);
               localStorage.setItem('savedPosts', JSON.stringify(savedPosts));
             }
             toast.success('Post saved! (Saved locally until backend is updated)');
@@ -303,13 +329,14 @@ const PostDetail = () => {
             if (!updatedUser.bookmarkedPosts) {
               updatedUser.bookmarkedPosts = [];
             }
+            const normalizedUserBookmarks = updatedUser.bookmarkedPosts.map(id => String(id));
             if (wasBookmarked) {
               updatedUser.bookmarkedPosts = updatedUser.bookmarkedPosts.filter(
-                id => id !== post._id
+                id => String(id) !== normalizedPostId
               );
             } else {
-              if (!updatedUser.bookmarkedPosts.includes(post._id)) {
-                updatedUser.bookmarkedPosts.push(post._id);
+              if (!normalizedUserBookmarks.includes(normalizedPostId)) {
+                updatedUser.bookmarkedPosts.push(postId);
               }
             }
             localStorage.setItem('user', JSON.stringify(updatedUser));

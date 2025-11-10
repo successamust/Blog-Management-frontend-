@@ -97,7 +97,7 @@ export const commentsAPI = {
 
 export const newsletterAPI = {
   subscribe: (email) => api.post('/newsletters/subscribe', { email }),
-  unsubscribe: (email) => api.post('/newsletters/unsubscribe', { email }),
+  unsubscribe: (email) => api.get('/newsletters/unsubscribe', { params: { email } }),
 };
 
 export const searchAPI = {

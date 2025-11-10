@@ -13,6 +13,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
+import Unsubscribe from './pages/auth/Unsubscribe';
 import Posts from './pages/Posts';
 import PostDetail from './pages/PostDetail';
 import Categories from './pages/Categories';
@@ -41,6 +42,7 @@ function AppContent() {
             <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
             <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
             <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+            <Route path="/unsubscribe" element={<PageTransition><Unsubscribe /></PageTransition>} />
             <Route path="/posts" element={<PageTransition><Posts /></PageTransition>} />
             <Route path="/posts/:slug" element={<PageTransition><PostDetail /></PageTransition>} />
             <Route path="/categories" element={<PageTransition><Categories /></PageTransition>} />
