@@ -40,9 +40,25 @@ const AuthorApplication = () => {
       return;
     }
 
+    if (formData.message.trim().length < 10) {
+      toast.error('Application message must be at least 10 characters long');
+      return;
+    }
+
     try {
       setSubmitting(true);
-      const response = await authorsAPI.apply(formData);
+      
+      // Prepare data for backend - convert expertise string to array
+      const submitData = {
+        message: formData.message.trim(),
+        bio: formData.bio.trim() || undefined,
+        expertise: formData.expertise.trim() 
+          ? formData.expertise.split(',').map(exp => exp.trim()).filter(exp => exp.length > 0)
+          : undefined,
+        website: formData.website.trim() || undefined,
+      };
+
+      const response = await authorsAPI.apply(submitData);
       setApplicationStatus(response.data.application);
       toast.success(response.data.message || 'Application submitted successfully!');
       setFormData({
@@ -52,7 +68,18 @@ const AuthorApplication = () => {
         website: '',
       });
     } catch (error) {
-      if (error.response?.status === 404) {
+      if (error.response?.status === 400) {
+        // Handle validation errors from backend
+        const errorData = error.response.data;
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const errorMessages = errorData.errors.map(err => 
+            typeof err === 'string' ? err : err.msg || err.message || 'Validation error'
+          ).join(', ');
+          toast.error(errorMessages);
+        } else {
+          toast.error(errorData.message || 'Failed to submit application. Please check your input.');
+        }
+      } else if (error.response?.status === 404) {
         toast.error('Author application endpoint not found. Please ensure the backend is updated.');
       } else {
         toast.error(error.response?.data?.message || 'Failed to submit application');

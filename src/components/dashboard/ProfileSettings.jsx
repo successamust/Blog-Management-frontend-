@@ -267,9 +267,31 @@ const ProfileSettings = () => {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Member Since</span>
                 <span className="text-sm text-gray-900">
-                  {user.createdAt 
-                    ? new Date(user.createdAt).toLocaleDateString() 
-                    : 'N/A'}
+                  {(() => {
+                    // Try to get createdAt from user object
+                    let createdAt = user?.createdAt;
+                    
+                    // Fallback: try to get from localStorage
+                    if (!createdAt) {
+                      try {
+                        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                        createdAt = storedUser?.createdAt;
+                      } catch (e) {
+                        // Ignore
+                      }
+                    }
+                    
+                    // Format the date if available
+                    if (createdAt) {
+                      return new Date(createdAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      });
+                    }
+                    
+                    return 'N/A';
+                  })()}
                 </span>
               </div>
             </div>

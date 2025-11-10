@@ -60,6 +60,11 @@ export const AuthProvider = ({ children }) => {
             freshUser.bookmarkedPosts = storedUser.bookmarkedPosts;
           }
           
+          // Preserve createdAt from localStorage if backend doesn't return it
+          if (storedUser?.createdAt && !freshUser.createdAt) {
+            freshUser.createdAt = storedUser.createdAt;
+          }
+          
           // Also check savedPosts array and merge
           const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
           if (savedPosts.length > 0) {

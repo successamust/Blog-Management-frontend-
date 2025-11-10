@@ -37,7 +37,14 @@ const Search = () => {
   const fetchSuggestions = async () => {
     try {
       const response = await searchAPI.getSuggestions(query);
-      setSuggestions(response.data.suggestions || []);
+      const suggestionsData = response.data.suggestions || {};
+      // Flatten suggestions from different types
+      const flattened = [
+        ...(suggestionsData.posts || []).map(p => p.title),
+        ...(suggestionsData.categories || []).map(c => c.name),
+        ...(suggestionsData.tags || []).map(t => t.name)
+      ];
+      setSuggestions(flattened);
       setShowSuggestions(true);
     } catch (error) {
       setSuggestions([]);
@@ -57,7 +64,8 @@ const Search = () => {
       }
 
       const response = await searchAPI.search(params);
-      setResults(response.data.posts || []);
+      // Backend returns 'results' not 'posts'
+      setResults(response.data.results || response.data.posts || []);
     } catch (error) {
       console.error('Error searching:', error);
       toast.error('Failed to perform search');
