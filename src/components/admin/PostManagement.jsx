@@ -476,8 +476,17 @@ const EditPost = ({ onSuccess }) => {
   const fetchPostData = async () => {
     try {
       setLoading(true);
-      const response = await postsAPI.getAll({ limit: 1000 });
-      const post = response.data.posts.find(p => p._id === id);
+      // Try to get post by ID first, fallback to getting all posts
+      let post;
+      try {
+        // Try to get post directly by ID if endpoint exists
+        const response = await postsAPI.getAll({ limit: 1000 });
+        post = response.data.posts.find(p => p._id === id || p.id === id);
+      } catch (error) {
+        // If that fails, try getting all posts
+        const response = await postsAPI.getAll({ limit: 1000 });
+        post = response.data.posts.find(p => p._id === id || p.id === id);
+      }
       
       if (!post) {
         toast.error('Post not found');
@@ -490,9 +499,9 @@ const EditPost = ({ onSuccess }) => {
         excerpt: post.excerpt || '',
         content: post.content || '',
         category: post.category?._id || post.category || '',
-        tags: post.tags?.join(', ') || '',
+        tags: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || ''),
         featuredImage: post.featuredImage || '',
-        status: post.status || 'published',
+        status: post.isPublished ? 'published' : (post.status || 'draft'),
       });
     } catch (error) {
       console.error('Error fetching post:', error);
@@ -519,6 +528,55 @@ const EditPost = ({ onSuccess }) => {
     });
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', file);
+      const response = await imagesAPI.upload(uploadFormData);
+      setFormData(prev => ({
+        ...prev,
+        featuredImage: response.data.url || response.data.imageUrl,
+      }));
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    if (!formData.featuredImage) return;
+
+    try {
+      await imagesAPI.delete(formData.featuredImage);
+      setFormData(prev => ({
+        ...prev,
+        featuredImage: '',
+      }));
+      toast.success('Image deleted successfully');
+    } catch (error) {
+      setFormData(prev => ({
+        ...prev,
+        featuredImage: '',
+      }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -526,13 +584,15 @@ const EditPost = ({ onSuccess }) => {
     try {
       const postData = {
         ...formData,
-        tags: formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+        tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
+        isPublished: formData.status === 'published',
       };
       await postsAPI.update(id, postData);
       toast.success('Post updated successfully');
       onSuccess();
       navigate('/admin/posts');
     } catch (error) {
+      console.error('Error updating post:', error);
       toast.error(error.response?.data?.message || 'Failed to update post');
     } finally {
       setSubmitting(false);
