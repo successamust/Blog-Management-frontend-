@@ -8,7 +8,8 @@ import {
   Menu, 
   X,
   PenSquare,
-  LayoutDashboard
+  LayoutDashboard,
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -17,6 +18,9 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
+  
+  // Check if user can apply to become an author
+  const canApplyForAuthor = isAuthenticated && user?.role !== 'author' && user?.role !== 'admin';
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -249,6 +253,16 @@ const Header = () => {
                   >
                     My Dashboard
                   </Link>
+                  {canApplyForAuthor && (
+                    <Link
+                      to="/dashboard?tab=author"
+                      className="flex items-center space-x-2 text-slate-600 hover:text-indigo-600 hover:bg-white/50 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      <span>Become Author</span>
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       handleLogout();

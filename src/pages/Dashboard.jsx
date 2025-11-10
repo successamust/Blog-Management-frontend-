@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   FileText,
@@ -34,6 +34,7 @@ import RichTextEditor from '../components/admin/RichTextEditor';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dashboardData, setDashboardData] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
@@ -47,6 +48,14 @@ const Dashboard = () => {
   });
   const [tabLoading, setTabLoading] = useState(false);
   const { user, isAdmin } = useAuth();
+
+  // Read tab from URL query parameter on mount
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetchDashboardData();

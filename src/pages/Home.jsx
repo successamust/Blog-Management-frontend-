@@ -1,19 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, UserCheck, PenTool, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { postsAPI, categoriesAPI, searchAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import AnimatedHero from '../components/common/AnimatedHero';
 import AnimatedCard from '../components/common/AnimatedCard';
 import InteractivePostCard from '../components/posts/InteractivePostCard';
 
 const Home = () => {
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [featuredPosts, setFeaturedPosts] = useState([]);
   const [recentPosts, setRecentPosts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [popularTags, setPopularTags] = useState([]);
   const [totalPosts, setTotalPosts] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isAuthorSectionOpen, setIsAuthorSectionOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Check if user can apply to become an author
+  const canApplyForAuthor = isAuthenticated && user?.role !== 'author' && user?.role !== 'admin';
+
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+      // On desktop, always keep it open
+      if (window.innerWidth >= 640) {
+        setIsAuthorSectionOpen(true);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const fetchHomeData = async () => {
@@ -320,13 +343,114 @@ const Home = () => {
 
           {/* Sidebar */}
           <div className="space-y-6 lg:space-y-8">
+            {/* Become Author CTA - Only show to non-authors - Moved to top for visibility */}
+            {canApplyForAuthor && (
+              <motion.div
+                className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-2xl shadow-lg border-2 border-indigo-200 relative overflow-hidden"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4 }}
+              >
+                {/* Decorative background elements */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-200/30 to-purple-200/30 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-200/30 to-indigo-200/30 rounded-full blur-2xl"></div>
+                
+                <div className="relative z-10">
+                  {/* Header - Always visible, clickable on mobile */}
+                  <button
+                    onClick={() => setIsAuthorSectionOpen(!isAuthorSectionOpen)}
+                    className="w-full flex items-center justify-between p-4 sm:p-6 sm:pb-4 focus:outline-none"
+                  >
+                    <div className="flex items-center flex-1">
+                      <div className="p-2 sm:p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg mr-3 sm:mr-4">
+                        <PenTool className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="text-lg sm:text-xl md:text-2xl font-display text-slate-900">Become an Author</h3>
+                        <p className="text-xs sm:text-sm text-slate-600">Share your voice</p>
+                      </div>
+                    </div>
+                    {/* Chevron - Only visible on mobile */}
+                    <div className="sm:hidden ml-2">
+                      {isAuthorSectionOpen ? (
+                        <ChevronUp className="w-5 h-5 text-slate-600" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-slate-600" />
+                      )}
+                    </div>
+                  </button>
+                  
+                  {/* Content - Hidden on mobile when collapsed, always visible on desktop */}
+                  <AnimatePresence>
+                    {(isAuthorSectionOpen || !isMobile) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-4 sm:px-6 pb-4 sm:pb-6 sm:pb-8">
+                          <p className="text-slate-700 mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base">
+                            Join our community of writers and share your stories, insights, and expertise with readers around the world.
+                          </p>
+                          
+                          <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="mb-4"
+                          >
+                            {isAuthenticated ? (
+                              <Link
+                                to="/dashboard?tab=author"
+                                className="block w-full text-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group text-sm sm:text-base"
+                                onClick={() => setIsAuthorSectionOpen(false)}
+                              >
+                                <span className="flex items-center justify-center">
+                                  Apply Now
+                                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                </span>
+                              </Link>
+                            ) : (
+                              <Link
+                                to="/login?redirect=/dashboard?tab=author"
+                                className="block w-full text-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group text-sm sm:text-base"
+                                onClick={() => setIsAuthorSectionOpen(false)}
+                              >
+                                <span className="flex items-center justify-center">
+                                  Sign In to Apply
+                                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                </span>
+                              </Link>
+                            )}
+                          </motion.div>
+                          
+                          <div className="flex items-center justify-center gap-3 sm:gap-4 text-xs text-slate-600">
+                            <div className="flex items-center gap-1">
+                              <Sparkles className="w-3 h-3 text-indigo-500" />
+                              <span>Creative Freedom</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <UserCheck className="w-3 h-3 text-purple-500" />
+                              <span>Build Audience</span>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+
             {/* Categories */}
             <motion.section
               className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 sm:p-8"
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.5 }}
             >
               <div className="flex items-center mb-6">
                 <div className="w-1 h-10 bg-gradient-to-b from-indigo-500 via-purple-500 to-pink-500 rounded-full mr-4"></div>
@@ -373,7 +497,7 @@ const Home = () => {
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 0.6 }}
             >
               <div className="flex items-center mb-6">
                 <div className="w-1 h-10 bg-gradient-to-b from-purple-500 via-pink-500 to-indigo-500 rounded-full mr-4"></div>
@@ -417,7 +541,7 @@ const Home = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.6 }}
+              transition={{ delay: 0.7 }}
             >
               <h3 className="text-xl sm:text-2xl font-display mb-6">Quick Stats</h3>
               <div className="space-y-3">
