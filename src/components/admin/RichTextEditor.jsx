@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { TextSelection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
@@ -29,8 +30,6 @@ import {
   AlignRight,
   Eye,
   EyeOff,
-  Moon,
-  Sun,
   Save,
   Type,
   FileText,
@@ -94,10 +93,14 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   const [isMarkdown, setIsMarkdown] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkText, setLinkText] = useState('');
   const [markdownContent, setMarkdownContent] = useState('');
   const [lastSaved, setLastSaved] = useState(null);
   const autosaveTimerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const isUpdatingRef = useRef(false);
 
   // Convert HTML to Markdown
   const htmlToMarkdown = useCallback((html) => {
@@ -138,10 +141,16 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     extensions: [
       StarterKit.configure({
         codeBlock: false, // We'll use CodeBlockLowlight instead
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
         // Note: StarterKit v3 doesn't include Link or Underline by default
-        // But we exclude them explicitly to prevent any conflicts
-        link: false,
-        underline: false,
+        // So we add them explicitly below
       }),
       Image.configure({
         inline: true,
@@ -169,6 +178,9 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     ],
     content: value || '',
     onUpdate: ({ editor }) => {
+      // Skip update if we're programmatically updating content
+      if (isUpdatingRef.current) return;
+      
       const html = editor.getHTML();
       onChange(html);
       
@@ -198,18 +210,39 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     editorProps: {
       attributes: {
         class: isDark
-          ? 'prose prose-invert max-w-none focus:outline-none p-4 min-h-[400px] dark:text-gray-100'
-          : 'prose max-w-none focus:outline-none p-4 min-h-[400px] text-gray-900',
+          ? 'prose prose-invert max-w-none focus:outline-none p-4 min-h-[400px] dark:text-gray-100 bg-gray-800'
+          : 'prose max-w-none focus:outline-none p-4 min-h-[400px] text-gray-900 bg-white',
       },
     },
   });
 
   // Update editor content when value prop changes
   useEffect(() => {
-    if (editor && value !== undefined && value !== editor.getHTML()) {
-      editor.commands.setContent(value || '');
-      const md = htmlToMarkdown(value || '');
+    if (!editor || isUpdatingRef.current) return;
+    
+    const currentContent = editor.getHTML();
+    const newContent = value || '';
+    
+    // Only update if content actually changed to avoid infinite loops
+    // Normalize empty content for comparison
+    const normalizedCurrent = currentContent.trim() || '<p></p>';
+    const normalizedNew = newContent.trim() || '<p></p>';
+    
+    if (normalizedNew !== normalizedCurrent) {
+      isUpdatingRef.current = true;
+      
+      try {
+        editor.commands.setContent(newContent, false); // false = don't emit update event
+        const md = htmlToMarkdown(newContent);
       setMarkdownContent(md);
+      } catch (error) {
+        console.error('Error updating editor content:', error);
+      } finally {
+        // Reset flag after a short delay
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 100);
+      }
     }
   }, [value, editor, htmlToMarkdown]);
 
@@ -221,29 +254,243 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       // Switch to Markdown mode - convert current HTML to Markdown
       const currentHtml = editor.getHTML();
       const md = htmlToMarkdown(currentHtml);
-      setMarkdownContent(md);
+      setMarkdownContent(md || '');
     } else {
       // Switch to WYSIWYG mode - convert Markdown to HTML
       if (markdownContent) {
+        try {
+          isUpdatingRef.current = true;
         const html = markdownToHtml(markdownContent);
-        editor.commands.setContent(html);
-        onChange(html);
+          editor.commands.setContent(html || '', false);
+          onChange(html || '');
+          setTimeout(() => {
+            isUpdatingRef.current = false;
+          }, 100);
+        } catch (error) {
+          console.error('Error converting markdown to HTML:', error);
+          isUpdatingRef.current = false;
+        }
+      } else {
+        // If no markdown content, ensure editor has current content
+        const currentHtml = editor.getHTML();
+        if (currentHtml) {
+          onChange(currentHtml);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMarkdown, editor]);
 
-  // Toggle dark mode
-  useEffect(() => {
-    if (editor) {
+  // Flag to prevent infinite loops
+  const isApplyingStylesRef = useRef(false);
+  const styleTimeoutRef = useRef(null);
+
+  // Function to apply dark mode styles to editor content
+  const applyDarkModeStyles = useCallback(() => {
+    if (!editor || isApplyingStylesRef.current) return;
+    
+    isApplyingStylesRef.current = true;
+    
+    try {
       const editorElement = editor.view.dom.closest('.ProseMirror') || editor.view.dom;
+      if (!editorElement) return;
+      
+      if (isDark) {
+        // Set cursor color on the editor element itself
+        editorElement.style.setProperty('caret-color', '#f3f4f6', 'important');
+        editorElement.style.setProperty('color', '#f3f4f6', 'important');
+        
+        // Specifically target headers first with more aggressive approach
+        const headers = editorElement.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        headers.forEach(header => {
+          header.style.setProperty('color', '#f3f4f6', 'important');
+          header.style.setProperty('caret-color', '#f3f4f6', 'important');
+          // Also set on any text nodes or nested elements within headers
+          const headerChildren = header.querySelectorAll('*');
+          headerChildren.forEach(child => {
+            child.style.setProperty('color', '#f3f4f6', 'important');
+          });
+        });
+        
+        // Force all text elements to be light in dark mode with !important
+        const allTextElements = editorElement.querySelectorAll('p, li, span, strong, em, blockquote, div');
+        allTextElements.forEach(el => {
+          el.style.setProperty('color', '#f3f4f6', 'important');
+          el.style.setProperty('caret-color', '#f3f4f6', 'important');
+        });
+        
+        // Also set on any nested elements that might be headers
+        const allElements = editorElement.querySelectorAll('*');
+        allElements.forEach(el => {
+          if (el.tagName && ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(el.tagName)) {
+            el.style.setProperty('color', '#f3f4f6', 'important');
+            el.style.setProperty('caret-color', '#f3f4f6', 'important');
+          } else if (el.tagName && ['P', 'LI', 'SPAN', 'STRONG', 'EM', 'BLOCKQUOTE', 'DIV'].includes(el.tagName)) {
+            el.style.setProperty('color', '#f3f4f6', 'important');
+          }
+        });
+      } else {
+        // Reset cursor color
+        editorElement.style.removeProperty('caret-color');
+        editorElement.style.removeProperty('color');
+        
+        // Reset text elements to dark in light mode
+        const allTextElements = editorElement.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, span, strong, em, blockquote, div');
+        allTextElements.forEach(el => {
+          el.style.removeProperty('color');
+          el.style.removeProperty('caret-color');
+        });
+      }
+    } finally {
+      // Reset flag after a short delay
+      setTimeout(() => {
+        isApplyingStylesRef.current = false;
+      }, 50);
+    }
+  }, [editor, isDark]);
+
+  // Toggle dark mode - apply to editor and parent container
+  useEffect(() => {
+    if (!editor) return;
+    
+      const editorElement = editor.view.dom.closest('.ProseMirror') || editor.view.dom;
+    if (!editorElement) return;
+    
+    // Clear any pending style updates
+    if (styleTimeoutRef.current) {
+      clearTimeout(styleTimeoutRef.current);
+    }
+    
+    // Update editor element classes and styles
       if (isDark) {
         editorElement.classList.add('dark');
+      editorElement.classList.add('prose-invert');
+      editorElement.style.backgroundColor = '#1f2937'; // bg-gray-800
+      editorElement.style.color = '#f3f4f6'; // text-gray-100
+      editorElement.style.caretColor = '#f3f4f6'; // cursor color
       } else {
         editorElement.classList.remove('dark');
-      }
+      editorElement.classList.remove('prose-invert');
+      editorElement.style.backgroundColor = '#ffffff'; // bg-white
+      editorElement.style.color = '#111827'; // text-gray-900
+      editorElement.style.caretColor = '#111827'; // cursor color
     }
-  }, [isDark, editor]);
+    
+    // Apply styles immediately and then again after a delay
+    applyDarkModeStyles();
+    styleTimeoutRef.current = setTimeout(() => {
+      applyDarkModeStyles();
+    }, 100);
+    
+    // Also apply styles after a longer delay to catch any late DOM updates
+    setTimeout(() => {
+      applyDarkModeStyles();
+    }, 300);
+    
+    // Use MutationObserver to watch for DOM changes (but not style changes)
+    const observer = new MutationObserver((mutations) => {
+      // Only react to actual content changes, not style changes
+      const hasContentChange = mutations.some(mutation => 
+        mutation.type === 'childList' || 
+        (mutation.type === 'attributes' && mutation.attributeName !== 'style')
+      );
+      
+      // Also check if headers were added or modified
+      const hasHeaderChange = mutations.some(mutation => {
+        if (mutation.type === 'childList') {
+          const addedNodes = Array.from(mutation.addedNodes);
+          return addedNodes.some(node => 
+            node.nodeType === 1 && 
+            ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(node.tagName)
+          );
+        }
+        return false;
+      });
+      
+      if ((hasContentChange || hasHeaderChange) && !isApplyingStylesRef.current) {
+        // Debounce style application
+        if (styleTimeoutRef.current) {
+          clearTimeout(styleTimeoutRef.current);
+        }
+        styleTimeoutRef.current = setTimeout(() => {
+          applyDarkModeStyles();
+        }, 50);
+      }
+    });
+    
+    observer.observe(editorElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class'] // Only watch class changes, not style
+    });
+    
+    return () => {
+      observer.disconnect();
+      if (styleTimeoutRef.current) {
+        clearTimeout(styleTimeoutRef.current);
+      }
+    };
+  }, [isDark, editor, applyDarkModeStyles]);
+
+  // Reapply dark mode styles when editor content updates
+  useEffect(() => {
+    if (!editor) return;
+    
+    const handleUpdate = () => {
+      if (isApplyingStylesRef.current) return;
+      
+      // Debounce style application
+      if (styleTimeoutRef.current) {
+        clearTimeout(styleTimeoutRef.current);
+      }
+      styleTimeoutRef.current = setTimeout(() => {
+        applyDarkModeStyles();
+      }, 100);
+    };
+    
+    const handleSelectionUpdate = () => {
+      if (isApplyingStylesRef.current) return;
+      
+      // Reapply styles on selection change with debounce
+      // This is important for headers that might be selected
+      requestAnimationFrame(() => {
+        if (styleTimeoutRef.current) {
+          clearTimeout(styleTimeoutRef.current);
+        }
+        styleTimeoutRef.current = setTimeout(() => {
+          applyDarkModeStyles();
+        }, 30);
+      });
+    };
+    
+    // Also listen for transaction updates which happen when formatting changes
+    const handleTransaction = () => {
+      if (isApplyingStylesRef.current) return;
+      
+      requestAnimationFrame(() => {
+        if (styleTimeoutRef.current) {
+          clearTimeout(styleTimeoutRef.current);
+        }
+        styleTimeoutRef.current = setTimeout(() => {
+          applyDarkModeStyles();
+        }, 50);
+      });
+    };
+    
+    editor.on('update', handleUpdate);
+    editor.on('selectionUpdate', handleSelectionUpdate);
+    editor.on('transaction', handleTransaction);
+    
+    return () => {
+      editor.off('update', handleUpdate);
+      editor.off('selectionUpdate', handleSelectionUpdate);
+      editor.off('transaction', handleTransaction);
+      if (styleTimeoutRef.current) {
+        clearTimeout(styleTimeoutRef.current);
+      }
+    };
+  }, [editor, applyDarkModeStyles]);
 
   // Cleanup autosave timer
   useEffect(() => {
@@ -300,11 +547,250 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     }
   };
 
-  const handleLink = () => {
-    const url = window.prompt('Enter URL:');
-    if (url) {
-      editor.chain().focus().setLink({ href: url }).run();
+  const handleLink = (e) => {
+    // If we're already in a link, just move cursor out of link to allow normal text typing
+    // Don't unlink the text, just exit link mode (toggle off)
+    if (editor.isActive('link')) {
+      const { from, to } = editor.state.selection;
+      const doc = editor.state.doc;
+      
+      // Find the end of the link by looking forward from current position
+      let endPos = Math.max(from, to);
+      
+      // Check forward until we find a position without link mark
+      for (let pos = endPos; pos < doc.content.size; pos++) {
+        const resolved = doc.resolve(pos);
+        const marks = resolved.marks();
+        const hasLink = marks.some(m => m.type.name === 'link');
+        if (!hasLink) {
+          endPos = pos;
+          break;
+        }
+        // Safety check - don't loop forever
+        if (pos - endPos > 1000) break;
+      }
+      
+      // Move cursor to just after the link
+      editor.chain().focus().setTextSelection(endPos).run();
+      
+      // Remove link mark from cursor position to prevent extending
+      setTimeout(() => {
+        const { view } = editor;
+        const { state } = view;
+        const { tr } = state;
+        
+        // Remove link mark from stored marks
+        const linkMark = state.schema.marks.link;
+        if (linkMark) {
+          const marks = tr.storedMarks || tr.selection.$from.marks();
+          const marksWithoutLink = marks.filter(mark => mark.type.name !== 'link');
+          tr.setStoredMarks(marksWithoutLink);
+          view.dispatch(tr);
+        }
+      }, 10);
+      
+      return;
     }
+    
+    // If we're not in a link, open modal to insert link
+    // Get selected text if any
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, ' ');
+    
+    if (selectedText) {
+      setLinkText(selectedText);
+    } else {
+      setLinkText('');
+    }
+    
+    setLinkUrl('');
+    setShowLinkModal(true);
+  };
+
+  const handleInsertLink = () => {
+    if (!linkUrl.trim()) {
+      toast.error('Please enter a URL');
+      return;
+    }
+
+    // Validate and normalize URL format
+    let finalUrl = linkUrl.trim();
+    
+    try {
+      new URL(finalUrl);
+    } catch (e) {
+      // If not a valid URL, try adding https://
+      const urlWithProtocol = finalUrl.startsWith('http://') || finalUrl.startsWith('https://') 
+        ? finalUrl 
+        : `https://${finalUrl}`;
+      
+      try {
+        new URL(urlWithProtocol);
+        finalUrl = urlWithProtocol;
+      } catch (e2) {
+        toast.error('Please enter a valid URL');
+        return;
+      }
+    }
+
+    // Helper function to move cursor outside link
+    const moveCursorOutsideLink = () => {
+      requestAnimationFrame(() => {
+        const { from, to } = editor.state.selection;
+        const doc = editor.state.doc;
+        
+        // Start from the end of current selection and find where link mark ends
+        let endPos = Math.max(from, to);
+        
+        // Check if we're still in a link at the end position
+        const checkPos = doc.resolve(endPos);
+        const hasLinkAtPos = checkPos.marks().some(m => m.type.name === 'link');
+        
+        if (hasLinkAtPos) {
+          // Find where the link mark ends by checking forward
+          for (let pos = endPos; pos < doc.content.size; pos++) {
+            const resolved = doc.resolve(pos);
+            const marks = resolved.marks();
+            const hasLink = marks.some(m => m.type.name === 'link');
+            if (!hasLink) {
+              endPos = pos;
+              break;
+            }
+            // If we've checked many positions and still in link, break
+            if (pos - endPos > 1000) break;
+          }
+          
+          // If we couldn't find the end, insert a space to create a position outside the link
+          if (endPos === Math.max(from, to)) {
+            // Insert a space after the link
+            editor.chain().focus().insertContent(' ').run();
+            
+            // Move cursor to the space (outside link)
+            requestAnimationFrame(() => {
+              const spacePos = editor.state.selection.from;
+              
+              // Delete the space but keep cursor outside
+              setTimeout(() => {
+                const { view } = editor;
+                const { state } = view;
+                const { tr } = state;
+                
+                // Delete the space
+                tr.delete(spacePos - 1, spacePos);
+                
+                // Set cursor to where the space was (outside link)
+                // After deletion, this is selectionEnd + 1, but that position doesn't exist
+                // So we'll set it to selectionEnd, then move forward
+                const selection = TextSelection.create(tr.doc, spacePos - 1);
+                tr.setSelection(selection);
+                view.dispatch(tr);
+                
+                // Now move cursor forward by one position (outside link)
+                setTimeout(() => {
+                  const { view: newView } = editor;
+                  const { state: newState } = newView;
+                  const { tr: newTr } = newState;
+                  
+                  const currentPos = newTr.selection.from;
+                  const newPos = Math.min(currentPos + 1, newState.doc.content.size);
+                  
+                  if (newPos > currentPos && newPos <= newState.doc.content.size) {
+                    try {
+                      const newSelection = TextSelection.create(newState.doc, newPos);
+                      newTr.setSelection(newSelection);
+                      newView.dispatch(newTr);
+                    } catch (e) {
+                      editor.chain().focus().setTextSelection(newPos).run();
+                    }
+                  }
+                }, 5);
+              }, 5);
+            });
+            return;
+          }
+        }
+        
+        // Move cursor to just after the link
+        editor.chain().focus().setTextSelection(endPos).run();
+      });
+    };
+
+    if (linkText.trim()) {
+      // Insert link with text
+      editor.chain().focus().insertContent(`<a href="${finalUrl}">${linkText.trim()}</a>`).run();
+      
+      // Move cursor outside the link
+      moveCursorOutsideLink();
+    } else {
+      // Insert or update link on selected text
+      if (editor.isActive('link')) {
+        // Update existing link
+        editor.chain().focus().extendMarkRange('link').setLink({ href: finalUrl }).run();
+        moveCursorOutsideLink();
+      } else {
+        // Get the selected text and its range
+        const { from, to } = editor.state.selection;
+        const selectedText = editor.state.doc.textBetween(from, to, ' ');
+        
+        if (selectedText) {
+          // Get the selection range before setting link
+          const { from, to } = editor.state.selection;
+          const linkEndPos = to;
+          
+          // Set the link on the selected text
+          editor.chain()
+            .focus()
+            .setLink({ href: finalUrl })
+            .run();
+          
+          // Move cursor outside the link and remove link mark from cursor position
+          setTimeout(() => {
+            // Move cursor to just after the link
+            editor.chain().focus().setTextSelection(linkEndPos).run();
+            
+            // Remove link mark from cursor position to prevent extending
+            setTimeout(() => {
+              const { view } = editor;
+              const { state } = view;
+              const { tr } = state;
+              
+              // Remove link mark from stored marks
+              const linkMark = state.schema.marks.link;
+              if (linkMark) {
+                const marks = tr.storedMarks || tr.selection.$from.marks();
+                const marksWithoutLink = marks.filter(mark => mark.type.name !== 'link');
+                tr.setStoredMarks(marksWithoutLink);
+                view.dispatch(tr);
+              }
+            }, 10);
+          }, 10);
+        } else {
+          // No text selected, just set link mark (will apply to next typed text)
+          editor.chain().focus().setLink({ href: finalUrl }).run();
+        }
+      }
+    }
+
+    setShowLinkModal(false);
+    setLinkUrl('');
+    setLinkText('');
+    toast.success('Link inserted successfully');
+  };
+
+  const handleCancelLink = () => {
+    setShowLinkModal(false);
+    setLinkUrl('');
+    setLinkText('');
+  };
+
+  const handleUnlink = () => {
+    if (editor.isActive('link')) {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      toast.success('Link removed');
+    }
+    setShowLinkModal(false);
+    setLinkUrl('');
+    setLinkText('');
   };
 
   const insertImage = () => {
@@ -326,23 +812,29 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   const ToolbarButton = ({ onClick, isActive = false, children, title, disabled = false }) => (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!disabled && onClick) {
+          onClick(e);
+        }
+      }}
       disabled={disabled}
       title={title}
       className={`p-2 rounded-lg transition-colors ${
         isActive
           ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+          : `hover:bg-gray-100 dark:hover:bg-gray-700 ${isDark ? 'text-gray-300' : 'text-gray-900'}`
+      } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
       {children}
     </button>
   );
 
   const editorContent = (
-    <div className={`border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 transition-colors ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}>
+    <div className={`border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-white'} transition-colors ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}>
       {/* Toolbar */}
-      <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-2 flex flex-wrap items-center gap-1 overflow-x-auto">
+      <div className={`border-b border-gray-200 dark:border-gray-700 ${isDark ? 'bg-gray-900' : 'bg-gray-50'} p-2 flex flex-wrap items-center gap-1 overflow-x-auto`}>
         {/* Formatting */}
         <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
           <ToolbarButton
@@ -396,14 +888,18 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         {/* Lists */}
         <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
           <ToolbarButton
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            onClick={() => {
+              editor.chain().focus().toggleBulletList().run();
+            }}
             isActive={editor.isActive('bulletList')}
             title="Bullet List"
           >
             <List size={18} />
           </ToolbarButton>
           <ToolbarButton
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            onClick={() => {
+              editor.chain().focus().toggleOrderedList().run();
+            }}
             isActive={editor.isActive('orderedList')}
             title="Numbered List"
           >
@@ -459,7 +955,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           <ToolbarButton
             onClick={handleLink}
             isActive={editor.isActive('link')}
-            title="Insert Link"
+            title={editor.isActive('link') ? 'Exit Link Mode' : 'Insert Link'}
           >
             <LinkIcon size={18} />
           </ToolbarButton>
@@ -472,30 +968,33 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         </div>
 
         {/* Mode Toggles */}
-        <div className="flex items-center gap-1 ml-auto flex-shrink-0">
+        <div className="flex items-center gap-1 ml-auto flex-shrink-0 z-10 relative">
           <ToolbarButton
-            onClick={() => setIsMarkdown(!isMarkdown)}
+            onClick={() => {
+              if (editor) {
+                setIsMarkdown(!isMarkdown);
+              }
+            }}
             isActive={isMarkdown}
+            disabled={!editor}
             title={isMarkdown ? 'Switch to WYSIWYG' : 'Switch to Markdown'}
           >
             {isMarkdown ? <Type size={18} /> : <FileText size={18} />}
           </ToolbarButton>
           <ToolbarButton
-            onClick={() => setIsPreview(!isPreview)}
+            onClick={() => {
+              setIsPreview(!isPreview);
+            }}
             isActive={isPreview}
+            disabled={!editor}
             title="Toggle Preview"
           >
             {isPreview ? <EyeOff size={18} /> : <Eye size={18} />}
           </ToolbarButton>
           <ToolbarButton
-            onClick={() => setIsDark(!isDark)}
-            isActive={isDark}
-            title="Toggle Dark Mode"
-          >
-            {isDark ? <Sun size={18} /> : <Moon size={18} />}
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => setIsFullscreen(!isFullscreen)}
+            onClick={() => {
+              setIsFullscreen(!isFullscreen);
+            }}
             isActive={isFullscreen}
             title="Toggle Fullscreen"
           >
@@ -523,20 +1022,29 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
               const html = markdownToHtml(newMarkdown);
               onChange(html);
             }}
-            className={`w-full min-h-[400px] p-4 border-0 focus:outline-none resize-none font-mono text-sm ${
+            className={`w-full min-h-[400px] p-4 border-0 focus:outline-none resize-none font-mono text-sm transition-colors ${
               isDark
-                ? 'bg-gray-800 text-gray-100'
-                : 'bg-white text-gray-900'
+                ? 'bg-gray-800 text-gray-100 caret-gray-100'
+                : 'bg-white text-gray-900 caret-gray-900'
             }`}
+            style={isDark ? { 
+              color: '#f3f4f6', 
+              caretColor: '#f3f4f6' 
+            } : { 
+              color: '#111827', 
+              caretColor: '#111827' 
+            }}
             placeholder={placeholder}
           />
         ) : (
+          <div className={isDark ? 'bg-gray-800' : 'bg-white'}>
           <EditorContent editor={editor} />
+          </div>
         )}
 
         {/* Stats Bar */}
-        <div className={`border-t border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between text-xs flex-wrap gap-2 ${
-          isDark ? 'bg-gray-900 text-gray-400' : 'bg-gray-50 text-gray-600'
+        <div className={`border-t border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between text-xs flex-wrap gap-2 transition-colors ${
+          isDark ? 'bg-gray-900 text-gray-400' : 'bg-gray-50 text-gray-900'
         }`}>
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
             <span>{wordCount} words</span>
@@ -624,6 +1132,17 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         }
         .ProseMirror ul, .ProseMirror ol {
           padding-left: 1.5rem;
+          list-style-position: outside;
+        }
+        .ProseMirror ul {
+          list-style-type: disc;
+        }
+        .ProseMirror ol {
+          list-style-type: decimal;
+        }
+        .ProseMirror li {
+          display: list-item;
+          margin-left: 0;
         }
         .ProseMirror h1, .ProseMirror h2, .ProseMirror h3 {
           font-weight: 700;
@@ -658,6 +1177,30 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         }
         .dark .ProseMirror a:hover {
           color: #93c5fd;
+        }
+        .dark .ProseMirror {
+          caret-color: #f3f4f6 !important;
+          color: #f3f4f6 !important;
+        }
+        .dark .ProseMirror h1,
+        .dark .ProseMirror h2,
+        .dark .ProseMirror h3,
+        .dark .ProseMirror h4,
+        .dark .ProseMirror h5,
+        .dark .ProseMirror h6 {
+          color: #f3f4f6 !important;
+          caret-color: #f3f4f6 !important;
+        }
+        .dark .ProseMirror p,
+        .dark .ProseMirror li,
+        .dark .ProseMirror span,
+        .dark .ProseMirror div,
+        .dark .ProseMirror strong,
+        .dark .ProseMirror em {
+          color: #f3f4f6 !important;
+        }
+        .dark .ProseMirror * {
+          caret-color: #f3f4f6 !important;
         }
         .hljs {
           display: block;
@@ -714,6 +1257,93 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           font-weight: bold;
         }
       `}</style>
+
+      {/* Link Modal */}
+      {showLinkModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={handleCancelLink}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+              Insert Link
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  URL
+                </label>
+                <input
+                  type="url"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleInsertLink();
+                    } else if (e.key === 'Escape') {
+                      handleCancelLink();
+                    }
+                  }}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Link Text (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={linkText}
+                  onChange={(e) => setLinkText(e.target.value)}
+                  placeholder="Link text"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleInsertLink();
+                    } else if (e.key === 'Escape') {
+                      handleCancelLink();
+                    }
+                  }}
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center mt-6">
+              {editor.isActive('link') && (
+                <button
+                  onClick={handleUnlink}
+                  className="px-4 py-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                >
+                  Remove Link
+                </button>
+              )}
+              <div className="flex justify-end gap-3 ml-auto">
+                <button
+                  onClick={handleCancelLink}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleInsertLink}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  {editor.isActive('link') ? 'Update Link' : 'Insert Link'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
