@@ -1093,6 +1093,11 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         .ProseMirror {
           outline: none;
         }
+        .ProseMirror p {
+          line-height: 1.4;
+          margin-bottom: 0.75em;
+          margin-top: 0;
+        }
         .ProseMirror p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);
           float: left;
