@@ -138,6 +138,10 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     extensions: [
       StarterKit.configure({
         codeBlock: false, // We'll use CodeBlockLowlight instead
+        // Note: StarterKit v3 doesn't include Link or Underline by default
+        // But we exclude them explicitly to prevent any conflicts
+        link: false,
+        underline: false,
       }),
       Image.configure({
         inline: true,
@@ -158,7 +162,9 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
-      Underline,
+      Underline.configure({
+        // Explicitly configure to avoid conflicts
+      }),
       CharacterCount,
     ],
     content: value || '',

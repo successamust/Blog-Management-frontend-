@@ -698,14 +698,15 @@ const EditPost = ({ onSuccess }) => {
     try {
       setLoading(true);
       // Try to get post by ID first, fallback to getting all posts
+      // Include drafts so authors can edit their own draft posts
       let post;
       try {
         // Try to get post directly by ID if endpoint exists
-        const response = await postsAPI.getAll({ limit: 1000 });
+        const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
         post = response.data.posts.find(p => p._id === id || p.id === id);
       } catch (error) {
         // If that fails, try getting all posts
-        const response = await postsAPI.getAll({ limit: 1000 });
+        const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
         post = response.data.posts.find(p => p._id === id || p.id === id);
       }
       
