@@ -1,4 +1,4 @@
-# robots.txt for The NexusBlog
+# robots.txt for The Nexus Blog
 User-agent: *
 Allow: /
 
@@ -7,5 +7,5 @@ Disallow: /admin/
 Disallow: /dashboard/
 
 # Sitemap (update with your actual domain)
-# Sitemap: https://your-domain.com/sitemap.xml
+# Sitemap: https://thenexusblog.vercel.app/sitemap.xml
 

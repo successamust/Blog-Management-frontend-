@@ -1,4 +1,4 @@
-# The NexusBlog - Frontend
+# The Nexus Blog - Frontend
 
 A modern, responsive blog management platform with newsletter functionality built with React and Vite.
 
