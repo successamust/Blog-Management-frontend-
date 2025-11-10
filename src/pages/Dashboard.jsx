@@ -387,15 +387,15 @@ const Dashboard = () => {
   }
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: <TrendingUp className="w-4 h-4" /> },
-    ...(user?.role === 'author' || user?.role === 'admin' ? [{ id: 'create-post', label: 'Create Post', icon: <Plus className="w-4 h-4" /> }] : []),
-    { id: 'posts', label: 'My Posts', icon: <FileText className="w-4 h-4" /> },
-    { id: 'comments', label: 'My Comments', icon: <MessageCircle className="w-4 h-4" /> },
-    { id: 'likes', label: 'Liked Posts', icon: <Heart className="w-4 h-4" /> },
-    { id: 'bookmarks', label: 'Saved Posts', icon: <Bookmark className="w-4 h-4" /> },
-    { id: 'history', label: 'History', icon: <History className="w-4 h-4" /> },
-    ...(user?.role !== 'author' && user?.role !== 'admin' ? [{ id: 'author', label: 'Become Author', icon: <UserCheck className="w-4 h-4" /> }] : []),
-    { id: 'settings', label: 'Profile Settings', icon: <User className="w-4 h-4" /> },
+    { id: 'overview', label: 'Overview', mobileLabel: 'Overview', icon: <TrendingUp className="w-4 h-4" /> },
+    ...(user?.role === 'author' || user?.role === 'admin' ? [{ id: 'create-post', label: 'Create Post', mobileLabel: 'Create', icon: <Plus className="w-4 h-4" /> }] : []),
+    { id: 'posts', label: 'My Posts', mobileLabel: 'Posts', icon: <FileText className="w-4 h-4" /> },
+    { id: 'comments', label: 'My Comments', mobileLabel: 'Comments', icon: <MessageCircle className="w-4 h-4" /> },
+    { id: 'likes', label: 'Liked Posts', mobileLabel: 'Liked', icon: <Heart className="w-4 h-4" /> },
+    { id: 'bookmarks', label: 'Saved Posts', mobileLabel: 'Saved', icon: <Bookmark className="w-4 h-4" /> },
+    { id: 'history', label: 'History', mobileLabel: 'History', icon: <History className="w-4 h-4" /> },
+    ...(user?.role !== 'author' && user?.role !== 'admin' ? [{ id: 'author', label: 'Become Author', mobileLabel: 'Author', icon: <UserCheck className="w-4 h-4" /> }] : []),
+    { id: 'settings', label: 'Profile Settings', mobileLabel: 'Settings', icon: <User className="w-4 h-4" /> },
   ];
 
   return (
@@ -457,7 +457,7 @@ const Dashboard = () => {
                 onClick={() => setActiveTab(tab.id)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`flex items-center space-x-2 py-2.5 px-4 rounded-xl font-medium text-sm transition-all whitespace-nowrap ${
+                className={`flex items-center space-x-1 sm:space-x-2 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl font-medium text-xs sm:text-sm transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25'
                     : 'text-slate-600 hover:text-indigo-600 hover:bg-white/50'
@@ -465,7 +465,7 @@ const Dashboard = () => {
               >
                 {tab.icon}
                 <span className="hidden sm:inline">{tab.label}</span>
-                <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+                <span className="sm:hidden">{tab.mobileLabel || tab.label}</span>
               </motion.button>
             ))}
           </nav>
