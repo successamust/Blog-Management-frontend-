@@ -4,6 +4,8 @@ import { FileText, CheckCircle, XCircle, Clock, Search, UserCheck, AlertCircle }
 import { authorsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import SkeletonLoader from '../common/SkeletonLoader';
+import Spinner from '../common/Spinner';
 
 const AuthorManagement = () => {
   const [applications, setApplications] = useState([]);
@@ -226,9 +228,7 @@ const AuthorManagement = () => {
 
   if (loading && !endpointError) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <SkeletonLoader variant="list" count={4} />
     );
   }
 
@@ -324,13 +324,13 @@ const AuthorManagement = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search applications..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
           >
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
@@ -388,7 +388,7 @@ const AuthorManagement = () => {
               )}
 
               {application.authorProfile && (
-                <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+                <div className="mb-4 p-4 bg-[var(--accent)]/10 rounded-lg">
                   <p className="text-sm font-medium text-gray-700 mb-2">Author Profile:</p>
                   {application.authorProfile.bio && (
                     <p className="text-sm text-gray-600 mb-2">
@@ -410,7 +410,7 @@ const AuthorManagement = () => {
                         href={application.authorProfile.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className="text-[var(--accent)] hover:underline"
                       >
                         {application.authorProfile.website}
                       </a>
@@ -439,7 +439,7 @@ const AuthorManagement = () => {
                         <select
                           value={reviewData.action}
                           onChange={(e) => setReviewData(prev => ({ ...prev, action: e.target.value }))}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                         >
                           <option value="approve">Approve</option>
                           <option value="reject">Reject</option>
@@ -454,7 +454,7 @@ const AuthorManagement = () => {
                           onChange={(e) => setReviewData(prev => ({ ...prev, adminNotes: e.target.value }))}
                           rows={3}
                           placeholder="Add notes about this application..."
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
                         />
                       </div>
                       <div className="flex space-x-3">
@@ -482,7 +482,7 @@ const AuthorManagement = () => {
                   ) : (
                     <button
                       onClick={() => setReviewingId(application._id)}
-                      className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition-all"
+                      className="w-full bg-[var(--accent)] text-white py-2 px-4 rounded-lg font-medium hover:bg-[var(--accent-hover)] transition-all shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
                     >
                       Review Application
                     </button>

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Folder, ArrowRight } from 'lucide-react';
 import { categoriesAPI, postsAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import Spinner from '../components/common/Spinner';
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
@@ -77,14 +78,15 @@ const Categories = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-page">
+        <Spinner size="2xl" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="bg-page min-h-screen">
+    <div className="layout-container-wide py-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -92,10 +94,15 @@ const Categories = () => {
         transition={{ duration: 0.5 }}
         className="mb-8"
       >
-        <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">
-          <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Categories</span>
-        </h1>
-        <p className="text-slate-600">
+        <div className="inline-flex items-center gap-3">
+          <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[var(--accent)]/10 text-[var(--accent)]">
+            <Folder className="w-5 h-5" />
+          </span>
+          <h1 className="text-3xl sm:text-4xl font-bold text-primary mb-0">
+            Categories
+          </h1>
+        </div>
+        <p className="text-muted">
           Browse posts by category
         </p>
       </motion.div>
@@ -118,13 +125,14 @@ const Categories = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center py-16"
+          className="text-center py-16 border border-dashed border-[var(--border-subtle)] rounded-2xl bg-surface-subtle"
         >
-          <Folder className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-          <p className="text-slate-500 text-lg mb-2">No categories found</p>
-          <p className="text-slate-400 text-sm">Categories will appear here once they are created.</p>
+          <Folder className="w-16 h-16 mx-auto text-muted mb-4" />
+          <p className="text-secondary text-lg mb-2">No categories found</p>
+          <p className="text-muted text-sm">Categories will appear here once they are created.</p>
         </motion.div>
       )}
+    </div>
     </div>
   );
 };
@@ -153,35 +161,35 @@ const CategoryCard = ({ category }) => {
     >
       <Link
         to={`/categories/${categorySlug}`}
-        className="block group card-elevated card-elevated-hover p-6"
+        className="block group surface-card p-6 hover:border-[#d6cfc6] transition-colors"
       >
         <div className="flex items-center justify-between mb-4">
-          <div className="p-3 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-xl">
-            <Folder className="w-6 h-6 text-indigo-600" />
+          <div className="p-3 rounded-xl bg-[var(--accent)]/[0.1] text-[var(--accent)]">
+            <Folder className="w-6 h-6" />
           </div>
           <motion.div
             whileHover={{ x: 4 }}
             transition={{ type: 'spring', stiffness: 400 }}
           >
-            <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+            <ArrowRight className="w-5 h-5 text-muted group-hover:text-[var(--accent)] transition-colors" />
           </motion.div>
         </div>
         
-        <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors">
+        <h3 className="text-xl font-bold text-primary mb-2 group-hover:text-[var(--accent)] transition-colors">
           {category.name}
         </h3>
         
         {category.description && (
-          <p className="text-slate-600 mb-4 line-clamp-2 text-sm leading-relaxed">
+          <p className="text-secondary mb-4 line-clamp-2 text-sm leading-relaxed">
             {category.description}
           </p>
         )}
         
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-500">
+          <span className="text-muted">
             {postCount} {postCount === 1 ? 'post' : 'posts'}
           </span>
-          <span className="px-3 py-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold rounded-full">
+          <span className="px-3 py-1 bg-[var(--accent)] text-white text-xs font-semibold rounded-full group-hover:bg-[var(--accent-hover)] transition-colors">
             Explore
           </span>
         </div>

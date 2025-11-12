@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, Eye, Heart, ArrowLeft, ArrowRight, Folder } from 'lucide-react';
-import { format } from 'date-fns';
+import { ArrowLeft, ArrowRight, Folder } from 'lucide-react';
 import { categoriesAPI, postsAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import ModernPostCard from '../components/posts/ModernPostCard';
+import Spinner from '../components/common/Spinner';
 
 const CategoryPosts = () => {
   const { slug } = useParams();
@@ -198,8 +199,8 @@ const CategoryPosts = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-page">
+        <Spinner size="2xl" />
       </div>
     );
   }
@@ -213,197 +214,137 @@ const CategoryPosts = () => {
       }
     : null);
 
-  // Don't show "Category Not Found" if we're still loading or if we have posts
-  // Only show it if we explicitly failed to load and have no data
   if (!loading && !displayCategory && !hasPosts) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Folder className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Category Not Found</h1>
-          <p className="text-slate-500 mb-4">The category "{slug}" could not be found.</p>
-          <Link 
-            to="/categories" 
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
-          >
-            Back to Categories
-          </Link>
+      <div className="min-h-screen flex items-center justify-center bg-page">
+        <div className="text-center px-6">
+          <Folder className="w-12 h-12 mx-auto text-muted mb-4" />
+          <h1 className="text-2xl font-semibold text-primary mb-2">Category not found</h1>
+          <p className="text-muted">We couldn’t locate “{slug}”. Try exploring other categories.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Category Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-8 card-elevated p-6"
-      >
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="p-3 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-xl">
-            <Folder className="w-6 h-6 text-indigo-600" />
+    <div className="bg-page min-h-screen">
+      <div className="layout-container section-spacing-y">
+        {/* Category Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="mb-12"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent)] text-white">
+              <Folder className="w-5 h-5" />
+            </span>
+            <div>
+              <h1 className="text-4xl sm:text-5xl font-bold text-primary tracking-tight">
+                {displayCategory?.name}
+              </h1>
+            </div>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">{displayCategory?.name}</h1>
-        </div>
-        {displayCategory?.description && (
-          <p className="text-slate-600 mb-4 leading-relaxed">{displayCategory.description}</p>
-        )}
-        <p className="text-sm text-slate-500">
-          {pagination.totalPosts} {pagination.totalPosts === 1 ? 'post' : 'posts'} in this category
-        </p>
-      </motion.div>
+          {displayCategory?.description && (
+            <p className="text-sm sm:text-base text-secondary leading-relaxed max-w-3xl">
+              {displayCategory.description}
+            </p>
+          )}
+          <p className="text-xs sm:text-sm text-muted mt-4 uppercase tracking-[0.2em]">
+            {pagination.totalPosts} {pagination.totalPosts === 1 ? 'article' : 'articles'} in this category
+          </p>
+        </motion.div>
 
-      {/* Posts Grid */}
-      {posts.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {/* Posts List */}
+        {hasPosts ? (
+          <div className="space-y-10">
             {posts.map((post, index) => (
-              <PostCard key={post._id || post.id || index} post={post} />
+              <ModernPostCard key={post._id || post.id || index} post={post} delay={index * 0.05} />
             ))}
           </div>
-
-          {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex items-center justify-center space-x-2"
-            >
-              <motion.button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center px-4 py-2 glass-card rounded-xl hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium text-slate-700"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Previous
-              </motion.button>
-
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => {
-                  if (
-                    page === 1 ||
-                    page === pagination.totalPages ||
-                    (page >= currentPage - 1 && page <= currentPage + 1)
-                  ) {
-                    return (
-                      <motion.button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        className={`px-4 py-2 rounded-xl transition-all text-sm font-medium ${
-                          page === currentPage
-                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25'
-                            : 'glass-card text-slate-700 hover:bg-white/80'
-                        }`}
-                      >
-                        {page}
-                      </motion.button>
-                    );
-                  } else if (page === currentPage - 2 || page === currentPage + 2) {
-                    return <span key={page} className="px-2 text-slate-400">...</span>;
-                  }
-                  return null;
-                })}
-              </div>
-
-              <motion.button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === pagination.totalPages}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center px-4 py-2 glass-card rounded-xl hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium text-slate-700"
-              >
-                Next
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </motion.button>
-            </motion.div>
-          )}
-        </>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-16 card-elevated"
-        >
-          <Folder className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-          <p className="text-slate-500 text-lg mb-4">No posts in this category yet</p>
-          <Link
-            to="/categories"
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16 border border-dashed border-[var(--border-subtle)] rounded-2xl bg-surface-subtle"
           >
-            Browse other categories
-          </Link>
-        </motion.div>
-      )}
-    </div>
-  );
-};
-
-const PostCard = ({ post }) => {
-  if (!post || !post.title) {
-    return null; // Don't render if post is invalid
-  }
-
-  const postSlug = post.slug || post._id || post.id || '';
-  const postDate = post.publishedAt || post.createdAt || new Date();
-  
-  return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ type: 'spring', stiffness: 300 }}
-    >
-      <Link
-        to={`/posts/${postSlug}`}
-        className="block group card-elevated card-elevated-hover overflow-hidden"
-      >
-        {post.featuredImage && (
-          <img
-            src={post.featuredImage}
-            alt={post.title}
-            className="w-full h-48 object-cover"
-            onError={(e) => {
-              e.target.style.display = 'none';
-            }}
-          />
+            <Folder className="w-12 h-12 mx-auto text-muted mb-4" />
+            <p className="text-secondary text-lg">No posts in this category yet.</p>
+            <p className="text-sm text-muted mt-2">Check back soon for new articles.</p>
+          </motion.div>
         )}
-        <div className="p-6">
-          <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
-            {post.title}
-          </h3>
-          {post.excerpt && (
-            <div className="relative mb-4 bg-gradient-to-br from-purple-50 to-pink-50 border-l-4 border-purple-400 rounded-r-md p-3 shadow-sm group-hover:shadow-md transition-all">
-              <p className="text-slate-700 text-sm leading-relaxed line-clamp-3 font-medium">
-                {post.excerpt}
-              </p>
+
+        {/* Pagination */}
+        {hasPosts && pagination.totalPages > 1 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mt-12 flex items-center justify-center gap-2"
+          >
+            <motion.button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              whileHover={{ scale: currentPage === 1 ? 1 : 1.04 }}
+              whileTap={{ scale: currentPage === 1 ? 1 : 0.96 }}
+              className="flex items-center px-4 py-2 border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Previous
+            </motion.button>
+
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => {
+                if (
+                  page === 1 ||
+                  page === pagination.totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  const isActive = page === currentPage;
+                  return (
+                    <motion.button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      whileHover={{ scale: isActive ? 1 : 1.08 }}
+                      whileTap={{ scale: isActive ? 1 : 0.94 }}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'bg-gray-900 text-white'
+                          : 'border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                      }`}
+                    >
+                      {page}
+                    </motion.button>
+                  );
+                }
+
+                if (page === currentPage - 2 || page === currentPage + 2) {
+                  return (
+                    <span key={page} className="px-2 text-gray-400">
+                      …
+                    </span>
+                  );
+                }
+
+                return null;
+              })}
             </div>
-          )}
-          
-          <div className="flex items-center justify-between text-xs text-slate-500">
-            <div className="flex items-center space-x-4">
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {format(new Date(postDate), 'MMM d, yyyy')}
-              </span>
-              <span className="flex items-center gap-1">
-                <Eye className="w-3 h-3" />
-                {post.viewCount || 0}
-              </span>
-            </div>
-            <span className="flex items-center gap-1">
-              <Heart className="w-3 h-3" />
-              {post.likes?.length || 0}
-            </span>
-          </div>
-        </div>
-      </Link>
-    </motion.div>
+
+            <motion.button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === pagination.totalPages}
+              whileHover={{ scale: currentPage === pagination.totalPages ? 1 : 1.04 }}
+              whileTap={{ scale: currentPage === pagination.totalPages ? 1 : 0.96 }}
+              className="flex items-center px-4 py-2 border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </motion.button>
+          </motion.div>
+        )}
+      </div>
+    </div>
   );
 };
 

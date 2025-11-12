@@ -5,6 +5,7 @@ import { authorsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import Spinner from '../common/Spinner';
 
 const AuthorApplication = () => {
   const { user } = useAuth();
@@ -202,16 +203,16 @@ const AuthorApplication = () => {
       className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
     >
       <div className="flex items-center space-x-3 mb-6">
-        <FileText className="w-6 h-6 text-indigo-600" />
+        <FileText className="w-6 h-6 text-[var(--accent)]" />
         <h3 className="text-xl font-bold text-gray-900">Apply to Become an Author</h3>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+      <div className="bg-[var(--accent)]/10 border border-[var(--accent)]/30 rounded-lg p-4 mb-6">
         <div className="flex items-start space-x-3">
-          <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-[var(--accent)] mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-blue-900 mb-1">Author Benefits</p>
-            <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+            <p className="text-sm font-medium text-[var(--accent)] mb-1">Author Benefits</p>
+            <ul className="text-sm text-secondary space-y-1 list-disc list-inside">
               <li>Create and publish blog posts</li>
               <li>Manage your own content</li>
               <li>Build your author profile</li>
@@ -233,7 +234,7 @@ const AuthorApplication = () => {
             value={formData.message}
             onChange={handleChange}
             placeholder="Tell us about your motivation, experience, and what you'd like to write about..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
             required
           />
           <p className="mt-1 text-xs text-gray-500">This is required and will be reviewed by our team</p>
@@ -250,7 +251,7 @@ const AuthorApplication = () => {
             value={formData.bio}
             onChange={handleChange}
             placeholder="Tell us about yourself..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
           />
         </div>
 
@@ -265,7 +266,7 @@ const AuthorApplication = () => {
             value={formData.expertise}
             onChange={handleChange}
             placeholder="e.g., Web Development, Design, Marketing"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
           <p className="mt-1 text-xs text-gray-500">Comma-separated list of your expertise areas</p>
         </div>
@@ -281,18 +282,18 @@ const AuthorApplication = () => {
             value={formData.website}
             onChange={handleChange}
             placeholder="https://yourwebsite.com"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+          className="btn btn-primary flex items-center justify-center space-x-2 shadow-[0_14px_30px_rgba(26,137,23,0.2)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <Spinner size="sm" tone="light" />
               <span>Submitting...</span>
             </>
           ) : (

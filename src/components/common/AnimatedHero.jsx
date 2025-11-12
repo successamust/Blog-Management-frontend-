@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronDown, Sparkles } from 'lucide-react';
+import BrandWordmark from './BrandWordmark';
 
 const AnimatedHero = () => {
   const containerVariants = {
@@ -38,7 +39,7 @@ const AnimatedHero = () => {
   };
 
   return (
-    <section className="relative min-h-[92vh] sm:min-h-[95vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/40 py-16 sm:py-20">
+    <section className="relative min-h-[92vh] sm:min-h-[95vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-16 sm:py-20">
       {/* Premium Atmospheric Background with Abstract Shapes */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Soft gradient overlay */}
@@ -46,7 +47,7 @@ const AnimatedHero = () => {
         
         {/* Animated abstract shapes - more subtle and premium */}
         <motion.div
-          className="absolute top-10 left-[10%] w-96 h-96 bg-gradient-to-br from-indigo-200/20 via-purple-200/15 to-pink-200/20 rounded-full mix-blend-multiply filter blur-3xl"
+          className="absolute top-10 left-[10%] w-96 h-96 bg-gradient-to-br from-[#cdeecf]/35 via-[#def6dd]/25 to-white/20 rounded-full mix-blend-multiply filter blur-3xl"
           animate={{
             x: [0, 80, 0],
             y: [0, 60, 0],
@@ -59,7 +60,7 @@ const AnimatedHero = () => {
           }}
         />
         <motion.div
-          className="absolute top-32 right-[15%] w-[500px] h-[500px] bg-gradient-to-br from-purple-200/20 via-blue-200/15 to-indigo-200/20 rounded-full mix-blend-multiply filter blur-3xl"
+          className="absolute top-32 right-[15%] w-[500px] h-[500px] bg-gradient-to-br from-[#b7f0c4]/25 via-[#d5f7df]/20 to-white/18 rounded-full mix-blend-multiply filter blur-3xl"
           animate={{
             x: [0, -90, 0],
             y: [0, -70, 0],
@@ -72,7 +73,7 @@ const AnimatedHero = () => {
           }}
         />
         <motion.div
-          className="absolute bottom-24 left-1/3 w-[450px] h-[450px] bg-gradient-to-br from-pink-200/15 via-purple-200/20 to-indigo-200/15 rounded-full mix-blend-multiply filter blur-3xl"
+          className="absolute bottom-24 left-1/3 w-[450px] h-[450px] bg-gradient-to-br from-[#c9f4ce]/25 via-[#e6fbe4]/20 to-white/18 rounded-full mix-blend-multiply filter blur-3xl"
           animate={{
             x: [0, 60, 0],
             y: [0, -90, 0],
@@ -91,7 +92,7 @@ const AnimatedHero = () => {
 
       {/* Content */}
       <motion.div
-        className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto"
+        className="relative z-10 text-center layout-container"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -102,7 +103,7 @@ const AnimatedHero = () => {
           variants={itemVariants}
         >
           <motion.p
-            className="text-xs sm:text-sm font-medium text-indigo-600/80 uppercase tracking-[0.2em] mb-6 sm:mb-8 font-sans"
+          className="text-xs sm:text-sm font-medium text-[var(--accent)]/80 uppercase tracking-[0.2em] mb-6 sm:mb-8 font-sans"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.8 }}
@@ -124,34 +125,19 @@ const AnimatedHero = () => {
           variants={itemVariants}
         >
           <motion.h1
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-display leading-[0.95] tracking-tight mb-4"
+            className="flex flex-col items-center text-center"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 1, ease: [0.22, 1, 0.36, 1] }}
           >
+            <BrandWordmark variant="hero" className="mx-auto text-slate-900" />
             <motion.span
-              className="inline-block bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"
-              animate={{
-                backgroundPosition: ['0%', '100%', '0%'],
-              }}
-              transition={{
-                duration: 8,
-                repeat: Infinity,
-                ease: 'linear',
-              }}
-              style={{
-                backgroundSize: '200% auto',
-              }}
-            >
-              The Nexus
-            </motion.span>
-            <motion.span
-              className="inline-block ml-2 sm:ml-3 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-clip-text text-transparent"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              className="mt-4 block text-sm sm:text-base tracking-[0.35em] uppercase text-slate-500"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 0.8 }}
             >
-              Blog
+              Stories Worth Sharing
             </motion.span>
           </motion.h1>
         </motion.div>
@@ -165,7 +151,7 @@ const AnimatedHero = () => {
         >
           Where{' '}
           <motion.span
-            className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600"
+            className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] to-[var(--accent-hover)]"
             animate={{
               backgroundPosition: ['0%', '100%', '0%'],
             }}
@@ -182,7 +168,7 @@ const AnimatedHero = () => {
           </motion.span>
           {' '}meet{' '}
           <motion.span
-            className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
+            className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-[#1a8917] to-[#189112]"
             animate={{
               backgroundPosition: ['0%', '100%', '0%'],
             }}
@@ -213,11 +199,11 @@ const AnimatedHero = () => {
           >
             <Link
               to="/posts"
-              className="group relative inline-flex items-center px-10 py-4 sm:px-12 sm:py-5 border border-transparent text-base sm:text-lg font-semibold rounded-2xl text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden"
+              className="group relative inline-flex items-center px-10 py-4 sm:px-12 sm:py-5 border border-transparent text-base sm:text-lg font-semibold rounded-2xl text-white bg-[var(--accent)] shadow-xl shadow-[rgba(26,137,23,0.22)] hover:shadow-[0_24px_48px_rgba(26,137,23,0.25)] transition-all duration-500 overflow-hidden"
             >
               {/* Animated gradient overlay on hover */}
               <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                className="absolute inset-0 bg-[var(--accent-hover)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                 initial={false}
               />
               <span className="relative z-10 flex items-center">
@@ -241,11 +227,11 @@ const AnimatedHero = () => {
           >
             <Link
               to="/categories"
-              className="group relative inline-flex items-center px-10 py-4 sm:px-12 sm:py-5 border-2 border-slate-300 text-base sm:text-lg font-semibold rounded-2xl text-slate-700 bg-white/80 backdrop-blur-sm hover:bg-white hover:border-indigo-400 shadow-lg hover:shadow-xl transition-all duration-500"
+              className="group relative inline-flex items-center px-10 py-4 sm:px-12 sm:py-5 border-2 border-[var(--border-subtle)] text-base sm:text-lg font-semibold rounded-2xl text-secondary bg-white/80 backdrop-blur-sm hover:bg-white hover:border-[var(--accent)]/60 shadow-lg hover:shadow-xl transition-all duration-500"
             >
               <span className="relative z-10">Browse Categories</span>
               <motion.div
-                className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                className="absolute inset-0 rounded-2xl bg-[var(--accent)]/8 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                 initial={false}
               />
             </Link>
@@ -278,9 +264,9 @@ const AnimatedHero = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 1.4, duration: 0.8 }}
             >
-              <div className="w-1 h-8 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full"></div>
+              <div className="w-1 h-8 bg-gradient-to-b from-[var(--accent)] to-[var(--accent-hover)] rounded-full"></div>
               <p className="text-sm sm:text-base text-slate-600 font-medium">
-                — The Nexus Blog Community
+                — Nexus Community
               </p>
             </motion.div>
           </motion.div>

@@ -31,6 +31,8 @@ import {
 import { adminAPI, postsAPI, categoriesAPI, newsletterAPI, dashboardAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import AnimatedCard from '../common/AnimatedCard';
+import SkeletonLoader from '../common/SkeletonLoader';
+import Spinner from '../common/Spinner';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
 
@@ -1151,8 +1153,9 @@ const AdminOverview = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="space-y-6">
+        <SkeletonLoader variant="stat" count={4} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" />
+        <SkeletonLoader variant="list" count={3} />
       </div>
     );
   }
@@ -1235,8 +1238,8 @@ const AdminOverview = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-6">Engagement Metrics</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <Eye className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+              <div className="text-center p-4 bg-[var(--accent)]/12 rounded-lg">
+                <Eye className="w-8 h-8 text-[var(--accent)] mx-auto mb-2" />
                 <p className="text-2xl font-bold text-gray-900">{totalViews}</p>
                 <p className="text-sm text-gray-600">Total Views</p>
               </div>
@@ -1393,7 +1396,7 @@ const AdminOverview = () => {
 
 const StatCard = ({ title, value, icon, color, subtitle }) => {
   const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600',
+    blue: 'bg-[var(--accent)]/12 text-[var(--accent)]',
     purple: 'bg-purple-50 text-purple-600',
     green: 'bg-green-50 text-green-600',
     orange: 'bg-orange-50 text-orange-600',

@@ -2,12 +2,13 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
-import { CheckCircle2, AlertTriangle, Info, Loader2 } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 import { AuthProvider } from './context/AuthContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import ReadingProgress from './components/common/ReadingProgress';
 import PageTransition from './components/common/PageTransition';
+import Spinner from './components/common/Spinner';
 
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
@@ -31,11 +32,11 @@ import './styles/globals.css';
 function AppContent() {
   const location = useLocation();
 
-  const baseToastClasses = 'flex items-start gap-3 w-full max-w-sm rounded-2xl px-4 py-3 sm:px-5 sm:py-4 shadow-xl shadow-indigo-500/10 border border-white/30 bg-white/95 backdrop-blur-md text-slate-900';
+  const baseToastClasses = 'flex items-start gap-3 w-full max-w-sm rounded-2xl px-4 py-3 sm:px-5 sm:py-4 shadow-xl shadow-[rgba(26,137,23,0.12)] border border-white/30 bg-white/95 backdrop-blur-md text-slate-900';
   const iconBadgeClasses = 'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/20 to-purple-50/30 flex flex-col">
+    <div className="min-h-screen bg-page flex flex-col">
       <ReadingProgress />
       <Header />
       <main className="flex-1">
@@ -66,7 +67,7 @@ function AppContent() {
               path="/admin/*" 
               element={
                 <ProtectedRoute requireAuthorOrAdmin>
-                  <PageTransition><Admin /></PageTransition>
+                  <Admin />
                 </ProtectedRoute>
               } 
             />
@@ -85,9 +86,9 @@ function AppContent() {
             boxShadow: 'none',
             padding: 0,
           },
-          className: `${baseToastClasses} border-l-4 border-indigo-400`,
+          className: `${baseToastClasses} border-l-4 border-[var(--accent)]/70`,
           icon: (
-            <span className={`${iconBadgeClasses} bg-indigo-100 text-indigo-600`}>
+            <span className={`${iconBadgeClasses} bg-[var(--accent)]/20 text-[var(--accent)]`}>
               <Info className="h-4 w-4" />
             </span>
           ),
@@ -114,7 +115,7 @@ function AppContent() {
             className: `${baseToastClasses} border-l-4 border-amber-400`,
             icon: (
               <span className={`${iconBadgeClasses} bg-amber-100 text-amber-500`}>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Spinner size="sm" tone="warning" />
               </span>
             ),
           },

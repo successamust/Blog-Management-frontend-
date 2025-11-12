@@ -16,7 +16,8 @@ import {
   X,
   Check,
   Copy,
-  CheckCircle
+  CheckCircle,
+  Tag
 } from 'lucide-react';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
@@ -25,6 +26,9 @@ import { postsAPI, commentsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import ReadingProgress from '../components/common/ReadingProgress';
+import { calculateReadingTime, formatReadingTime } from '../utils/readingTime';
+import { Clock } from 'lucide-react';
+import Spinner from '../components/common/Spinner';
 
 const PostDetail = () => {
   const { slug } = useParams();
@@ -464,22 +468,25 @@ const PostDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-page">
+        <Spinner size="2xl" />
       </div>
     );
   }
 
   if (!post) {
     return (
-        <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-page">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center card-elevated p-8"
+          className="text-center surface-card p-8"
         >
-          <h1 className="text-2xl font-bold text-slate-900 mb-4">Post Not Found</h1>
-          <Link to="/posts" className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all">
+          <h1 className="text-2xl font-bold text-primary mb-4">Post Not Found</h1>
+          <Link
+            to="/posts"
+            className="btn btn-primary !w-auto"
+          >
             Back to Posts
           </Link>
         </motion.div>
@@ -494,7 +501,8 @@ const PostDetail = () => {
   return (
     <>
       <ReadingProgress />
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="bg-page min-h-screen">
+      <div className="layout-container-wide py-6 sm:py-8">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
         {/* Main Content */}
         <div className="lg:col-span-3">
@@ -516,11 +524,11 @@ const PostDetail = () => {
             <div className="p-4 sm:p-6 md:p-8">
               {/* Post Header */}
               <div className="mb-4 sm:mb-6">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-3 sm:mb-4">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-3 sm:mb-4">
                   {post.title}
                 </h1>
                 
-                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-slate-600 mb-3 sm:mb-4">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted mb-3 sm:mb-4">
                   <div className="flex items-center">
                     <User className="w-4 h-4 mr-2" />
                     <span className="font-medium">{post.author?.username}</span>
@@ -530,25 +538,14 @@ const PostDetail = () => {
                     <span>{format(new Date(post.publishedAt), 'MMMM d, yyyy')}</span>
                   </div>
                   <div className="flex items-center">
+                    <Clock className="w-4 h-4 mr-2" />
+                    <span>{formatReadingTime(calculateReadingTime(post.content))}</span>
+                  </div>
+                  <div className="flex items-center">
                     <Eye className="w-4 h-4 mr-2" />
                     <span>{post.viewCount} views</span>
                   </div>
                 </div>
-
-                {/* Tags */}
-                {post.tags && post.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {post.tags.map((tag) => (
-                      <Link
-                        key={tag}
-                        to={`/search?tags=${tag}`}
-                        className="px-3 py-1 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-full text-sm hover:from-indigo-200 hover:to-purple-200 transition-all"
-                      >
-                        #{tag}
-                      </Link>
-                    ))}
-                  </div>
-                )}
               </div>
 
               {/* Post Content */}
@@ -572,6 +569,30 @@ const PostDetail = () => {
                 })()}
               </div>
 
+              {/* Tags */}
+              {post.tags && post.tags.length > 0 && (
+                <div className="mb-8 rounded-xl border border-[var(--border-subtle)] bg-surface-subtle p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <div className="rounded-lg bg-[var(--accent)]/12 p-2 text-[var(--accent)]">
+                      <Tag className="h-4 w-4" />
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted">Tags</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {post.tags.map((tag) => (
+                      <Link
+                        key={tag}
+                        to={`/search?tags=${tag}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-sm font-medium text-secondary transition-all hover:bg-[var(--accent)] hover:text-white hover:shadow-[0_8px_20px_rgba(26,137,23,0.2)]"
+                      >
+                        <span>#</span>
+                        <span>{tag}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Interaction Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 border-t border-gray-200 pt-4 sm:pt-6">
                 <div className="flex items-center space-x-2 sm:space-x-4">
@@ -582,8 +603,8 @@ const PostDetail = () => {
                     whileTap={{ scale: 0.95 }}
                     className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
                       hasLiked
-                        ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-500/25'
-                        : 'glass-card text-slate-700 hover:bg-white/80'
+                        ? 'bg-[var(--accent)] text-white shadow-[0_12px_30px_rgba(26,137,23,0.22)]'
+                        : 'glass-card text-secondary hover:bg-white/80'
                     }`}
                   >
                     <ThumbsUp className="w-4 h-4" />
@@ -598,7 +619,7 @@ const PostDetail = () => {
                     className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
                       hasDisliked
                         ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg shadow-rose-500/25'
-                        : 'glass-card text-slate-700 hover:bg-white/80'
+                        : 'glass-card text-secondary hover:bg-white/80'
                     }`}
                   >
                     <ThumbsDown className="w-4 h-4" />
@@ -609,7 +630,7 @@ const PostDetail = () => {
                     onClick={handleShare}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 glass-card text-slate-700 rounded-xl hover:bg-white/80 transition-all text-sm sm:text-base"
+                    className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 glass-card text-secondary rounded-xl hover:bg-white/80 transition-all text-sm sm:text-base"
                   >
                     <Share2 className="w-4 h-4" />
                     <span className="hidden sm:inline">Share</span>
@@ -624,7 +645,7 @@ const PostDetail = () => {
                   className={`flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
                     hasBookmarked
                       ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/25'
-                      : 'glass-card text-slate-700 hover:bg-white/80'
+                      : 'glass-card text-secondary hover:bg-white/80'
                   }`}
                 >
                   <Bookmark className={`w-4 h-4 ${hasBookmarked ? 'fill-current' : ''}`} />
@@ -641,7 +662,7 @@ const PostDetail = () => {
             transition={{ delay: 0.2 }}
             className="mt-8 card-elevated card-elevated-hover p-6"
           >
-            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+            <h2 className="text-2xl font-bold text-primary mb-6 flex items-center">
               <MessageCircle className="w-6 h-6 mr-2" />
               Comments ({comments.length})
             </h2>
@@ -655,7 +676,7 @@ const PostDetail = () => {
                     onChange={(e) => setCommentText(e.target.value)}
                     placeholder="Share your thoughts..."
                     rows="4"
-                    className="w-full px-4 py-3 glass-card rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300/50 focus:bg-white/90 resize-none transition-all"
+                    className="w-full px-4 py-3 glass-card rounded-xl focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 resize-none transition-all"
                   />
                 </div>
                 <motion.button
@@ -663,19 +684,19 @@ const PostDetail = () => {
                   disabled={submittingComment || !commentText.trim()}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+                  className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_30px_rgba(26,137,23,0.18)]"
                 >
                   {submittingComment ? 'Posting...' : 'Post Comment'}
                 </motion.button>
               </form>
             ) : (
               <div className="mb-8 p-4 glass-card rounded-xl text-center">
-                <p className="text-slate-600 mb-2">
+                <p className="text-muted mb-2">
                   Please log in to leave a comment
                 </p>
                 <Link
                   to="/login"
-                  className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                    className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium transition-colors"
                 >
                   Sign In
                 </Link>
@@ -693,14 +714,14 @@ const PostDetail = () => {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                      <div className="w-8 h-8 bg-[var(--accent)]/15 text-[var(--accent)] rounded-full flex items-center justify-center text-xs font-semibold">
                         {comment.author?.username?.charAt(0).toUpperCase() || <User className="w-4 h-4" />}
                       </div>
                       <div>
-                        <span className="font-medium text-slate-900">
+                    <span className="font-medium text-primary">
                           {comment.author?.username}
                         </span>
-                        <span className="text-sm text-slate-500 ml-2">
+                    <span className="text-sm text-muted ml-2">
                           {format(new Date(comment.createdAt), 'MMM d, yyyy')}
                         </span>
                       </div>
@@ -720,7 +741,7 @@ const PostDetail = () => {
                             onClick={handleCancelEdit}
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            className="text-slate-600 hover:text-slate-700 transition-colors"
+                            className="text-secondary hover:text-primary transition-colors"
                           >
                             <X className="w-4 h-4" />
                           </motion.button>
@@ -733,7 +754,7 @@ const PostDetail = () => {
                                 onClick={() => handleEditComment(comment)}
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
-                                className="text-indigo-600 hover:text-indigo-700 transition-colors"
+                                className="text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
                               >
                                 <Edit className="w-4 h-4" />
                               </motion.button>
@@ -754,7 +775,7 @@ const PostDetail = () => {
                             className={`flex items-center space-x-1 transition-colors ${
                               comment.likes?.includes(user?._id)
                                 ? 'text-rose-500 hover:text-rose-600'
-                                : 'text-slate-500 hover:text-indigo-600'
+                        : 'text-slate-500 hover:text-[var(--accent)]'
                             }`}
                           >
                             <Heart className={`w-4 h-4 ${comment.likes?.includes(user?._id) ? 'fill-current' : ''}`} />
@@ -769,7 +790,7 @@ const PostDetail = () => {
                       value={editCommentText}
                       onChange={(e) => setEditCommentText(e.target.value)}
                       rows="3"
-                      className="w-full px-4 py-2 glass-card rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300/50 focus:bg-white/90 resize-none transition-all"
+                      className="w-full px-4 py-2 glass-card rounded-xl focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 resize-none transition-all"
                     />
                   ) : (
                     <p className="text-slate-700 leading-relaxed">{comment.content}</p>
@@ -813,7 +834,7 @@ const PostDetail = () => {
                       to={`/posts/${relatedPost.slug}`}
                       className="block group glass-card-hover p-3 rounded-xl"
                     >
-                      <h4 className="text-sm font-medium text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                      <h4 className="text-sm font-medium text-slate-900 group-hover:text-[var(--accent)] transition-colors line-clamp-2">
                         {relatedPost.title}
                       </h4>
                       <p className="text-xs text-slate-500 mt-1">
@@ -859,6 +880,7 @@ const PostDetail = () => {
           </motion.div>
         </div>
       </div>
+      </div>
     </div>
 
     {/* Share Modal */}
@@ -872,7 +894,7 @@ const PostDetail = () => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative"
+          className="surface-card max-w-md w-full p-6 relative shadow-xl"
         >
           <button
             onClick={() => setShowShareModal(false)}
@@ -895,16 +917,16 @@ const PostDetail = () => {
                 type="text"
                 readOnly
                 value={window.location.href}
-                className="flex-1 px-4 py-2 glass-card rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300/50"
+                className="flex-1 px-4 py-2 glass-card rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35"
               />
               <motion.button
                 onClick={copyToClipboard}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`px-4 py-2 rounded-xl transition-all ${
+                className={`btn !w-auto transition-all ${
                   linkCopied
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg hover:shadow-indigo-500/25'
+                    ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                    : 'btn-primary shadow-[0_14px_32px_rgba(26,137,23,0.24)]'
                 }`}
               >
                 {linkCopied ? (
@@ -927,7 +949,7 @@ const PostDetail = () => {
               onClick={handleNativeShare}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all font-medium flex items-center justify-center gap-2"
+              className="btn btn-primary flex items-center justify-center gap-2 shadow-[0_16px_36px_rgba(26,137,23,0.2)]"
             >
               <Share2 className="w-5 h-5" />
               Share via Device

@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import Spinner from '../../components/common/Spinner';
+import BrandWordmark from '../../components/common/BrandWordmark';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -74,7 +76,7 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-indigo-50/20 to-purple-50/30 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -90,25 +92,28 @@ const Register = () => {
             >
               <img 
                 src="/nexus-logo-icon.svg" 
-                alt="The Nexus Blog Logo" 
+                alt="Nexus Logo" 
                 className="w-12 h-12"
               />
             </motion.div>
           </div>
+          <div className="mt-4 flex justify-center text-slate-900">
+            <BrandWordmark />
+          </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900">
             Create your account
           </h2>
-          <p className="mt-2 text-center text-sm text-slate-600">
+          <p className="mt-2 text-center text-sm text-secondary">
             Or{' '}
             <Link
               to="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
+              className="font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
             >
               sign in to your existing account
             </Link>
           </p>
         </div>
-        <form className="mt-8 space-y-6 card-elevated p-8" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6 surface-card p-8" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">
@@ -116,7 +121,7 @@ const Register = () => {
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
+                  <User className="h-5 w-5 text-muted" />
                 </div>
                 <input
                   id="username"
@@ -126,7 +131,7 @@ const Register = () => {
                   required
                   value={formData.username}
                   onChange={handleChange}
-                  className={`appearance-none relative block w-full pl-10 pr-3 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300/50 focus:bg-white/90 sm:text-sm transition-all ${
+                  className={`appearance-none relative block w-full pl-10 pr-3 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 sm:text-sm transition-all ${
                     errors.username ? 'border-rose-300' : ''
                   }`}
                   placeholder="Choose a username"
@@ -143,7 +148,7 @@ const Register = () => {
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5 text-muted" />
                 </div>
                 <input
                   id="email"
@@ -153,7 +158,7 @@ const Register = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className={`appearance-none relative block w-full pl-10 pr-3 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300/50 focus:bg-white/90 sm:text-sm transition-all ${
+                  className={`appearance-none relative block w-full pl-10 pr-3 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 sm:text-sm transition-all ${
                     errors.email ? 'border-rose-300' : ''
                   }`}
                   placeholder="Enter your email"
@@ -170,7 +175,7 @@ const Register = () => {
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5 text-muted" />
                 </div>
                 <input
                   id="password"
@@ -180,7 +185,7 @@ const Register = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className={`appearance-none relative block w-full pl-10 pr-10 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300/50 focus:bg-white/90 sm:text-sm transition-all ${
+                  className={`appearance-none relative block w-full pl-10 pr-10 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 sm:text-sm transition-all ${
                     errors.password ? 'border-rose-300' : ''
                   }`}
                   placeholder="Create a password"
@@ -191,9 +196,9 @@ const Register = () => {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5 text-muted" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5 text-muted" />
                   )}
                 </button>
               </div>
@@ -208,7 +213,7 @@ const Register = () => {
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5 text-muted" />
                 </div>
                 <input
                   id="confirmPassword"
@@ -218,7 +223,7 @@ const Register = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`appearance-none relative block w-full pl-10 pr-3 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300/50 focus:bg-white/90 sm:text-sm transition-all ${
+                  className={`appearance-none relative block w-full pl-10 pr-3 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 sm:text-sm transition-all ${
                     errors.confirmPassword ? 'border-rose-300' : ''
                   }`}
                   placeholder="Confirm your password"
@@ -234,13 +239,9 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg hover:shadow-indigo-500/25 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="btn btn-primary group relative disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
             >
-              {loading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              ) : (
-                'Create Account'
-              )}
+              {loading ? <Spinner size="sm" tone="light" /> : 'Create Account'}
             </button>
           </div>
         </form>

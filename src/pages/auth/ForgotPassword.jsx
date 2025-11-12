@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { authAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import Spinner from '../../components/common/Spinner';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -27,14 +28,14 @@ const ForgotPassword = () => {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-indigo-50/20 to-purple-50/30 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="max-w-md w-full space-y-8"
         >
-          <div className="card-elevated p-8 text-center">
+          <div className="surface-card p-8 text-center">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -44,16 +45,16 @@ const ForgotPassword = () => {
               <Mail className="w-8 h-8 text-white" />
             </motion.div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Check Your Email</h2>
-            <p className="text-slate-600 mb-6">
-              We've sent a password reset link to <strong className="text-indigo-600">{email}</strong>
+            <p className="text-secondary mb-6">
+              We've sent a password reset link to <strong className="text-[var(--accent)]">{email}</strong>
             </p>
-            <p className="text-sm text-slate-500 mb-6">
+            <p className="text-sm text-muted mb-6">
               Please check your inbox and click on the link to reset your password.
             </p>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
                 to="/login"
-                className="inline-flex items-center text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                className="inline-flex items-center text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Login
@@ -66,7 +67,7 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-indigo-50/20 to-purple-50/30 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -77,9 +78,9 @@ const ForgotPassword = () => {
           <div className="flex justify-center">
             <motion.div
               whileHover={{ scale: 1.1, rotate: 5 }}
-              className="w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25"
+              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-[rgba(26,137,23,0.25)] bg-[var(--accent)] text-white font-bold text-lg"
             >
-              <span className="text-white font-bold text-lg">B</span>
+              B
             </motion.div>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900">
@@ -89,14 +90,14 @@ const ForgotPassword = () => {
             Enter your email address and we'll send you a link to reset your password.
           </p>
         </div>
-        <form className="mt-8 space-y-6 card-elevated p-8" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6 surface-card p-8" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-secondary">
               Email address
             </label>
             <div className="mt-1 relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
+                <Mail className="h-5 w-5 text-muted" />
               </div>
               <input
                 id="email"
@@ -106,7 +107,7 @@ const ForgotPassword = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none relative block w-full pl-10 pr-3 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300/50 focus:bg-white/90 focus:z-10 sm:text-sm transition-all"
+                className="appearance-none relative block w-full pl-10 pr-3 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 focus:z-10 sm:text-sm transition-all"
                 placeholder="Enter your email"
               />
             </div>
@@ -118,20 +119,16 @@ const ForgotPassword = () => {
               disabled={loading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg hover:shadow-indigo-500/25 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="btn btn-primary group relative disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
             >
-              {loading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              ) : (
-                'Send Reset Link'
-              )}
+              {loading ? <Spinner size="sm" tone="light" /> : 'Send Reset Link'}
             </motion.button>
           </div>
 
           <div className="text-center">
             <Link
               to="/login"
-              className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
+              className="inline-flex items-center text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Login

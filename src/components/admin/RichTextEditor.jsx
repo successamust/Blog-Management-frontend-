@@ -159,7 +159,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-blue-600 underline',
+          class: 'text-[var(--accent)] underline',
         },
       }),
       CodeBlockLowlight.configure({
@@ -823,7 +823,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       title={title}
       className={`p-2 rounded-lg transition-colors ${
         isActive
-          ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300'
+          ? 'bg-[var(--accent)]/15 text-[var(--accent)] dark:bg-emerald-900/50 dark:text-emerald-200'
           : `hover:bg-gray-100 dark:hover:bg-gray-700 ${isDark ? 'text-gray-300' : 'text-gray-900'}`
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
@@ -1287,7 +1287,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
                   placeholder="https://example.com"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] dark:bg-gray-700 dark:text-gray-100"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -1309,7 +1309,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
                   value={linkText}
                   onChange={(e) => setLinkText(e.target.value)}
                   placeholder="Link text"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] dark:bg-gray-700 dark:text-gray-100"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -1340,7 +1340,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
                 </button>
                 <button
                   onClick={handleInsertLink}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
                 >
                   {editor.isActive('link') ? 'Update Link' : 'Insert Link'}
                 </button>

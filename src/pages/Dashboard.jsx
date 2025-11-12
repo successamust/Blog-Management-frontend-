@@ -31,7 +31,9 @@ import AuthorApplication from '../components/dashboard/AuthorApplication';
 import AnimatedCounter from '../components/common/AnimatedCounter';
 import Sparkline from '../components/common/Sparkline';
 import RichTextEditor from '../components/admin/RichTextEditor';
+import SkeletonLoader from '../components/common/SkeletonLoader';
 import toast from 'react-hot-toast';
+import Spinner from '../components/common/Spinner';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -311,7 +313,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <Spinner size="3xl" />
       </div>
     );
   }
@@ -320,10 +322,10 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Dashboard</h1>
+        <h1 className="text-2xl font-bold text-primary mb-4">Error Loading Dashboard</h1>
           <button
             onClick={fetchDashboardData}
-            className="text-blue-600 hover:text-blue-700"
+            className="text-[var(--accent)] hover:text-[var(--accent-hover)]"
           >
             Try Again
           </button>
@@ -408,7 +410,8 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="bg-page min-h-screen">
+    <div className="layout-container-wide py-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -416,10 +419,10 @@ const Dashboard = () => {
         transition={{ duration: 0.5 }}
         className="mb-8"
       >
-        <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">
-          Welcome back, <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{user?.username || 'User'}</span>!
+        <h1 className="text-3xl sm:text-4xl font-bold text-primary mb-2">
+          Welcome back, <span className="bg-gradient-to-r from-[var(--accent)] via-[#189112] to-[var(--accent-hover)] bg-clip-text text-transparent">{user?.username || 'User'}</span>!
         </h1>
-        <p className="text-sm sm:text-base text-slate-600">
+        <p className="text-sm sm:text-base text-muted">
           Here's what's happening with your content and engagement.
         </p>
       </motion.div>
@@ -458,7 +461,7 @@ const Dashboard = () => {
         transition={{ delay: 0.1, duration: 0.5 }}
         className="mb-8"
       >
-        <div className="glass-card rounded-2xl p-2 overflow-x-auto">
+        <div className="surface-card rounded-2xl p-2 overflow-x-auto">
           <nav className="flex space-x-2 min-w-max">
             {tabs.map((tab) => (
               <motion.button
@@ -468,8 +471,8 @@ const Dashboard = () => {
                 whileTap={{ scale: 0.98 }}
                 className={`flex items-center space-x-1 sm:space-x-2 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl font-medium text-xs sm:text-sm transition-all whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25'
-                    : 'text-slate-600 hover:text-indigo-600 hover:bg-white/50'
+                    ? 'bg-[var(--accent)] text-white shadow-[0_16px_35px_rgba(26,137,23,0.25)]'
+                    : 'text-secondary hover:text-[var(--accent)] hover:bg-surface-subtle'
                 }`}
               >
                 {tab.icon}
@@ -498,7 +501,7 @@ const Dashboard = () => {
               title="Total Posts"
               value={postsTotal}
               change={`${postsPublished} published`}
-              color="indigo"
+              color="accent"
               trend={5}
             />
             <StatCard
@@ -535,15 +538,15 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="card-elevated card-elevated-hover p-6"
+            className="surface-card p-6 transition-colors hover:border-[#d6cfc6]"
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-slate-900">Recent Posts</h2>
+              <h2 className="text-xl font-bold text-primary">Recent Posts</h2>
               {(isAdmin() || user?.role === 'author') && (
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <button
                     onClick={() => setActiveTab('create-post')}
-                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
+                    className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
                   >
                     <Plus className="w-4 h-4" />
                     <span>New Post</span>
@@ -557,13 +560,13 @@ const Dashboard = () => {
                   <PostItem key={post._id} post={post} />
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <div className="text-center py-8 text-muted">
+                  <FileText className="w-12 h-12 mx-auto mb-4 text-muted" />
                   <p>No posts yet</p>
                   {(isAdmin() || user?.role === 'author') && (
                     <button
                       onClick={() => setActiveTab('create-post')}
-                      className="text-blue-600 hover:text-blue-700 mt-2 inline-block"
+                      className="btn btn-link mt-2 inline-flex items-center gap-2"
                     >
                       Create your first post
                     </button>
@@ -578,17 +581,17 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="card-elevated card-elevated-hover p-6"
+            className="surface-card p-6 transition-colors hover:border-[#d6cfc6]"
           >
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Recent Comments</h2>
+            <h2 className="text-xl font-bold text-primary mb-6">Recent Comments</h2>
             <div className="space-y-4">
               {recentComments && recentComments.length > 0 ? (
                 recentComments.map((comment) => (
                   <CommentItem key={comment._id} comment={comment} />
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <div className="text-center py-8 text-muted">
+                  <MessageCircle className="w-12 h-12 mx-auto mb-4 text-muted" />
                   <p>No comments yet</p>
                 </div>
               )}
@@ -603,9 +606,9 @@ const Dashboard = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
-            className="card-elevated card-elevated-hover p-6"
+            className="surface-card p-6 transition-colors hover:border-[#d6cfc6]"
           >
-            <h2 className="text-xl font-bold text-slate-900 mb-4">Quick Actions</h2>
+            <h2 className="text-xl font-bold text-primary mb-4">Quick Actions</h2>
             <div className="space-y-2">
               {quickActions.map((action, index) => {
                 const handleClick = (e) => {
@@ -628,13 +631,13 @@ const Dashboard = () => {
                     {action.onClick ? (
                       <button
                         onClick={handleClick}
-                        className="w-full text-left p-3 rounded-lg hover:bg-white/50 transition-colors group"
+                        className="w-full text-left p-3 rounded-lg surface-card transition-colors hover:border-[#d6cfc6] group"
                       >
                         <div className="flex items-center space-x-3">
-                          <div className="text-indigo-600 group-hover:text-indigo-700">
+                          <div className="text-[var(--accent)] group-hover:text-[var(--accent-hover)]">
                             {action.icon}
                           </div>
-                          <span className="font-medium text-slate-700 group-hover:text-indigo-600">
+                          <span className="font-medium text-secondary group-hover:text-[var(--accent)]">
                             {action.title}
                           </span>
                         </div>
@@ -643,16 +646,16 @@ const Dashboard = () => {
                       <Link
                         to={action.path}
                         onClick={handleClick}
-                        className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all group glass-card-hover"
+                        className="flex items-center space-x-3 p-3 rounded-xl surface-card transition-colors hover:border-[#d6cfc6] group"
                       >
-                        <div className="flex-shrink-0 text-slate-600 group-hover:text-indigo-600 transition-colors">
+                        <div className="flex-shrink-0 text-secondary group-hover:text-[var(--accent)] transition-colors">
                           {action.icon}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-slate-900 group-hover:text-indigo-600">
+                          <div className="font-medium text-primary group-hover:text-[var(--accent)]">
                             {action.title}
                           </div>
-                          <div className="text-sm text-slate-500 truncate">{action.description}</div>
+                          <div className="text-sm text-muted truncate">{action.description}</div>
                         </div>
                       </Link>
                     )}
@@ -667,27 +670,27 @@ const Dashboard = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="card-elevated card-elevated-hover p-6"
+            className="surface-card p-6 transition-colors hover:border-[#d6cfc6]"
           >
-            <h2 className="text-xl font-bold text-slate-900 mb-4">Liked Posts</h2>
+            <h2 className="text-xl font-bold text-primary mb-4">Liked Posts</h2>
             <div className="space-y-3">
               {likedPosts && likedPosts.length > 0 ? (
                 likedPosts.map((post) => (
                   <Link
                     key={post._id}
                     to={`/posts/${post.slug}`}
-                    className="block p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                    className="block p-3 rounded-lg surface-card transition-colors hover:border-[#d6cfc6] group"
                   >
-                    <h3 className="font-medium text-gray-900 group-hover:text-blue-600 line-clamp-2">
+                    <h3 className="font-medium text-primary group-hover:text-[var(--accent)] line-clamp-2">
                       {post.title}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-muted mt-1">
                       by {post.author?.username}
                     </p>
                   </Link>
                 ))
               ) : (
-                <p className="text-gray-500 text-center py-4">
+                <p className="text-muted text-center py-4">
                   No liked posts yet
                 </p>
               )}
@@ -699,27 +702,27 @@ const Dashboard = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
-            className="card-elevated card-elevated-hover p-6"
+            className="surface-card p-6 transition-colors hover:border-[#d6cfc6]"
           >
-            <h2 className="text-xl font-bold text-slate-900 mb-4">Saved Posts</h2>
+            <h2 className="text-xl font-bold text-primary mb-4">Saved Posts</h2>
             <div className="space-y-3">
               {bookmarkedPosts && bookmarkedPosts.length > 0 ? (
                 bookmarkedPosts.map((post) => (
                   <Link
                     key={post._id}
                     to={`/posts/${post.slug}`}
-                    className="block p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                    className="block p-3 rounded-lg surface-card transition-colors hover:border-[#d6cfc6] group"
                   >
-                    <h3 className="font-medium text-gray-900 group-hover:text-blue-600 line-clamp-2">
+                    <h3 className="font-medium text-primary group-hover:text-[var(--accent)] line-clamp-2">
                       {post.title}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-muted mt-1">
                       by {post.author?.username}
                     </p>
                   </Link>
                 ))
               ) : (
-                <p className="text-gray-500 text-center py-4">
+                <p className="text-muted text-center py-4">
                   No saved posts yet
                 </p>
               )}
@@ -731,25 +734,26 @@ const Dashboard = () => {
       )}
 
       {activeTab === 'posts' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card-elevated p-6"
-        >
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="surface-card p-6"
+          >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">My Posts</h2>
+            <h2 className="text-2xl font-bold text-primary">My Posts</h2>
             {(isAdmin() || user?.role === 'author') && (
               <div className="flex items-center gap-3">
                 <Link
                   to="/admin/posts"
-                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
+                  className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
                 >
                   <FileText className="w-4 h-4" />
                   <span>Manage Posts</span>
                 </Link>
                 <button
                   onClick={() => setActiveTab('create-post')}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="btn btn-primary !w-auto"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Create Post</span>
@@ -758,9 +762,7 @@ const Dashboard = () => {
             )}
           </div>
           {tabLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
+            <SkeletonLoader variant="post" count={3} />
           ) : tabData.posts.length > 0 ? (
             <div className="space-y-4">
               {tabData.posts.map((post) => (
@@ -768,20 +770,20 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
-              <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-12 text-muted">
+              <FileText className="w-12 h-12 mx-auto mb-4 text-muted" />
               <p>No posts yet</p>
               {(isAdmin() || user?.role === 'author') && (
                 <div className="mt-4 flex items-center justify-center gap-3">
                   <button
                     onClick={() => setActiveTab('create-post')}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="btn btn-primary !w-auto"
                   >
                     Create your first post
                   </button>
                   <Link
                     to="/admin/posts"
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="btn btn-outline !w-auto text-secondary"
                   >
                     Manage Posts
                   </Link>
@@ -789,20 +791,20 @@ const Dashboard = () => {
               )}
             </div>
           )}
-        </motion.div>
+          </motion.div>
+        </div>
       )}
 
       {activeTab === 'comments' && (
+        <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="card-elevated p-6"
+          className="surface-card p-6"
         >
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">My Comments</h2>
+          <h2 className="text-2xl font-bold text-primary mb-6">My Comments</h2>
           {tabLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
+            <SkeletonLoader variant="comment" count={3} />
           ) : tabData.comments.length > 0 ? (
             <div className="space-y-4">
               {tabData.comments.map((comment) => (
@@ -810,25 +812,25 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
-              <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-12 text-muted">
+              <MessageCircle className="w-12 h-12 mx-auto mb-4 text-muted" />
               <p>No comments yet</p>
             </div>
           )}
         </motion.div>
+        </div>
       )}
 
       {activeTab === 'likes' && (
+        <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="card-elevated p-6"
+          className="surface-card p-6"
         >
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Liked Posts</h2>
+          <h2 className="text-2xl font-bold text-primary mb-6">Liked Posts</h2>
           {tabLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
+            <SkeletonLoader variant="post" count={3} />
           ) : tabData.likes.length > 0 ? (
             <div className="space-y-4">
               {tabData.likes.map((post) => (
@@ -836,25 +838,25 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
-              <Heart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-12 text-muted">
+              <Heart className="w-12 h-12 mx-auto mb-4 text-muted" />
               <p>No liked posts yet</p>
             </div>
           )}
         </motion.div>
+        </div>
       )}
 
       {activeTab === 'bookmarks' && (
+        <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="card-elevated p-6"
+          className="surface-card p-6"
         >
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Saved Posts</h2>
+          <h2 className="text-2xl font-bold text-primary mb-6">Saved Posts</h2>
           {tabLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
+            <SkeletonLoader variant="post" count={3} />
           ) : tabData.bookmarks.length > 0 ? (
             <div className="space-y-4">
               {tabData.bookmarks.map((post) => (
@@ -862,25 +864,25 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
-              <Bookmark className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-12 text-muted">
+              <Bookmark className="w-12 h-12 mx-auto mb-4 text-muted" />
               <p>No saved posts yet</p>
             </div>
           )}
         </motion.div>
+        </div>
       )}
 
       {activeTab === 'history' && (
-        <motion.div
+        <div className="max-w-6xl mx-auto">
+      <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="card-elevated p-6"
+        className="surface-card p-6"
         >
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Activity History</h2>
+          <h2 className="text-2xl font-bold text-primary mb-6">Activity History</h2>
           {tabLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
+            <SkeletonLoader variant="post" count={3} />
           ) : tabData.history.length > 0 ? (
             <div className="space-y-4">
               {tabData.history.map((post) => (
@@ -888,31 +890,39 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
-              <History className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-12 text-muted">
+              <History className="w-12 h-12 mx-auto mb-4 text-muted" />
               <p>No history yet</p>
             </div>
           )}
         </motion.div>
+        </div>
       )}
 
       {activeTab === 'create-post' && (
-        <CreatePostTab />
+        <div className="max-w-6xl mx-auto">
+          <CreatePostTab />
+        </div>
       )}
 
       {activeTab === 'author' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <AuthorApplication />
-        </motion.div>
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <AuthorApplication />
+          </motion.div>
+        </div>
       )}
 
       {activeTab === 'settings' && (
-        <ProfileSettings />
+        <div className="max-w-6xl mx-auto">
+          <ProfileSettings />
+        </div>
       )}
+    </div>
     </div>
   );
 };
@@ -931,11 +941,11 @@ const StatCard = ({ icon, title, value, change, color, trend }) => {
   }, []);
 
   const colorConfig = {
-    indigo: {
-      bg: 'from-indigo-500/10 to-indigo-600/5',
-      icon: 'bg-indigo-500/10 text-indigo-600',
-      gradient: 'from-indigo-500 to-indigo-600',
-      sparkline: '#6366f1',
+    accent: {
+      bg: 'from-[#c8f0ce]/35 to-[#dff7e3]/25',
+      icon: 'bg-[#c8f0ce]/60 text-[var(--accent)]',
+      gradient: 'from-[#1a8917] to-[#189112]',
+      sparkline: '#1a8917',
     },
     emerald: {
       bg: 'from-emerald-500/10 to-emerald-600/5',
@@ -957,7 +967,7 @@ const StatCard = ({ icon, title, value, change, color, trend }) => {
     },
   };
 
-  const config = colorConfig[color] || colorConfig.indigo;
+  const config = colorConfig[color] || colorConfig.accent;
   const isPositive = trend >= 0;
 
   const sparklineData = Array.from({ length: 20 }, () => 
@@ -973,25 +983,25 @@ const StatCard = ({ icon, title, value, change, color, trend }) => {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3 }}
-      className="card-elevated card-elevated-hover p-4 sm:p-6 relative overflow-hidden group"
+      className="surface-card p-4 sm:p-6 relative overflow-hidden group transition-colors hover:border-[#d6cfc6]"
     >
       {/* Gradient background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${config.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
       
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-3 sm:mb-4">
-          <p className="text-xs sm:text-sm font-medium text-slate-600">{title}</p>
+          <p className="text-xs sm:text-sm font-medium text-muted">{title}</p>
           <div className={`p-2 sm:p-2.5 rounded-xl ${config.icon} transition-transform group-hover:scale-110`}>
             {icon}
           </div>
         </div>
         
         <div className="mb-3">
-          <p className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">
+          <p className="text-2xl sm:text-3xl font-bold text-primary mb-1">
             <AnimatedCounter value={displayValue} />
           </p>
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-xs text-slate-500">{change}</p>
+            <p className="text-xs text-muted">{change}</p>
             {trend !== undefined && (
               <div className={`flex items-center gap-1 text-xs font-medium ${
                 isPositive ? 'text-emerald-600' : 'text-rose-600'
@@ -1031,17 +1041,17 @@ const PostItem = ({ post }) => {
     <motion.div
       whileHover={{ x: 4 }}
       transition={{ type: 'spring', stiffness: 300 }}
-      className="flex items-center justify-between p-4 rounded-xl glass-card-hover group"
+      className="flex items-center justify-between p-4 rounded-xl surface-card transition-colors hover:border-[#d6cfc6] group"
     >
       <Link
         to={`/posts/${post.slug}`}
         className="flex-1 min-w-0"
       >
         <div>
-          <h3 className="font-semibold text-slate-900 group-hover:text-indigo-600 truncate mb-2">
+          <h3 className="font-semibold text-primary group-hover:text-[var(--accent)] truncate mb-2">
             {post.title}
           </h3>
-          <div className="flex items-center space-x-4 text-xs text-slate-500">
+          <div className="flex items-center space-x-4 text-xs text-muted">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               {format(new Date(post.publishedAt || post.createdAt), 'MMM d, yyyy')}
@@ -1066,19 +1076,19 @@ const PostItem = ({ post }) => {
         <div className="ml-4 flex-shrink-0 flex items-center gap-2">
           <Link
             to={`/admin/posts/edit/${post._id}`}
-            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            className="btn-icon-square text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors"
             title="Edit Post"
           >
             <Edit className="w-4 h-4" />
           </Link>
-          <div className="text-slate-400 group-hover:text-indigo-600 transition-colors">
+          <div className="text-muted group-hover:text-[var(--accent)] transition-colors">
             <TrendingUp className="w-4 h-4" />
           </div>
         </div>
       )}
       {!isPostOwner && (
         <div className="ml-4 flex-shrink-0">
-          <TrendingUp className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+          <TrendingUp className="w-4 h-4 text-muted group-hover:text-[var(--accent)] transition-colors" />
         </div>
       )}
     </motion.div>
@@ -1089,13 +1099,13 @@ const CommentItem = ({ comment }) => (
   <motion.div
     whileHover={{ x: 4 }}
     transition={{ type: 'spring', stiffness: 300 }}
-    className="p-4 rounded-xl glass-card-hover"
+    className="p-4 rounded-xl surface-card transition-colors hover:border-[#d6cfc6]"
   >
-    <p className="text-slate-700 mb-3 line-clamp-2 text-sm leading-relaxed">{comment.content}</p>
-    <div className="flex items-center justify-between text-xs text-slate-500">
+    <p className="text-secondary mb-3 line-clamp-2 text-sm leading-relaxed">{comment.content}</p>
+    <div className="flex items-center justify-between text-xs text-muted">
       <Link
         to={`/posts/${comment.post?.slug}`}
-        className="font-medium hover:text-indigo-600 transition-colors truncate max-w-[60%]"
+        className="font-medium text-primary hover:text-[var(--accent)] transition-colors truncate max-w-[60%]"
       >
         {comment.post?.title}
       </Link>
@@ -1264,35 +1274,35 @@ const CreatePostTab = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="card-elevated p-6"
+      className="surface-card p-6"
     >
-      <h2 className="text-2xl font-bold text-slate-900 mb-6">Create New Post</h2>
+      <h2 className="text-2xl font-bold text-primary mb-6">Create New Post</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+          <label className="block text-sm font-medium text-secondary mb-2">Title</label>
           <input
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-surface"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Excerpt</label>
+          <label className="block text-sm font-medium text-secondary mb-2">Excerpt</label>
           <textarea
             name="excerpt"
             value={formData.excerpt}
             onChange={handleChange}
             rows="3"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-surface"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+          <label className="block text-sm font-medium text-secondary mb-2">Content</label>
           <RichTextEditor
             value={formData.content}
             onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
@@ -1302,18 +1312,18 @@ const CreatePostTab = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <label className="block text-sm font-medium text-secondary mb-2">Category</label>
             {categoriesLoading ? (
-              <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span className="text-sm text-gray-500">Loading categories...</span>
+              <div className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg bg-surface-subtle flex items-center gap-2">
+                <Spinner size="xs" />
+                <span className="text-sm text-muted">Loading categories...</span>
               </div>
             ) : (
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-surface"
               >
                 <option value="">Select a category</option>
                 {categories.length > 0 ? (
@@ -1330,30 +1340,30 @@ const CreatePostTab = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tags (comma-separated)</label>
+            <label className="block text-sm font-medium text-secondary mb-2">Tags (comma-separated)</label>
             <input
               type="text"
               name="tags"
               value={formData.tags}
               onChange={handleChange}
               placeholder="tag1, tag2, tag3"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-surface"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Featured Image</label>
+          <label className="block text-sm font-medium text-secondary mb-2">Featured Image</label>
           {formData.featuredImage ? (
             <div className="space-y-2">
               <img
                 src={formData.featuredImage}
                 alt="Featured"
-                className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                className="w-full h-48 object-cover rounded-lg border border-[var(--border-subtle)]"
                 onError={() => toast.error('Failed to load image')}
               />
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 truncate">{formData.featuredImage}</span>
+                <span className="text-sm text-secondary truncate">{formData.featuredImage}</span>
                 <button
                   type="button"
                   onClick={handleDeleteImage}
@@ -1370,22 +1380,22 @@ const CreatePostTab = () => {
                 accept="image/*"
                 onChange={handleImageUpload}
                 disabled={uploadingImage}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-surface"
               />
               {uploadingImage && (
-                <p className="text-sm text-gray-500 mt-2">Uploading image...</p>
+                <p className="text-sm text-muted mt-2">Uploading image...</p>
               )}
             </div>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+          <label className="block text-sm font-medium text-secondary mb-2">Status</label>
           <select
             name="status"
             value={formData.status}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-surface"
           >
             <option value="published">Published</option>
             <option value="draft">Draft</option>
@@ -1406,14 +1416,14 @@ const CreatePostTab = () => {
                 status: 'published',
               });
             }}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            className="px-6 py-2 border border-[var(--border-subtle)] rounded-lg text-secondary hover:bg-surface-subtle"
           >
             Reset
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:shadow-lg hover:shadow-indigo-500/25 transition-all disabled:opacity-50"
+            className="btn btn-primary disabled:opacity-50 shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
           >
             {submitting ? 'Creating...' : 'Create Post'}
           </button>

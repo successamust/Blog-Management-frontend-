@@ -80,7 +80,7 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
       >
         <Link
           to={postHref}
-          className="block card-elevated card-elevated-hover overflow-hidden"
+          className="block surface-card overflow-hidden transition-colors hover:border-[#d6cfc6]"
         >
           <div className="relative h-64 overflow-hidden">
             {post.featuredImage ? (
@@ -94,12 +94,12 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
                 }}
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500" />
+              <div className="w-full h-full bg-gradient-to-br from-[var(--accent)]/60 to-[var(--accent-hover)]/60" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4">
               <motion.h3
-                className="text-2xl font-bold text-white mb-2 group-hover:text-blue-200 transition-colors"
+                className="text-2xl font-bold text-white mb-2 transition-colors"
                 initial={{ opacity: 0, y: 20 }}
                 whileHover={{ opacity: 1, y: 0 }}
               >
@@ -108,7 +108,7 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
             </div>
           </div>
           <div className="p-6">
-            <div className="relative mb-4 bg-slate-50 border-l-4 border-indigo-500 rounded-r-lg p-4 shadow-sm">
+            <div className="relative mb-4 bg-slate-50 border-l-4 border-[var(--accent)] rounded-r-lg p-4 shadow-sm">
               <p className="text-slate-700 text-base leading-relaxed line-clamp-2 font-normal tracking-normal">
                 {postExcerpt}
               </p>
@@ -132,7 +132,7 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
               </div>
             </div>
             <motion.div
-              className="mt-4 flex items-center text-indigo-600 font-medium"
+              className="mt-4 flex items-center text-[var(--accent)] font-medium"
               initial={{ opacity: 0, x: -20 }}
               whileHover={{ opacity: 1, x: 0 }}
             >
@@ -157,10 +157,10 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
     >
       <Link
         to={postHref}
-        className="block card-elevated card-elevated-hover p-6 overflow-hidden relative"
+        className="block surface-card p-6 overflow-hidden relative transition-colors hover:border-[#d6cfc6]"
       >
         {/* Gradient overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-50/0 to-purple-50/0 group-hover:from-blue-50/50 group-hover:to-purple-50/50 transition-all duration-300 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-transparent group-hover:from-[var(--accent)]/8 group-hover:to-[var(--accent-hover)]/10 transition-all duration-300 pointer-events-none"></div>
         
         <div className="relative z-10">
           {post.featuredImage && (
@@ -179,12 +179,12 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
           )}
           
           <motion.h3
-            className="text-xl font-bold text-slate-900 mb-3 group-hover:text-indigo-600 transition-colors"
+            className="text-xl font-bold text-slate-900 mb-3 group-hover:text-[var(--accent)] transition-colors"
             whileHover={{ x: 5 }}
           >
             {postTitle}
           </motion.h3>
-          <div className="relative mb-4 bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-lg p-3 shadow-sm group-hover:shadow-md transition-shadow">
+          <div className="relative mb-4 bg-[var(--accent)]/8 border border-[var(--border-subtle)] rounded-lg p-3 shadow-sm group-hover:shadow-md transition-shadow">
             <p className="text-slate-700 text-sm leading-relaxed line-clamp-2 font-medium tracking-normal">
               {postExcerpt}
             </p>
@@ -208,7 +208,7 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
           </div>
           
           <motion.div
-            className="flex items-center text-indigo-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity"
+            className="flex items-center text-[var(--accent)] font-semibold opacity-0 group-hover:opacity-100 transition-opacity"
             whileHover={{ x: 5 }}
           >
             Read more

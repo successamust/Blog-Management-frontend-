@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { authAPI, imagesAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import ChangePassword from './ChangePassword';
+import Spinner from '../common/Spinner';
 
 const ProfileSettings = () => {
   const { user, isAuthenticated } = useAuth();
@@ -187,7 +188,7 @@ const ProfileSettings = () => {
   if (loading || !isAuthenticated) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -207,7 +208,7 @@ const ProfileSettings = () => {
           {!isEditing ? (
             <button
               onClick={handleEdit}
-              className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base w-full sm:w-auto"
+              className="btn btn-primary shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
             >
               <Edit2 className="w-4 h-4" />
               <span>Edit Profile</span>
@@ -216,7 +217,7 @@ const ProfileSettings = () => {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <button
                 onClick={handleCancel}
-                className="flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
+                className="btn btn-outline"
               >
                 <X className="w-4 h-4" />
                 <span>Cancel</span>
@@ -224,7 +225,7 @@ const ProfileSettings = () => {
               <button
                 onClick={handleSubmit}
                 disabled={submitting || !hasChanges}
-                className="flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
               >
                 <Save className="w-4 h-4" />
                 <span>{submitting ? 'Saving...' : 'Save Changes'}</span>
@@ -242,13 +243,13 @@ const ProfileSettings = () => {
                   <img
                     src={formData.profilePicture}
                     alt="Profile"
-                    className="w-20 h-20 rounded-full object-cover border-4 border-indigo-100 shadow-lg"
+                    className="w-20 h-20 rounded-full object-cover border-4 border-[var(--accent)]/30 shadow-lg"
                     onError={(e) => {
                       e.target.style.display = 'none';
                       e.target.nextSibling.style.display = 'flex';
                     }}
                   />
-                  <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center border-4 border-indigo-100 shadow-lg hidden">
+                  <div className="w-20 h-20 bg-gradient-to-r from-[var(--accent)] to-[var(--accent-hover)] rounded-full flex items-center justify-center border-4 border-[var(--accent)]/30 shadow-lg hidden">
                     <User className="w-10 h-10 text-white" />
                   </div>
                   {isEditing && (
@@ -263,7 +264,7 @@ const ProfileSettings = () => {
                   )}
                 </div>
               ) : (
-                <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center border-4 border-indigo-100 shadow-lg">
+                <div className="w-20 h-20 bg-gradient-to-r from-[var(--accent)] to-[var(--accent-hover)] rounded-full flex items-center justify-center border-4 border-[var(--accent)]/30 shadow-lg">
                   <User className="w-10 h-10 text-white" />
                 </div>
               )}
@@ -272,7 +273,7 @@ const ProfileSettings = () => {
               <p className="text-sm font-medium text-gray-700 mb-2">Profile Picture</p>
               {isEditing ? (
                 <div className="space-y-2">
-                  <label className="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer transition-colors text-sm font-medium">
+                  <label className="btn btn-primary inline-flex items-center space-x-2 cursor-pointer shadow-[0_12px_24px_rgba(26,137,23,0.18)]">
                     <Camera className="w-4 h-4" />
                     <span>{uploadingPicture ? 'Uploading...' : formData.profilePicture ? 'Change Picture' : 'Upload Picture'}</span>
                     <input
@@ -288,7 +289,7 @@ const ProfileSettings = () => {
                     <button
                       type="button"
                       onClick={handleRemovePicture}
-                      className="ml-2 inline-flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+                      className="btn btn-danger !w-auto"
                     >
                       <Trash2 className="w-4 h-4" />
                       <span>Remove</span>
@@ -320,7 +321,7 @@ const ProfileSettings = () => {
                   value={formData.username}
                   onChange={handleChange}
                   required
-                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:z-10 sm:text-sm"
                   placeholder="Enter username"
                 />
               </div>
@@ -347,7 +348,7 @@ const ProfileSettings = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:z-10 sm:text-sm"
                   placeholder="Enter email address"
                 />
               </div>
@@ -369,7 +370,7 @@ const ProfileSettings = () => {
                 value={formData.bio}
                 onChange={handleChange}
                 rows="4"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
                 placeholder="Tell us about yourself..."
               />
             ) : (

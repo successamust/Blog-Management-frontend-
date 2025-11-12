@@ -6,6 +6,8 @@ import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import RichTextEditor from './RichTextEditor';
+import SkeletonLoader from '../common/SkeletonLoader';
+import Spinner from '../common/Spinner';
 
 const PostManagement = () => {
   const [posts, setPosts] = useState([]);
@@ -169,9 +171,7 @@ const PostManagement = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <SkeletonLoader variant="list" count={6} />
     );
   }
 
@@ -201,6 +201,30 @@ const PostManagement = () => {
 const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusFilter, onDelete }) => {
   const { user, isAdmin } = useAuth();
   const isAuthor = user?.role === 'author' || isAdmin();
+
+  const getStatusMeta = (post) => {
+    const rawStatus = (post.status || post.state || '').toString().trim().toLowerCase();
+    const baseStatus = rawStatus || (post.isPublished ? 'published' : 'draft');
+    const normalizedStatus = baseStatus.replace(/\s+/g, '-');
+
+    const badgeClassMap = {
+      published: 'bg-green-100 text-green-800',
+      draft: 'bg-yellow-100 text-yellow-800',
+      scheduled: 'bg-blue-100 text-blue-800',
+      pending: 'bg-amber-100 text-amber-800',
+      archived: 'bg-slate-200 text-slate-700',
+    };
+
+    const label = baseStatus
+      .split(/[\s-]+/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
+    return {
+      label,
+      className: badgeClassMap[normalizedStatus] || 'bg-slate-100 text-slate-700',
+    };
+  };
   
   return (
     <>
@@ -211,7 +235,7 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
         {isAuthor && (
           <Link
             to="/admin/posts/create"
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
           >
             <Plus className="w-4 h-4" />
             <span>Create Post</span>
@@ -229,13 +253,13 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search posts..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent md:w-60"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent md:w-60"
           >
             <option value="all">All statuses</option>
             <option value="published">Published</option>
@@ -247,96 +271,164 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
       </div>
 
       {/* Posts List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Author
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Published
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {posts.map((post) => (
-                <tr key={post._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900 line-clamp-1">{post.title}</div>
-                    <div className="text-sm text-gray-500 line-clamp-1">{post.excerpt}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{post.author?.username}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
-                      {(() => {
-                        const dateSource = post.publishedAt || post.updatedAt || post.createdAt;
-                        if (!dateSource) return '—';
-                        const parsed = new Date(dateSource);
-                        return Number.isNaN(parsed.getTime()) ? '—' : format(parsed, 'MMM d, yyyy');
-                      })()}
+      {posts.length > 0 ? (
+        <>
+          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Title
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Author
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Published
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {posts.map((post) => {
+                    const { label, className } = getStatusMeta(post);
+                    return (
+                      <tr key={post._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900 line-clamp-1">{post.title}</div>
+                          <div className="text-sm text-gray-500 line-clamp-1">{post.excerpt}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{post.author?.username || '—'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-500">
+                            {(() => {
+                              const dateSource = post.publishedAt || post.updatedAt || post.createdAt;
+                              if (!dateSource) return '—';
+                              const parsed = new Date(dateSource);
+                              return Number.isNaN(parsed.getTime()) ? '—' : format(parsed, 'MMM d, yyyy');
+                            })()}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${className}`}>
+                            {label}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                          <Link
+                            to={`/posts/${post.slug}`}
+                            className="text-secondary hover:text-[var(--accent)] transition-colors"
+                            title="View Post"
+                          >
+                            <Eye className="w-4 h-4 inline" />
+                          </Link>
+                          <Link
+                            to={`/admin/posts/edit/${post._id}`}
+                            className="text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                            title="Edit Post"
+                          >
+                            <Edit className="w-4 h-4 inline" />
+                          </Link>
+                          {isAdmin() && (
+                            <button
+                              onClick={() => onDelete(post._id)}
+                              className="text-red-600 hover:text-red-900 transition-colors"
+                              title="Delete Post"
+                            >
+                              <Trash2 className="w-4 h-4 inline" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="md:hidden space-y-4">
+            {posts.map((post) => {
+              const { label, className } = getStatusMeta(post);
+              return (
+                <div
+                  key={post._id}
+                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3"
+                >
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-base font-semibold text-gray-900">{post.title}</p>
+                        {post.excerpt && (
+                          <p className="text-sm text-gray-500 line-clamp-2">{post.excerpt}</p>
+                        )}
+                      </div>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${className}`}>
+                        {label}
+                      </span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        post.isPublished
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {post.isPublished ? 'published' : 'draft'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    <div className="flex flex-wrap gap-3 text-sm text-gray-500">
+                      <span className="inline-flex items-center gap-2">
+                        <span className="font-medium text-gray-700">Author:</span>
+                        {post.author?.username || '—'}
+                      </span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="font-medium text-gray-700">Updated:</span>
+                        {(() => {
+                          const dateSource = post.publishedAt || post.updatedAt || post.createdAt;
+                          if (!dateSource) return '—';
+                          const parsed = new Date(dateSource);
+                          return Number.isNaN(parsed.getTime()) ? '—' : format(parsed, 'MMM d, yyyy');
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
                     <Link
                       to={`/posts/${post.slug}`}
-                      className="text-blue-600 hover:text-blue-900 transition-colors"
-                      title="View Post"
+                      className="btn btn-outline flex-1 justify-center"
                     >
-                      <Eye className="w-4 h-4 inline" />
+                      <Eye className="w-4 h-4" />
+                      View
                     </Link>
                     <Link
                       to={`/admin/posts/edit/${post._id}`}
-                      className="text-green-600 hover:text-green-900 transition-colors"
-                      title="Edit Post"
+                      className="btn btn-primary flex-1 justify-center"
                     >
-                      <Edit className="w-4 h-4 inline" />
+                      <Edit className="w-4 h-4" />
+                      Edit
                     </Link>
                     {isAdmin() && (
                       <button
                         onClick={() => onDelete(post._id)}
-                        className="text-red-600 hover:text-red-900 transition-colors"
-                        title="Delete Post"
+                        className="btn-icon-square border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                        aria-label="Delete post"
                       >
-                        <Trash2 className="w-4 h-4 inline" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {posts.length === 0 && (
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <div className="text-center py-12 text-gray-500">
             <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p>No posts found</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 };
@@ -366,15 +458,11 @@ const CreatePost = ({ onSuccess }) => {
     try {
       setCategoriesLoading(true);
       const response = await categoriesAPI.getAll();
-      console.log('Categories API response:', response);
-      
       // Handle different possible response structures
       const categoriesData = response.data?.categories || 
                             response.data?.data || 
                             response.data || 
                             [];
-      
-      console.log('Categories data:', categoriesData);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -460,6 +548,7 @@ const CreatePost = ({ onSuccess }) => {
         category: formData.category || undefined,
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
         featuredImage: formData.featuredImage || undefined,
+        status: formData.status,
         isPublished: formData.status === 'published', // Convert status to isPublished boolean
       };
       
@@ -517,7 +606,7 @@ const CreatePost = ({ onSuccess }) => {
             value={formData.title}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
           />
         </div>
 
@@ -528,7 +617,7 @@ const CreatePost = ({ onSuccess }) => {
             value={formData.excerpt}
             onChange={handleChange}
             rows="3"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
           />
         </div>
 
@@ -546,7 +635,7 @@ const CreatePost = ({ onSuccess }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
             {categoriesLoading ? (
               <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <Spinner size="xs" />
                 <span className="text-sm text-gray-500">Loading categories...</span>
               </div>
             ) : (
@@ -554,7 +643,7 @@ const CreatePost = ({ onSuccess }) => {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
               >
                 <option value="">Select a category</option>
                 {categories.length > 0 ? (
@@ -576,7 +665,7 @@ const CreatePost = ({ onSuccess }) => {
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             >
               <option value="published">Published</option>
               <option value="draft">Draft</option>
@@ -592,7 +681,7 @@ const CreatePost = ({ onSuccess }) => {
             value={formData.tags}
             onChange={handleChange}
             placeholder="tag1, tag2, tag3"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
@@ -606,7 +695,7 @@ const CreatePost = ({ onSuccess }) => {
                 value={formData.featuredImage}
                 onChange={handleChange}
                 placeholder="Image URL or upload an image"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               />
               <label className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors flex items-center">
                 <Upload className="w-4 h-4 mr-2" />
@@ -652,14 +741,14 @@ const CreatePost = ({ onSuccess }) => {
         <div className="flex justify-end space-x-4">
           <Link
             to="/admin/posts"
-            className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="btn btn-outline"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
           >
             {submitting ? 'Creating...' : 'Create Post'}
           </button>
@@ -700,14 +789,24 @@ const EditPost = ({ onSuccess }) => {
       // Try to get post by ID first, fallback to getting all posts
       // Include drafts so authors can edit their own draft posts
       let post;
+      const normalizePosts = (response) => {
+        if (!response?.data) return [];
+        return (
+          response.data.posts ||
+          response.data.data ||
+          (Array.isArray(response.data) ? response.data : []) ||
+          []
+        );
+      };
+
       try {
         // Try to get post directly by ID if endpoint exists
         const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
-        post = response.data.posts.find(p => p._id === id || p.id === id);
+        post = normalizePosts(response).find((p) => p?._id === id || p?.id === id);
       } catch (error) {
         // If that fails, try getting all posts
         const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
-        post = response.data.posts.find(p => p._id === id || p.id === id);
+        post = normalizePosts(response).find((p) => p?._id === id || p?.id === id);
       }
       
       if (!post) {
@@ -749,15 +848,11 @@ const EditPost = ({ onSuccess }) => {
     try {
       setCategoriesLoading(true);
       const response = await categoriesAPI.getAll();
-      console.log('Categories API response:', response);
-      
       // Handle different possible response structures
       const categoriesData = response.data?.categories || 
                             response.data?.data || 
                             response.data || 
                             [];
-      
-      console.log('Categories data:', categoriesData);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -844,6 +939,7 @@ const EditPost = ({ onSuccess }) => {
         excerpt: formData.excerpt,
         content: formData.content,
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
+        status: formData.status,
         isPublished: isPublished, // Convert status to isPublished boolean - ALWAYS send this
       };
       
@@ -870,9 +966,7 @@ const EditPost = ({ onSuccess }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <SkeletonLoader variant="post-card" count={1} />
     );
   }
 
@@ -888,7 +982,7 @@ const EditPost = ({ onSuccess }) => {
             value={formData.title}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
           />
         </div>
 
@@ -899,7 +993,7 @@ const EditPost = ({ onSuccess }) => {
             value={formData.excerpt}
             onChange={handleChange}
             rows="3"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
           />
         </div>
 
@@ -917,7 +1011,7 @@ const EditPost = ({ onSuccess }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
             {categoriesLoading ? (
               <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <Spinner size="xs" />
                 <span className="text-sm text-gray-500">Loading categories...</span>
               </div>
             ) : (
@@ -925,7 +1019,7 @@ const EditPost = ({ onSuccess }) => {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
               >
                 <option value="">Select a category</option>
                 {categories.length > 0 ? (
@@ -947,7 +1041,7 @@ const EditPost = ({ onSuccess }) => {
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
             >
               <option value="published">Published</option>
               <option value="draft">Draft</option>
@@ -963,7 +1057,7 @@ const EditPost = ({ onSuccess }) => {
             value={formData.tags}
             onChange={handleChange}
             placeholder="tag1, tag2, tag3"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
           />
         </div>
 
@@ -977,7 +1071,7 @@ const EditPost = ({ onSuccess }) => {
                 value={formData.featuredImage}
                 onChange={handleChange}
                 placeholder="Image URL or upload an image"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
               />
               <label className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors flex items-center">
                 <Upload className="w-4 h-4 mr-2" />
@@ -1023,14 +1117,14 @@ const EditPost = ({ onSuccess }) => {
         <div className="flex justify-end space-x-4">
           <Link
             to="/admin/posts"
-            className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="btn btn-outline"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
           >
             {submitting ? 'Updating...' : 'Update Post'}
           </button>

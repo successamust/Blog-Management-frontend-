@@ -1,4 +1,4 @@
-# robots.txt for The Nexus Blog
+# robots.txt for Nexus
 User-agent: *
 Allow: /
 

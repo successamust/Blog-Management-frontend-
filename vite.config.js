@@ -30,6 +30,10 @@ export default defineConfig({
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
+          // Preserve email-assets folder structure for email templates
+          if (assetInfo.name && assetInfo.name.includes('email-assets')) {
+            return `email-assets/[name][extname]`;
+          }
           const info = assetInfo.name.split('.');
           const ext = info[info.length - 1];
           if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {

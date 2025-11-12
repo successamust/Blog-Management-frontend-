@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Mail, Send, Users, TrendingUp, FileText, Eye, Pencil, Loader2 } from 'lucide-react';
+import { Mail, Send, Users, TrendingUp, FileText, Eye, Pencil } from 'lucide-react';
 import { adminAPI, newsletterAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import RichTextEditor from './RichTextEditor';
+import SkeletonLoader from '../common/SkeletonLoader';
+import Spinner from '../common/Spinner';
 
 const NewsletterManagement = () => {
   const [stats, setStats] = useState(null);
@@ -120,7 +122,7 @@ const NewsletterManagement = () => {
       {
         title: 'Total Subscribers',
         value: stats.totalSubscribers || 0,
-        icon: <Users className="w-8 h-8 text-blue-600" />,
+        icon: <Users className="w-8 h-8 text-[var(--accent)]" />,
         description: stats.lastNewsletter?.subject
           ? `Last: ${new Date(stats.lastNewsletter.sentAt || stats.lastNewsletter.date || Date.now()).toLocaleDateString()}`
           : 'Latest totals',
@@ -144,9 +146,7 @@ const NewsletterManagement = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <SkeletonLoader variant="list" count={5} />
     );
   }
 
@@ -192,7 +192,7 @@ const NewsletterManagement = () => {
                 setShowSendForm((prev) => !prev);
                 setPreviewMode(false);
               }}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="btn btn-primary !w-auto shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
             >
               <Send className="w-4 h-4" />
               <span>{showSendForm ? 'Cancel' : 'New Newsletter'}</span>
@@ -209,7 +209,7 @@ const NewsletterManagement = () => {
                 value={sendFormData.subject}
                 onChange={(e) => setSendFormData({ ...sendFormData, subject: e.target.value })}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
               />
             </div>
             <div>
@@ -236,9 +236,9 @@ const NewsletterManagement = () => {
             <button
               type="submit"
               disabled={sending}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              className="btn btn-primary inline-flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
             >
-              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {sending ? <Spinner size="xs" tone="light" /> : <Send className="w-4 h-4" />}
               <span>{sending ? 'Sending...' : 'Send Newsletter'}</span>
             </button>
           </form>
@@ -250,49 +250,79 @@ const NewsletterManagement = () => {
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900">Subscribers</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Subscribed At
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+        {subscribers.length > 0 ? (
+          <>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Subscribed At
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {subscribers.map((subscriber) => (
+                    <tr key={subscriber._id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{subscriber.email}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">
+                          {new Date(subscriber.subscribedAt).toLocaleString()}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${
+                            subscriber.status === 'unsubscribed'
+                              ? 'bg-rose-100 text-rose-700'
+                              : 'bg-green-100 text-green-700'
+                          }`}
+                        >
+                          {subscriber.status || 'active'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="md:hidden space-y-4 p-4">
               {subscribers.map((subscriber) => (
-                <tr key={subscriber._id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{subscriber.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
+                <div
+                  key={subscriber._id}
+                  className="rounded-xl border border-gray-200 p-4 flex flex-col gap-3 bg-white shadow-sm"
+                >
+                  <div>
+                    <p className="text-base font-semibold text-gray-900 break-words">
+                      {subscriber.email}
+                    </p>
+                    <p className="text-sm text-gray-500">
                       {new Date(subscriber.subscribedAt).toLocaleString()}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${
-                        subscriber.status === 'unsubscribed'
-                          ? 'bg-rose-100 text-rose-700'
-                          : 'bg-green-100 text-green-700'
-                      }`}
-                    >
-                      {subscriber.status || 'active'}
-                    </span>
-                  </td>
-                </tr>
+                    </p>
+                  </div>
+                  <span
+                    className={`self-start px-2 py-1 text-xs font-semibold rounded-full capitalize ${
+                      subscriber.status === 'unsubscribed'
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'bg-green-100 text-green-700'
+                    }`}
+                  >
+                    {subscriber.status || 'active'}
+                  </span>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
-        {subscribers.length === 0 && (
+            </div>
+          </>
+        ) : (
           <div className="text-center py-12 text-gray-500">
             <Mail className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p>No subscribers yet</p>

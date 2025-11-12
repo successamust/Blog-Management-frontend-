@@ -3,6 +3,8 @@ import { Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import { Folder, Plus, Edit, Trash2, Search, Eye } from 'lucide-react';
 import { categoriesAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import SkeletonLoader from '../common/SkeletonLoader';
+import Spinner from '../common/Spinner';
 
 const CategoryManagement = () => {
   const [categories, setCategories] = useState([]);
@@ -18,7 +20,12 @@ const CategoryManagement = () => {
     try {
       setLoading(true);
       const response = await categoriesAPI.getAll();
-      setCategories(response.data.categories || []);
+      const categoriesData =
+        response.data?.categories ||
+        response.data?.data ||
+        (Array.isArray(response.data) ? response.data : []) ||
+        [];
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast.error('Failed to load categories');
@@ -48,9 +55,7 @@ const CategoryManagement = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <SkeletonLoader variant="category" count={6} />
     );
   }
 
@@ -66,13 +71,15 @@ const CategoryManagement = () => {
 };
 
 const CategoryList = ({ categories, searchQuery, setSearchQuery, onDelete }) => {
+  const hasCategories = categories.length > 0;
+
   return (
     <>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Categories Management</h2>
         <Link
           to="/admin/categories/create"
-          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
         >
           <Plus className="w-4 h-4" />
           <span>Create Category</span>
@@ -88,75 +95,128 @@ const CategoryList = ({ categories, searchQuery, setSearchQuery, onDelete }) => 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search categories..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
           />
         </div>
       </div>
 
       {/* Categories List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Slug
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {categories.map((category) => (
-                <tr key={category._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{category.name}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-500 line-clamp-2">{category.description || 'No description'}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{category.slug}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <Link
-                      to={`/categories/${category.slug}`}
-                      className="text-blue-600 hover:text-blue-900 transition-colors"
-                    >
-                      <Eye className="w-4 h-4 inline" />
-                    </Link>
-                    <Link
-                      to={`/admin/categories/edit/${category._id}`}
-                      className="text-green-600 hover:text-green-900 transition-colors"
-                    >
-                      <Edit className="w-4 h-4 inline" />
-                    </Link>
-                    <button
-                      onClick={() => onDelete(category._id)}
-                      className="text-red-600 hover:text-red-900 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4 inline" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {categories.length === 0 && (
+      {hasCategories ? (
+        <>
+          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Slug
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {categories.map((category) => (
+                    <tr key={category._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-gray-900">{category.name}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-500 line-clamp-2">
+                          {category.description || 'No description'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">{category.slug || '—'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <Link
+                          to={`/categories/${category.slug}`}
+                          className="text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                        >
+                          <Eye className="w-4 h-4 inline" />
+                        </Link>
+                        <Link
+                          to={`/admin/categories/edit/${category._id}`}
+                          className="text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                        >
+                          <Edit className="w-4 h-4 inline" />
+                        </Link>
+                        <button
+                          onClick={() => onDelete(category._id)}
+                          className="text-red-600 hover:text-red-900 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 inline" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="md:hidden space-y-4">
+            {categories.map((category) => (
+              <div
+                key={category._id}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3"
+              >
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-base font-semibold text-gray-900">{category.name}</p>
+                      {category.description && (
+                        <p className="text-sm text-gray-500 line-clamp-3">{category.description}</p>
+                      )}
+                    </div>
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                      {category.slug || '—'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <Link
+                    to={`/categories/${category.slug}`}
+                    className="btn btn-outline flex-1 justify-center"
+                  >
+                    <Eye className="w-4 h-4" />
+                    View
+                  </Link>
+                  <Link
+                    to={`/admin/categories/edit/${category._id}`}
+                    className="btn btn-primary flex-1 justify-center"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => onDelete(category._id)}
+                    className="btn-icon-square border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                    aria-label="Delete category"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <div className="text-center py-12 text-gray-500">
             <Folder className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p>No categories found</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 };
@@ -204,32 +264,32 @@ const CreateCategory = ({ onSuccess }) => {
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+          <label className="block text-sm font-medium text-secondary mb-2">Description</label>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
             rows="4"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
           />
         </div>
 
         <div className="flex justify-end space-x-4">
           <Link
             to="/admin/categories"
-            className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="btn btn-outline"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
           >
             {submitting ? 'Creating...' : 'Create Category'}
           </button>
@@ -258,7 +318,12 @@ const EditCategory = ({ onSuccess }) => {
     try {
       setLoading(true);
       const response = await categoriesAPI.getAll();
-      const category = response.data.categories.find(c => c._id === id);
+      const categoriesData =
+        response.data?.categories ||
+        response.data?.data ||
+        (Array.isArray(response.data) ? response.data : []) ||
+        [];
+      const category = categoriesData.find((c) => c._id === id);
       
       if (!category) {
         toast.error('Category not found');
@@ -304,50 +369,48 @@ const EditCategory = ({ onSuccess }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <SkeletonLoader variant="category" count={1} />
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit Category</h2>
+    <div className="surface-card p-6">
+      <h2 className="text-2xl font-bold text-primary mb-6">Edit Category</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+          <label className="block text-sm font-medium text-secondary mb-2">Name</label>
           <input
             type="text"
             name="name"
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+          <label className="block text-sm font-medium text-secondary mb-2">Description</label>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
             rows="4"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
           />
         </div>
 
         <div className="flex justify-end space-x-4">
           <Link
             to="/admin/categories"
-            className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="btn btn-outline"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
           >
             {submitting ? 'Updating...' : 'Update Category'}
           </button>

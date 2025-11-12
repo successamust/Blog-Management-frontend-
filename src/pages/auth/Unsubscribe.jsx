@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 import { newsletterAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import Spinner from '../../components/common/Spinner';
 
 const Unsubscribe = () => {
   const [searchParams] = useSearchParams();
@@ -59,13 +60,13 @@ const Unsubscribe = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-50 via-indigo-50/20 to-purple-50/30">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-md w-full"
       >
-        <div className="card-elevated card-elevated-hover p-8 text-center">
+        <div className="surface-card p-8 text-center space-y-6">
           {success ? (
             <>
               <motion.div
@@ -81,16 +82,16 @@ const Unsubscribe = () => {
               <h1 className="text-2xl font-bold text-slate-900 mb-4">
                 Successfully Unsubscribed
               </h1>
-              <p className="text-slate-600 mb-6">
+              <p className="text-secondary">
                 You have been successfully unsubscribed from our newsletter. 
                 We're sorry to see you go!
               </p>
-              <p className="text-sm text-slate-500 mb-6">
+              <p className="text-sm text-muted">
                 If you change your mind, you can always subscribe again from our website.
               </p>
               <Link
                 to="/"
-                className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
+                className="btn btn-primary inline-flex items-center space-x-2 shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back to Home</span>
@@ -111,7 +112,7 @@ const Unsubscribe = () => {
               <h1 className="text-2xl font-bold text-slate-900 mb-4">
                 Unsubscribe Failed
               </h1>
-              <p className="text-slate-600 mb-6">
+              <p className="text-secondary mb-6">
                 {error}
               </p>
               <button
@@ -119,7 +120,7 @@ const Unsubscribe = () => {
                   setError(null);
                   setEmail('');
                 }}
-                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
+                className="btn btn-primary shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
               >
                 Try Again
               </button>
@@ -132,14 +133,14 @@ const Unsubscribe = () => {
                 transition={{ type: 'spring', stiffness: 200 }}
                 className="mb-6"
               >
-                <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto">
-                  <Mail className="w-10 h-10 text-indigo-600" />
+                <div className="w-20 h-20 bg-[var(--accent)]/15 rounded-full flex items-center justify-center mx-auto">
+                  <Mail className="w-10 h-10 text-[var(--accent)]" />
                 </div>
               </motion.div>
               <h1 className="text-2xl font-bold text-slate-900 mb-4">
                 Unsubscribe from Newsletter
               </h1>
-              <p className="text-slate-600 mb-6">
+              <p className="text-secondary mb-6">
                 Enter your email address to unsubscribe from our newsletter.
               </p>
               
@@ -152,7 +153,7 @@ const Unsubscribe = () => {
                     placeholder="Enter your email address"
                     required
                     disabled={loading}
-                    className="w-full px-4 py-3 glass-card rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300/50 focus:bg-white/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 glass-card rounded-xl focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 <motion.button
@@ -160,11 +161,11 @@ const Unsubscribe = () => {
                   disabled={loading || !email.trim()}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full px-6 py-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-xl hover:shadow-lg hover:shadow-rose-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center space-x-2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <Spinner size="sm" tone="light" />
                       <span>Unsubscribing...</span>
                     </div>
                   ) : (
@@ -176,7 +177,7 @@ const Unsubscribe = () => {
               <div className="mt-6 pt-6 border-t border-slate-200">
                 <Link
                   to="/"
-                  className="inline-flex items-center space-x-2 text-slate-600 hover:text-indigo-600 transition-colors text-sm"
+                  className="inline-flex items-center space-x-2 text-secondary hover:text-[var(--accent)] transition-colors text-sm"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>Back to Home</span>

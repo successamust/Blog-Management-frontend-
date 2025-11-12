@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Users, Shield, UserMinus, Search, UserCheck } from 'lucide-react';
 import { adminAPI, authorsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import SkeletonLoader from '../common/SkeletonLoader';
+import Spinner from '../common/Spinner';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -22,8 +24,15 @@ const UserManagement = () => {
         adminAPI.getUsers(),
         adminAPI.getUserStats(),
       ]);
-      setUsers(usersRes.data.users || []);
-      setStats(statsRes.data || {});
+      const usersData =
+        usersRes.data?.users ||
+        usersRes.data?.data ||
+        (Array.isArray(usersRes.data) ? usersRes.data : []) ||
+        [];
+      setUsers(Array.isArray(usersData) ? usersData : []);
+
+      const statsData = statsRes.data?.stats || statsRes.data || {};
+      setStats(statsData);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to load users');
@@ -72,11 +81,11 @@ const UserManagement = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <SkeletonLoader variant="list" count={6} />
     );
   }
+
+  const hasUsers = filteredUsers.length > 0;
 
   return (
     <div className="space-y-6">
@@ -89,7 +98,7 @@ const UserManagement = () => {
                 <p className="text-sm font-medium text-gray-600">Total Users</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalUsers || 0}</p>
               </div>
-              <Users className="w-8 h-8 text-blue-600" />
+              <Users className="w-8 h-8 text-[var(--accent)]" />
             </div>
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -123,13 +132,13 @@ const UserManagement = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search users..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             />
           </div>
           <select
             value={filterRole}
             onChange={(e) => setFilterRole(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           >
             <option value="all">All Roles</option>
             <option value="admin">Admins</option>
@@ -140,89 +149,149 @@ const UserManagement = () => {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{user.username}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{user.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.role === 'admin'
-                          ? 'bg-purple-100 text-purple-800'
-                          : user.role === 'author'
-                          ? 'bg-indigo-100 text-indigo-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {user.role || 'user'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-3">
-                      {user.role === 'admin' ? (
-                        <button
-                          onClick={() => handleDemote(user._id)}
-                          className="text-red-600 hover:text-red-900 transition-colors"
+      {hasUsers ? (
+        <>
+          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      User
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Role
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredUsers.map((user) => (
+                    <tr key={user._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{user.username}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">{user.email}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            user.role === 'admin'
+                              ? 'bg-amber-100 text-amber-800'
+                              : user.role === 'author'
+                              ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}
                         >
-                          Demote
-                        </button>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => handlePromote(user._id)}
-                            className="text-blue-600 hover:text-blue-900 transition-colors"
-                          >
-                            Promote to Admin
-                          </button>
-                          {user.role !== 'author' && (
+                          {user.role || 'user'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center space-x-3">
+                          {user.role === 'admin' ? (
                             <button
-                              onClick={() => handlePromoteToAuthor(user._id)}
-                              className="text-indigo-600 hover:text-indigo-900 transition-colors flex items-center space-x-1"
+                              onClick={() => handleDemote(user._id)}
+                              className="btn btn-danger !w-auto"
                             >
-                              <UserCheck className="w-4 h-4" />
-                              <span>Promote to Author</span>
+                              Demote
                             </button>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handlePromote(user._id)}
+                                className="btn btn-primary !w-auto"
+                              >
+                                Promote to Admin
+                              </button>
+                              {user.role !== 'author' && (
+                                <button
+                                  onClick={() => handlePromoteToAuthor(user._id)}
+                                  className="btn btn-outline !w-auto flex items-center gap-2"
+                                >
+                                  <UserCheck className="w-4 h-4" />
+                                  <span>Promote to Author</span>
+                                </button>
+                              )}
+                            </>
                           )}
-                        </>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="md:hidden space-y-4">
+            {filteredUsers.map((user) => (
+              <div
+                key={user._id}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-base font-semibold text-gray-900">{user.username}</p>
+                    <p className="text-sm text-gray-500 break-words">{user.email}</p>
+                  </div>
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      user.role === 'admin'
+                        ? 'bg-amber-100 text-amber-800'
+                        : user.role === 'author'
+                        ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {user.role || 'user'}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {user.role === 'admin' ? (
+                    <button
+                      onClick={() => handleDemote(user._id)}
+                      className="btn btn-danger flex-1 min-w-[140px] justify-center"
+                    >
+                      Demote
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handlePromote(user._id)}
+                        className="btn btn-primary flex-1 min-w-[160px] justify-center"
+                      >
+                        Promote to Admin
+                      </button>
+                      {user.role !== 'author' && (
+                        <button
+                          onClick={() => handlePromoteToAuthor(user._id)}
+                          className="btn btn-outline flex-1 min-w-[160px] justify-center gap-2"
+                        >
+                          <UserCheck className="w-4 h-4" />
+                          Author
+                        </button>
                       )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {filteredUsers.length === 0 && (
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <div className="text-center py-12 text-gray-500">
             <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p>No users found</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import Spinner from './Spinner';
 
 const ProtectedRoute = ({ children, requireAdmin = false, requireAuthor = false, requireAuthorOrAdmin = false }) => {
   const { isAuthenticated, isAdmin, isAuthor, isAuthorOrAdmin, loading } = useAuth();
@@ -8,8 +9,8 @@ const ProtectedRoute = ({ children, requireAdmin = false, requireAuthor = false,
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-page">
+        <Spinner size="3xl" />
       </div>
     );
   }

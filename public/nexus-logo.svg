@@ -1,68 +1,97 @@
-<svg width="260" height="60" viewBox="0 0 260 60" xmlns="http://www.w3.org/2000/svg">
+<svg width="320" height="96" viewBox="0 0 320 96" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- 3D Gradient for white elements -->
-    <linearGradient id="white3D" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#e5e7eb;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#d1d5db;stop-opacity:1" />
+    <radialGradient id="logo-bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#111827" />
+      <stop offset="100%" stop-color="#020617" />
+    </radialGradient>
+    <linearGradient id="logo-orbit" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="50%" stop-color="#22C55E"/>
+      <stop offset="100%" stop-color="#0EA5E9"/>
     </linearGradient>
-    
-    <!-- Shadow gradient -->
-    <linearGradient id="shadowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#000000;stop-opacity:0.3" />
-      <stop offset="100%" style="stop-color:#000000;stop-opacity:0.1" />
+    <linearGradient id="logo-node" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
     </linearGradient>
-    
-    <!-- Highlight gradient -->
-    <linearGradient id="highlightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.8" />
-      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.2" />
+    <linearGradient id="wordmark-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0EA5E9" />
+      <stop offset="50%" stop-color="#22C55E" />
+      <stop offset="100%" stop-color="#34D399" />
     </linearGradient>
-    
-    <!-- Drop shadow filter -->
-    <filter id="dropshadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
-      <feOffset dx="2" dy="2" result="offsetblur"/>
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="0.3"/>
-      </feComponentTransfer>
+    <filter id="logo-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
       <feMerge>
-        <feMergeNode/>
+        <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
   </defs>
-  
-  <!-- Black background with 3D depth -->
-  <rect width="50" height="50" x="5" y="5" rx="10" fill="#000000"/>
-  <rect x="6" y="6" width="48" height="48" rx="9" fill="url(#shadowGrad)"/>
-  
-  <!-- 3D Geometric "N" Icon -->
-  <g id="nexus-icon" transform="translate(5, 5)" filter="url(#dropshadow)">
-    <!-- Left vertical bar - 3D -->
-    <rect x="7" y="7" width="3" height="36" rx="1.5" fill="url(#white3D)"/>
-    <rect x="7" y="7" width="1.2" height="36" rx="0.6" fill="url(#highlightGrad)"/>
-    <rect x="9.5" y="7" width="0.5" height="36" rx="0.25" fill="#000000" opacity="0.2"/>
+
+  <!-- Icon -->
+  <g transform="translate(0, 0)">
+    <!-- Background Circle -->
+    <circle cx="48" cy="48" r="46" fill="url(#logo-bg)" />
     
-    <!-- Diagonal connection - 3D -->
-    <path d="M 10 7 L 40 43" stroke="url(#white3D)" stroke-width="3" stroke-linecap="round" fill="none"/>
-    <path d="M 10 7 L 40 43" stroke="url(#highlightGrad)" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.6"/>
-    <path d="M 10.8 7.8 L 40.8 43.8" stroke="#000000" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.2"/>
+    <!-- Inner glow -->
+    <circle cx="48" cy="48" r="30" fill="rgba(34,211,153,0.12)" />
+
+    <!-- Concentric Orbital Rings -->
+    <!-- Outer orbit -->
+    <ellipse cx="48" cy="48" rx="34" ry="34" fill="none" stroke="url(#logo-orbit)" stroke-width="2.4" opacity="0.6" />
     
-    <!-- Right vertical bar - 3D -->
-    <rect x="40" y="7" width="3" height="36" rx="1.5" fill="url(#white3D)"/>
-    <rect x="40" y="7" width="1.2" height="36" rx="0.6" fill="url(#highlightGrad)"/>
-    <rect x="42.5" y="7" width="0.5" height="36" rx="0.25" fill="#000000" opacity="0.2"/>
+    <!-- Middle orbit -->
+    <ellipse cx="48" cy="48" rx="24" ry="24" fill="none" stroke="url(#logo-orbit)" stroke-width="2.2" opacity="0.75" />
     
-    <!-- 3D Nexus point -->
-    <circle cx="25" cy="25" r="2.5" fill="url(#white3D)"/>
-    <circle cx="24.2" cy="24.2" r="1.8" fill="url(#highlightGrad)" opacity="0.8"/>
-    <circle cx="25.8" cy="25.8" r="1.2" fill="#000000" opacity="0.15"/>
+    <!-- Inner orbit -->
+    <ellipse cx="48" cy="48" rx="14" ry="14" fill="none" stroke="url(#logo-orbit)" stroke-width="2" opacity="0.85" />
+
+    <!-- Connection Lines - Creating Nexus Pattern -->
+    <g stroke="url(#logo-orbit)" stroke-width="2" opacity="0.7" stroke-linecap="round">
+      <!-- Cardinal directions -->
+      <line x1="48" y1="48" x2="48" y2="14" />
+      <line x1="48" y1="48" x2="82" y2="48" />
+      <line x1="48" y1="48" x2="48" y2="82" />
+      <line x1="48" y1="48" x2="14" y2="48" />
+      <!-- Diagonal connections -->
+      <line x1="48" y1="48" x2="72" y2="24" />
+      <line x1="48" y1="48" x2="72" y2="72" />
+      <line x1="48" y1="48" x2="24" y2="72" />
+      <line x1="48" y1="48" x2="24" y2="24" />
+    </g>
+
+    <!-- Connection Nodes with Glow -->
+    <g filter="url(#logo-glow)">
+      <!-- Center node (main nexus point) -->
+      <circle cx="48" cy="48" r="6.5" fill="url(#logo-node)" />
+      <circle cx="48" cy="48" r="4.5" fill="rgba(34,211,153,0.4)" />
+      
+      <!-- Outer nodes (connection points) -->
+      <circle cx="48" cy="14" r="4.5" fill="url(#logo-node)" />
+      <circle cx="82" cy="48" r="4.5" fill="url(#logo-node)" />
+      <circle cx="48" cy="82" r="4.5" fill="url(#logo-node)" />
+      <circle cx="14" cy="48" r="4.5" fill="url(#logo-node)" />
+      
+      <!-- Diagonal nodes -->
+      <circle cx="72" cy="24" r="4" fill="url(#logo-node)" />
+      <circle cx="72" cy="72" r="4" fill="url(#logo-node)" />
+      <circle cx="24" cy="72" r="4" fill="url(#logo-node)" />
+      <circle cx="24" cy="24" r="4" fill="url(#logo-node)" />
+    </g>
+
+    <!-- Subtle accent arcs -->
+    <path d="M 14 48 A 34 34 0 0 1 48 14" fill="none" stroke="url(#logo-orbit)" stroke-width="1.8" opacity="0.5" />
+    <path d="M 48 14 A 34 34 0 0 1 82 48" fill="none" stroke="url(#logo-orbit)" stroke-width="1.8" opacity="0.5" />
   </g>
-  
-  <!-- Text -->
-  <g id="text">
-    <text x="65" y="32" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="600" fill="#1e293b" letter-spacing="-0.3px">The NexusBlog</text>
-    <text x="65" y="48" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="10" font-weight="400" fill="#64748b" letter-spacing="0.3px">Connecting Ideas Across Worlds</text>
+
+  <!-- Wordmark -->
+  <g transform="translate(110, 28)">
+    <text x="0" y="28" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="0.28em" fill="#0F172A">
+      NE
+      <tspan fill="url(#wordmark-grad)">X</tspan>
+      US
+    </text>
+    <text x="2" y="54" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="14" font-weight="500" letter-spacing="0.42em" fill="#64748B">
+      STORIES WORTH SHARING
+    </text>
   </g>
 </svg>

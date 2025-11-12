@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Users, FileText, Mail, LayoutDashboard, Folder, UserCheck } from 'lucide-react';
 import UserManagement from '../components/admin/UserManagement';
 import PostManagement from '../components/admin/PostManagement';
@@ -7,7 +8,6 @@ import NewsletterManagement from '../components/admin/NewsletterManagement';
 import CategoryManagement from '../components/admin/CategoryManagement';
 import AuthorManagement from '../components/admin/AuthorManagement';
 import AdminOverview from '../components/admin/AdminOverview';
-import CollapsibleSidebar from '../components/common/CollapsibleSidebar';
 import { useAuth } from '../context/AuthContext';
 
 const Admin = () => {
@@ -15,125 +15,92 @@ const Admin = () => {
   const { user, isAdmin } = useAuth();
   const isAuthorOnly = user?.role === 'author' && !isAdmin();
 
+  const normalizePath = (path) => path.replace(/\/+$/, '') || '/';
+
   const isActive = (path) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+    const normalizedTarget = normalizePath(path);
+    const normalizedCurrent = normalizePath(location.pathname);
+
+    if (normalizedTarget === '/admin') {
+      return normalizedCurrent === '/admin';
+    }
+
+    return (
+      normalizedCurrent === normalizedTarget ||
+      normalizedCurrent.startsWith(`${normalizedTarget}/`)
+    );
   };
 
+  const tabs = [
+    ...(!isAuthorOnly ? [{ id: 'overview', path: '/admin', label: 'Overview', mobileLabel: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> }] : []),
+    ...(!isAuthorOnly ? [{ id: 'users', path: '/admin/users', label: 'Users', mobileLabel: 'Users', icon: <Users className="w-4 h-4" /> }] : []),
+    { id: 'posts', path: '/admin/posts', label: 'Posts', mobileLabel: 'Posts', icon: <FileText className="w-4 h-4" /> },
+    ...(!isAuthorOnly ? [{ id: 'categories', path: '/admin/categories', label: 'Categories', mobileLabel: 'Categories', icon: <Folder className="w-4 h-4" /> }] : []),
+    ...(!isAuthorOnly ? [{ id: 'newsletter', path: '/admin/newsletter', label: 'Newsletter', mobileLabel: 'Newsletter', icon: <Mail className="w-4 h-4" /> }] : []),
+    ...(!isAuthorOnly ? [{ id: 'authors', path: '/admin/authors', label: 'Authors', mobileLabel: 'Authors', icon: <UserCheck className="w-4 h-4" /> }] : []),
+  ];
+
   return (
-    <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="bg-page min-h-screen">
+    <div className="layout-container-wide py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">
-          <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+        <h1 className="text-3xl sm:text-4xl font-bold text-primary mb-2">
+          <span className="bg-gradient-to-r from-[var(--accent)] via-[#189112] to-[var(--accent-hover)] bg-clip-text text-transparent">
             {isAuthorOnly ? 'Author' : 'Admin'}
           </span> Dashboard
         </h1>
-        <p className="text-sm sm:text-base text-slate-600">
+        <p className="text-sm sm:text-base text-muted">
           {isAuthorOnly ? 'Manage your posts' : 'Manage users, posts, categories, and newsletters'}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
-        {/* Sidebar */}
-        <div className="lg:col-span-1">
-          <CollapsibleSidebar defaultCollapsed={false}>
-            <nav className="overflow-x-auto">
-              <div className="flex lg:flex-col gap-2 min-w-max lg:min-w-0">
-              {!isAuthorOnly && (
-                <Link
-                  to="/admin"
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all whitespace-nowrap ${
-                    isActive('/admin') && location.pathname === '/admin'
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25'
-                      : 'text-slate-600 hover:bg-white/50 hover:text-indigo-600'
-                  }`}
+      {/* Tabs - Same style as Dashboard */}
+      <div className="mb-8">
+        <div className="surface-card rounded-2xl p-2 overflow-x-auto">
+          <nav className="flex space-x-2 min-w-max">
+            {tabs.map((tab) => {
+              const isRouteActive = isActive(tab.path);
+              return (
+                <motion.div
+                  key={tab.id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                 >
-                  <LayoutDashboard className="w-5 h-5" />
-                  <span>Overview</span>
-                </Link>
-              )}
-              {!isAuthorOnly && (
-                <Link
-                  to="/admin/users"
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all whitespace-nowrap ${
-                    isActive('/admin/users')
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25'
-                      : 'text-slate-600 hover:bg-white/50 hover:text-indigo-600'
-                  }`}
-                >
-                  <Users className="w-5 h-5" />
-                  <span>Users</span>
-                </Link>
-              )}
-              <Link
-                to="/admin/posts"
-                className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all whitespace-nowrap ${
-                  isActive('/admin/posts')
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25'
-                    : 'text-slate-600 hover:bg-white/50 hover:text-indigo-600'
-                }`}
-              >
-                <FileText className="w-5 h-5" />
-                <span>Posts</span>
-              </Link>
-              {!isAuthorOnly && (
-                <Link
-                  to="/admin/categories"
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all whitespace-nowrap ${
-                    isActive('/admin/categories')
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25'
-                      : 'text-slate-600 hover:bg-white/50 hover:text-indigo-600'
-                  }`}
-                >
-                  <Folder className="w-5 h-5" />
-                  <span>Categories</span>
-                </Link>
-              )}
-              {!isAuthorOnly && (
-                <Link
-                  to="/admin/newsletter"
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all whitespace-nowrap ${
-                    isActive('/admin/newsletter')
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25'
-                      : 'text-slate-600 hover:bg-white/50 hover:text-indigo-600'
-                  }`}
-                >
-                  <Mail className="w-5 h-5" />
-                  <span>Newsletter</span>
-                </Link>
-              )}
-              {!isAuthorOnly && (
-                <Link
-                  to="/admin/authors"
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all whitespace-nowrap ${
-                    isActive('/admin/authors')
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25'
-                      : 'text-slate-600 hover:bg-white/50 hover:text-indigo-600'
-                  }`}
-                >
-                  <UserCheck className="w-5 h-5" />
-                  <span>Authors</span>
-                </Link>
-              )}
-              </div>
-            </nav>
-          </CollapsibleSidebar>
-        </div>
-
-        {/* Main Content */}
-        <div className="lg:col-span-3">
-          <Routes>
-            {!isAuthorOnly && <Route index element={<AdminOverview />} />}
-            {isAuthorOnly && <Route index element={<Navigate to="/admin/posts" replace />} />}
-            {!isAuthorOnly && <Route path="users" element={<UserManagement />} />}
-            <Route path="posts/*" element={<PostManagement />} />
-            {!isAuthorOnly && <Route path="categories/*" element={<CategoryManagement />} />}
-            {!isAuthorOnly && <Route path="newsletter" element={<NewsletterManagement />} />}
-            {!isAuthorOnly && <Route path="authors" element={<AuthorManagement />} />}
-            {isAuthorOnly && <Route path="*" element={<Navigate to="/admin/posts" replace />} />}
-          </Routes>
+                  <Link
+                    to={tab.path}
+                    className={`flex items-center space-x-1 sm:space-x-2 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl font-medium text-xs sm:text-sm transition-all whitespace-nowrap ${
+                      isRouteActive
+                        ? 'bg-[var(--accent)] text-white shadow-[0_16px_35px_rgba(26,137,23,0.25)]'
+                        : 'text-secondary hover:text-[var(--accent)] hover:bg-surface-subtle'
+                    }`}
+                  >
+                    {tab.icon}
+                    <span className="hidden sm:inline">{tab.label}</span>
+                    <span className="sm:hidden">{tab.mobileLabel || tab.label}</span>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </nav>
         </div>
       </div>
+
+      {/* Main Content */}
+      <div>
+        <Routes>
+          {!isAuthorOnly && <Route index element={<AdminOverview />} />}
+          {isAuthorOnly && <Route index element={<Navigate to="/admin/posts" replace />} />}
+          {!isAuthorOnly && <Route path="users" element={<UserManagement />} />}
+          <Route path="posts/*" element={<PostManagement />} />
+          {!isAuthorOnly && <Route path="categories/*" element={<CategoryManagement />} />}
+          {!isAuthorOnly && <Route path="newsletter" element={<NewsletterManagement />} />}
+          {!isAuthorOnly && <Route path="authors" element={<AuthorManagement />} />}
+          {isAuthorOnly && <Route path="*" element={<Navigate to="/admin/posts" replace />} />}
+        </Routes>
+      </div>
+    </div>
     </div>
   );
 };
