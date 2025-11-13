@@ -69,6 +69,19 @@
     color: var(--accent-hover);
   }
   
+  /* Ensure button hover states override global link hover with higher specificity */
+  a.btn-primary:hover {
+    color: white;
+  }
+  
+  a.btn-secondary:hover {
+    color: white;
+  }
+  
+  a.btn-danger:hover {
+    color: white;
+  }
+  
   /* Premium editorial typography - Medium/Substack style */
   .font-display {
     font-family: 'Playfair Display', 'Times New Roman', serif;
@@ -114,11 +127,11 @@
   }
 
   .btn-primary {
-    @apply bg-[var(--accent)] text-white shadow-[0_12px_26px_rgba(26,137,23,0.2)] hover:bg-[var(--accent-hover)] hover:shadow-[0_14px_32px_rgba(26,137,23,0.22)];
+    @apply bg-[var(--accent)] text-white shadow-[0_12px_26px_rgba(26,137,23,0.2)] hover:bg-[var(--accent-hover)] hover:shadow-[0_14px_32px_rgba(26,137,23,0.22)] hover:text-white;
   }
 
   .btn-secondary {
-    @apply bg-gray-900 text-white hover:bg-gray-800 shadow-[0_10px_24px_rgba(17,24,39,0.18)];
+    @apply bg-gray-900 text-white hover:bg-gray-800 hover:text-white shadow-[0_10px_24px_rgba(17,24,39,0.18)];
   }
 
   .btn-outline {
@@ -140,7 +153,7 @@
   }
 
   .btn-danger {
-    @apply bg-rose-500 text-white hover:bg-rose-600 shadow-[0_12px_24px_rgba(244,63,94,0.22)];
+    @apply bg-rose-500 text-white hover:bg-rose-600 hover:text-white shadow-[0_12px_24px_rgba(244,63,94,0.22)];
   }
 
   .btn-link {
