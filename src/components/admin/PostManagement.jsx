@@ -971,9 +971,9 @@ const EditPost = ({ onSuccess }) => {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit Post</h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 overflow-x-hidden">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Edit Post</h2>
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
           <input
@@ -1064,16 +1064,16 @@ const EditPost = ({ onSuccess }) => {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Featured Image</label>
           <div className="space-y-2">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="url"
                 name="featuredImage"
                 value={formData.featuredImage}
                 onChange={handleChange}
                 placeholder="Image URL or upload an image"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white text-sm sm:text-base"
               />
-              <label className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors flex items-center">
+              <label className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors flex items-center justify-center text-sm sm:text-base whitespace-nowrap">
                 <Upload className="w-4 h-4 mr-2" />
                 {uploadingImage ? 'Uploading...' : 'Upload'}
                 <input
@@ -1088,7 +1088,7 @@ const EditPost = ({ onSuccess }) => {
                 <button
                   type="button"
                   onClick={handleDeleteImage}
-                  className="px-4 py-2 bg-red-100 text-red-700 border border-red-300 rounded-lg hover:bg-red-200 transition-colors flex items-center"
+                  className="px-4 py-2 bg-red-100 text-red-700 border border-red-300 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center text-sm sm:text-base whitespace-nowrap"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1114,17 +1114,17 @@ const EditPost = ({ onSuccess }) => {
           </div>
         </div>
 
-        <div className="flex justify-end space-x-4">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
           <Link
             to="/admin/posts"
-            className="btn btn-outline"
+            className="btn btn-outline w-full sm:w-auto"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={submitting}
-            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
+            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(26,137,23,0.2)] w-full sm:w-auto"
           >
             {submitting ? 'Updating...' : 'Update Post'}
           </button>

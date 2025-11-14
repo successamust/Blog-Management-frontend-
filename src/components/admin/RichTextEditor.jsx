@@ -210,8 +210,8 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     editorProps: {
       attributes: {
         class: isDark
-          ? 'prose prose-invert max-w-none focus:outline-none p-4 min-h-[400px] dark:text-gray-100 bg-gray-800'
-          : 'prose max-w-none focus:outline-none p-4 min-h-[400px] text-[var(--text-primary)] bg-white',
+          ? 'prose prose-invert max-w-none focus:outline-none p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] dark:text-gray-100 bg-gray-800'
+          : 'prose max-w-none focus:outline-none p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] text-[var(--text-primary)] bg-white',
       },
     },
   });
@@ -1006,7 +1006,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       {/* Editor Content */}
       <div className="relative">
         {isPreview ? (
-          <div className={`p-4 min-h-[400px] max-h-[600px] overflow-y-auto ${isDark ? 'bg-gray-800 text-gray-100' : 'bg-white'}`}>
+          <div className={`p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] max-h-[400px] sm:max-h-[600px] overflow-y-auto ${isDark ? 'bg-gray-800 text-gray-100' : 'bg-white'}`}>
             <ReactMarkdown
               className={isDark ? 'prose prose-invert max-w-none' : 'prose max-w-none'}
             >
@@ -1022,7 +1022,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
               const html = markdownToHtml(newMarkdown);
               onChange(html);
             }}
-            className={`w-full min-h-[400px] p-4 border-0 focus:outline-none resize-none font-mono text-sm transition-colors ${
+            className={`w-full min-h-[300px] sm:min-h-[400px] p-2 sm:p-4 border-0 focus:outline-none resize-none font-mono text-sm transition-colors ${
               isDark
                 ? 'bg-gray-800 text-gray-100 caret-gray-100'
                 : 'bg-white text-[var(--text-primary)] caret-[var(--text-primary)]'
