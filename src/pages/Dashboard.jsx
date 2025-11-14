@@ -471,7 +471,7 @@ const Dashboard = () => {
                 whileTap={{ scale: 0.98 }}
                 className={`flex items-center space-x-1 sm:space-x-2 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl font-medium text-xs sm:text-sm transition-all whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'bg-[var(--accent)] text-white shadow-[0_16px_35px_rgba(26,137,23,0.25)]'
+                    ? 'bg-[var(--accent)] text-white shadow-[0_16px_35px_rgba(26,137,23,0.25)] hover:text-white'
                     : 'text-secondary hover:text-[var(--accent)] hover:bg-surface-subtle'
                 }`}
               >
@@ -538,7 +538,7 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="surface-card p-6 transition-colors hover:border-[#d6cfc6]"
+            className="surface-card p-6 transition-colors hover:border-[var(--border-subtle)]"
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-primary">Recent Posts</h2>
@@ -581,7 +581,7 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="surface-card p-6 transition-colors hover:border-[#d6cfc6]"
+            className="surface-card p-6 transition-colors hover:border-[var(--border-subtle)]"
           >
             <h2 className="text-xl font-bold text-primary mb-6">Recent Comments</h2>
             <div className="space-y-4">
@@ -606,7 +606,7 @@ const Dashboard = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
-            className="surface-card p-6 transition-colors hover:border-[#d6cfc6]"
+            className="surface-card p-6 transition-colors hover:border-[var(--border-subtle)]"
           >
             <h2 className="text-xl font-bold text-primary mb-4">Quick Actions</h2>
             <div className="space-y-2">
@@ -631,7 +631,7 @@ const Dashboard = () => {
                     {action.onClick ? (
                       <button
                         onClick={handleClick}
-                        className="w-full text-left p-3 rounded-lg surface-card transition-colors hover:border-[#d6cfc6] group"
+                        className="w-full text-left p-3 rounded-lg surface-card transition-colors hover:border-[var(--border-subtle)] group"
                       >
                         <div className="flex items-center space-x-3">
                           <div className="text-[var(--accent)] group-hover:text-[var(--accent-hover)]">
@@ -646,7 +646,7 @@ const Dashboard = () => {
                       <Link
                         to={action.path}
                         onClick={handleClick}
-                        className="flex items-center space-x-3 p-3 rounded-xl surface-card transition-colors hover:border-[#d6cfc6] group"
+                        className="flex items-center space-x-3 p-3 rounded-xl surface-card transition-colors hover:border-[var(--border-subtle)] group"
                       >
                         <div className="flex-shrink-0 text-secondary group-hover:text-[var(--accent)] transition-colors">
                           {action.icon}
@@ -670,7 +670,7 @@ const Dashboard = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="surface-card p-6 transition-colors hover:border-[#d6cfc6]"
+            className="surface-card p-6 transition-colors hover:border-[var(--border-subtle)]"
           >
             <h2 className="text-xl font-bold text-primary mb-4">Liked Posts</h2>
             <div className="space-y-3">
@@ -679,7 +679,7 @@ const Dashboard = () => {
                   <Link
                     key={post._id}
                     to={`/posts/${post.slug}`}
-                    className="block p-3 rounded-lg surface-card transition-colors hover:border-[#d6cfc6] group"
+                    className="block p-3 rounded-lg surface-card transition-colors hover:border-[var(--border-subtle)] group"
                   >
                     <h3 className="font-medium text-primary group-hover:text-[var(--accent)] line-clamp-2">
                       {post.title}
@@ -702,7 +702,7 @@ const Dashboard = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
-            className="surface-card p-6 transition-colors hover:border-[#d6cfc6]"
+            className="surface-card p-6 transition-colors hover:border-[var(--border-subtle)]"
           >
             <h2 className="text-xl font-bold text-primary mb-4">Saved Posts</h2>
             <div className="space-y-3">
@@ -711,7 +711,7 @@ const Dashboard = () => {
                   <Link
                     key={post._id}
                     to={`/posts/${post.slug}`}
-                    className="block p-3 rounded-lg surface-card transition-colors hover:border-[#d6cfc6] group"
+                    className="block p-3 rounded-lg surface-card transition-colors hover:border-[var(--border-subtle)] group"
                   >
                     <h3 className="font-medium text-primary group-hover:text-[var(--accent)] line-clamp-2">
                       {post.title}
@@ -983,7 +983,7 @@ const StatCard = ({ icon, title, value, change, color, trend }) => {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3 }}
-      className="surface-card p-4 sm:p-6 relative overflow-hidden group transition-colors hover:border-[#d6cfc6]"
+      className="surface-card p-4 sm:p-6 relative overflow-hidden group transition-colors hover:border-[var(--border-subtle)]"
     >
       {/* Gradient background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${config.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
@@ -1041,7 +1041,7 @@ const PostItem = ({ post }) => {
     <motion.div
       whileHover={{ x: 4 }}
       transition={{ type: 'spring', stiffness: 300 }}
-      className="flex items-center justify-between p-4 rounded-xl surface-card transition-colors hover:border-[#d6cfc6] group"
+      className="flex items-center justify-between p-4 rounded-xl surface-card transition-colors hover:border-[var(--border-subtle)] group"
     >
       <Link
         to={`/posts/${post.slug}`}
@@ -1099,7 +1099,7 @@ const CommentItem = ({ comment }) => (
   <motion.div
     whileHover={{ x: 4 }}
     transition={{ type: 'spring', stiffness: 300 }}
-    className="p-4 rounded-xl surface-card transition-colors hover:border-[#d6cfc6]"
+    className="p-4 rounded-xl surface-card transition-colors hover:border-[var(--border-subtle)]"
   >
     <p className="text-secondary mb-3 line-clamp-2 text-sm leading-relaxed">{comment.content}</p>
     <div className="flex items-center justify-between text-xs text-muted">

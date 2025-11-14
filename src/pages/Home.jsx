@@ -204,11 +204,11 @@ const Home = () => {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight tracking-tight">
-              Stories worth sharing
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[var(--text-primary)] mb-6 leading-tight tracking-tight">
+              Write. Share. Inspire.
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Discover thoughtful articles, insights, and stories from our community of writers
+            <p className="text-base sm:text-lg md:text-xl text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto leading-relaxed">
+              Discover useful articles, insights, and writing from our community of creators.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-xl mx-auto">
               <Link
@@ -232,7 +232,8 @@ const Home = () => {
       </section>
 
       {/* Main Content */}
-      <div className="layout-container section-spacing-y">
+      <div className="bg-content">
+        <div className="layout-container section-spacing-y">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           {/* Main Content Area */}
           <div className="lg:col-span-8">
@@ -240,10 +241,10 @@ const Home = () => {
             {featuredPosts.length > 0 && (
               <section className="mb-16">
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Featured</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Featured</h2>
                   <Link
                     to="/posts"
-                    className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                    className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                   >
                     View all →
                   </Link>
@@ -259,10 +260,10 @@ const Home = () => {
             {/* Latest Articles */}
             <section className="mb-16">
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Latest</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Latest</h2>
                 <Link
                   to="/posts"
-                  className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                  className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   View all →
                 </Link>
@@ -273,7 +274,7 @@ const Home = () => {
                     <ModernPostCard key={post._id || post.id || index} post={post} delay={index * 0.05} />
                   ))
                 ) : (
-                  <div className="text-center py-12 text-gray-500">
+                  <div className="text-center py-12 text-[var(--text-muted)]">
                     <p>No posts available yet. Check back soon!</p>
                   </div>
                 )}
@@ -305,10 +306,10 @@ const Home = () => {
               className="bg-surface-subtle rounded-2xl p-6 border border-[var(--border-subtle)] shadow-sm"
             >
               <div className="flex items-center mb-4">
-                <Mail className="w-5 h-5 text-gray-900 mr-2" />
-                <h3 className="text-lg font-bold text-gray-900">Subscribe to our newsletter</h3>
+                <Mail className="w-5 h-5 text-[var(--text-primary)] mr-2" />
+                <h3 className="text-lg font-bold text-[var(--text-primary)]">Subscribe to our newsletter</h3>
               </div>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-[var(--text-secondary)] mb-4">
                 Get the latest stories delivered to your inbox
               </p>
               <form onSubmit={handleNewsletterSubscribe} className="space-y-3">
@@ -337,7 +338,7 @@ const Home = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="surface-card p-6 hover:border-[#d6cfc6] transition-colors"
+                className="surface-card p-6 hover:border-[var(--border-subtle)] transition-colors"
               >
                 <button
                   onClick={() => setIsAuthorSectionOpen(!isAuthorSectionOpen)}
@@ -345,18 +346,18 @@ const Home = () => {
                 >
                   <div className="flex items-center flex-1">
                     <div className="p-2 bg-gray-100 rounded-lg mr-3">
-                      <PenTool className="w-5 h-5 text-gray-900" />
+                      <PenTool className="w-5 h-5 text-[var(--text-primary)]" />
                     </div>
                     <div className="text-left">
-                      <h3 className="text-base font-bold text-gray-900">Become an Author</h3>
-                      <p className="text-xs text-gray-600">Share your voice</p>
+                      <h3 className="text-base font-bold text-[var(--text-primary)]">Become an Author</h3>
+                      <p className="text-xs text-[var(--text-secondary)]">Share your voice</p>
                     </div>
                   </div>
                   <div className="sm:hidden ml-2">
                     {isAuthorSectionOpen ? (
-                      <ChevronUp className="w-5 h-5 text-gray-600" />
+                      <ChevronUp className="w-5 h-5 text-[var(--text-secondary)]" />
                     ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-600" />
+                      <ChevronDown className="w-5 h-5 text-[var(--text-secondary)]" />
                     )}
                   </div>
                 </button>
@@ -371,13 +372,13 @@ const Home = () => {
                       className="overflow-hidden"
                     >
                       <div className="pt-4 mt-4 border-t border-gray-100">
-                        <p className="text-sm text-gray-600 mb-4">
+                        <p className="text-sm text-[var(--text-secondary)] mb-4">
                           Join our community of writers and share your stories with readers around the world.
                         </p>
                         {isAuthenticated ? (
                           <Link
                             to="/dashboard?tab=author"
-                            className="block w-full text-center px-4 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors text-sm"
+                            className="block w-full text-center px-4 py-2.5 bg-[var(--text-primary)] text-white font-medium rounded-lg hover:opacity-90 transition-colors text-sm"
                             onClick={() => setIsAuthorSectionOpen(false)}
                           >
                             Apply Now
@@ -385,7 +386,7 @@ const Home = () => {
                         ) : (
                           <Link
                             to="/login?redirect=/dashboard?tab=author"
-                            className="block w-full text-center px-4 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors text-sm"
+                            className="block w-full text-center px-4 py-2.5 bg-[var(--text-primary)] text-white font-medium rounded-lg hover:opacity-90 transition-colors text-sm"
                             onClick={() => setIsAuthorSectionOpen(false)}
                           >
                             Sign In to Apply
@@ -408,8 +409,8 @@ const Home = () => {
                 className="surface-card p-6"
               >
                 <div className="flex items-center mb-6">
-                  <TrendingUp className="w-5 h-5 text-gray-900 mr-2" />
-                  <h3 className="text-lg font-bold text-gray-900">Trending</h3>
+                  <TrendingUp className="w-5 h-5 text-[var(--text-primary)] mr-2" />
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">Trending</h3>
                 </div>
                 <div className="space-y-4">
                   {trendingPosts.map((post, index) => {
@@ -425,14 +426,14 @@ const Home = () => {
                         className="block group"
                       >
                         <div className="flex items-start space-x-3">
-                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 group-hover:bg-gray-900 group-hover:text-white transition-colors">
+                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--accent-soft)] flex items-center justify-center text-xs font-bold text-[var(--text-secondary)] group-hover:bg-[var(--text-primary)] group-hover:text-white transition-colors">
                             {index + 1}
                           </span>
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-semibold text-gray-900 group-hover:text-gray-700 transition-colors line-clamp-2 mb-1">
+                            <h4 className="text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--text-secondary)] transition-colors line-clamp-2 mb-1">
                               {post.title}
                             </h4>
-                            <div className="flex items-center space-x-2 text-xs text-gray-500">
+                            <div className="flex items-center space-x-2 text-xs text-[var(--text-muted)]">
                               <span>{authorName}</span>
                               <span>•</span>
                               <span>{format(new Date(postDate), 'MMM d')}</span>
@@ -455,7 +456,7 @@ const Home = () => {
                 transition={{ duration: 0.5, delay: 0.3 }}
                 className="surface-card p-6"
               >
-                <h3 className="text-lg font-bold text-gray-900 mb-6">Topics</h3>
+                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-6">Topics</h3>
                 <div className="space-y-2">
                   {categories.map((category) => {
                     const categoryId = category._id || category.id;
@@ -468,10 +469,10 @@ const Home = () => {
                         to={`/categories/${categorySlug}`}
                         className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-subtle transition-colors group"
                       >
-                        <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                        <span className="text-sm font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]">
                           {categoryName}
                         </span>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                        <span className="text-xs text-[var(--text-muted)] bg-[var(--accent-soft)] px-2 py-1 rounded-full">
                           {category.postCount ?? 0}
                         </span>
                       </Link>
@@ -480,7 +481,7 @@ const Home = () => {
                 </div>
                 <Link
                   to="/categories"
-                  className="block mt-4 text-center text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                  className="block mt-4 text-center text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   View all topics →
                 </Link>
@@ -496,7 +497,7 @@ const Home = () => {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="surface-card p-6"
               >
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Popular Tags</h3>
+                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Popular Tags</h3>
                 <div className="flex flex-wrap gap-2">
                   {popularTags.map((tag) => {
                     const tagName = typeof tag === 'string' ? tag : tag?.name;
@@ -505,7 +506,7 @@ const Home = () => {
                       <Link
                         key={tagName}
                         to={`/search?tags=${encodeURIComponent(tagName)}`}
-                        className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-xs font-medium hover:bg-gray-200 transition-colors"
+                        className="px-3 py-1.5 bg-[var(--accent-soft)] text-[var(--text-secondary)] rounded-full text-xs font-medium hover:bg-[var(--accent)] hover:text-white transition-colors"
                       >
                         #{tagName}
                       </Link>
@@ -515,6 +516,7 @@ const Home = () => {
               </motion.div>
             )}
           </aside>
+        </div>
         </div>
       </div>
     </div>

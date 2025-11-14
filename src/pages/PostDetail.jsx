@@ -480,7 +480,7 @@ const PostDetail = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center surface-card p-8"
+          className="text-center surface-card p-6"
         >
           <h1 className="text-2xl font-bold text-primary mb-4">Post Not Found</h1>
           <Link
@@ -521,7 +521,7 @@ const PostDetail = () => {
               />
             )}
 
-            <div className="p-4 sm:p-6 md:p-8">
+            <div className="p-6">
               {/* Post Header */}
               <div className="mb-4 sm:mb-6">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-3 sm:mb-4">
@@ -549,7 +549,7 @@ const PostDetail = () => {
               </div>
 
               {/* Post Content */}
-              <div className="prose prose-lg max-w-none mb-8">
+              <div className="prose prose-lg max-w-[680px] mx-auto mb-8">
                 {(() => {
                   // Check if content is HTML (contains HTML tags)
                   const isHTML = /<[a-z][\s\S]*>/i.test(post.content);
@@ -594,7 +594,7 @@ const PostDetail = () => {
               )}
 
               {/* Interaction Buttons */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 border-t border-gray-200 pt-4 sm:pt-6">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 border-t border-[var(--border-subtle)] pt-4 sm:pt-6">
                 <div className="flex items-center space-x-2 sm:space-x-4">
                   <motion.button
                     onClick={handleLike}
@@ -603,7 +603,7 @@ const PostDetail = () => {
                     whileTap={{ scale: 0.95 }}
                     className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
                       hasLiked
-                        ? 'bg-[var(--accent)] text-white shadow-[0_12px_30px_rgba(26,137,23,0.22)]'
+                        ? 'bg-[var(--accent)] text-white shadow-[0_12px_30px_rgba(26,137,23,0.22)] hover:text-white'
                         : 'glass-card text-secondary hover:bg-white/80'
                     }`}
                   >
@@ -710,7 +710,7 @@ const PostDetail = () => {
                   key={comment._id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="border-b border-slate-200/50 pb-6 last:border-b-0"
+                  className="border-b border-[var(--border-subtle)] pb-6 last:border-b-0"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center space-x-2">
@@ -775,7 +775,7 @@ const PostDetail = () => {
                             className={`flex items-center space-x-1 transition-colors ${
                               comment.likes?.includes(user?._id)
                                 ? 'text-rose-500 hover:text-rose-600'
-                        : 'text-slate-500 hover:text-[var(--accent)]'
+                        : 'text-[var(--text-muted)] hover:text-[var(--accent)]'
                             }`}
                           >
                             <Heart className={`w-4 h-4 ${comment.likes?.includes(user?._id) ? 'fill-current' : ''}`} />
@@ -793,7 +793,7 @@ const PostDetail = () => {
                       className="w-full px-4 py-2 glass-card rounded-xl focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 resize-none transition-all"
                     />
                   ) : (
-                    <p className="text-slate-700 leading-relaxed">{comment.content}</p>
+                    <p className="text-[var(--text-secondary)] leading-relaxed">{comment.content}</p>
                   )}
                 </motion.div>
               ))}
@@ -802,9 +802,9 @@ const PostDetail = () => {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-center py-8 text-slate-500"
+                  className="text-center py-8 text-[var(--text-muted)]"
                 >
-                  <MessageCircle className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                  <MessageCircle className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
                   <p>No comments yet. Be the first to share your thoughts!</p>
                 </motion.div>
               )}
@@ -822,7 +822,7 @@ const PostDetail = () => {
               transition={{ delay: 0.3 }}
               className="card-elevated card-elevated-hover p-6"
             >
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Related Posts</h3>
+              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Related Posts</h3>
               <div className="space-y-4">
                 {relatedPosts.map((relatedPost) => (
                   <motion.div
@@ -834,10 +834,10 @@ const PostDetail = () => {
                       to={`/posts/${relatedPost.slug}`}
                       className="block group glass-card-hover p-3 rounded-xl"
                     >
-                      <h4 className="text-sm font-medium text-slate-900 group-hover:text-[var(--accent)] transition-colors line-clamp-2">
+                      <h4 className="text-sm font-medium text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors line-clamp-2">
                         {relatedPost.title}
                       </h4>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-[var(--text-muted)] mt-1">
                         {format(new Date(relatedPost.publishedAt), 'MMM d, yyyy')}
                       </p>
                     </Link>
@@ -854,27 +854,27 @@ const PostDetail = () => {
             transition={{ delay: 0.4 }}
             className="card-elevated card-elevated-hover p-6"
           >
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Post Stats</h3>
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Post Stats</h3>
             <div className="space-y-3">
               <div className="flex justify-between py-2">
-                <span className="text-slate-600">Views</span>
-                <span className="font-semibold text-slate-900">{post.viewCount}</span>
+                <span className="text-[var(--text-secondary)]">Views</span>
+                <span className="font-semibold text-[var(--text-primary)]">{post.viewCount}</span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-slate-600">Likes</span>
-                <span className="font-semibold text-slate-900">{post.likes?.length || 0}</span>
+                <span className="text-[var(--text-secondary)]">Likes</span>
+                <span className="font-semibold text-[var(--text-primary)]">{post.likes?.length || 0}</span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-slate-600">Dislikes</span>
-                <span className="font-semibold text-slate-900">{post.dislikes?.length || 0}</span>
+                <span className="text-[var(--text-secondary)]">Dislikes</span>
+                <span className="font-semibold text-[var(--text-primary)]">{post.dislikes?.length || 0}</span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-slate-600">Shares</span>
-                <span className="font-semibold text-slate-900">{post.shares || 0}</span>
+                <span className="text-[var(--text-secondary)]">Shares</span>
+                <span className="font-semibold text-[var(--text-primary)]">{post.shares || 0}</span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-slate-600">Comments</span>
-                <span className="font-semibold text-slate-900">{comments.length}</span>
+                <span className="text-[var(--text-secondary)]">Comments</span>
+                <span className="font-semibold text-[var(--text-primary)]">{comments.length}</span>
               </div>
             </div>
           </motion.div>
@@ -898,18 +898,18 @@ const PostDetail = () => {
         >
           <button
             onClick={() => setShowShareModal(false)}
-            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+            className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Share Post</h2>
-            <p className="text-slate-600">Share this post with others</p>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Share Post</h2>
+            <p className="text-[var(--text-secondary)]">Share this post with others</p>
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Post Link
             </label>
             <div className="flex items-center gap-2">
@@ -917,7 +917,7 @@ const PostDetail = () => {
                 type="text"
                 readOnly
                 value={window.location.href}
-                className="flex-1 px-4 py-2 glass-card rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35"
+                className="flex-1 px-4 py-2 glass-card rounded-xl text-sm text-[var(--text-secondary)] focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35"
               />
               <motion.button
                 onClick={copyToClipboard}

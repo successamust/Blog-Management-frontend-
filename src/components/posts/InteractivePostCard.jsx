@@ -80,7 +80,7 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
       >
         <Link
           to={postHref}
-          className="block surface-card overflow-hidden transition-colors hover:border-[#d6cfc6]"
+          className="block surface-card overflow-hidden transition-colors hover:border-[var(--border-subtle)]"
         >
           <div className="relative h-64 overflow-hidden">
             {post.featuredImage ? (
@@ -157,7 +157,7 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
     >
       <Link
         to={postHref}
-        className="block surface-card p-6 overflow-hidden relative transition-colors hover:border-[#d6cfc6]"
+        className="block surface-card p-6 overflow-hidden relative transition-colors hover:border-[var(--border-subtle)]"
       >
         {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent to-transparent group-hover:from-[var(--accent)]/8 group-hover:to-[var(--accent-hover)]/10 transition-all duration-300 pointer-events-none"></div>

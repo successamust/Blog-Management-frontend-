@@ -4,19 +4,28 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
 
 [data-theme="light"],
 :root {
-  --page-bg: #f8f5f1;
-  --surface-bg: #ffffff;
-  --surface-subtle: #fbf9f6;
-  --border-subtle: #e8e2da;
-  --text-primary: #1f1f1f;
-  --text-secondary: #44403c;
-  --text-muted: #78716c;
-  --accent: #1a8917;
-  --accent-hover: #166f13;
+  /* Primary Colors */
+  --accent: #1A8917;
+  --accent-hover: #166E14;
+  --accent-soft: #E7F6E6;
+  
+  /* Neutral Backgrounds */
+  --page-bg: #F6F2ED;
+  --content-bg: #FAF9F7;
+  --surface-bg: #FFFFFF;
+  --surface-subtle: #E7F6E6;
+  
+  /* Text Colors */
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  
+  /* Borders & Shadows */
+  --border-subtle: #E2E8F0;
+  --shadow-default: rgba(0, 0, 0, 0.05);
 }
 
 @layer base {
@@ -26,7 +35,7 @@
   
   body {
     @apply font-sans;
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Source Sans Pro', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     color: var(--text-primary);
     background-color: var(--page-bg);
     -webkit-font-smoothing: antialiased;
@@ -34,7 +43,7 @@
   }
   
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', 'Times New Roman', serif;
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--text-primary);
@@ -82,9 +91,15 @@
     color: white;
   }
   
+  /* Ensure links with accent background maintain white text on hover */
+  a[class*="bg-[var(--accent)]"]:hover,
+  a.bg-\[var\(--accent\)\]:hover {
+    color: white !important;
+  }
+  
   /* Premium editorial typography - Medium/Substack style */
   .font-display {
-    font-family: 'Playfair Display', 'Times New Roman', serif;
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
     font-weight: 600;
     letter-spacing: -0.02em;
     line-height: 1.05;
@@ -92,14 +107,14 @@
   
   /* Hero typography enhancements */
   .hero-title {
-    font-family: 'Playfair Display', 'Times New Roman', serif;
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
     font-weight: 600;
     letter-spacing: -0.025em;
     line-height: 1.05;
   }
   
   .hero-subtitle {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Source Sans Pro', system-ui, sans-serif;
     font-weight: 400;
     letter-spacing: -0.005em;
     line-height: 1.7;
@@ -131,7 +146,13 @@
   }
 
   .btn-secondary {
-    @apply bg-gray-900 text-white hover:bg-gray-800 hover:text-white shadow-[0_10px_24px_rgba(17,24,39,0.18)];
+    @apply text-white hover:text-white shadow-[0_10px_24px_rgba(17,24,39,0.18)];
+    background-color: var(--text-primary);
+  }
+  
+  .btn-secondary:hover {
+    background-color: var(--text-primary);
+    opacity: 0.9;
   }
 
   .btn-outline {
@@ -179,12 +200,12 @@
 
 /* Prose styles for markdown content */
 .prose {
-  color: #374151;
-  max-width: none;
+  color: var(--text-secondary);
+  max-width: 680px;
 }
 
 .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
-  color: #111827;
+  color: var(--text-primary);
   font-weight: 600;
   margin-top: 2em;
   margin-bottom: 1em;
@@ -444,7 +465,7 @@ html {
   }
 
   .section-spacing-y {
-    @apply py-12 md:py-16;
+    @apply py-12;
   }
 
   .section-hero-spacing-y {
@@ -453,6 +474,10 @@ html {
 
   .bg-page {
     background-color: var(--page-bg);
+  }
+
+  .bg-content {
+    background-color: var(--content-bg);
   }
 
   .bg-surface {
@@ -467,7 +492,7 @@ html {
     background-color: var(--surface-bg);
     border: 1px solid var(--border-subtle);
     border-radius: 1.25rem;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 2px 8px var(--shadow-default);
   }
 
   .text-primary {

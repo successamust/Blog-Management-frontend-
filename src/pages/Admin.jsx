@@ -72,7 +72,7 @@ const Admin = () => {
                     to={tab.path}
                     className={`flex items-center space-x-1 sm:space-x-2 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl font-medium text-xs sm:text-sm transition-all whitespace-nowrap ${
                       isRouteActive
-                        ? 'bg-[var(--accent)] text-white shadow-[0_16px_35px_rgba(26,137,23,0.25)]'
+                        ? 'bg-[var(--accent)] text-white shadow-[0_16px_35px_rgba(26,137,23,0.25)] hover:text-white'
                         : 'text-secondary hover:text-[var(--accent)] hover:bg-surface-subtle'
                     }`}
                   >

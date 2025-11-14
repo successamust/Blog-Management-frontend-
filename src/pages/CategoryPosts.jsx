@@ -228,7 +228,8 @@ const CategoryPosts = () => {
 
   return (
     <div className="bg-page min-h-screen">
-      <div className="layout-container section-spacing-y">
+      <div className="bg-content">
+        <div className="layout-container section-spacing-y">
         {/* Category Header */}
         <motion.div
           initial={{ opacity: 0, y: -16 }}
@@ -288,7 +289,7 @@ const CategoryPosts = () => {
               disabled={currentPage === 1}
               whileHover={{ scale: currentPage === 1 ? 1 : 1.04 }}
               whileTap={{ scale: currentPage === 1 ? 1 : 0.96 }}
-              className="flex items-center px-4 py-2 border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center px-4 py-2 border border-[var(--border-subtle)] rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-subtle)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Previous
@@ -310,8 +311,8 @@ const CategoryPosts = () => {
                       whileTap={{ scale: isActive ? 1 : 0.94 }}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                         isActive
-                          ? 'bg-gray-900 text-white'
-                          : 'border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                          ? 'bg-[var(--text-primary)] text-white'
+                          : 'border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-subtle)]'
                       }`}
                     >
                       {page}
@@ -336,13 +337,14 @@ const CategoryPosts = () => {
               disabled={currentPage === pagination.totalPages}
               whileHover={{ scale: currentPage === pagination.totalPages ? 1 : 1.04 }}
               whileTap={{ scale: currentPage === pagination.totalPages ? 1 : 0.96 }}
-              className="flex items-center px-4 py-2 border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center px-4 py-2 border border-[var(--border-subtle)] rounded-full text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-subtle)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Next
               <ArrowRight className="w-4 h-4 ml-2" />
             </motion.button>
           </motion.div>
         )}
+        </div>
       </div>
     </div>
   );

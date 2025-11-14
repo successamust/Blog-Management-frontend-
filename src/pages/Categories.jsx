@@ -86,7 +86,8 @@ const Categories = () => {
 
   return (
     <div className="bg-page min-h-screen">
-    <div className="layout-container-wide py-8">
+      <div className="bg-content">
+        <div className="layout-container-wide py-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -132,7 +133,8 @@ const Categories = () => {
           <p className="text-muted text-sm">Categories will appear here once they are created.</p>
         </motion.div>
       )}
-    </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -161,7 +163,7 @@ const CategoryCard = ({ category }) => {
     >
       <Link
         to={`/categories/${categorySlug}`}
-        className="block group surface-card p-6 hover:border-[#d6cfc6] transition-colors"
+        className="block group surface-card p-6 hover:border-[var(--border-subtle)] transition-colors"
       >
         <div className="flex items-center justify-between mb-4">
           <div className="p-3 rounded-xl bg-[var(--accent)]/[0.1] text-[var(--accent)]">

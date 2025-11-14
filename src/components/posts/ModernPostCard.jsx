@@ -108,9 +108,9 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
         className="group h-full"
       >
         <Link to={postHref} className="block h-full">
-          <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white transition-all hover:border-gray-300 hover:shadow-xl">
+          <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-[var(--border-subtle)] bg-white transition-all duration-300 hover:border-[var(--border-subtle)] hover:shadow-lg" style={{ boxShadow: '0 2px 8px var(--shadow-default)' }}>
             <div className="relative w-full">
-              <div className="aspect-[16/10] w-full bg-gray-100">
+              <div className="aspect-[16/10] w-full bg-[var(--surface-subtle)]">
                 {post.featuredImage ? (
                   <motion.img
                     src={post.featuredImage}
@@ -123,7 +123,7 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
                     }}
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-6xl font-semibold text-gray-300">
+                  <div className="flex h-full items-center justify-center text-6xl font-semibold text-[var(--text-muted)]">
                     {fallbackInitial || postTitle.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -136,24 +136,24 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
               </div>
             </div>
 
-            <div className="flex flex-1 flex-col p-8 md:p-10">
+            <div className="flex flex-1 flex-col p-6">
               {categoryLabel && (
                 <div className="mb-4">
-                  <span className="inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-gray-500">
+                  <span className="inline-flex items-center rounded-full border border-[var(--border-subtle)] px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">
                     {categoryLabel}
                   </span>
                 </div>
               )}
-              <h2 className="text-3xl md:text-4xl font-bold leading-tight tracking-tight text-gray-900 transition-colors group-hover:text-gray-700">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight tracking-tight text-[var(--text-primary)] transition-colors group-hover:text-[var(--text-secondary)]">
                 {postTitle}
               </h2>
               {postExcerpt && (
-                <p className="mt-5 text-lg leading-relaxed text-gray-600 line-clamp-4">
+                <p className="mt-5 text-xl leading-relaxed text-[var(--text-secondary)] line-clamp-4">
                   {postExcerpt}
                 </p>
               )}
 
-              <div className="mt-auto flex flex-col gap-6 border-t border-gray-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-auto flex flex-col gap-6 border-t border-[var(--border-subtle)] pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   {authorAvatar ? (
                     <img
@@ -168,19 +168,19 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
                       }}
                     />
                   ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-900 text-sm font-semibold text-white">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--text-primary)] text-sm font-semibold text-white">
                       {authorName.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 normal-case">{authorName}</p>
-                    <p className="text-[0.7rem] uppercase tracking-[0.14em] text-gray-500 whitespace-nowrap">
+                    <p className="text-sm font-semibold text-[var(--text-primary)] normal-case">{authorName}</p>
+                    <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-muted)] whitespace-nowrap">
                       {format(postDateObject, 'MMM d, yyyy')}
                     </p>
                   </div>
                 </div>
 
-                <div className="inline-flex items-center gap-2 text-sm font-semibold text-gray-900">
+                <div className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
                   Read more
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </div>
@@ -201,7 +201,7 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
       className="group"
     >
       <Link to={postHref} className="block">
-        <div className="flex flex-col sm:flex-row gap-6 pb-8 border-b border-gray-200 hover:border-gray-300 transition-colors">
+        <div className="flex flex-col sm:flex-row gap-6 pb-8 border-b border-[var(--border-subtle)] hover:border-[var(--border-subtle)] transition-colors">
           {/* Image */}
           {post.featuredImage && (
             <div className="flex-shrink-0 sm:w-48 sm:h-32 w-full h-48 overflow-hidden rounded-xl">
@@ -222,7 +222,7 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
           <div className="flex-1 min-w-0">
             {categoryLabel && (
               <div className="mb-2">
-                <span className="inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
+                <span className="inline-flex items-center rounded-full border border-[var(--border-subtle)] px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-[var(--text-muted)]">
                   {categoryLabel}
                 </span>
               </div>
@@ -243,11 +243,11 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
                   }}
                 />
               ) : null}
-              <div className={`w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-xs font-semibold ${authorAvatar ? 'hidden' : 'flex'}`}>
+              <div className={`w-8 h-8 rounded-full bg-[var(--text-primary)] text-white flex items-center justify-center text-xs font-semibold ${authorAvatar ? 'hidden' : 'flex'}`}>
                 {authorName.charAt(0).toUpperCase()}
               </div>
-              <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-[0.7rem] uppercase tracking-[0.14em] text-gray-500">
-                <span className="text-sm font-semibold tracking-normal text-gray-900 normal-case">{authorName}</span>
+              <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-[0.7rem] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                <span className="text-sm font-semibold tracking-normal text-[var(--text-primary)] normal-case">{authorName}</span>
                 <span>•</span>
                 <span className="whitespace-nowrap">{format(postDateObject, 'MMM d, yyyy')}</span>
                 <span>•</span>
@@ -259,24 +259,24 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
             </div>
 
             {/* Title */}
-            <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 group-hover:text-gray-700 transition-colors leading-tight line-clamp-2">
+            <h3 className="text-xl md:text-2xl font-bold text-[var(--text-primary)] mb-2 group-hover:text-[var(--text-secondary)] transition-colors leading-tight line-clamp-2">
               {postTitle}
             </h3>
 
             {/* Excerpt */}
             {postExcerpt && (
-              <p className="text-gray-600 mb-4 leading-relaxed line-clamp-3">
+              <p className="text-[var(--text-secondary)] mb-4 leading-relaxed line-clamp-3">
                 {postExcerpt}
               </p>
             )}
 
             {/* Tags & Meta */}
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center space-x-4 text-sm text-gray-500">
-                {sanitizedTags.length > 0 && (
-                  <div className="flex items-center space-x-2">
-                    {sanitizedTags.slice(0, 2).map((tag) => (
-                      <span key={tag} className="text-xs text-gray-500 hover:text-gray-900 transition-colors">
+                <div className="flex items-center space-x-4 text-sm text-[var(--text-muted)]">
+                  {sanitizedTags.length > 0 && (
+                    <div className="flex items-center space-x-2">
+                      {sanitizedTags.slice(0, 2).map((tag) => (
+                        <span key={tag} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
                         #{tag}
                       </span>
                     ))}
@@ -284,7 +284,7 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
                 )}
               </div>
               {(typeof post.viewCount === 'number' || Array.isArray(post.likes)) && (
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                <div className="flex items-center space-x-4 text-sm text-[var(--text-muted)]">
                   {typeof post.viewCount === 'number' && (
                     <span className="flex items-center">
                       <Eye className="w-4 h-4 mr-1" />
@@ -305,7 +305,7 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
       </Link>
 
       <motion.div
-        className="flex items-center text-gray-700 font-semibold opacity-0 group-hover:opacity-100 transition-opacity"
+        className="flex items-center text-[var(--text-secondary)] font-semibold opacity-0 group-hover:opacity-100 transition-opacity"
         whileHover={{ x: 5 }}
       >
         Read more

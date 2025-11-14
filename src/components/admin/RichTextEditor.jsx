@@ -211,7 +211,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       attributes: {
         class: isDark
           ? 'prose prose-invert max-w-none focus:outline-none p-4 min-h-[400px] dark:text-gray-100 bg-gray-800'
-          : 'prose max-w-none focus:outline-none p-4 min-h-[400px] text-gray-900 bg-white',
+          : 'prose max-w-none focus:outline-none p-4 min-h-[400px] text-[var(--text-primary)] bg-white',
       },
     },
   });
@@ -372,8 +372,8 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         editorElement.classList.remove('dark');
       editorElement.classList.remove('prose-invert');
       editorElement.style.backgroundColor = '#ffffff'; // bg-white
-      editorElement.style.color = '#111827'; // text-gray-900
-      editorElement.style.caretColor = '#111827'; // cursor color
+      editorElement.style.color = 'var(--text-primary)'; // text-primary
+      editorElement.style.caretColor = 'var(--text-primary)'; // cursor color
     }
     
     // Apply styles immediately and then again after a delay
@@ -824,7 +824,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       className={`p-2 rounded-lg transition-colors ${
         isActive
           ? 'bg-[var(--accent)]/15 text-[var(--accent)] dark:bg-emerald-900/50 dark:text-emerald-200'
-          : `hover:bg-gray-100 dark:hover:bg-gray-700 ${isDark ? 'text-gray-300' : 'text-gray-900'}`
+          : `hover:bg-[var(--accent-soft)] dark:hover:bg-gray-700 ${isDark ? 'text-gray-300' : 'text-[var(--text-primary)]'}`
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
       {children}
@@ -834,7 +834,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   const editorContent = (
     <div className={`border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-white'} transition-colors ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}>
       {/* Toolbar */}
-      <div className={`border-b border-gray-200 dark:border-gray-700 ${isDark ? 'bg-gray-900' : 'bg-gray-50'} p-2 flex flex-wrap items-center gap-1 overflow-x-auto`}>
+      <div className={`border-b border-[var(--border-subtle)] dark:border-gray-700 ${isDark ? 'bg-gray-900' : 'bg-[var(--surface-subtle)]'} p-2 flex flex-wrap items-center gap-1 overflow-x-auto`}>
         {/* Formatting */}
         <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
           <ToolbarButton
@@ -1025,14 +1025,14 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
             className={`w-full min-h-[400px] p-4 border-0 focus:outline-none resize-none font-mono text-sm transition-colors ${
               isDark
                 ? 'bg-gray-800 text-gray-100 caret-gray-100'
-                : 'bg-white text-gray-900 caret-gray-900'
+                : 'bg-white text-[var(--text-primary)] caret-[var(--text-primary)]'
             }`}
             style={isDark ? { 
               color: '#f3f4f6', 
               caretColor: '#f3f4f6' 
             } : { 
-              color: '#111827', 
-              caretColor: '#111827' 
+              color: 'var(--text-primary)', 
+              caretColor: 'var(--text-primary)' 
             }}
             placeholder={placeholder}
           />
@@ -1043,8 +1043,8 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         )}
 
         {/* Stats Bar */}
-        <div className={`border-t border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between text-xs flex-wrap gap-2 transition-colors ${
-          isDark ? 'bg-gray-900 text-gray-400' : 'bg-gray-50 text-gray-900'
+        <div className={`border-t border-[var(--border-subtle)] dark:border-gray-700 px-4 py-2 flex items-center justify-between text-xs flex-wrap gap-2 transition-colors ${
+          isDark ? 'bg-gray-900 text-gray-400' : 'bg-[var(--surface-subtle)] text-[var(--text-primary)]'
         }`}>
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
             <span>{wordCount} words</span>
@@ -1273,13 +1273,13 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
             className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+            <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)] dark:text-gray-100">
               Insert Link
             </h3>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] dark:text-gray-300 mb-2">
                   URL
                 </label>
                 <input
@@ -1301,7 +1301,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] dark:text-gray-300 mb-2">
                   Link Text (Optional)
                 </label>
                 <input
@@ -1334,7 +1334,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
               <div className="flex justify-end gap-3 ml-auto">
                 <button
                   onClick={handleCancelLink}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className="px-4 py-2 text-[var(--text-secondary)] dark:text-gray-300 bg-[var(--surface-subtle)] dark:bg-gray-700 rounded-lg hover:bg-[var(--accent-soft)] dark:hover:bg-gray-600 transition-colors"
                 >
                   Cancel
                 </button>

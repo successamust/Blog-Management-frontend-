@@ -199,7 +199,7 @@ const AnimatedHero = () => {
           >
             <Link
               to="/posts"
-              className="group relative inline-flex items-center px-10 py-4 sm:px-12 sm:py-5 border border-transparent text-base sm:text-lg font-semibold rounded-2xl text-white bg-[var(--accent)] shadow-xl shadow-[rgba(26,137,23,0.22)] hover:shadow-[0_24px_48px_rgba(26,137,23,0.25)] transition-all duration-500 overflow-hidden"
+              className="group relative inline-flex items-center px-10 py-4 sm:px-12 sm:py-5 border border-transparent text-base sm:text-lg font-semibold rounded-2xl text-white bg-[var(--accent)] shadow-xl shadow-[rgba(26,137,23,0.22)] hover:shadow-[0_24px_48px_rgba(26,137,23,0.25)] hover:text-white transition-all duration-500 overflow-hidden"
             >
               {/* Animated gradient overlay on hover */}
               <motion.div

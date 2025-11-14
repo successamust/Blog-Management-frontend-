@@ -108,7 +108,8 @@ const Search = () => {
 
   return (
     <div className="bg-page min-h-screen">
-      <div className="layout-container section-spacing-y">
+      <div className="bg-content">
+        <div className="layout-container section-spacing-y">
         {/* Search Header */}
         <motion.div
           initial={{ opacity: 0, y: -16 }}
@@ -236,6 +237,7 @@ const Search = () => {
             <p className="text-sm text-muted mt-2">Search by topic, author, tag, or keyword.</p>
           </motion.div>
         )}
+        </div>
       </div>
     </div>
   );

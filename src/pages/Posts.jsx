@@ -72,7 +72,8 @@ const Posts = () => {
 
   return (
     <div className="bg-page min-h-screen">
-      <div className="layout-container max-w-6xl mx-auto section-spacing-y">
+      <div className="bg-content">
+        <div className="layout-container max-w-6xl mx-auto section-spacing-y">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -16 }}
@@ -181,6 +182,7 @@ const Posts = () => {
             </motion.button>
           </motion.div>
         )}
+        </div>
       </div>
     </div>
   );

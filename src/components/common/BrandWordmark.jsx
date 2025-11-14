@@ -10,7 +10,7 @@ const VARIANTS = {
     right: 'tracking-[0.18em]',
   },
   navigation: {
-    container: 'font-semibold text-lg leading-none',
+    container: 'font-bold text-lg leading-none',
     gap: 'gap-[0.3em]',
     left: 'tracking-[0.22em]',
     accent: 'tracking-[0.28em] text-[var(--accent)]',
