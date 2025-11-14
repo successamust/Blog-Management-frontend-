@@ -802,11 +802,25 @@ const EditPost = ({ onSuccess }) => {
       try {
         // Try to get post directly by ID if endpoint exists
         const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
-        post = normalizePosts(response).find((p) => p?._id === id || p?.id === id);
+        const posts = normalizePosts(response);
+        post = posts.find((p) => {
+          const postId = p?._id || p?.id;
+          return postId && (String(postId) === String(id));
+        });
       } catch (error) {
+        console.error('Error in first fetch attempt:', error);
         // If that fails, try getting all posts
-        const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
-        post = normalizePosts(response).find((p) => p?._id === id || p?.id === id);
+        try {
+          const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
+          const posts = normalizePosts(response);
+          post = posts.find((p) => {
+            const postId = p?._id || p?.id;
+            return postId && (String(postId) === String(id));
+          });
+        } catch (secondError) {
+          console.error('Error in second fetch attempt:', secondError);
+          throw secondError;
+        }
       }
       
       if (!post) {
@@ -819,7 +833,7 @@ const EditPost = ({ onSuccess }) => {
       if (user?.role === 'author' && !isAdmin()) {
         const postAuthorId = post.author?._id || post.author || post.authorId;
         const userId = user._id || user.id;
-        if (String(postAuthorId) !== String(userId)) {
+        if (postAuthorId && userId && String(postAuthorId) !== String(userId)) {
           toast.error('You can only edit your own posts');
           navigate('/admin/posts');
           return;
@@ -970,6 +984,23 @@ const EditPost = ({ onSuccess }) => {
     );
   }
 
+  if (!formData.title && !loading) {
+    // If formData is empty and not loading, there might be an issue
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="text-center py-8">
+          <p className="text-gray-600 mb-4">Unable to load post data. Please try again.</p>
+          <Link
+            to="/admin/posts"
+            className="btn btn-primary"
+          >
+            Back to Posts
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 overflow-x-hidden">
       <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Edit Post</h2>
@@ -979,7 +1010,7 @@ const EditPost = ({ onSuccess }) => {
           <input
             type="text"
             name="title"
-            value={formData.title}
+            value={formData.title || ''}
             onChange={handleChange}
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
@@ -990,7 +1021,7 @@ const EditPost = ({ onSuccess }) => {
           <label className="block text-sm font-medium text-gray-700 mb-2">Excerpt</label>
           <textarea
             name="excerpt"
-            value={formData.excerpt}
+            value={formData.excerpt || ''}
             onChange={handleChange}
             rows="3"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
@@ -999,11 +1030,13 @@ const EditPost = ({ onSuccess }) => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
-          <RichTextEditor
-            value={formData.content}
-            onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
-            placeholder="Write your post content here..."
-          />
+          {typeof window !== 'undefined' && (
+            <RichTextEditor
+              value={formData.content || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+              placeholder="Write your post content here..."
+            />
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
