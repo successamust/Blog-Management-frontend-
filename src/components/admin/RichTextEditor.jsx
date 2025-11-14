@@ -88,6 +88,60 @@ const registerLanguages = async () => {
 // Register languages on module load
 registerLanguages();
 
+// Create extensions array once at module level to avoid duplicates
+// StarterKit includes: Blockquote, Bold, BulletList, Code, CodeBlock, Document, 
+// Dropcursor, Gapcursor, HardBreak, Heading, History, HorizontalRule, Italic, 
+// ListItem, OrderedList, Paragraph, Strike, Text
+// It does NOT include Link or Underline, so we add them separately
+// We create a function that returns extensions with a dynamic placeholder
+let cachedExtensions = null;
+let cachedPlaceholder = null;
+
+const getExtensions = (placeholderText) => {
+  // Only recreate if placeholder changes, otherwise reuse cached extensions
+  if (cachedExtensions && cachedPlaceholder === placeholderText) {
+    return cachedExtensions;
+  }
+  
+  cachedExtensions = [
+    StarterKit.configure({
+      codeBlock: false, // We'll use CodeBlockLowlight instead
+      bulletList: {
+        keepMarks: true,
+        keepAttributes: false,
+      },
+      orderedList: {
+        keepMarks: true,
+        keepAttributes: false,
+      },
+    }),
+    Image.configure({
+      inline: true,
+      allowBase64: true,
+    }),
+    Link.configure({
+      openOnClick: false,
+      HTMLAttributes: {
+        class: 'text-[var(--accent)] underline',
+      },
+    }),
+    CodeBlockLowlight.configure({
+      lowlight,
+    }),
+    Placeholder.configure({
+      placeholder: placeholderText,
+    }),
+    TextAlign.configure({
+      types: ['heading', 'paragraph'],
+    }),
+    Underline,
+    CharacterCount,
+  ];
+  
+  cachedPlaceholder = placeholderText;
+  return cachedExtensions;
+};
+
 const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) => {
   const [isPreview, setIsPreview] = useState(false);
   const [isMarkdown, setIsMarkdown] = useState(false);
@@ -101,6 +155,9 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   const autosaveTimerRef = useRef(null);
   const fileInputRef = useRef(null);
   const isUpdatingRef = useRef(false);
+  
+  // Get extensions - cached at module level to prevent duplicates
+  const extensions = getExtensions(placeholder);
 
   // Convert HTML to Markdown
   const htmlToMarkdown = useCallback((html) => {
@@ -138,45 +195,9 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   }, []);
 
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        codeBlock: false, // We'll use CodeBlockLowlight instead
-        bulletList: {
-          keepMarks: true,
-          keepAttributes: false,
-        },
-        orderedList: {
-          keepMarks: true,
-          keepAttributes: false,
-        },
-        // Note: StarterKit v3 doesn't include Link or Underline by default
-        // So we add them explicitly below
-      }),
-      Image.configure({
-        inline: true,
-        allowBase64: true,
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-[var(--accent)] underline',
-        },
-      }),
-      CodeBlockLowlight.configure({
-        lowlight,
-      }),
-      Placeholder.configure({
-        placeholder,
-      }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
-      Underline.configure({
-        // Explicitly configure to avoid conflicts
-      }),
-      CharacterCount,
-    ],
+    extensions,
     content: value || '',
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       // Skip update if we're programmatically updating content
       if (isUpdatingRef.current) return;
