@@ -77,6 +77,104 @@ const PostDetail = () => {
     }
   }, [post, user, isAuthenticated]);
 
+  // Update meta tags for social sharing when post loads
+  useEffect(() => {
+    if (!post) return;
+
+    const baseUrl = 'https://thenexusblog.vercel.app';
+    const currentUrl = `${baseUrl}/posts/${post.slug || post._id}`;
+    
+    // Get post image or fallback to default
+    const getImageUrl = (imageUrl) => {
+      if (!imageUrl) {
+        return `${baseUrl}/email-assets/nexus-og-image.png`;
+      }
+      // If image is already absolute URL, use it
+      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl;
+      }
+      // If relative URL, make it absolute
+      if (imageUrl.startsWith('/')) {
+        return `${baseUrl}${imageUrl}`;
+      }
+      // Otherwise, assume it's a full URL from backend
+      return imageUrl;
+    };
+
+    const ogImage = getImageUrl(post.featuredImage);
+    
+    // Extract plain text from HTML if needed for description
+    const getPlainText = (text) => {
+      if (!text) return '';
+      // Remove HTML tags
+      const div = document.createElement('div');
+      div.innerHTML = text;
+      return div.textContent || div.innerText || '';
+    };
+
+    const description = post.excerpt || post.summary || post.metaDescription || 
+                        getPlainText(post.content).substring(0, 160) || 
+                        'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.';
+
+    // Update document title
+    document.title = `${post.title} | Nexus - Stories Worth Sharing`;
+
+    // Helper function to update or create meta tag
+    const updateMetaTag = (property, content, isProperty = true) => {
+      const selector = isProperty ? `meta[property="${property}"]` : `meta[name="${property}"]`;
+      let meta = document.querySelector(selector);
+      
+      if (!meta) {
+        meta = document.createElement('meta');
+        if (isProperty) {
+          meta.setAttribute('property', property);
+        } else {
+          meta.setAttribute('name', property);
+        }
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    // Update Open Graph tags
+    updateMetaTag('og:type', 'article');
+    updateMetaTag('og:url', currentUrl);
+    updateMetaTag('og:title', post.title);
+    updateMetaTag('og:description', description);
+    updateMetaTag('og:image', ogImage);
+    updateMetaTag('og:image:width', '1200');
+    updateMetaTag('og:image:height', '630');
+    updateMetaTag('og:image:type', 'image/png');
+    updateMetaTag('og:image:alt', post.title);
+
+    // Update Twitter tags
+    updateMetaTag('twitter:card', 'summary_large_image', false);
+    updateMetaTag('twitter:url', currentUrl, false);
+    updateMetaTag('twitter:title', post.title, false);
+    updateMetaTag('twitter:description', description, false);
+    updateMetaTag('twitter:image', ogImage, false);
+    updateMetaTag('twitter:image:alt', post.title, false);
+
+    // Update standard meta tags
+    updateMetaTag('description', description, false);
+    updateMetaTag('title', `${post.title} | Nexus`, false);
+
+    // Cleanup function to restore defaults when component unmounts
+    return () => {
+      document.title = 'Nexus - Stories Worth Sharing';
+      updateMetaTag('og:type', 'website');
+      updateMetaTag('og:url', baseUrl);
+      updateMetaTag('og:title', 'Nexus - Stories Worth Sharing');
+      updateMetaTag('og:description', 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.');
+      updateMetaTag('og:image', `${baseUrl}/email-assets/nexus-og-image.png`);
+      updateMetaTag('twitter:url', baseUrl, false);
+      updateMetaTag('twitter:title', 'Nexus - Stories Worth Sharing', false);
+      updateMetaTag('twitter:description', 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.', false);
+      updateMetaTag('twitter:image', `${baseUrl}/email-assets/nexus-og-image.png`, false);
+      updateMetaTag('description', 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.', false);
+    };
+  }, [post]);
+
   const fetchPostData = async () => {
     try {
       setLoading(true);

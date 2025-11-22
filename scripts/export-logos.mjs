@@ -24,6 +24,12 @@ const tasks = [
       { filename: 'nexus-logo-icon@2x.png', width: 256, height: 256 },
     ],
   },
+  {
+    source: 'nexus-og-image.svg',
+    outputs: [
+      { filename: 'nexus-og-image.png', width: 1200, height: 630 },
+    ],
+  },
 ];
 
 const run = async () => {
