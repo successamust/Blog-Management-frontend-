@@ -5,11 +5,23 @@ import { Mail, ArrowLeft } from 'lucide-react';
 import { authAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import Spinner from '../../components/common/Spinner';
+import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
+
+const FORGOT_PASSWORD_DESCRIPTION = 'Reset your Nexus password by requesting a secure link straight to your inbox.';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  const seoNode = (
+    <Seo
+      title="Forgot Password"
+      description={FORGOT_PASSWORD_DESCRIPTION}
+      url="/forgot-password"
+      image={DEFAULT_OG_IMAGE}
+    />
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +40,9 @@ const ForgotPassword = () => {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
+      <>
+        {seoNode}
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -46,7 +60,7 @@ const ForgotPassword = () => {
             </motion.div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Check Your Email</h2>
             <p className="text-secondary mb-6">
-              We've sent a password reset link to <strong className="text-[var(--accent)]">{email}</strong>
+              We&rsquo;ve sent a password reset link to <strong className="text-[var(--accent)]">{email}</strong>
             </p>
             <p className="text-sm text-muted mb-6">
               Please check your inbox and click on the link to reset your password.
@@ -62,12 +76,15 @@ const ForgotPassword = () => {
             </motion.div>
           </div>
         </motion.div>
-      </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
+    <>
+      {seoNode}
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -87,7 +104,7 @@ const ForgotPassword = () => {
             Forgot Password
           </h2>
           <p className="mt-2 text-center text-sm text-slate-600">
-            Enter your email address and we'll send you a link to reset your password.
+            Enter your email address and we&rsquo;ll send you a link to reset your password.
           </p>
         </div>
         <form className="mt-8 space-y-6 surface-card p-8" onSubmit={handleSubmit}>
@@ -136,7 +153,8 @@ const ForgotPassword = () => {
           </div>
         </form>
       </motion.div>
-    </div>
+      </div>
+    </>
   );
 };
 

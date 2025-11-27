@@ -8,6 +8,9 @@ import ModernPostCard from '../components/posts/ModernPostCard';
 import SkeletonLoader from '../components/common/SkeletonLoader';
 import { format } from 'date-fns';
 import Spinner from '../components/common/Spinner';
+import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+
+const SEARCH_DESCRIPTION_BASE = 'Search Nexus to find stories, authors, tags, and categories that match your interests.';
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -25,7 +28,6 @@ const Search = () => {
     if (searchQuery || searchTag) {
       performSearch();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   useEffect(() => {
@@ -34,7 +36,6 @@ const Search = () => {
     } else {
       setSuggestions([]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   const fetchSuggestions = async () => {
@@ -106,8 +107,27 @@ const Search = () => {
     setSearchParams({});
   };
 
+  const queryString = searchParams.toString();
+  const searchQuery = searchParams.get('q') || '';
+  const searchTag = searchParams.get('tags') || '';
+  const activeFilters = [
+    searchQuery ? `keyword “${searchQuery}”` : null,
+    searchTag ? `tag “${searchTag}”` : null,
+  ].filter(Boolean);
+  const seoDescription = activeFilters.length
+    ? `${SEARCH_DESCRIPTION_BASE} Currently filtered by ${activeFilters.join(' and ')}.`
+    : SEARCH_DESCRIPTION_BASE;
+  const seoUrl = queryString ? `/search?${queryString}` : '/search';
+
   return (
-    <div className="bg-page min-h-screen">
+    <>
+      <Seo
+        title="Search Nexus"
+        description={seoDescription}
+        url={seoUrl}
+        image={DEFAULT_OG_IMAGE}
+      />
+      <div className="bg-page min-h-screen">
       <div className="bg-content">
         <div className="layout-container section-spacing-y">
         {/* Search Header */}
@@ -239,7 +259,8 @@ const Search = () => {
         )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

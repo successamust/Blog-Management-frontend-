@@ -5,6 +5,9 @@ import { Mail, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 import { newsletterAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import Spinner from '../../components/common/Spinner';
+import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
+
+const UNSUBSCRIBE_DESCRIPTION = 'Leave the Nexus newsletter or update your preferences in one click.';
 
 const Unsubscribe = () => {
   const [searchParams] = useSearchParams();
@@ -12,6 +15,8 @@ const Unsubscribe = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
+  const emailParam = searchParams.get('email');
+  const seoUrl = emailParam ? `/unsubscribe?email=${encodeURIComponent(emailParam)}` : '/unsubscribe';
 
   const handleUnsubscribe = async (emailToUnsubscribe = null) => {
     const emailValue = emailToUnsubscribe || email;
@@ -44,15 +49,11 @@ const Unsubscribe = () => {
   };
 
   useEffect(() => {
-    // Get email from URL query parameter
-    const emailParam = searchParams.get('email');
     if (emailParam) {
       setEmail(emailParam);
-      // Auto-unsubscribe if email is provided in URL
       handleUnsubscribe(emailParam);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [emailParam]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -60,7 +61,14 @@ const Unsubscribe = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5]">
+    <>
+      <Seo
+        title="Unsubscribe"
+        description={UNSUBSCRIBE_DESCRIPTION}
+        url={seoUrl}
+        image={DEFAULT_OG_IMAGE}
+      />
+      <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -84,7 +92,7 @@ const Unsubscribe = () => {
               </h1>
               <p className="text-secondary">
                 You have been successfully unsubscribed from our newsletter. 
-                We're sorry to see you go!
+                We&rsquo;re sorry to see you go!
               </p>
               <p className="text-sm text-muted">
                 If you change your mind, you can always subscribe again from our website.
@@ -187,7 +195,8 @@ const Unsubscribe = () => {
           )}
         </div>
       </motion.div>
-    </div>
+      </div>
+    </>
   );
 };
 

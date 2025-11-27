@@ -13,7 +13,6 @@ const CategoryManagement = () => {
 
   useEffect(() => {
     fetchCategories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchCategories = async () => {
@@ -311,7 +310,6 @@ const EditCategory = ({ onSuccess }) => {
 
   useEffect(() => {
     fetchCategory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchCategory = async () => {

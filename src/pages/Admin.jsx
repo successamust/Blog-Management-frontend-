@@ -9,6 +9,9 @@ import CategoryManagement from '../components/admin/CategoryManagement';
 import AuthorManagement from '../components/admin/AuthorManagement';
 import AdminOverview from '../components/admin/AdminOverview';
 import { useAuth } from '../context/AuthContext';
+import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+
+const ADMIN_DESCRIPTION = 'Moderate posts, categories, newsletters, and authors to keep Nexus running smoothly.';
 
 const Admin = () => {
   const location = useLocation();
@@ -40,8 +43,24 @@ const Admin = () => {
     ...(!isAuthorOnly ? [{ id: 'authors', path: '/admin/authors', label: 'Authors', mobileLabel: 'Authors', icon: <UserCheck className="w-4 h-4" /> }] : []),
   ];
 
+  const activeTabMeta = tabs.find((tab) => isActive(tab.path));
+  const dashboardLabel = isAuthorOnly ? 'Author' : 'Admin';
+  const seoTitleSuffix = activeTabMeta && activeTabMeta.label !== 'Overview' ? ` — ${activeTabMeta.label}` : '';
+  const seoTitle = `${dashboardLabel} Dashboard${seoTitleSuffix}`;
+  const seoDescription = isAuthorOnly
+    ? 'Publish, edit, and organize your Nexus posts from one dashboard.'
+    : ADMIN_DESCRIPTION;
+  const seoUrl = `${location.pathname}${location.search || ''}`;
+
   return (
-    <div className="bg-page min-h-screen">
+    <>
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        url={seoUrl}
+        image={DEFAULT_OG_IMAGE}
+      />
+      <div className="bg-page min-h-screen">
     <div className="layout-container-wide py-8">
       {/* Header */}
       <div className="mb-8">
@@ -101,7 +120,8 @@ const Admin = () => {
         </Routes>
       </div>
     </div>
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -6,6 +6,9 @@ import { postsAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import ModernPostCard from '../components/posts/ModernPostCard';
 import Spinner from '../components/common/Spinner';
+import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+
+const DEFAULT_POSTS_DESCRIPTION = 'Browse the latest stories and reporting from the Nexus community.';
 
 const Posts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -21,10 +24,21 @@ const Posts = () => {
   const currentPage = parseInt(searchParams.get('page')) || 1;
   const category = searchParams.get('category');
   const tag = searchParams.get('tag');
+  const queryString = searchParams.toString();
+
+  const filterDescriptions = [
+    category ? `category “${category}”` : null,
+    tag ? `tag “${tag}”` : null,
+  ].filter(Boolean);
+
+  const seoDescription = filterDescriptions.length
+    ? `${DEFAULT_POSTS_DESCRIPTION} Currently filtered by ${filterDescriptions.join(' and ')}.`
+    : DEFAULT_POSTS_DESCRIPTION;
+
+  const seoUrl = queryString ? `/posts?${queryString}` : '/posts';
 
   useEffect(() => {
     fetchPosts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, category, tag]);
 
   const fetchPosts = async () => {
@@ -71,7 +85,14 @@ const Posts = () => {
   }
 
   return (
-    <div className="bg-page min-h-screen">
+    <>
+      <Seo
+        title="All Articles"
+        description={seoDescription}
+        url={seoUrl}
+        image={DEFAULT_OG_IMAGE}
+      />
+      <div className="bg-page min-h-screen">
       <div className="bg-content">
         <div className="layout-container max-w-6xl mx-auto section-spacing-y">
         {/* Header */}
@@ -184,7 +205,8 @@ const Posts = () => {
         )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

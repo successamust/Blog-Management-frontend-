@@ -5,6 +5,9 @@ import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Spinner from '../../components/common/Spinner';
 import BrandWordmark from '../../components/common/BrandWordmark';
+import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
+
+const REGISTER_DESCRIPTION = 'Create a Nexus account to publish stories, join the newsletter, and unlock your personalized reading feed.';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -76,7 +79,14 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
+    <>
+      <Seo
+        title="Create Account"
+        description={REGISTER_DESCRIPTION}
+        url="/register"
+        image={DEFAULT_OG_IMAGE}
+      />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -246,7 +256,8 @@ const Register = () => {
           </div>
         </form>
       </motion.div>
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -8,6 +8,9 @@ import ModernPostCard from '../components/posts/ModernPostCard';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import Spinner from '../components/common/Spinner';
+import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+
+const HOME_DESCRIPTION = 'Discover useful articles, insights, and writing from our community of creators.';
 
 const Home = () => {
   const { user, isAuthenticated } = useAuth();
@@ -194,7 +197,14 @@ const Home = () => {
   }
 
   return (
-    <div className="bg-page min-h-screen">
+    <>
+      <Seo
+        title="Nexus — Stories Worth Sharing"
+        description={HOME_DESCRIPTION}
+        url="/"
+        image={DEFAULT_OG_IMAGE}
+      />
+      <div className="bg-page min-h-screen">
       {/* Minimal Hero Section - Medium/Substack Style */}
       <section className="border-b border-[var(--border-subtle)]">
         <div className="layout-container section-hero-spacing-y">
@@ -519,7 +529,8 @@ const Home = () => {
         </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

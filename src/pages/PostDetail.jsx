@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -29,6 +29,26 @@ import ReadingProgress from '../components/common/ReadingProgress';
 import { calculateReadingTime, formatReadingTime } from '../utils/readingTime';
 import { Clock } from 'lucide-react';
 import Spinner from '../components/common/Spinner';
+import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+
+const DEFAULT_POST_DESCRIPTION = 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.';
+
+const stripHtmlTags = (value) => {
+  if (!value) return '';
+  return value.replace(/<[^>]*>/g, '');
+};
+
+const normalizeImageSource = (imagePath) => {
+  if (!imagePath) {
+    return DEFAULT_OG_IMAGE;
+  }
+
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('//')) {
+    return imagePath;
+  }
+
+  return imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+};
 
 const PostDetail = () => {
   const { slug } = useParams();
@@ -46,9 +66,26 @@ const PostDetail = () => {
   const [linkCopied, setLinkCopied] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
+  const seoDescription = useMemo(() => {
+    if (!post) return DEFAULT_POST_DESCRIPTION;
+    return (
+      post.excerpt ||
+      post.summary ||
+      post.metaDescription ||
+      stripHtmlTags(post.content).slice(0, 160) ||
+      DEFAULT_POST_DESCRIPTION
+    );
+  }, [post]);
+
+  const seoImage = useMemo(() => {
+    if (!post) return DEFAULT_OG_IMAGE;
+    return normalizeImageSource(post.featuredImage);
+  }, [post]);
+
+  const seoUrl = post ? `/posts/${post.slug || post._id}` : undefined;
+
   useEffect(() => {
     fetchPostData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   // Update bookmark state when user or post changes
@@ -76,104 +113,6 @@ const PostDetail = () => {
       setIsBookmarked(false);
     }
   }, [post, user, isAuthenticated]);
-
-  // Update meta tags for social sharing when post loads
-  useEffect(() => {
-    if (!post) return;
-
-    const baseUrl = 'https://thenexusblog.vercel.app';
-    const currentUrl = `${baseUrl}/posts/${post.slug || post._id}`;
-    
-    // Get post image or fallback to default
-    const getImageUrl = (imageUrl) => {
-      if (!imageUrl) {
-        return `${baseUrl}/email-assets/nexus-og-image.png`;
-      }
-      // If image is already absolute URL, use it
-      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-        return imageUrl;
-      }
-      // If relative URL, make it absolute
-      if (imageUrl.startsWith('/')) {
-        return `${baseUrl}${imageUrl}`;
-      }
-      // Otherwise, assume it's a full URL from backend
-      return imageUrl;
-    };
-
-    const ogImage = getImageUrl(post.featuredImage);
-    
-    // Extract plain text from HTML if needed for description
-    const getPlainText = (text) => {
-      if (!text) return '';
-      // Remove HTML tags
-      const div = document.createElement('div');
-      div.innerHTML = text;
-      return div.textContent || div.innerText || '';
-    };
-
-    const description = post.excerpt || post.summary || post.metaDescription || 
-                        getPlainText(post.content).substring(0, 160) || 
-                        'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.';
-
-    // Update document title
-    document.title = `${post.title} | Nexus - Stories Worth Sharing`;
-
-    // Helper function to update or create meta tag
-    const updateMetaTag = (property, content, isProperty = true) => {
-      const selector = isProperty ? `meta[property="${property}"]` : `meta[name="${property}"]`;
-      let meta = document.querySelector(selector);
-      
-      if (!meta) {
-        meta = document.createElement('meta');
-        if (isProperty) {
-          meta.setAttribute('property', property);
-        } else {
-          meta.setAttribute('name', property);
-        }
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', content);
-    };
-
-    // Update Open Graph tags
-    updateMetaTag('og:type', 'article');
-    updateMetaTag('og:url', currentUrl);
-    updateMetaTag('og:title', post.title);
-    updateMetaTag('og:description', description);
-    updateMetaTag('og:image', ogImage);
-    updateMetaTag('og:image:width', '1200');
-    updateMetaTag('og:image:height', '630');
-    updateMetaTag('og:image:type', 'image/png');
-    updateMetaTag('og:image:alt', post.title);
-
-    // Update Twitter tags
-    updateMetaTag('twitter:card', 'summary_large_image', false);
-    updateMetaTag('twitter:url', currentUrl, false);
-    updateMetaTag('twitter:title', post.title, false);
-    updateMetaTag('twitter:description', description, false);
-    updateMetaTag('twitter:image', ogImage, false);
-    updateMetaTag('twitter:image:alt', post.title, false);
-
-    // Update standard meta tags
-    updateMetaTag('description', description, false);
-    updateMetaTag('title', `${post.title} | Nexus`, false);
-
-    // Cleanup function to restore defaults when component unmounts
-    return () => {
-      document.title = 'Nexus - Stories Worth Sharing';
-      updateMetaTag('og:type', 'website');
-      updateMetaTag('og:url', baseUrl);
-      updateMetaTag('og:title', 'Nexus - Stories Worth Sharing');
-      updateMetaTag('og:description', 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.');
-      updateMetaTag('og:image', `${baseUrl}/email-assets/nexus-og-image.png`);
-      updateMetaTag('twitter:url', baseUrl, false);
-      updateMetaTag('twitter:title', 'Nexus - Stories Worth Sharing', false);
-      updateMetaTag('twitter:description', 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.', false);
-      updateMetaTag('twitter:image', `${baseUrl}/email-assets/nexus-og-image.png`, false);
-      updateMetaTag('description', 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.', false);
-    };
-  }, [post]);
 
   const fetchPostData = async () => {
     try {
@@ -598,6 +537,16 @@ const PostDetail = () => {
 
   return (
     <>
+      {post && (
+        <Seo
+          title={post.title}
+          description={seoDescription}
+          url={seoUrl}
+          image={seoImage}
+          type="article"
+          imageAlt={post.title}
+        />
+      )}
       <ReadingProgress />
       <div className="bg-page min-h-screen">
       <div className="layout-container-wide py-6 sm:py-8">
@@ -657,7 +606,7 @@ const PostDetail = () => {
                     const sanitizedHTML = DOMPurify.sanitize(post.content, {
                       ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'video', 'div', 'span'],
                       ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel'],
-                      ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
+                      ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i
                     });
                     return <div dangerouslySetInnerHTML={{ __html: sanitizedHTML }} />;
                   } else {

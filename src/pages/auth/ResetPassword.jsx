@@ -5,6 +5,9 @@ import { Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { authAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import Spinner from '../../components/common/Spinner';
+import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
+
+const RESET_PASSWORD_DESCRIPTION = 'Choose a new Nexus password so you can continue reading, writing, and curating your publication.';
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -17,6 +20,16 @@ const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const seoUrl = token ? `/reset-password?token=${encodeURIComponent(token)}` : '/reset-password';
+  const seoNode = (
+    <Seo
+      title="Reset Password"
+      description={RESET_PASSWORD_DESCRIPTION}
+      url={seoUrl}
+      image={DEFAULT_OG_IMAGE}
+    />
+  );
 
   const handleChange = (e) => {
     setFormData({
@@ -61,7 +74,9 @@ const ResetPassword = () => {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
+      <>
+        {seoNode}
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -83,12 +98,15 @@ const ResetPassword = () => {
             </motion.div>
           </div>
         </motion.div>
-      </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
+    <>
+      {seoNode}
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -202,7 +220,8 @@ const ResetPassword = () => {
         </div>
         </form>
       </motion.div>
-    </div>
+      </div>
+    </>
   );
 };
 

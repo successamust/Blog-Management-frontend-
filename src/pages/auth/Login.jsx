@@ -5,6 +5,9 @@ import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Spinner from '../../components/common/Spinner';
 import BrandWordmark from '../../components/common/BrandWordmark';
+import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
+
+const LOGIN_DESCRIPTION = 'Sign in to Nexus to manage your publications, subscriptions, and saved reading list.';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -40,7 +43,14 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
+    <>
+      <Seo
+        title="Sign In"
+        description={LOGIN_DESCRIPTION}
+        url={`/login${location.search || ''}`}
+        image={DEFAULT_OG_IMAGE}
+      />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -168,7 +178,8 @@ const Login = () => {
           </div>
         </form>
       </motion.div>
-    </div>
+      </div>
+    </>
   );
 };
 

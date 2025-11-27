@@ -34,6 +34,18 @@ import RichTextEditor from '../components/admin/RichTextEditor';
 import SkeletonLoader from '../components/common/SkeletonLoader';
 import toast from 'react-hot-toast';
 import Spinner from '../components/common/Spinner';
+import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+
+const DASHBOARD_DESCRIPTION = 'Manage your Nexus profile, author tools, analytics, and saved posts from one workspace.';
+const DASHBOARD_TAB_LABELS = {
+  overview: 'Overview',
+  posts: 'Posts',
+  comments: 'Comments',
+  likes: 'Likes',
+  history: 'Reading History',
+  bookmarks: 'Bookmarks',
+  settings: 'Settings',
+};
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -51,6 +63,20 @@ const Dashboard = () => {
   const [tabLoading, setTabLoading] = useState(false);
   const { user, isAdmin } = useAuth();
 
+  const tabLabel = DASHBOARD_TAB_LABELS[activeTab] || 'Overview';
+  const queryString = searchParams.toString();
+  const seoTitle = tabLabel === 'Overview' ? 'Dashboard' : `Dashboard — ${tabLabel}`;
+  const seoDescription = `${tabLabel === 'Overview' ? 'At-a-glance insights.' : `${tabLabel} tools.`} ${DASHBOARD_DESCRIPTION}`;
+  const seoUrl = queryString ? `/dashboard?${queryString}` : '/dashboard';
+  const seoNode = (
+    <Seo
+      title={seoTitle}
+      description={seoDescription}
+      url={seoUrl}
+      image={DEFAULT_OG_IMAGE}
+    />
+  );
+
   // Read tab from URL query parameter on mount
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab');
@@ -67,7 +93,6 @@ const Dashboard = () => {
     if (activeTab !== 'overview' && activeTab !== 'settings') {
       fetchTabData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   // Fetch posts count if overview data doesn't include it
@@ -118,7 +143,6 @@ const Dashboard = () => {
     }, typeof window !== 'undefined' && window.innerWidth < 768 ? 100 : 0);
     
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, dashboardData, user, isAdmin]);
 
   const fetchTabData = async () => {
@@ -312,25 +336,31 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner size="3xl" />
-      </div>
+      <>
+        {seoNode}
+        <div className="min-h-screen flex items-center justify-center">
+          <Spinner size="3xl" />
+        </div>
+      </>
     );
   }
 
   if (!dashboardData && !error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-        <h1 className="text-2xl font-bold text-primary mb-4">Error Loading Dashboard</h1>
-          <button
-            onClick={fetchDashboardData}
-            className="text-[var(--accent)] hover:text-[var(--accent-hover)]"
-          >
-            Try Again
-          </button>
+      <>
+        {seoNode}
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+          <h1 className="text-2xl font-bold text-primary mb-4">Error Loading Dashboard</h1>
+            <button
+              onClick={fetchDashboardData}
+              className="text-[var(--accent)] hover:text-[var(--accent-hover)]"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -410,7 +440,9 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="bg-page min-h-screen">
+    <>
+      {seoNode}
+      <div className="bg-page min-h-screen">
     <div className="layout-container-wide py-8">
       {/* Header */}
       <motion.div
@@ -423,7 +455,7 @@ const Dashboard = () => {
           Welcome back, <span className="bg-gradient-to-r from-[var(--accent)] via-[#189112] to-[var(--accent-hover)] bg-clip-text text-transparent">{user?.username || 'User'}</span>!
         </h1>
         <p className="text-sm sm:text-base text-muted">
-          Here's what's happening with your content and engagement.
+          Here&rsquo;s what&rsquo;s happening with your content and engagement.
         </p>
       </motion.div>
 
@@ -489,7 +521,7 @@ const Dashboard = () => {
           {error && (
             <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-red-800 text-sm">
-                <strong>Note:</strong> The overview data couldn't be loaded due to a server error. 
+                <strong>Note:</strong> The overview data couldn&rsquo;t be loaded due to a server error. 
                 You can still use other tabs like Profile Settings, My Posts, etc.
               </p>
             </div>
@@ -923,7 +955,8 @@ const Dashboard = () => {
         </div>
       )}
     </div>
-    </div>
+      </div>
+    </>
   );
 };
 
@@ -1138,7 +1171,6 @@ const CreatePostTab = () => {
 
   useEffect(() => {
     fetchCategories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchCategories = async () => {

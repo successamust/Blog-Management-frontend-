@@ -6,6 +6,10 @@ import { categoriesAPI, postsAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import ModernPostCard from '../components/posts/ModernPostCard';
 import Spinner from '../components/common/Spinner';
+import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+
+const FALLBACK_CATEGORY_DESCRIPTION = (name) =>
+  `Fresh stories, guides, and resources from Nexus contributors writing about ${name}.`;
 
 const CategoryPosts = () => {
   const { slug } = useParams();
@@ -24,7 +28,6 @@ const CategoryPosts = () => {
 
   useEffect(() => {
     fetchCategoryData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, currentPage]);
 
   const fetchCategoryData = async () => {
@@ -213,6 +216,11 @@ const CategoryPosts = () => {
         description: null,
       }
     : null);
+  const categoryName = displayCategory?.name || slug;
+  const seoDescription = displayCategory?.description || FALLBACK_CATEGORY_DESCRIPTION(categoryName);
+  const featuredImageFromPosts = posts.find((post) => Boolean(post?.featuredImage))?.featuredImage;
+  const seoImage = featuredImageFromPosts || DEFAULT_OG_IMAGE;
+  const seoUrl = currentPage > 1 ? `/categories/${slug}?page=${currentPage}` : `/categories/${slug}`;
 
   if (!loading && !displayCategory && !hasPosts) {
     return (
@@ -227,7 +235,15 @@ const CategoryPosts = () => {
   }
 
   return (
-    <div className="bg-page min-h-screen">
+    <>
+      <Seo
+        title={`${categoryName || 'Category'} Posts`}
+        description={seoDescription}
+        url={seoUrl}
+        image={seoImage}
+        type="website"
+      />
+      <div className="bg-page min-h-screen">
       <div className="bg-content">
         <div className="layout-container section-spacing-y">
         {/* Category Header */}
@@ -346,7 +362,8 @@ const CategoryPosts = () => {
         )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

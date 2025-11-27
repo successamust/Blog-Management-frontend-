@@ -49,9 +49,10 @@ const ChangePassword = () => {
           newPassword: '',
           confirmPassword: '',
         });
-      }
-    } catch (error) {
-    } finally {
+    }
+  } catch (error) {
+    toast.error(error.response?.data?.message || 'Failed to change password');
+  } finally {
       setSubmitting(false);
     }
   };

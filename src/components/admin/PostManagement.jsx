@@ -18,7 +18,6 @@ const PostManagement = () => {
 
   useEffect(() => {
     fetchPosts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPosts = async () => {
@@ -451,7 +450,6 @@ const CreatePost = ({ onSuccess }) => {
 
   useEffect(() => {
     fetchCategories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchCategories = async () => {
@@ -780,7 +778,6 @@ const EditPost = ({ onSuccess }) => {
   useEffect(() => {
     fetchPostData();
     fetchCategories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchPostData = async () => {

@@ -299,7 +299,6 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMarkdown, editor]);
 
   // Flag to prevent infinite loops

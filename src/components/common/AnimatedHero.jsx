@@ -256,7 +256,8 @@ const AnimatedHero = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 1.2, duration: 0.8 }}
             >
-              "A platform that elevates storytelling to an art form, connecting writers and readers in a space designed for inspiration and discovery."
+              &ldquo;A platform that elevates storytelling to an art form, connecting writers and readers
+              in a space designed for inspiration and discovery.&rdquo;
             </motion.p>
             <motion.div
               className="flex items-center justify-center gap-2"

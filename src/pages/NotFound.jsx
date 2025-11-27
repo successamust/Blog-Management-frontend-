@@ -2,10 +2,20 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, ArrowLeft } from 'lucide-react';
+import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+
+const NOT_FOUND_DESCRIPTION = 'We couldn’t find that page on Nexus. Head back home to keep exploring new stories.';
 
 const NotFound = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5]">
+    <>
+      <Seo
+        title="Page Not Found"
+        description={NOT_FOUND_DESCRIPTION}
+        url="/404"
+        image={DEFAULT_OG_IMAGE}
+      />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -22,7 +32,7 @@ const NotFound = () => {
         </motion.h1>
         <h2 className="text-3xl font-bold text-slate-900 mb-4">Page Not Found</h2>
         <p className="text-secondary mb-8 max-w-md mx-auto">
-          The page you're looking for doesn't exist or has been moved.
+          The page you&rsquo;re looking for doesn&rsquo;t exist or has been moved.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -45,7 +55,8 @@ const NotFound = () => {
           </motion.button>
         </div>
       </motion.div>
-    </div>
+      </div>
+    </>
   );
 };
 

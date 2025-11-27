@@ -5,6 +5,9 @@ import { Folder, ArrowRight } from 'lucide-react';
 import { categoriesAPI, postsAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import Spinner from '../components/common/Spinner';
+import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+
+const CATEGORIES_DESCRIPTION = 'Browse the Nexus archive by topic and discover curated collections of stories.';
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
@@ -85,7 +88,14 @@ const Categories = () => {
   }
 
   return (
-    <div className="bg-page min-h-screen">
+    <>
+      <Seo
+        title="Categories"
+        description={CATEGORIES_DESCRIPTION}
+        url="/categories"
+        image={DEFAULT_OG_IMAGE}
+      />
+      <div className="bg-page min-h-screen">
       <div className="bg-content">
         <div className="layout-container-wide py-8">
       {/* Header */}
@@ -135,7 +145,8 @@ const Categories = () => {
       )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
