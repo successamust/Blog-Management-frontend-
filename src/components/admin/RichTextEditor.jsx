@@ -19,6 +19,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import TurndownService from 'turndown';
 import { gfm as turndownGfm } from 'turndown-plugin-gfm';
+import DOMPurify from 'dompurify';
 import {
   Bold,
   Italic,
@@ -122,6 +123,63 @@ const turndownService = new TurndownService({
   strongDelimiter: '**',
 });
 turndownService.use(turndownGfm);
+
+// Preprocess HTML to clean up TipTap table structure before markdown conversion
+const preprocessTableHTML = (html) => {
+  if (!html) return html;
+  
+  try {
+    // Create a temporary DOM element to parse and clean the HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    // Find all tables
+    const tables = doc.querySelectorAll('table');
+    tables.forEach(table => {
+      // Remove colgroup elements (not needed for markdown)
+      const colgroups = table.querySelectorAll('colgroup');
+      colgroups.forEach(colgroup => colgroup.remove());
+      
+      // Clean up header cells - extract text from nested h3/h2/h1 tags
+      const thElements = table.querySelectorAll('th');
+      thElements.forEach(th => {
+        const heading = th.querySelector('h1, h2, h3, h4, h5, h6');
+        if (heading) {
+          th.innerHTML = heading.textContent || heading.innerText;
+        }
+        // Remove unnecessary attributes
+        th.removeAttribute('colwidth');
+        th.removeAttribute('colspan');
+        th.removeAttribute('rowspan');
+      });
+      
+      // Clean up data cells - extract text from nested p tags and preserve formatting
+      const tdElements = table.querySelectorAll('td');
+      tdElements.forEach(td => {
+        // If cell only contains a single p tag, unwrap it but keep the content
+        const pTag = td.querySelector('p');
+        if (pTag && td.children.length === 1) {
+          td.innerHTML = pTag.innerHTML;
+        }
+        // Remove unnecessary attributes
+        td.removeAttribute('colwidth');
+        td.removeAttribute('colspan');
+        td.removeAttribute('rowspan');
+      });
+      
+      // Remove style attributes from table and cells
+      table.removeAttribute('style');
+      table.querySelectorAll('th, td').forEach(cell => {
+        cell.removeAttribute('style');
+      });
+    });
+    
+    return doc.body.innerHTML;
+  } catch (error) {
+    console.warn('Failed to preprocess table HTML, using original:', error);
+    return html;
+  }
+};
 
 // Create extensions array once at module level to avoid duplicates
 // StarterKit includes: Blockquote, Bold, BulletList, Code, CodeBlock, Document, 
@@ -230,7 +288,9 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   const htmlToMarkdown = useCallback((html) => {
     if (!html) return '';
     try {
-      return turndownService.turndown(html);
+      // Preprocess HTML to clean up TipTap table structure
+      const cleanedHTML = preprocessTableHTML(html);
+      return turndownService.turndown(cleanedHTML);
     } catch (error) {
       console.error('Failed to convert HTML to markdown', error);
       return html;
@@ -1287,12 +1347,25 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       <div className="relative">
         {isPreview ? (
           <div className={`p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] max-h-[400px] sm:max-h-[600px] overflow-y-auto ${isDark ? 'bg-gray-800 text-gray-100' : 'bg-white'}`}>
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              className={isDark ? 'prose prose-invert max-w-none' : 'prose max-w-none'}
-            >
-              {isMarkdown ? markdownContent : htmlToMarkdown(editor.getHTML())}
-            </ReactMarkdown>
+            {isMarkdown ? (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                className={isDark ? 'prose prose-invert max-w-none' : 'prose max-w-none'}
+              >
+                {markdownContent}
+              </ReactMarkdown>
+            ) : (
+              <div
+                className={isDark ? 'prose prose-invert max-w-none' : 'prose max-w-none'}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(editor.getHTML(), {
+                    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'video', 'div', 'span', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'colgroup', 'col'],
+                    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel', 'colspan', 'rowspan', 'width', 'data-borderless'],
+                    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i
+                  })
+                }}
+              />
+            )}
           </div>
         ) : isMarkdown ? (
           <textarea
@@ -1419,19 +1492,34 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         .ProseMirror table {
           width: 100%;
           border-collapse: collapse;
-          margin: 1.5rem 0;
+          margin: 1em 0;
           table-layout: fixed;
+        }
+        .ProseMirror table:first-child {
+          margin-top: 0;
+        }
+        .ProseMirror table:last-child {
+          margin-bottom: 0;
+        }
+        .ProseMirror p + table {
+          margin-top: 0.75em;
+        }
+        .ProseMirror table + p {
+          margin-top: 0.75em;
         }
         .ProseMirror th,
         .ProseMirror td {
           border: 1px solid #e5e7eb;
-          padding: 0.75rem;
           text-align: left;
           vertical-align: top;
         }
         .ProseMirror th {
           background-color: rgba(15, 23, 42, 0.04);
           font-weight: 600;
+          padding: 0.5rem 1rem;
+        }
+        .ProseMirror td {
+          padding: 0.75rem 1rem 0.5rem 1rem;
         }
         .ProseMirror .selectedCell {
           outline: 2px solid var(--accent);
@@ -1529,16 +1617,31 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         .prose table {
           width: 100%;
           border-collapse: collapse;
-          margin: 1.5rem 0;
+          margin: 1em 0;
+        }
+        .prose table:first-child {
+          margin-top: 0;
+        }
+        .prose table:last-child {
+          margin-bottom: 0;
+        }
+        .prose p + table {
+          margin-top: 0.75em;
+        }
+        .prose table + p {
+          margin-top: 0.75em;
         }
         .prose th,
         .prose td {
           border: 1px solid rgba(148, 163, 184, 0.4);
-          padding: 0.75rem;
           text-align: left;
         }
         .prose th {
           background-color: rgba(15, 23, 42, 0.05);
+          padding: 0.5rem 1rem;
+        }
+        .prose td {
+          padding: 0.75rem 1rem 0.5rem 1rem;
         }
         .hljs {
           display: block;

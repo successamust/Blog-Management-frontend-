@@ -248,13 +248,28 @@
 .prose table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1.5em 0;
+  margin: 1em 0;
+}
+
+.prose table:first-child {
+  margin-top: 0;
+}
+
+.prose table:last-child {
+  margin-bottom: 0;
+}
+
+.prose p + table {
+  margin-top: 0.75em;
+}
+
+.prose table + p {
+  margin-top: 0.75em;
 }
 
 .prose th,
 .prose td {
   border: 1px solid #e5e7eb;
-  padding: 0.75em;
   text-align: left;
   vertical-align: top;
 }
@@ -262,6 +277,11 @@
 .prose th {
   background-color: rgba(15, 23, 42, 0.04);
   font-weight: 600;
+  padding: 0.5em 1em;
+}
+
+.prose td {
+  padding: 0.75em 1em 0.5em 1em;
 }
 
 .prose table[data-borderless="true"] {
