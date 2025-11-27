@@ -9,9 +9,16 @@ import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import CharacterCount from '@tiptap/extension-character-count';
+import { Table } from '@tiptap/extension-table';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import TableRow from '@tiptap/extension-table-row';
 import { createLowlight } from 'lowlight';
 import { marked } from 'marked';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import TurndownService from 'turndown';
+import { gfm as turndownGfm } from 'turndown-plugin-gfm';
 import {
   Bold,
   Italic,
@@ -35,6 +42,17 @@ import {
   FileText,
   Maximize2,
   Minimize2,
+  Grid3x3,
+  Columns,
+  Rows,
+  MinusSquare,
+  Trash2,
+  SeparatorHorizontal,
+  Undo2,
+  Redo2,
+  Indent,
+  Outdent,
+  Eraser,
 } from 'lucide-react';
 import { imagesAPI } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -88,6 +106,23 @@ const registerLanguages = async () => {
 // Register languages on module load
 registerLanguages();
 
+// Configure markdown converters once
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+  headerIds: true,
+  mangle: false,
+});
+
+const turndownService = new TurndownService({
+  headingStyle: 'atx',
+  codeBlockStyle: 'fenced',
+  bulletListMarker: '-',
+  emDelimiter: '*',
+  strongDelimiter: '**',
+});
+turndownService.use(turndownGfm);
+
 // Create extensions array once at module level to avoid duplicates
 // StarterKit includes: Blockquote, Bold, BulletList, Code, CodeBlock, Document, 
 // Dropcursor, Gapcursor, HardBreak, Heading, History, HorizontalRule, Italic, 
@@ -134,6 +169,14 @@ const getExtensions = (placeholderText) => {
     TextAlign.configure({
       types: ['heading', 'paragraph'],
     }),
+    Table.configure({
+      resizable: true,
+      handleWidth: 6,
+      lastColumnResizable: true,
+    }),
+    TableRow,
+    TableHeader,
+    TableCell,
     Underline,
     CharacterCount,
   ];
@@ -152,46 +195,41 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   const [linkText, setLinkText] = useState('');
   const [markdownContent, setMarkdownContent] = useState('');
   const [lastSaved, setLastSaved] = useState(null);
+  const [showTableModal, setShowTableModal] = useState(false);
+  const [tableRows, setTableRows] = useState(3);
+  const [tableCols, setTableCols] = useState(3);
+  const [tableHasHeader, setTableHasHeader] = useState(true);
   const autosaveTimerRef = useRef(null);
   const fileInputRef = useRef(null);
   const isUpdatingRef = useRef(false);
   
+  const isWysiwygMode = !isMarkdown;
+  const getWysiwygTitle = (label) =>
+    isWysiwygMode ? label : `${label} (WYSIWYG only)`;
+
   // Get extensions - cached at module level to prevent duplicates
   const extensions = getExtensions(placeholder);
 
   // Convert HTML to Markdown
   const htmlToMarkdown = useCallback((html) => {
     if (!html) return '';
-    // Simple HTML to Markdown conversion
-    let md = html
-      .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
-      .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n')
-      .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n')
-      .replace(/<h4>(.*?)<\/h4>/gi, '#### $1\n\n')
-      .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
-      .replace(/<b>(.*?)<\/b>/gi, '**$1**')
-      .replace(/<em>(.*?)<\/em>/gi, '*$1*')
-      .replace(/<i>(.*?)<\/i>/gi, '*$1*')
-      .replace(/<u>(.*?)<\/u>/gi, '<u>$1</u>')
-      .replace(/<code>(.*?)<\/code>/gi, '`$1`')
-      .replace(/<pre><code>(.*?)<\/code><\/pre>/gis, '```\n$1\n```')
-      .replace(/<blockquote>(.*?)<\/blockquote>/gis, '> $1')
-      .replace(/<ul>(.*?)<\/ul>/gis, '$1')
-      .replace(/<ol>(.*?)<\/ol>/gis, '$1')
-      .replace(/<li>(.*?)<\/li>/gi, '- $1\n')
-      .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<a href="(.*?)">(.*?)<\/a>/gi, '[$2]($1)')
-      .replace(/<img src="(.*?)" alt="(.*?)"\/?>/gi, '![$2]($1)')
-      .replace(/<[^>]+>/g, '')
-      .trim();
-    return md;
+    try {
+      return turndownService.turndown(html);
+    } catch (error) {
+      console.error('Failed to convert HTML to markdown', error);
+      return html;
+    }
   }, []);
 
   // Convert Markdown to HTML
   const markdownToHtml = useCallback((md) => {
     if (!md) return '';
-    return marked.parse(md);
+    try {
+      return marked.parse(md);
+    } catch (error) {
+      console.error('Failed to convert markdown to HTML', error);
+      return md;
+    }
   }, []);
 
   const editor = useEditor({
@@ -255,7 +293,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       try {
         editor.commands.setContent(newContent, false); // false = don't emit update event
         const md = htmlToMarkdown(newContent);
-      setMarkdownContent(md);
+        setMarkdownContent(md);
       } catch (error) {
         console.error('Error updating editor content:', error);
       } finally {
@@ -521,10 +559,6 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     };
   }, []);
 
-  if (!editor) {
-    return null;
-  }
-
   const handleImageUpload = async (file) => {
     if (!file) return;
 
@@ -568,6 +602,10 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   };
 
   const handleLink = (e) => {
+    if (isMarkdown) {
+      toast.error('Switch to WYSIWYG mode to manage links');
+      return;
+    }
     // If we're already in a link, just move cursor out of link to allow normal text typing
     // Don't unlink the text, just exit link mode (toggle off)
     if (editor.isActive('link')) {
@@ -817,6 +855,74 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     fileInputRef.current?.click();
   };
 
+  const handleOpenTableModal = useCallback(() => {
+    if (!editor || !isWysiwygMode) {
+      toast.error('Switch to WYSIWYG mode to insert tables');
+      return;
+    }
+    setShowTableModal(true);
+  }, [editor, isWysiwygMode]);
+
+  const handleCreateTable = useCallback(() => {
+    if (!editor || !isWysiwygMode) return;
+
+    const rows = Math.min(Math.max(parseInt(tableRows, 10) || 0, 1), 20);
+    const cols = Math.min(Math.max(parseInt(tableCols, 10) || 0, 1), 12);
+
+    editor
+      .chain()
+      .focus()
+      .insertTable({
+        rows,
+        cols,
+        withHeaderRow: tableHasHeader,
+      })
+      .run();
+
+    setShowTableModal(false);
+    setTableRows(rows);
+    setTableCols(cols);
+  }, [editor, isWysiwygMode, tableRows, tableCols, tableHasHeader]);
+
+  const handleCancelTable = useCallback(() => {
+    setShowTableModal(false);
+  }, []);
+
+  const handleAddTableRow = useCallback(() => {
+    if (!editor || !isWysiwygMode) return;
+    editor.chain().focus().addRowAfter().run();
+  }, [editor, isWysiwygMode]);
+
+  const handleAddTableColumn = useCallback(() => {
+    if (!editor || !isWysiwygMode) return;
+    editor.chain().focus().addColumnAfter().run();
+  }, [editor, isWysiwygMode]);
+
+  const handleDeleteTableRow = useCallback(() => {
+    if (!editor || !isWysiwygMode) return;
+    editor.chain().focus().deleteRow().run();
+  }, [editor, isWysiwygMode]);
+
+  const handleDeleteTableColumn = useCallback(() => {
+    if (!editor || !isWysiwygMode) return;
+    editor.chain().focus().deleteColumn().run();
+  }, [editor, isWysiwygMode]);
+
+  const handleDeleteTable = useCallback(() => {
+    if (!editor || !isWysiwygMode) return;
+    editor.chain().focus().deleteTable().run();
+  }, [editor, isWysiwygMode]);
+
+  const handleClearFormatting = useCallback(() => {
+    if (!editor || !isWysiwygMode) return;
+    editor.chain().focus().unsetAllMarks().clearNodes().run();
+  }, [editor, isWysiwygMode]);
+
+  const handleInsertHorizontalRule = useCallback(() => {
+    if (!editor || !isWysiwygMode) return;
+    editor.chain().focus().setHorizontalRule().run();
+  }, [editor, isWysiwygMode]);
+
   const calculateReadingTime = (text) => {
     const wordsPerMinute = 200;
     const textContent = text.replace(/<[^>]*>/g, '');
@@ -825,9 +931,22 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     return minutes;
   };
 
+  if (!editor) {
+    return null;
+  }
+
+  const editorCan = editor?.can?.();
+  const isTableActive = editor?.isActive('table') ?? false;
+  const disableFormatting = !editor || !isWysiwygMode;
+  const disableTableManipulation = disableFormatting || !isTableActive;
+  const canIndent = Boolean(isWysiwygMode && editorCan?.sinkListItem?.('listItem'));
+  const canOutdent = Boolean(isWysiwygMode && editorCan?.liftListItem?.('listItem'));
+  const canUndo = Boolean(editorCan?.undo?.());
+  const canRedo = Boolean(editorCan?.redo?.());
+  const readingSource = isMarkdown ? markdownContent : editor.getHTML();
   const wordCount = editor.storage.characterCount?.words() || 0;
   const characterCount = editor.storage.characterCount?.characters() || 0;
-  const readingTime = calculateReadingTime(isMarkdown ? markdownContent : editor.getHTML());
+  const readingTime = calculateReadingTime(readingSource);
 
   const ToolbarButton = ({ onClick, isActive = false, children, title, disabled = false }) => (
     <button
@@ -841,6 +960,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       }}
       disabled={disabled}
       title={title}
+      aria-pressed={isActive}
       className={`p-2 rounded-lg transition-colors ${
         isActive
           ? 'bg-[var(--accent)]/15 text-[var(--accent)] dark:bg-emerald-900/50 dark:text-emerald-200'
@@ -860,21 +980,24 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBold().run()}
             isActive={editor.isActive('bold')}
-            title="Bold (Ctrl+B)"
+            title={getWysiwygTitle('Bold (Ctrl+B)')}
+            disabled={disableFormatting}
           >
             <Bold size={18} />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleItalic().run()}
             isActive={editor.isActive('italic')}
-            title="Italic (Ctrl+I)"
+            title={getWysiwygTitle('Italic (Ctrl+I)')}
+            disabled={disableFormatting}
           >
             <Italic size={18} />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleUnderline().run()}
             isActive={editor.isActive('underline')}
-            title="Underline (Ctrl+U)"
+            title={getWysiwygTitle('Underline (Ctrl+U)')}
+            disabled={disableFormatting}
           >
             <UnderlineIcon size={18} />
           </ToolbarButton>
@@ -885,21 +1008,24 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
             isActive={editor.isActive('heading', { level: 1 })}
-            title="Heading 1"
+            title={getWysiwygTitle('Heading 1')}
+            disabled={disableFormatting}
           >
             <Heading1 size={18} />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
             isActive={editor.isActive('heading', { level: 2 })}
-            title="Heading 2"
+            title={getWysiwygTitle('Heading 2')}
+            disabled={disableFormatting}
           >
             <Heading2 size={18} />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
             isActive={editor.isActive('heading', { level: 3 })}
-            title="Heading 3"
+            title={getWysiwygTitle('Heading 3')}
+            disabled={disableFormatting}
           >
             <Heading3 size={18} />
           </ToolbarButton>
@@ -912,7 +1038,8 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
               editor.chain().focus().toggleBulletList().run();
             }}
             isActive={editor.isActive('bulletList')}
-            title="Bullet List"
+            title={getWysiwygTitle('Bullet list')}
+            disabled={disableFormatting}
           >
             <List size={18} />
           </ToolbarButton>
@@ -921,9 +1048,26 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
               editor.chain().focus().toggleOrderedList().run();
             }}
             isActive={editor.isActive('orderedList')}
-            title="Numbered List"
+            title={getWysiwygTitle('Numbered list')}
+            disabled={disableFormatting}
           >
             <ListOrdered size={18} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().sinkListItem('listItem').run()}
+            isActive={false}
+            title={getWysiwygTitle('Indent list item')}
+            disabled={disableFormatting || !canIndent}
+          >
+            <Indent size={18} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().liftListItem('listItem').run()}
+            isActive={false}
+            title={getWysiwygTitle('Outdent list item')}
+            disabled={disableFormatting || !canOutdent}
+          >
+            <Outdent size={18} />
           </ToolbarButton>
         </div>
 
@@ -932,41 +1076,106 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           <ToolbarButton
             onClick={() => editor.chain().focus().setTextAlign('left').run()}
             isActive={editor.isActive({ textAlign: 'left' })}
-            title="Align Left"
+            title={getWysiwygTitle('Align left')}
+            disabled={disableFormatting}
           >
             <AlignLeft size={18} />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().setTextAlign('center').run()}
             isActive={editor.isActive({ textAlign: 'center' })}
-            title="Align Center"
+            title={getWysiwygTitle('Align center')}
+            disabled={disableFormatting}
           >
             <AlignCenter size={18} />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().setTextAlign('right').run()}
             isActive={editor.isActive({ textAlign: 'right' })}
-            title="Align Right"
+            title={getWysiwygTitle('Align right')}
+            disabled={disableFormatting}
           >
             <AlignRight size={18} />
           </ToolbarButton>
         </div>
 
-        {/* Code & Quote */}
+        {/* Code, Quote & Divider */}
         <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleCodeBlock().run()}
             isActive={editor.isActive('codeBlock')}
-            title="Code Block"
+            title={getWysiwygTitle('Code block')}
+            disabled={disableFormatting}
           >
             <Code size={18} />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             isActive={editor.isActive('blockquote')}
-            title="Quote"
+            title={getWysiwygTitle('Quote')}
+            disabled={disableFormatting}
           >
             <Quote size={18} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={handleInsertHorizontalRule}
+            isActive={false}
+            title={getWysiwygTitle('Horizontal rule')}
+            disabled={disableFormatting}
+          >
+            <SeparatorHorizontal size={18} />
+          </ToolbarButton>
+        </div>
+
+        {/* Table tools */}
+        <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
+          <ToolbarButton
+            onClick={handleOpenTableModal}
+            isActive={isTableActive}
+            title={getWysiwygTitle('Insert custom table')}
+            disabled={disableFormatting}
+          >
+            <Grid3x3 size={18} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={handleAddTableRow}
+            isActive={false}
+            title={getWysiwygTitle('Add row below')}
+            disabled={disableTableManipulation}
+          >
+            <Rows size={18} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={handleAddTableColumn}
+            isActive={false}
+            title={getWysiwygTitle('Add column to the right')}
+            disabled={disableTableManipulation}
+          >
+            <Columns size={18} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={handleDeleteTableRow}
+            isActive={false}
+            title={getWysiwygTitle('Delete current row')}
+            disabled={disableTableManipulation}
+          >
+            <MinusSquare size={18} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={handleDeleteTableColumn}
+            isActive={false}
+            title={getWysiwygTitle('Delete current column')}
+            disabled={disableTableManipulation}
+          >
+            <MinusSquare size={18} className="transform rotate-90" />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={handleDeleteTable}
+            isActive={false}
+            title={getWysiwygTitle('Delete table')}
+            disabled={disableTableManipulation}
+          >
+            <Trash2 size={18} />
           </ToolbarButton>
         </div>
 
@@ -975,15 +1184,45 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           <ToolbarButton
             onClick={handleLink}
             isActive={editor.isActive('link')}
-            title={editor.isActive('link') ? 'Exit Link Mode' : 'Insert Link'}
+            title={editor.isActive('link') ? getWysiwygTitle('Exit link mode') : getWysiwygTitle('Insert link')}
+            disabled={disableFormatting}
           >
             <LinkIcon size={18} />
           </ToolbarButton>
           <ToolbarButton
             onClick={insertImage}
             title="Insert Image"
+            disabled={!editor}
           >
             <ImageIcon size={18} />
+          </ToolbarButton>
+        </div>
+
+        {/* History & cleanup */}
+        <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
+          <ToolbarButton
+            onClick={() => editor.chain().focus().undo().run()}
+            isActive={false}
+            title={getWysiwygTitle('Undo (Ctrl+Z)')}
+            disabled={disableFormatting || !canUndo}
+          >
+            <Undo2 size={18} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().redo().run()}
+            isActive={false}
+            title={getWysiwygTitle('Redo (Ctrl+Shift+Z)')}
+            disabled={disableFormatting || !canRedo}
+          >
+            <Redo2 size={18} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={handleClearFormatting}
+            isActive={false}
+            title={getWysiwygTitle('Clear formatting')}
+            disabled={disableFormatting}
+          >
+            <Eraser size={18} />
           </ToolbarButton>
         </div>
 
@@ -1028,9 +1267,10 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         {isPreview ? (
           <div className={`p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] max-h-[400px] sm:max-h-[600px] overflow-y-auto ${isDark ? 'bg-gray-800 text-gray-100' : 'bg-white'}`}>
             <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
               className={isDark ? 'prose prose-invert max-w-none' : 'prose max-w-none'}
             >
-              {isMarkdown ? markdownContent : (editor ? htmlToMarkdown(editor.getHTML()) : '')}
+              {isMarkdown ? markdownContent : htmlToMarkdown(editor.getHTML())}
             </ReactMarkdown>
           </div>
         ) : isMarkdown ? (
@@ -1155,6 +1395,27 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           margin-left: 0;
           font-style: italic;
         }
+        .ProseMirror table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 1.5rem 0;
+          table-layout: fixed;
+        }
+        .ProseMirror th,
+        .ProseMirror td {
+          border: 1px solid #e5e7eb;
+          padding: 0.75rem;
+          text-align: left;
+          vertical-align: top;
+        }
+        .ProseMirror th {
+          background-color: rgba(15, 23, 42, 0.04);
+          font-weight: 600;
+        }
+        .ProseMirror .selectedCell {
+          outline: 2px solid var(--accent);
+          outline-offset: -2px;
+        }
         .ProseMirror ul, .ProseMirror ol {
           padding-left: 1.5rem;
           list-style-position: outside;
@@ -1203,6 +1464,13 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         .dark .ProseMirror a:hover {
           color: #93c5fd;
         }
+        .dark .ProseMirror th,
+        .dark .ProseMirror td {
+          border-color: #374151;
+        }
+        .dark .ProseMirror th {
+          background-color: rgba(243, 244, 246, 0.05);
+        }
         .dark .ProseMirror {
           caret-color: #f3f4f6 !important;
           color: #f3f4f6 !important;
@@ -1226,6 +1494,20 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         }
         .dark .ProseMirror * {
           caret-color: #f3f4f6 !important;
+        }
+        .prose table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 1.5rem 0;
+        }
+        .prose th,
+        .prose td {
+          border: 1px solid rgba(148, 163, 184, 0.4);
+          padding: 0.75rem;
+          text-align: left;
+        }
+        .prose th {
+          background-color: rgba(15, 23, 42, 0.05);
         }
         .hljs {
           display: block;
@@ -1365,6 +1647,83 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
                   {editor.isActive('link') ? 'Update Link' : 'Insert Link'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Table Modal */}
+      {showTableModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={handleCancelTable}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)] dark:text-gray-100">
+              Insert Table
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] dark:text-gray-300 mb-2">
+                  Rows
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={tableRows}
+                  onChange={(e) => setTableRows(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] dark:bg-gray-700 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] dark:text-gray-300 mb-2">
+                  Columns
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={tableCols}
+                  onChange={(e) => setTableCols(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] dark:bg-gray-700 dark:text-gray-100"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center gap-2">
+              <input
+                id="table-header-toggle"
+                type="checkbox"
+                checked={tableHasHeader}
+                onChange={(e) => setTableHasHeader(e.target.checked)}
+                className="h-4 w-4 text-[var(--accent)] border-gray-300 rounded focus:ring-[var(--accent)]"
+              />
+              <label
+                htmlFor="table-header-toggle"
+                className="text-sm text-[var(--text-secondary)] dark:text-gray-300 select-none"
+              >
+                Include header row
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={handleCancelTable}
+                className="px-4 py-2 text-[var(--text-secondary)] dark:text-gray-300 bg-[var(--surface-subtle)] dark:bg-gray-700 rounded-lg hover:bg-[var(--accent-soft)] dark:hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateTable}
+                className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
+              >
+                Insert Table
+              </button>
             </div>
           </div>
         </div>
