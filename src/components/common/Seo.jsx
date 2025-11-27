@@ -1,4 +1,10 @@
 import { useEffect } from 'react';
+import StructuredData, { 
+  generateArticleSchema, 
+  generateWebsiteSchema, 
+  generateOrganizationSchema,
+  generateBreadcrumbSchema 
+} from './StructuredData';
 
 const SITE_NAME = 'Nexus';
 const DEFAULT_BASE_URL = 'https://thenexusblog.vercel.app';
@@ -84,6 +90,9 @@ const Seo = ({
   image,
   type = 'website',
   imageAlt,
+  structuredData,
+  post,
+  breadcrumbs,
 }) => {
   useEffect(() => {
     if (typeof document === 'undefined') {
@@ -126,7 +135,43 @@ const Seo = ({
     upsertMetaTag('name', 'twitter:description', metaDescription);
     upsertMetaTag('name', 'twitter:image', imageUrl);
     upsertMetaTag('name', 'twitter:image:alt', imageAltText);
-  }, [title, description, url, image, type, imageAlt]);
+
+    // Generate structured data
+    const schemas = [];
+    
+    // Add custom structured data if provided
+    if (structuredData) {
+      schemas.push(structuredData);
+    }
+    
+    // Generate article schema for posts
+    if (post && type === 'article') {
+      const articleSchema = generateArticleSchema(post);
+      if (articleSchema) schemas.push(articleSchema);
+    }
+    
+    // Generate breadcrumb schema
+    if (breadcrumbs && breadcrumbs.length > 0) {
+      const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs);
+      if (breadcrumbSchema) schemas.push(breadcrumbSchema);
+    }
+    
+    // Always add website schema
+    const websiteSchema = generateWebsiteSchema(baseUrl);
+    if (websiteSchema) schemas.push(websiteSchema);
+
+    // Remove old structured data scripts
+    const oldScripts = document.head.querySelectorAll('script[type="application/ld+json"]');
+    oldScripts.forEach(script => script.remove());
+
+    // Add new structured data
+    schemas.forEach((schema) => {
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.textContent = JSON.stringify(schema);
+      document.head.appendChild(script);
+    });
+  }, [title, description, url, image, type, imageAlt, structuredData, post, breadcrumbs]);
 
   return null;
 };

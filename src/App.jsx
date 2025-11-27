@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
@@ -9,74 +9,95 @@ import Footer from './components/layout/Footer';
 import ReadingProgress from './components/common/ReadingProgress';
 import PageTransition from './components/common/PageTransition';
 import Spinner from './components/common/Spinner';
+import ErrorBoundary from './components/common/ErrorBoundary';
+import KeyboardShortcuts from './components/common/KeyboardShortcuts';
+import { SkipToContent } from './components/common/Accessibility';
+import { useServiceWorker } from './hooks/useServiceWorker';
+import BackToTop from './components/common/BackToTop';
+import OfflineIndicator from './components/common/OfflineIndicator';
 
-import Home from './pages/Home';
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/ResetPassword';
-import Unsubscribe from './pages/auth/Unsubscribe';
-import Posts from './pages/Posts';
-import PostDetail from './pages/PostDetail';
-import Categories from './pages/Categories';
-import CategoryPosts from './pages/CategoryPosts';
-import Search from './pages/Search';
-import Dashboard from './pages/Dashboard';
-import Admin from './pages/Admin';
-import NotFound from './pages/NotFound';
+// Lazy load pages for code splitting
+const Home = lazy(() => import('./pages/Home'));
+const Login = lazy(() => import('./pages/auth/Login'));
+const Register = lazy(() => import('./pages/auth/Register'));
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
+const Unsubscribe = lazy(() => import('./pages/auth/Unsubscribe'));
+const Posts = lazy(() => import('./pages/Posts'));
+const PostDetail = lazy(() => import('./pages/PostDetail'));
+const Categories = lazy(() => import('./pages/Categories'));
+const CategoryPosts = lazy(() => import('./pages/CategoryPosts'));
+const Search = lazy(() => import('./pages/Search'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Admin = lazy(() => import('./pages/Admin'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 import ProtectedRoute from './components/common/ProtectedRoute';
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-page">
+    <Spinner size="2xl" />
+  </div>
+);
 
 import './styles/globals.css';
 
 function AppContent() {
   const location = useLocation();
+  useServiceWorker();
 
   const baseToastClasses = 'flex items-start gap-3 w-full max-w-sm rounded-2xl px-4 py-3 sm:px-5 sm:py-4 shadow-xl shadow-[rgba(26,137,23,0.12)] border border-white/30 bg-white/95 backdrop-blur-md text-slate-900';
   const iconBadgeClasses = 'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold';
 
   return (
-    <div className="min-h-screen bg-page flex flex-col">
-      <ReadingProgress />
-      <Header />
-      <main className="flex-1">
-        <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-            <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
-            <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
-            <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
-            <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
-            <Route path="/unsubscribe" element={<PageTransition><Unsubscribe /></PageTransition>} />
-            <Route path="/posts" element={<PageTransition><Posts /></PageTransition>} />
-            <Route path="/posts/:slug" element={<PageTransition><PostDetail /></PageTransition>} />
-            <Route path="/categories" element={<PageTransition><Categories /></PageTransition>} />
-            <Route path="/categories/:slug" element={<PageTransition><CategoryPosts /></PageTransition>} />
-            <Route path="/search" element={<PageTransition><Search /></PageTransition>} />
-            
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <PageTransition><Dashboard /></PageTransition>
-                </ProtectedRoute>
-              } 
-            />
-            {/* Admin routes - allow authors to access posts management */}
-            <Route 
-              path="/admin/*" 
-              element={
-                <ProtectedRoute requireAuthorOrAdmin>
-                  <Admin />
-                </ProtectedRoute>
-              } 
-            />
-            
-            <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-          </Routes>
-        </AnimatePresence>
-      </main>
-      <Footer />
+    <ErrorBoundary>
+      <SkipToContent />
+      <div className="min-h-screen bg-page flex flex-col">
+        <ReadingProgress />
+        <Header />
+        <main id="main-content" className="flex-1" tabIndex={-1}>
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <AnimatePresence mode="wait">
+                <Routes location={location} key={location.pathname}>
+                  <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+                  <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+                  <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
+                  <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
+                  <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+                  <Route path="/unsubscribe" element={<PageTransition><Unsubscribe /></PageTransition>} />
+                  <Route path="/posts" element={<PageTransition><Posts /></PageTransition>} />
+                  <Route path="/posts/:slug" element={<PageTransition><PostDetail /></PageTransition>} />
+                  <Route path="/categories" element={<PageTransition><Categories /></PageTransition>} />
+                  <Route path="/categories/:slug" element={<PageTransition><CategoryPosts /></PageTransition>} />
+                  <Route path="/search" element={<PageTransition><Search /></PageTransition>} />
+                  
+                  <Route 
+                    path="/dashboard" 
+                    element={
+                      <ProtectedRoute>
+                        <PageTransition><Dashboard /></PageTransition>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  {/* Admin routes - allow authors to access posts management */}
+                  <Route 
+                    path="/admin/*" 
+                    element={
+                      <ProtectedRoute requireAuthorOrAdmin>
+                        <Admin />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+                </Routes>
+              </AnimatePresence>
+            </Suspense>
+          </ErrorBoundary>
+        </main>
+        <Footer />
       <Toaster 
         position="top-right"
         toastOptions={{
@@ -121,22 +142,28 @@ function AppContent() {
           },
         }}
       />
-    </div>
+      <KeyboardShortcuts />
+      <BackToTop />
+      <OfflineIndicator />
+      </div>
+    </ErrorBoundary>
   );
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <Router
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <AppContent />
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <AppContent />
+        </Router>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

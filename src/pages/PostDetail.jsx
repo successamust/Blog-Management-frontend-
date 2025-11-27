@@ -15,8 +15,6 @@ import {
   Trash2,
   X,
   Check,
-  Copy,
-  CheckCircle,
   Tag
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -31,6 +29,7 @@ import { calculateReadingTime, formatReadingTime } from '../utils/readingTime';
 import { Clock } from 'lucide-react';
 import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+import SocialShare from '../components/posts/SocialShare';
 
 const DEFAULT_POST_DESCRIPTION = 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.';
 
@@ -64,7 +63,6 @@ const PostDetail = () => {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editCommentText, setEditCommentText] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
   const seoDescription = useMemo(() => {
@@ -263,8 +261,17 @@ const PostDetail = () => {
 
   const handleShare = async () => {
     try {
-      // Track share on backend (fire and forget)
-      postsAPI.share(post._id).catch(() => {});
+      // Show share modal
+      setShowShareModal(true);
+    } catch (error) {
+      toast.error('Failed to open share dialog');
+    }
+  };
+
+  const handleShareTrack = async (platform) => {
+    try {
+      // Track share on backend with platform info
+      postsAPI.share(post._id, { platform }).catch(() => {});
       
       // Update shares count optimistically
       setPost(prevPost => {
@@ -274,42 +281,12 @@ const PostDetail = () => {
           shares: (prevPost.shares || 0) + 1
         };
       });
-      
-      // Show share modal
-      setShowShareModal(true);
-      setLinkCopied(false);
     } catch (error) {
-      toast.error('Failed to share post');
+      // Silent fail for tracking
+      console.error('Share tracking failed:', error);
     }
   };
 
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setLinkCopied(true);
-      toast.success('Link copied to clipboard!');
-      setTimeout(() => setLinkCopied(false), 2000);
-    } catch (error) {
-      toast.error('Failed to copy link');
-    }
-  };
-
-  const handleNativeShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: post.title,
-          text: post.excerpt || 'Check out this story on Nexus',
-          url: shareUrl,
-        });
-        setShowShareModal(false);
-      }
-    } catch (error) {
-      if (error.name !== 'AbortError') {
-        toast.error('Failed to share');
-      }
-    }
-  };
 
   const handleSave = async () => {
     if (!isAuthenticated) {
@@ -557,6 +534,12 @@ const PostDetail = () => {
           image={seoImage}
           type="article"
           imageAlt={post.title}
+          post={post}
+          breadcrumbs={[
+            { name: 'Home', url: '/' },
+            { name: 'Posts', url: '/posts' },
+            { name: post.title, url: seoUrl },
+          ]}
         />
       )}
       <ReadingProgress />
@@ -973,53 +956,11 @@ const PostDetail = () => {
             <p className="text-[var(--text-secondary)]">Share this post with others</p>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-              Post Link
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                readOnly
-                value={shareUrl}
-                className="flex-1 px-4 py-2 glass-card rounded-xl text-sm text-[var(--text-secondary)] focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35"
-              />
-              <motion.button
-                onClick={copyToClipboard}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`btn !w-auto transition-all ${
-                  linkCopied
-                    ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                    : 'btn-primary shadow-[0_14px_32px_rgba(26,137,23,0.24)]'
-                }`}
-              >
-                {linkCopied ? (
-                  <CheckCircle className="w-5 h-5" />
-                ) : (
-                  <Copy className="w-5 h-5" />
-                )}
-              </motion.button>
-            </div>
-            {linkCopied && (
-              <p className="mt-2 text-sm text-emerald-600 flex items-center gap-1">
-                <CheckCircle className="w-4 h-4" />
-                Link copied!
-              </p>
-            )}
-          </div>
-
-          {navigator.share && (
-            <motion.button
-              onClick={handleNativeShare}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="btn btn-primary flex items-center justify-center gap-2 shadow-[0_16px_36px_rgba(26,137,23,0.2)]"
-            >
-              <Share2 className="w-5 h-5" />
-              Share via Device
-            </motion.button>
-          )}
+          <SocialShare 
+            post={post} 
+            shareUrl={shareUrl} 
+            onShare={handleShareTrack}
+          />
         </motion.div>
       </div>
     )}

@@ -57,6 +57,7 @@ import {
 } from 'lucide-react';
 import { imagesAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import Spinner from '../common/Spinner';
 
 // Create lowlight instance with common languages
 const lowlight = createLowlight();
@@ -211,18 +212,23 @@ const getExtensions = (placeholderText) => {
     return cachedExtensions;
   }
   
+  // Configure StarterKit to exclude Link and Underline if they're included
+  const starterKitConfig = {
+    codeBlock: false, // We'll use CodeBlockLowlight instead
+    link: false, // Explicitly disable Link in StarterKit to avoid duplicates
+    underline: false, // Explicitly disable Underline in StarterKit to avoid duplicates
+    bulletList: {
+      keepMarks: true,
+      keepAttributes: false,
+    },
+    orderedList: {
+      keepMarks: true,
+      keepAttributes: false,
+    },
+  };
+  
   cachedExtensions = [
-    StarterKit.configure({
-      codeBlock: false, // We'll use CodeBlockLowlight instead
-      bulletList: {
-        keepMarks: true,
-        keepAttributes: false,
-      },
-      orderedList: {
-        keepMarks: true,
-        keepAttributes: false,
-      },
-    }),
+    StarterKit.configure(starterKitConfig),
     Image.configure({
       inline: true,
       allowBase64: true,
@@ -268,6 +274,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   const [linkText, setLinkText] = useState('');
   const [markdownContent, setMarkdownContent] = useState('');
   const [lastSaved, setLastSaved] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [showTableModal, setShowTableModal] = useState(false);
   const [tableRows, setTableRows] = useState(3);
   const [tableCols, setTableCols] = useState(3);
@@ -327,6 +334,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       if (autosaveTimerRef.current) {
         clearTimeout(autosaveTimerRef.current);
       }
+      setIsSaving(true);
       autosaveTimerRef.current = setTimeout(() => {
         const draftKey = 'editor-draft-' + Date.now();
         localStorage.setItem(draftKey, JSON.stringify({
@@ -335,6 +343,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           timestamp: Date.now(),
         }));
         setLastSaved(new Date());
+        setIsSaving(false);
         // Keep only last 5 drafts
         const keys = Object.keys(localStorage).filter(k => k.startsWith('editor-draft-'));
         if (keys.length > 5) {
@@ -423,6 +432,9 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   const applyDarkModeStyles = useCallback(() => {
     if (!editor || isApplyingStylesRef.current) return;
     
+    // Check if editor view is available
+    if (!editor.view || !editor.view.dom) return;
+    
     isApplyingStylesRef.current = true;
     
     try {
@@ -485,7 +497,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
 
   // Toggle dark mode - apply to editor and parent container
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || !editor.view || !editor.view.dom) return;
     
       const editorElement = editor.view.dom.closest('.ProseMirror') || editor.view.dom;
     if (!editorElement) return;
@@ -569,10 +581,10 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
 
   // Reapply dark mode styles when editor content updates
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || !editor.view) return;
     
     const handleUpdate = () => {
-      if (isApplyingStylesRef.current) return;
+      if (isApplyingStylesRef.current || !editor.view) return;
       
       // Debounce style application
       if (styleTimeoutRef.current) {
@@ -1404,13 +1416,19 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
             <span>{wordCount} words</span>
             <span className="hidden sm:inline">{characterCount} characters</span>
             <span>~{readingTime} min read</span>
-            {lastSaved && (
-              <span className="flex items-center gap-1">
+            {isSaving ? (
+              <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                <Spinner size="xs" />
+                <span className="hidden sm:inline">Saving...</span>
+                <span className="sm:hidden">Saving</span>
+              </span>
+            ) : lastSaved ? (
+              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                 <Save size={12} />
                 <span className="hidden sm:inline">Saved {lastSaved.toLocaleTimeString()}</span>
                 <span className="sm:hidden">Saved</span>
               </span>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
