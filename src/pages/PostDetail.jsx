@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import DOMPurify from 'dompurify';
 import { postsAPI, commentsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -615,14 +616,20 @@ const PostDetail = () => {
                   if (isHTML) {
                     // Render HTML content (from rich text editor)
                     const sanitizedHTML = DOMPurify.sanitize(post.content, {
-                      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'video', 'div', 'span'],
-                      ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel'],
+                      ALLOWED_TAGS: [
+                        'p', 'br', 'strong', 'em', 'u', 's',
+                        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                        'ul', 'ol', 'li', 'blockquote', 'code', 'pre',
+                        'a', 'img', 'video', 'div', 'span',
+                        'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'colgroup', 'col'
+                      ],
+                      ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel', 'colspan', 'rowspan', 'width'],
                       ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i
                     });
                     return <div dangerouslySetInnerHTML={{ __html: sanitizedHTML }} />;
                   } else {
                     // Render Markdown content (legacy posts)
-                    return <ReactMarkdown>{post.content}</ReactMarkdown>;
+                    return <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>;
                   }
                 })()}
               </div>
