@@ -131,6 +131,21 @@ turndownService.use(turndownGfm);
 // We create a function that returns extensions with a dynamic placeholder
 let cachedExtensions = null;
 let cachedPlaceholder = null;
+const TableWithBorders = Table.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      borderless: {
+        default: false,
+        parseHTML: (element) => element.getAttribute('data-borderless') === 'true',
+        renderHTML: (attributes) => {
+          if (!attributes.borderless) return {};
+          return { 'data-borderless': 'true' };
+        },
+      },
+    };
+  },
+});
 
 const getExtensions = (placeholderText) => {
   // Only recreate if placeholder changes, otherwise reuse cached extensions
@@ -169,7 +184,7 @@ const getExtensions = (placeholderText) => {
     TextAlign.configure({
       types: ['heading', 'paragraph'],
     }),
-    Table.configure({
+    TableWithBorders.configure({
       resizable: true,
       handleWidth: 6,
       lastColumnResizable: true,
@@ -199,6 +214,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   const [tableRows, setTableRows] = useState(3);
   const [tableCols, setTableCols] = useState(3);
   const [tableHasHeader, setTableHasHeader] = useState(true);
+  const [tableShowBorder, setTableShowBorder] = useState(true);
   const autosaveTimerRef = useRef(null);
   const fileInputRef = useRef(null);
   const isUpdatingRef = useRef(false);
@@ -869,20 +885,25 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     const rows = Math.min(Math.max(parseInt(tableRows, 10) || 0, 1), 20);
     const cols = Math.min(Math.max(parseInt(tableCols, 10) || 0, 1), 12);
 
-    editor
+    const chain = editor
       .chain()
       .focus()
       .insertTable({
         rows,
         cols,
         withHeaderRow: tableHasHeader,
-      })
-      .run();
+      });
+
+    if (!tableShowBorder) {
+      chain.updateAttributes('table', { borderless: true });
+    }
+
+    chain.run();
 
     setShowTableModal(false);
     setTableRows(rows);
     setTableCols(cols);
-  }, [editor, isWysiwygMode, tableRows, tableCols, tableHasHeader]);
+  }, [editor, isWysiwygMode, tableRows, tableCols, tableHasHeader, tableShowBorder]);
 
   const handleCancelTable = useCallback(() => {
     setShowTableModal(false);
@@ -1416,6 +1437,16 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           outline: 2px solid var(--accent);
           outline-offset: -2px;
         }
+        .ProseMirror table[data-borderless="true"],
+        .prose table[data-borderless="true"] {
+          border: none;
+        }
+        .ProseMirror table[data-borderless="true"] th,
+        .ProseMirror table[data-borderless="true"] td,
+        .prose table[data-borderless="true"] th,
+        .prose table[data-borderless="true"] td {
+          border-color: transparent;
+        }
         .ProseMirror ul, .ProseMirror ol {
           padding-left: 1.5rem;
           list-style-position: outside;
@@ -1708,6 +1739,22 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
                 className="text-sm text-[var(--text-secondary)] dark:text-gray-300 select-none"
               >
                 Include header row
+              </label>
+            </div>
+
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                id="table-border-toggle"
+                type="checkbox"
+                checked={tableShowBorder}
+                onChange={(e) => setTableShowBorder(e.target.checked)}
+                className="h-4 w-4 text-[var(--accent)] border-gray-300 rounded focus:ring-[var(--accent)]"
+              />
+              <label
+                htmlFor="table-border-toggle"
+                className="text-sm text-[var(--text-secondary)] dark:text-gray-300 select-none"
+              >
+                Show table borders
               </label>
             </div>
 
