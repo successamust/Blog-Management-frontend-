@@ -1,1 +1,3 @@
-module.exports = require('../social-preview');
+import handler from '../social-preview.js';
+
+export default handler;

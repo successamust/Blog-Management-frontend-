@@ -52,7 +52,7 @@ const fetchPostBySlug = async (slug) => {
   return payload?.post || payload?.data || payload;
 };
 
-module.exports = async (req, res) => {
+const handler = async (req, res) => {
   const slugParam = req.query?.slug;
   const slugValue = Array.isArray(slugParam) ? slugParam[0] : slugParam;
 
@@ -142,4 +142,6 @@ module.exports = async (req, res) => {
     res.status(500).send('Failed to generate preview page');
   }
 };
+
+export default handler;
 
