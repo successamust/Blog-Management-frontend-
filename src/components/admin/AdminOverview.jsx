@@ -19,13 +19,16 @@ import {
 } from 'recharts';
 import {
   Users,
-  FileText,
-  Folder,
-  Mail,
+  PenLine,
+  Boxes,
+  UsersRound,
   TrendingUp,
+  LineChart as LineChartIcon,
+  HeartHandshake,
+  MessageSquare,
+  MessageCircle,
   Eye,
   Heart,
-  MessageCircle,
   Calendar,
 } from 'lucide-react';
 import { adminAPI, postsAPI, categoriesAPI, newsletterAPI, dashboardAPI } from '../../services/api';
@@ -1207,7 +1210,7 @@ const AdminOverview = () => {
           <StatCard
             title="Total Posts"
             value={totalPosts}
-            icon={<FileText className="w-6 h-6" />}
+            icon={<PenLine className="w-6 h-6" />}
             color="purple"
             subtitle={`${stats.posts?.published || 0} published`}
           />
@@ -1216,7 +1219,7 @@ const AdminOverview = () => {
           <StatCard
             title="Categories"
             value={stats.categories?.total || 0}
-            icon={<Folder className="w-6 h-6" />}
+            icon={<Boxes className="w-6 h-6" />}
             color="green"
             subtitle="Active categories"
           />
@@ -1225,7 +1228,7 @@ const AdminOverview = () => {
           <StatCard
             title="Subscribers"
             value={stats.newsletter?.totalSubscribers || 0}
-            icon={<Mail className="w-6 h-6" />}
+            icon={<UsersRound className="w-6 h-6" />}
             color="orange"
             subtitle="Newsletter subscribers"
           />
@@ -1239,17 +1242,17 @@ const AdminOverview = () => {
             <h3 className="text-xl font-bold text-gray-900 mb-6">Engagement Metrics</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-[var(--accent)]/12 rounded-lg">
-                <Eye className="w-8 h-8 text-[var(--accent)] mx-auto mb-2" />
+                <LineChartIcon className="w-8 h-8 text-[var(--accent)] mx-auto mb-2" />
                 <p className="text-2xl font-bold text-gray-900">{totalViews}</p>
                 <p className="text-sm text-gray-600">Total Views</p>
               </div>
               <div className="text-center p-4 bg-red-50 rounded-lg">
-                <Heart className="w-8 h-8 text-red-600 mx-auto mb-2" />
+                <HeartHandshake className="w-8 h-8 text-red-600 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-gray-900">{totalLikes}</p>
                 <p className="text-sm text-gray-600">Total Likes</p>
               </div>
               <div className="text-center p-4 bg-green-50 rounded-lg">
-                <MessageCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <MessageSquare className="w-8 h-8 text-green-600 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-gray-900">{totalComments}</p>
                 <p className="text-sm text-gray-600">Total Comments</p>
               </div>

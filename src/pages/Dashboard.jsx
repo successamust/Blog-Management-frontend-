@@ -21,7 +21,11 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   UserCheck,
-  Bookmark
+  Bookmark,
+  PenLine,
+  MessageSquare,
+  HeartHandshake,
+  LineChart
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { dashboardAPI, postsAPI, categoriesAPI, imagesAPI } from '../services/api';
@@ -529,7 +533,7 @@ const Dashboard = () => {
           {/* Quick Stats - Premium Analytics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatCard
-              icon={<FileText className="w-5 h-5" />}
+              icon={<PenLine className="w-5 h-5" />}
               title="Total Posts"
               value={postsTotal}
               change={`${postsPublished} published`}
@@ -537,7 +541,7 @@ const Dashboard = () => {
               trend={5}
             />
             <StatCard
-              icon={<MessageCircle className="w-5 h-5" />}
+              icon={<MessageSquare className="w-5 h-5" />}
               title="Comments"
               value={commentsTotal}
               change={`${commentsApproved} approved`}
@@ -545,7 +549,7 @@ const Dashboard = () => {
               trend={12}
             />
             <StatCard
-              icon={<Heart className="w-5 h-5" />}
+              icon={<HeartHandshake className="w-5 h-5" />}
               title="Total Likes"
               value={totalLikes}
               change="Across all posts"
@@ -553,7 +557,7 @@ const Dashboard = () => {
               trend={8}
             />
             <StatCard
-              icon={<Eye className="w-5 h-5" />}
+              icon={<LineChart className="w-5 h-5" />}
               title="Total Views"
               value={totalViews}
               change="All time"

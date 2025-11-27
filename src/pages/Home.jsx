@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, UserCheck, PenTool, Sparkles, ChevronDown, ChevronUp, Mail, TrendingUp, Clock, Eye, Heart } from 'lucide-react';
+import { ArrowRight, Sparkles, ChevronDown, ChevronUp, PenLine, UsersRound, LineChart, Boxes } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { postsAPI, categoriesAPI, searchAPI, newsletterAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -316,7 +316,7 @@ const Home = () => {
               className="bg-surface-subtle rounded-2xl p-6 border border-[var(--border-subtle)] shadow-sm"
             >
               <div className="flex items-center mb-4">
-                <Mail className="w-5 h-5 text-[var(--text-primary)] mr-2" />
+                <UsersRound className="w-5 h-5 text-[var(--text-primary)] mr-2" />
                 <h3 className="text-lg font-bold text-[var(--text-primary)]">Subscribe to our newsletter</h3>
               </div>
               <p className="text-sm text-[var(--text-secondary)] mb-4">
@@ -356,7 +356,7 @@ const Home = () => {
                 >
                   <div className="flex items-center flex-1">
                     <div className="p-2 bg-gray-100 rounded-lg mr-3">
-                      <PenTool className="w-5 h-5 text-[var(--text-primary)]" />
+                      <PenLine className="w-5 h-5 text-[var(--text-primary)]" />
                     </div>
                     <div className="text-left">
                       <h3 className="text-base font-bold text-[var(--text-primary)]">Become an Author</h3>
@@ -419,7 +419,7 @@ const Home = () => {
                 className="surface-card p-6"
               >
                 <div className="flex items-center mb-6">
-                  <TrendingUp className="w-5 h-5 text-[var(--text-primary)] mr-2" />
+                  <LineChart className="w-5 h-5 text-[var(--text-primary)] mr-2" />
                   <h3 className="text-lg font-bold text-[var(--text-primary)]">Trending</h3>
                 </div>
                 <div className="space-y-4">
@@ -466,7 +466,10 @@ const Home = () => {
                 transition={{ duration: 0.5, delay: 0.3 }}
                 className="surface-card p-6"
               >
-                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-6">Topics</h3>
+                <div className="flex items-center mb-6">
+                  <Boxes className="w-5 h-5 text-[var(--text-primary)] mr-2" />
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">Topics</h3>
+                </div>
                 <div className="space-y-2">
                   {categories.map((category) => {
                     const categoryId = category._id || category.id;
