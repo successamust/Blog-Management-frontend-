@@ -2,8 +2,7 @@
   "rewrites": [
     {
       "source": "/preview/posts/(.*)",
-      "destination": "/api/social-preview?slug=$1",
-      "status": 200
+      "destination": "/api/social-preview?slug=$1"
     },
     {
       "source": "/(.*)",
