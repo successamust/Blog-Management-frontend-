@@ -84,6 +84,17 @@ const PostDetail = () => {
 
   const seoUrl = post ? `/posts/${post.slug || post._id}` : undefined;
 
+  const shareUrl = useMemo(() => {
+    const origin = typeof window !== 'undefined' && window.location.origin
+      ? window.location.origin
+      : 'https://thenexusblog.vercel.app';
+    if (!post) {
+      return origin;
+    }
+    const identifier = post.slug || post._id || post.id;
+    return `${origin}/preview/posts/${identifier}`;
+  }, [post]);
+
   useEffect(() => {
     fetchPostData();
   }, [slug]);
@@ -273,7 +284,7 @@ const PostDetail = () => {
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(shareUrl);
       setLinkCopied(true);
       toast.success('Link copied to clipboard!');
       setTimeout(() => setLinkCopied(false), 2000);
@@ -287,8 +298,8 @@ const PostDetail = () => {
       if (navigator.share) {
         await navigator.share({
           title: post.title,
-          text: post.excerpt,
-          url: window.location.href,
+          text: post.excerpt || 'Check out this story on Nexus',
+          url: shareUrl,
         });
         setShowShareModal(false);
       }
@@ -963,7 +974,7 @@ const PostDetail = () => {
               <input
                 type="text"
                 readOnly
-                value={window.location.href}
+                value={shareUrl}
                 className="flex-1 px-4 py-2 glass-card rounded-xl text-sm text-[var(--text-secondary)] focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35"
               />
               <motion.button

@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/preview/posts/:slug",
+      "destination": "/api/social-preview/:slug"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
