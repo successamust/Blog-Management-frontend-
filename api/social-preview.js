@@ -36,9 +36,16 @@ const toAbsoluteUrl = (value) => {
 const fetchPostBySlug = async (slug) => {
   const base = DEFAULT_API_BASE.replace(/\/$/, '');
   const url = `${base}/posts/${encodeURIComponent(slug)}`;
-  const response = await fetch(url);
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
   if (!response.ok) {
-    throw new Error(`Post fetch failed with status ${response.status}`);
+    const body = await response.text();
+    throw new Error(`Post fetch failed (${response.status}) -> ${body}`);
   }
 
   const payload = await response.json();
@@ -127,7 +134,11 @@ module.exports = async (req, res) => {
     res.setHeader('Cache-Control', `public, s-maxage=${CACHE_TTL}, stale-while-revalidate=86400`);
     res.status(200).send(html);
   } catch (error) {
-    console.error('[social-preview] Failed to generate preview', error);
+    console.error('[social-preview] Failed to generate preview', {
+      slug: slugValue,
+      message: error.message,
+      stack: error.stack,
+    });
     res.status(500).send('Failed to generate preview page');
   }
 };
