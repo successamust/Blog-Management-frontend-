@@ -148,7 +148,7 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
                 {postTitle}
               </h2>
               {postExcerpt && (
-                <p className="mt-5 text-xl leading-relaxed text-[var(--text-secondary)] line-clamp-4">
+                <p className="mt-5 text-base md:text-lg leading-relaxed text-[var(--text-secondary)] line-clamp-4">
                   {postExcerpt}
                 </p>
               )}
