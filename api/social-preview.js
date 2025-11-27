@@ -7,7 +7,7 @@ const DEFAULT_SITE_URL =
 const DEFAULT_API_BASE =
   process.env.API_BASE_URL ||
   process.env.VITE_API_BASE_URL ||
-  'https://blog-management-sx5c.onrender.com/api';
+  'https://blog-management-sx5c.onrender.com/v1';
 
 const FALLBACK_DESCRIPTION =
   'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.';
