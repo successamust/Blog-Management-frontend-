@@ -25,13 +25,15 @@ import {
   PenLine,
   MessageSquare,
   HeartHandshake,
-  LineChart
+  LineChart,
+  Users
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { dashboardAPI, postsAPI, categoriesAPI, imagesAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ProfileSettings from '../components/dashboard/ProfileSettings';
 import AuthorApplication from '../components/dashboard/AuthorApplication';
+import CollaborationsDashboard from '../components/dashboard/CollaborationsDashboard';
 import AnimatedCounter from '../components/common/AnimatedCounter';
 import Sparkline from '../components/common/Sparkline';
 import RichTextEditor from '../components/admin/RichTextEditor';
@@ -48,6 +50,7 @@ const DASHBOARD_TAB_LABELS = {
   likes: 'Likes',
   history: 'Reading History',
   bookmarks: 'Bookmarks',
+  collaborations: 'Collaborations',
   settings: 'Settings',
 };
 
@@ -94,7 +97,7 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (activeTab !== 'overview' && activeTab !== 'settings') {
+    if (activeTab !== 'overview' && activeTab !== 'settings' && activeTab !== 'collaborations') {
       fetchTabData();
     }
   }, [activeTab]);
@@ -439,6 +442,8 @@ const Dashboard = () => {
     { id: 'likes', label: 'Liked Posts', mobileLabel: 'Liked', icon: <Heart className="w-4 h-4" /> },
     { id: 'bookmarks', label: 'Saved Posts', mobileLabel: 'Saved', icon: <Bookmark className="w-4 h-4" /> },
     { id: 'history', label: 'History', mobileLabel: 'History', icon: <History className="w-4 h-4" /> },
+    // Show collaborations tab for all authenticated users (component handles visibility based on invitations)
+    { id: 'collaborations', label: 'Collaborations', mobileLabel: 'Collab', icon: <Users className="w-4 h-4" /> },
     ...(user?.role !== 'author' && user?.role !== 'admin' ? [{ id: 'author', label: 'Become Author', mobileLabel: 'Author', icon: <UserCheck className="w-4 h-4" /> }] : []),
     { id: 'settings', label: 'Profile Settings', mobileLabel: 'Settings', icon: <User className="w-4 h-4" /> },
   ];
@@ -502,7 +507,10 @@ const Dashboard = () => {
             {tabs.map((tab) => (
               <motion.button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setSearchParams({ tab: tab.id });
+                }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={`flex items-center space-x-1 sm:space-x-2 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl font-medium text-xs sm:text-sm transition-all whitespace-nowrap ${
@@ -951,6 +959,10 @@ const Dashboard = () => {
             <AuthorApplication />
           </motion.div>
         </div>
+      )}
+
+      {activeTab === 'collaborations' && (
+        <CollaborationsDashboard />
       )}
 
       {activeTab === 'settings' && (

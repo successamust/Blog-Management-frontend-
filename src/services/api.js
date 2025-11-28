@@ -162,9 +162,11 @@ export const collaborationsAPI = {
   invite: (postId, email, role) => api.post(`/collaborations/${postId}/invite`, { email, role }),
   acceptInvitation: (invitationId) => api.post(`/collaborations/invitations/${invitationId}/accept`),
   rejectInvitation: (invitationId) => api.post(`/collaborations/invitations/${invitationId}/reject`),
+  revokeInvitation: (invitationId) => api.post(`/collaborations/invitations/${invitationId}/revoke`),
   getCollaborators: (postId) => api.get(`/collaborations/${postId}/collaborators`),
   removeCollaborator: (postId, userId) => api.delete(`/collaborations/${postId}/collaborators/${userId}`),
   getMyInvitations: () => api.get('/collaborations/me/invitations'),
+  getSentInvitations: (postId) => api.get(`/collaborations/${postId}/invitations/sent`),
 };
 
 export default api;
