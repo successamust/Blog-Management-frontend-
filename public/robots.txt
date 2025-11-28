@@ -7,5 +7,5 @@ Disallow: /admin/
 Disallow: /dashboard/
 
 # Sitemap
-Sitemap: https://thenexusblog.vercel.app/api/sitemap.xml
+Sitemap: https://www.nexusblog.xyz/api/sitemap.xml
 
