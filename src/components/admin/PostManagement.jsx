@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import { FileText, Plus, Edit, Trash2, Eye, Search, Upload, X } from 'lucide-react';
-import { postsAPI, categoriesAPI, adminAPI, imagesAPI, dashboardAPI } from '../../services/api';
+import { postsAPI, categoriesAPI, adminAPI, imagesAPI, dashboardAPI, collaborationsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -910,8 +910,26 @@ const EditPost = ({ onSuccess }) => {
       if (user?.role === 'author' && !isAdmin()) {
         const postAuthorId = post.author?._id || post.author || post.authorId;
         const userId = user._id || user.id;
-        if (postAuthorId && userId && String(postAuthorId) !== String(userId)) {
-          toast.error('You can only edit your own posts');
+        const isPostOwner = postAuthorId && userId && String(postAuthorId) === String(userId);
+        
+        // Check if user is a collaborator
+        let isCollaborator = false;
+        if (!isPostOwner) {
+          try {
+            const collaboratorsResponse = await collaborationsAPI.getCollaborators(id);
+            const collaborators = collaboratorsResponse.data?.collaborators || [];
+            isCollaborator = collaborators.some(collab => {
+              const collabUserId = collab.user?._id || collab.user || collab.userId;
+              return collabUserId && userId && String(collabUserId) === String(userId);
+            });
+          } catch (error) {
+            // If fetching collaborators fails, we'll just check ownership
+            console.error('Error fetching collaborators:', error);
+          }
+        }
+        
+        if (!isPostOwner && !isCollaborator) {
+          toast.error('You can only edit your own posts or posts you collaborate on');
           navigate('/admin/posts');
           return;
         }
