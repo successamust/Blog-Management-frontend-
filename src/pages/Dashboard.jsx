@@ -159,8 +159,52 @@ const Dashboard = () => {
       
       switch (activeTab) {
         case 'posts':
-          response = await dashboardAPI.getPosts({ limit: 20 });
-          setTabData(prev => ({ ...prev, posts: response.data.posts || [] }));
+          response = await dashboardAPI.getPosts({ limit: 1000 });
+          const allPosts = response.data.posts || [];
+          const userId = user?._id || user?.id;
+          
+          // Filter posts where user is author OR collaborator
+          const userPosts = allPosts.filter(post => {
+            const postAuthorId = post.author?._id || post.author || post.authorId;
+            const isAuthor = postAuthorId && userId && String(postAuthorId) === String(userId);
+            
+            // Check if user is a collaborator (handle both populated and unpopulated formats)
+            const isCollaborator = post.collaborators?.some(collab => {
+              const collabUserId = collab.user?._id || collab.user || collab.userId || collab.user;
+              return collabUserId && userId && String(collabUserId) === String(userId);
+            });
+            
+            return isAuthor || isCollaborator;
+          });
+          
+          // If no posts found but user might be a collaborator, try fetching posts with collaborator info
+          if (userPosts.length === 0) {
+            try {
+              const postsResponse = await postsAPI.getAll({ limit: 1000, includeDrafts: true });
+              const allPostsWithCollabs = postsResponse.data.posts || [];
+              
+              const postsWithUserAsCollaborator = allPostsWithCollabs.filter(post => {
+                const postAuthorId = post.author?._id || post.author || post.authorId;
+                const isAuthor = postAuthorId && userId && String(postAuthorId) === String(userId);
+                
+                const isCollaborator = post.collaborators?.some(collab => {
+                  const collabUserId = collab.user?._id || collab.user || collab.userId || collab.user;
+                  return collabUserId && userId && String(collabUserId) === String(userId);
+                });
+                
+                return isAuthor || isCollaborator;
+              });
+              
+              if (postsWithUserAsCollaborator.length > 0) {
+                setTabData(prev => ({ ...prev, posts: postsWithUserAsCollaborator }));
+                return;
+              }
+            } catch (error) {
+              // Silently fail, use empty array
+            }
+          }
+          
+          setTabData(prev => ({ ...prev, posts: userPosts }));
           break;
         case 'comments':
           response = await dashboardAPI.getComments({ limit: 20 });
@@ -784,8 +828,11 @@ const Dashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             className="surface-card p-6"
           >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-primary">My Posts</h2>
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-primary">My Posts</h2>
+              <p className="text-sm text-muted mt-1">Posts you own or collaborate on</p>
+            </div>
             {(isAdmin() || user?.role === 'author') && (
               <div className="flex items-center gap-3">
                 <Link
@@ -1086,6 +1133,14 @@ const PostItem = ({ post }) => {
     String(postAuthorId) === String(userId) || isAdmin()
   );
   
+  // Check if user is a collaborator
+  const isCollaborator = post.collaborators?.some(collab => {
+    const collabUserId = collab.user?._id || collab.user || collab.userId;
+    return collabUserId && userId && String(collabUserId) === String(userId);
+  });
+  
+  const canEdit = isPostOwner || isCollaborator;
+  
   return (
     <motion.div
       whileHover={{ x: 4 }}
@@ -1100,7 +1155,12 @@ const PostItem = ({ post }) => {
           <h3 className="font-semibold text-primary group-hover:text-[var(--accent)] truncate mb-2">
             {post.title}
           </h3>
-          <div className="flex items-center space-x-4 text-xs text-muted">
+          <div className="flex items-center space-x-4 text-xs text-muted flex-wrap gap-2">
+            {isCollaborator && !isPostOwner && (
+              <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 rounded text-xs font-medium">
+                Collaborator
+              </span>
+            )}
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               {format(new Date(post.publishedAt || post.createdAt), 'MMM d, yyyy')}
@@ -1121,12 +1181,12 @@ const PostItem = ({ post }) => {
           </div>
         </div>
       </Link>
-      {isAuthor && isPostOwner && (
+      {canEdit && (
         <div className="ml-4 flex-shrink-0 flex items-center gap-2">
           <Link
             to={`/admin/posts/edit/${post._id}`}
             className="btn-icon-square text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors"
-            title="Edit Post"
+            title={isPostOwner ? "Edit Post" : "Edit as Collaborator"}
           >
             <Edit className="w-4 h-4" />
           </Link>
@@ -1135,7 +1195,7 @@ const PostItem = ({ post }) => {
           </div>
         </div>
       )}
-      {!isPostOwner && (
+      {!canEdit && (
         <div className="ml-4 flex-shrink-0">
           <TrendingUp className="w-4 h-4 text-muted group-hover:text-[var(--accent)] transition-colors" />
         </div>

@@ -66,6 +66,8 @@ export const AuthProvider = ({ children }) => {
       const now = Date.now();
       
       // Throttle auth checks to once per 5 minutes to avoid rate limiting
+      // COMMENTED OUT FOR TESTING
+      /*
       if (lastAuthCheck && (now - parseInt(lastAuthCheck)) < 300000) {
         const storedUser = JSON.parse(user);
         dispatch({
@@ -74,9 +76,12 @@ export const AuthProvider = ({ children }) => {
         });
         return;
       }
+      */
       
       if (token && user) {
         try {
+          // COMMENTED OUT FOR TESTING
+          /*
           const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
           const makeRequestWithRetry = async (retries = 2) => {
             for (let i = 0; i <= retries; i++) {
@@ -94,6 +99,8 @@ export const AuthProvider = ({ children }) => {
           };
 
           const response = await makeRequestWithRetry();
+          */
+          const response = await authAPI.getMe();
           const freshUser = response.data.user;
           localStorage.setItem('lastAuthCheck', now.toString());
           
@@ -158,6 +165,8 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     dispatch({ type: 'LOGIN_START' });
     
+    // COMMENTED OUT FOR TESTING
+    /*
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     const makeRequestWithRetry = async (retries = 2) => {
       for (let i = 0; i <= retries; i++) {
@@ -173,9 +182,10 @@ export const AuthProvider = ({ children }) => {
         }
       }
     };
+    */
 
     try {
-      const response = await makeRequestWithRetry();
+      const response = await authAPI.login(credentials);
       const { token, user } = response.data;
       
       setAuthToken(token);
@@ -187,9 +197,9 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       let message = error.response?.data?.message || 'Login failed';
-      if (error.response?.status === 429) {
-        message = 'Too many login attempts. Please wait a moment and try again.';
-      }
+      // if (error.response?.status === 429) { // COMMENTED OUT FOR TESTING
+      //   message = 'Too many login attempts. Please wait a moment and try again.';
+      // }
       dispatch({ type: 'LOGIN_FAILURE', payload: message });
       toast.error(message);
       return { success: false, error: message };

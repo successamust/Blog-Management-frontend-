@@ -15,12 +15,13 @@ import {
   Tag,
   Maximize,
   BookOpen,
-  User
+  User,
+  Users
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DOMPurify from 'dompurify';
-import { postsAPI, commentsAPI, interactionsAPI, pollsAPI } from '../services/api';
+import { postsAPI, commentsAPI, interactionsAPI, pollsAPI, collaborationsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import ReadingProgress from '../components/common/ReadingProgress';
@@ -72,6 +73,7 @@ const PostDetail = () => {
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [relatedPosts, setRelatedPosts] = useState([]);
+  const [collaborators, setCollaborators] = useState([]);
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -275,6 +277,19 @@ const PostDetail = () => {
 
       setComments(ensureCommentTree(commentsRes.data.comments || []));
       setRelatedPosts(relatedRes.data.relatedPosts || []);
+      
+      // Fetch collaborators
+      try {
+        const collaboratorsRes = await collaborationsAPI.getCollaborators(post._id);
+        if (collaboratorsRes.data?.collaborators) {
+          setCollaborators(collaboratorsRes.data.collaborators);
+        }
+      } catch (error) {
+        // Silently fail if collaborators endpoint doesn't exist or returns 404
+        if (error.response?.status !== 404) {
+          console.error('Failed to fetch collaborators:', error);
+        }
+      }
       
       if (post) {
         addToHistory(post);
@@ -855,6 +870,45 @@ const PostDetail = () => {
                 })()}
               </div>
 
+              {/* Collaborators */}
+              {collaborators && collaborators.length > 0 && (
+                <div className="mb-8 rounded-xl border border-[var(--border-subtle)] bg-surface-subtle p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <div className="rounded-lg bg-blue-500/12 p-2 text-blue-600 dark:text-blue-400">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted">Collaborators</span>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {collaborators.map((collaborator) => (
+                      <div
+                        key={collaborator.id || collaborator.user?._id || collaborator.user}
+                        className="inline-flex items-center gap-2 rounded-full bg-[var(--surface-bg)] px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)]"
+                      >
+                        {collaborator.user?.profilePicture ? (
+                          <img
+                            src={collaborator.user.profilePicture}
+                            alt={collaborator.email || collaborator.user?.username || 'Collaborator'}
+                            className="w-6 h-6 rounded-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
+                            {(collaborator.email || collaborator.user?.username || 'C').charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <span>{collaborator.user?.username || collaborator.email || 'Collaborator'}</span>
+                        {collaborator.role && (
+                          <span className="text-xs text-muted capitalize">({collaborator.role})</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Tags */}
               {post.tags && post.tags.length > 0 && (
                 <div className="mb-8 rounded-xl border border-[var(--border-subtle)] bg-surface-subtle p-5">
@@ -1033,6 +1087,7 @@ const PostDetail = () => {
                     onReport={handleReportComment}
                     reportedCommentIds={reportedIdsForPost}
                     postAuthorId={postAuthorId}
+                    postCollaborators={collaborators}
                   />
                 ))
               ) : (

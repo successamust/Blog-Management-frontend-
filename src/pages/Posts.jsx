@@ -53,6 +53,8 @@ const Posts = () => {
       if (category) params.category = category;
       if (tag) params.tag = tag;
 
+      // COMMENTED OUT FOR TESTING
+      /*
       const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
       const makeRequestWithRetry = async (retries = 2) => {
         for (let i = 0; i <= retries; i++) {
@@ -70,6 +72,8 @@ const Posts = () => {
       };
 
       const response = await makeRequestWithRetry();
+      */
+      const response = await postsAPI.getAll(params);
       setPosts(response.data.posts || []);
       setPagination({
         currentPage: response.data.currentPage || currentPage,
@@ -79,11 +83,11 @@ const Posts = () => {
       });
     } catch (error) {
       console.error('Error fetching posts:', error);
-      if (error.response?.status === 429) {
-        toast.error('Too many requests. Please try again in a moment.');
-      } else {
+      // if (error.response?.status === 429) { // COMMENTED OUT FOR TESTING
+      //   toast.error('Too many requests. Please try again in a moment.');
+      // } else {
         toast.error('Failed to load posts');
-      }
+      // }
     } finally {
       setLoading(false);
     }

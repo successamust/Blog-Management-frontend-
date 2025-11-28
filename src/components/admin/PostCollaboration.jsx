@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, UserPlus, X, Mail, Check, Clock, Send } from 'lucide-react';
+import { Users, UserPlus, X, Mail, Check, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { collaborationsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -9,7 +9,6 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
   const { user } = useAuth();
   const [collaborators, setCollaborators] = useState([]);
   const [receivedInvitations, setReceivedInvitations] = useState([]);
-  const [sentInvitations, setSentInvitations] = useState([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('co-author');
@@ -23,9 +22,6 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
     if (postId) {
       fetchCollaborators();
       fetchReceivedInvitations();
-      if (isOwner) {
-        fetchSentInvitations();
-      }
     }
   }, [postId, isOwner]);
 
@@ -64,35 +60,6 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
     }
   };
 
-  const fetchSentInvitations = async () => {
-    if (!postId || !isOwner) return;
-    try {
-      const response = await collaborationsAPI.getSentInvitations(postId);
-      if (response.data?.invitations) {
-        setSentInvitations(response.data.invitations);
-      }
-    } catch (error) {
-      // If endpoint doesn't exist, try to get from my invitations
-      if (error.response?.status === 404) {
-        try {
-          const fallbackResponse = await collaborationsAPI.getMyInvitations();
-          if (fallbackResponse.data?.invitations) {
-            // Filter invitations sent by the current user for this post
-            const postInvitations = fallbackResponse.data.invitations.filter(
-              inv => (inv.post?._id === postId || inv.post === postId) && 
-                     inv.email !== user?.email &&
-                     (inv.sender?._id === user?._id || inv.sender === user?._id || inv.invitedBy?._id === user?._id || inv.invitedBy === user?._id)
-            );
-            setSentInvitations(postInvitations);
-          }
-        } catch (fallbackError) {
-          console.error('Failed to fetch sent invitations:', fallbackError);
-        }
-      } else {
-        console.error('Failed to fetch sent invitations:', error);
-      }
-    }
-  };
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) {
@@ -111,8 +78,7 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
       toast.success(`Invitation sent to ${inviteEmail}`);
       setInviteEmail('');
       setShowInviteModal(false);
-      // Refresh invitations
-      await fetchSentInvitations();
+      // Refresh received invitations
       await fetchReceivedInvitations();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to send invitation');
@@ -154,35 +120,14 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
       return;
     }
 
-    console.log('Accepting invitation with ID:', invitationId);
-
     try {
       setLoading(true);
       const response = await collaborationsAPI.acceptInvitation(invitationId);
       
-      console.log('Invitation accepted successfully:', response);
-      
-      // Check if response contains redirect URL and prevent navigation
-      if (response?.data?.redirect) {
-        console.warn('API returned redirect URL, but we will not navigate:', response.data.redirect);
-      }
-      
       toast.success('Invitation accepted! You are now a collaborator.');
       await fetchCollaborators();
       await fetchReceivedInvitations();
-      if (isOwner) {
-        await fetchSentInvitations();
-      }
     } catch (error) {
-      console.error('Error accepting invitation:', error);
-      console.error('Error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message,
-        url: error.config?.url
-      });
-      
       // Handle different error types
       if (error.response?.status === 404) {
         toast.error('Invitation not found. It may have been deleted or already processed.');
@@ -209,21 +154,11 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
 
     try {
       setLoading(true);
-      const response = await collaborationsAPI.rejectInvitation(invitationId);
-      
-      // Check if response contains redirect URL and prevent navigation
-      if (response?.data?.redirect) {
-        console.warn('API returned redirect URL, but we will not navigate:', response.data.redirect);
-      }
+      await collaborationsAPI.rejectInvitation(invitationId);
       
       toast.success('Invitation rejected');
       await fetchReceivedInvitations();
-      if (isOwner) {
-        await fetchSentInvitations();
-      }
     } catch (error) {
-      console.error('Error rejecting invitation:', error);
-      
       // Handle different error types
       if (error.response?.status === 404) {
         toast.error('Invitation not found. It may have been deleted or already processed.');
@@ -239,45 +174,6 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
     }
   };
 
-  const handleRevokeInvitation = async (invitationId) => {
-    if (!invitationId) {
-      toast.error('Invalid invitation ID');
-      return;
-    }
-
-    if (!window.confirm('Are you sure you want to revoke this invitation?')) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await collaborationsAPI.revokeInvitation(invitationId);
-      
-      // Check if response contains redirect URL and prevent navigation
-      if (response?.data?.redirect) {
-        console.warn('API returned redirect URL, but we will not navigate:', response.data.redirect);
-      }
-      
-      toast.success('Invitation revoked');
-      await fetchSentInvitations();
-      await fetchReceivedInvitations();
-    } catch (error) {
-      console.error('Error revoking invitation:', error);
-      
-      // Handle different error types
-      if (error.response?.status === 404) {
-        toast.error('Invitation not found. It may have been deleted or already processed.');
-      } else if (error.response?.status === 401) {
-        toast.error('Please log in to revoke invitations.');
-      } else if (error.response?.status === 403) {
-        toast.error('You do not have permission to revoke this invitation.');
-      } else {
-        toast.error(error.response?.data?.message || error.message || 'Failed to revoke invitation');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Show component if user is owner, has collaborators, or has received invitations
   if (!isOwner && collaborators.length === 0 && receivedInvitations.length === 0) {
@@ -332,44 +228,6 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
               )}
             </motion.div>
           ))}
-        </div>
-      )}
-
-      {/* Sent Invitations (Only visible to owner) */}
-      {isOwner && sentInvitations.filter(inv => inv.status === 'pending').length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-secondary flex items-center gap-2">
-            <Send className="w-4 h-4" />
-            Sent Invitations
-          </h4>
-          {sentInvitations
-            .filter(inv => inv.status === 'pending')
-            .map((invitation) => {
-              const invitationId = invitation._id || invitation.id;
-              return (
-                <motion.div
-                  key={invitationId}
-                  className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
-                >
-                  <div className="flex items-center gap-3">
-                    <Send className="w-4 h-4 text-blue-600" />
-                    <div>
-                      <p className="text-sm font-medium text-primary">{invitation.email}</p>
-                      <p className="text-xs text-muted">Invited as {invitation.role}</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRevokeInvitation(invitationId)}
-                    disabled={loading}
-                    className="p-1.5 bg-red-100 dark:bg-red-900/20 text-red-600 rounded hover:bg-red-200 dark:hover:bg-red-900/30 disabled:opacity-50 transition-colors"
-                    title="Revoke invitation"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </motion.div>
-              );
-            })}
         </div>
       )}
 

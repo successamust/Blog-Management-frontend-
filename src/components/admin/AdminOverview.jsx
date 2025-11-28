@@ -256,6 +256,8 @@ const AdminOverview = () => {
 
       const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
       
+      // COMMENTED OUT FOR TESTING
+      /*
       const makeRequestWithRetry = async (requestFn, retries = 2) => {
         for (let i = 0; i <= retries; i++) {
           try {
@@ -271,15 +273,25 @@ const AdminOverview = () => {
         }
         return { error: new Error('Max retries exceeded') };
       };
+      */
+
+      // Simplified version without retry logic
+      const makeRequestWithRetry = async (requestFn) => {
+        try {
+          return await requestFn();
+        } catch (err) {
+          return { error: err };
+        }
+      };
 
       const userStatsRes = await Promise.resolve(makeRequestWithRetry(() => adminAPI.getUserStats()));
-      await delay(400);
+      // await delay(400); // COMMENTED OUT FOR TESTING
       const usersRes = await Promise.resolve(makeRequestWithRetry(() => adminAPI.getUsers({ limit: 1000 })));
-      await delay(400);
+      // await delay(400); // COMMENTED OUT FOR TESTING
       const categoriesRes = await Promise.resolve(makeRequestWithRetry(() => categoriesAPI.getAll()));
-      await delay(400);
+      // await delay(400); // COMMENTED OUT FOR TESTING
       const newsletterStatsRes = await Promise.resolve(makeRequestWithRetry(() => adminAPI.getNewsletterStats()));
-      await delay(400);
+      // await delay(400); // COMMENTED OUT FOR TESTING
       const dashboardRes = await Promise.resolve(makeRequestWithRetry(() => dashboardAPI.getOverview()));
 
       const getData = (res) => {
@@ -1353,18 +1365,59 @@ const AdminOverview = () => {
         {/* Posts by Category */}
         {postsByCategoryData.length > 0 && (
           <AnimatedCard delay={0.8}>
-            <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
-              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Posts by Category</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={postsByCategoryData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="posts" fill="#3b82f6" />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 relative overflow-hidden">
+              {/* Decorative background */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">Posts by Category</h3>
+                    <p className="text-sm text-[var(--text-muted)]">Distribution across categories</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30">
+                    <Boxes className="w-6 h-6 text-blue-500" />
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={postsByCategoryData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="categoryGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#1d4ed8" stopOpacity={0.7} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" opacity={0.3} />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
+                      axisLine={{ stroke: 'var(--border-subtle)' }}
+                      tickLine={{ stroke: 'var(--border-subtle)' }}
+                    />
+                    <YAxis 
+                      tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
+                      axisLine={{ stroke: 'var(--border-subtle)' }}
+                      tickLine={{ stroke: 'var(--border-subtle)' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--surface-bg)', 
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                      }}
+                      labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                    />
+                    <Bar 
+                      dataKey="posts" 
+                      fill="url(#categoryGradient)"
+                      radius={[8, 8, 0, 0]}
+                      stroke="#2563eb"
+                      strokeWidth={1}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </AnimatedCard>
         )}
@@ -1372,18 +1425,62 @@ const AdminOverview = () => {
         {/* Posts Over Time */}
         {postsByMonthData.length > 0 && (
           <AnimatedCard delay={0.9}>
-            <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
-              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Posts Over Time</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={postsByMonthData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Area type="monotone" dataKey="posts" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 relative overflow-hidden">
+              {/* Decorative background */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">Posts Over Time</h3>
+                    <p className="text-sm text-[var(--text-muted)]">Last 6 months trend</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30">
+                    <TrendingUp className="w-6 h-6 text-purple-500" />
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={320}>
+                  <AreaChart data={postsByMonthData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="timeGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.8} />
+                        <stop offset="50%" stopColor="#a855f7" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor="#ec4899" stopOpacity={0.1} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" opacity={0.3} />
+                    <XAxis 
+                      dataKey="month" 
+                      tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
+                      axisLine={{ stroke: 'var(--border-subtle)' }}
+                      tickLine={{ stroke: 'var(--border-subtle)' }}
+                    />
+                    <YAxis 
+                      tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
+                      axisLine={{ stroke: 'var(--border-subtle)' }}
+                      tickLine={{ stroke: 'var(--border-subtle)' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--surface-bg)', 
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                      }}
+                      labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="posts" 
+                      stroke="url(#timeGradient)"
+                      strokeWidth={3}
+                      fill="url(#timeGradient)"
+                      dot={{ fill: '#a855f7', strokeWidth: 2, r: 5 }}
+                      activeDot={{ r: 7, stroke: '#8b5cf6', strokeWidth: 2 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </AnimatedCard>
         )}
@@ -1392,19 +1489,79 @@ const AdminOverview = () => {
       {/* Top Posts */}
       {topPostsData.length > 0 && (
         <AnimatedCard delay={1.0}>
-          <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
-            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Top 5 Posts by Views</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={topPostsData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={150} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="views" fill="#10b981" name="Views" />
-                <Bar dataKey="likes" fill="#ef4444" name="Likes" />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 relative overflow-hidden">
+            {/* Decorative background */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">Top 5 Posts by Views</h3>
+                  <p className="text-sm text-[var(--text-muted)]">Most viewed content</p>
+                </div>
+                <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
+                  <Eye className="w-6 h-6 text-emerald-500" />
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={topPostsData} layout="vertical" margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="viewsGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#059669" stopOpacity={0.7} />
+                    </linearGradient>
+                    <linearGradient id="likesGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#dc2626" stopOpacity={0.7} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" opacity={0.3} horizontal={true} />
+                  <XAxis 
+                    type="number" 
+                    tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
+                    axisLine={{ stroke: 'var(--border-subtle)' }}
+                    tickLine={{ stroke: 'var(--border-subtle)' }}
+                  />
+                  <YAxis 
+                    dataKey="name" 
+                    type="category" 
+                    width={180}
+                    tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                    axisLine={{ stroke: 'var(--border-subtle)' }}
+                    tickLine={{ stroke: 'var(--border-subtle)' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'var(--surface-bg)', 
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                    }}
+                    labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px' }}
+                    iconType="circle"
+                  />
+                  <Bar 
+                    dataKey="views" 
+                    fill="url(#viewsGradient)" 
+                    name="Views"
+                    radius={[0, 8, 8, 0]}
+                    stroke="#059669"
+                    strokeWidth={1}
+                  />
+                  <Bar 
+                    dataKey="likes" 
+                    fill="url(#likesGradient)" 
+                    name="Likes"
+                    radius={[0, 8, 8, 0]}
+                    stroke="#dc2626"
+                    strokeWidth={1}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </AnimatedCard>
       )}

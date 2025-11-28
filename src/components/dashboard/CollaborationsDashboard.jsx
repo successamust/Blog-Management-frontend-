@@ -18,134 +18,88 @@ const CollaborationsDashboard = () => {
     fetchAllInvitations();
   }, []);
 
-  // Helper function to retry API calls with exponential backoff for 429 errors
-  const retryWithBackoff = async (apiCall, maxRetries = 3, baseDelay = 1000) => {
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        return await apiCall();
-      } catch (error) {
-        if (error.response?.status === 429 && attempt < maxRetries) {
-          const delay = baseDelay * Math.pow(2, attempt);
-          console.log(`Rate limited (429), retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
-        }
-        throw error;
-      }
-    }
+  const retryWithBackoff = async (apiCall) => {
+    return await apiCall();
   };
 
   const fetchAllInvitations = async () => {
     try {
       setLoading(true);
       
-      // Make ONE call to get all invitations, then separate into sent/received
-      let allInvitations = [];
+      const userEmail = user?.email?.toLowerCase();
+      const userId = String(user?._id || user?.id || '');
+      
+      let received = [];
+      let sent = [];
+      
       try {
-        const response = await retryWithBackoff(() => collaborationsAPI.getMyInvitations());
+        const response = await retryWithBackoff(() => 
+          collaborationsAPI.getMyInvitations(true)
+        );
+        
         if (response.data?.invitations) {
-          allInvitations = response.data.invitations;
+          const allInvitations = response.data.invitations;
+          
+          received = allInvitations.filter(inv => {
+            if (inv.type === 'received') return true;
+            if (inv.type === 'sent') return false;
+            return inv.email?.toLowerCase() === userEmail;
+          });
+          
+          sent = allInvitations.filter(inv => {
+            if (inv.type === 'sent') return true;
+            if (inv.type === 'received') return false;
+            const inviterId = String(inv.invitedBy?._id || inv.invitedBy || '');
+            return inviterId === userId && inv.email?.toLowerCase() !== userEmail;
+          });
         }
       } catch (error) {
-        if (error.response?.status === 429) {
-          toast.error('Too many requests. Please wait a moment and refresh.');
-        } else {
-          console.error('Failed to fetch invitations:', error);
-        }
-        return;
+        // Error handled silently, will try fallback methods
       }
-
-      // Separate received invitations (where user's email matches invitation email)
-      const userEmail = user?.email;
-      const received = allInvitations.filter(inv => inv.email === userEmail);
-      setReceivedInvitations(received);
-
-      // For sent invitations, we need to check which posts the user owns
-      // Only fetch posts if we have invitations that might be sent
-      if (allInvitations.length > 0) {
+      
+      if (received.length === 0) {
         try {
-          // Add a small delay to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const postsResponse = await retryWithBackoff(() => 
-            postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' })
+          const receivedResponse = await retryWithBackoff(() => 
+            collaborationsAPI.getMyInvitations(false)
           );
-          const posts = postsResponse.data?.posts || postsResponse.data?.data || [];
           
-          // Create a map of post IDs to post details
-          const postsMap = new Map();
-          posts.forEach(post => {
-            const postId = post._id || post.id;
-            if (postId) {
-              postsMap.set(String(postId), {
-                title: post.title,
-                slug: post.slug,
-                id: postId,
-                authorId: post.author?._id || post.author || post.authorId
-              });
-            }
-          });
-
-          // Find posts owned by the user
-          const userId = String(user?._id || user?.id || '');
-          const userPostIds = new Set();
-          postsMap.forEach((postInfo, postId) => {
-            if (String(postInfo.authorId) === userId) {
-              userPostIds.add(postId);
-            }
-          });
-
-          // Filter sent invitations:
-          // 1. Invitation is for a post owned by the user
-          // 2. Invitation email is NOT the user's email (not a self-invite)
-          // 3. OR user is explicitly marked as sender
-          const sent = allInvitations.filter(inv => {
-            const invPostId = String(inv.post?._id || inv.post || '');
-            const isUserPost = userPostIds.has(invPostId);
-            const isNotSelfInvite = inv.email !== userEmail;
-            
-            // Check if user is explicitly marked as sender
-            const isExplicitSender = 
-              String(inv.sender?._id || inv.sender || '') === userId ||
-              String(inv.invitedBy?._id || inv.invitedBy || '') === userId ||
-              String(inv.createdBy?._id || inv.createdBy || '') === userId;
-            
-            return (isUserPost && isNotSelfInvite) || isExplicitSender;
-          });
-
-          // Add post details to sent invitations
-          const sentWithPostDetails = sent.map(inv => {
-            const postId = String(inv.post?._id || inv.post || '');
-            const postInfo = postsMap.get(postId);
-            return {
-              ...inv,
-              postTitle: postInfo?.title || 'Unknown Post',
-              postSlug: postInfo?.slug,
-              postId: postId
-            };
-          });
-
-          setSentInvitations(sentWithPostDetails);
+          if (receivedResponse.data?.invitations) {
+            received = receivedResponse.data.invitations.filter(inv => 
+              inv.email?.toLowerCase() === userEmail
+            );
+          }
         } catch (error) {
           if (error.response?.status === 429) {
             toast.error('Too many requests. Please wait a moment and refresh.');
-          } else {
-            console.error('Failed to fetch posts for invitation details:', error);
-            // Still set sent invitations without post details
-            const userId = String(user?._id || user?.id || '');
-            const userEmail = user?.email;
-            const sent = allInvitations.filter(inv => {
-              const isNotSelfInvite = inv.email !== userEmail;
-              const isExplicitSender = 
-                String(inv.sender?._id || inv.sender || '') === userId ||
-                String(inv.invitedBy?._id || inv.invitedBy || '') === userId ||
-                String(inv.createdBy?._id || inv.createdBy || '') === userId;
-              return isNotSelfInvite && isExplicitSender;
-            });
-            setSentInvitations(sent);
           }
         }
       }
+      
+      if (sent.length === 0) {
+        try {
+          const sentResponse = await retryWithBackoff(() => 
+            collaborationsAPI.getMySentInvitations()
+          );
+          
+          if (sentResponse.data?.invitations) {
+            sent = sentResponse.data.invitations;
+          }
+        } catch (error) {
+          // Error handled silently
+        }
+      }
+      
+      setReceivedInvitations(received);
+      
+      const sentWithDetails = sent.map(inv => ({
+        ...inv,
+        postTitle: inv.post?.title || 'Unknown Post',
+        postSlug: inv.post?.slug,
+        postId: inv.post?._id || inv.post
+      }));
+      
+      setSentInvitations(sentWithDetails);
+      
     } finally {
       setLoading(false);
     }
@@ -164,11 +118,7 @@ const CollaborationsDashboard = () => {
 
     try {
       setActionLoading(true);
-      const response = await collaborationsAPI.acceptInvitation(invitationId);
-      
-      if (response?.data?.redirect) {
-        console.warn('API returned redirect URL, but we will not navigate:', response.data.redirect);
-      }
+      await collaborationsAPI.acceptInvitation(invitationId);
       
       toast.success('Invitation accepted! You are now a collaborator.');
       await fetchAllInvitations();
@@ -200,11 +150,7 @@ const CollaborationsDashboard = () => {
 
     try {
       setActionLoading(true);
-      const response = await collaborationsAPI.rejectInvitation(invitationId);
-      
-      if (response?.data?.redirect) {
-        console.warn('API returned redirect URL, but we will not navigate:', response.data.redirect);
-      }
+      await collaborationsAPI.rejectInvitation(invitationId);
       
       toast.success('Invitation rejected');
       await fetchAllInvitations();
@@ -237,11 +183,7 @@ const CollaborationsDashboard = () => {
 
     try {
       setActionLoading(true);
-      const response = await collaborationsAPI.revokeInvitation(invitationId);
-      
-      if (response?.data?.redirect) {
-        console.warn('API returned redirect URL, but we will not navigate:', response.data.redirect);
-      }
+      await collaborationsAPI.revokeInvitation(invitationId);
       
       toast.success('Invitation revoked');
       await fetchAllInvitations();
@@ -250,10 +192,15 @@ const CollaborationsDashboard = () => {
       
       if (error.response?.status === 404) {
         toast.error('Invitation not found. It may have been deleted or already processed.');
+      } else if (error.response?.status === 400) {
+        const message = error.response?.data?.message || 'Cannot revoke this invitation';
+        toast.error(message);
       } else if (error.response?.status === 401) {
         toast.error('Please log in to revoke invitations.');
       } else if (error.response?.status === 403) {
         toast.error('You do not have permission to revoke this invitation.');
+      } else if (error.response?.status === 500) {
+        toast.error(error.response?.data?.message || 'Server error. Please try again later.');
       } else {
         toast.error(error.response?.data?.message || error.message || 'Failed to revoke invitation');
       }
@@ -272,51 +219,23 @@ const CollaborationsDashboard = () => {
 
   const pendingReceived = receivedInvitations.filter(inv => inv.status === 'pending');
   const pendingSent = sentInvitations.filter(inv => inv.status === 'pending');
-
-  // Show tab if user has any invitations or is admin/author
-  const hasInvitations = pendingReceived.length > 0 || pendingSent.length > 0;
-  const isAuthorOrAdmin = user?.role === 'author' || user?.role === 'admin';
-
-  if (!hasInvitations && !isAuthorOrAdmin) {
-    return (
-      <div className="max-w-6xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="surface-card p-8 text-center"
-        >
-          <Users className="w-16 h-16 mx-auto mb-4 text-muted" />
-          <h3 className="text-xl font-bold text-primary mb-2">No Collaborations</h3>
-          <p className="text-muted mb-6">
-            You don't have any pending invitations. Invitations will appear here when you receive or send them.
-          </p>
-          <Link
-            to="/admin/posts"
-            className="btn btn-primary inline-flex items-center gap-2"
-          >
-            <FileText className="w-4 h-4" />
-            Go to Posts
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
+  const allSent = sentInvitations;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 px-4 sm:px-6">
       {/* Received Invitations */}
       {pendingReceived.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="surface-card p-6"
+          className="surface-card p-4 sm:p-6"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-primary flex items-center gap-2">
-              <Mail className="w-5 h-5" />
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h2 className="text-lg sm:text-xl font-bold text-primary flex items-center gap-2">
+              <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
               Received Invitations
             </h2>
-            <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 rounded-full text-sm font-medium">
+            <span className="px-2 sm:px-3 py-1 bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 rounded-full text-xs sm:text-sm font-medium">
               {pendingReceived.length}
             </span>
           </div>
@@ -330,27 +249,36 @@ const CollaborationsDashboard = () => {
               return (
                 <motion.div
                   key={invitationId}
-                  className="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800"
                 >
-                  <div className="flex items-center gap-4 flex-1">
-                    <Clock className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                  <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 flex-shrink-0 mt-0.5 sm:mt-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-primary truncate">
+                      <p className="text-sm font-medium text-primary break-words">
                         {postTitle}
                       </p>
-                      <p className="text-xs text-muted">Invited as {invitation.role}</p>
+                      <p className="text-xs text-muted mt-1">Invited as {invitation.role}</p>
+                      {postSlug && (
+                        <Link
+                          to={`/admin/posts/edit/${postId}`}
+                          className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1 mt-2 sm:hidden"
+                        >
+                          View Post
+                          <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      )}
                     </div>
                     {postSlug && (
                       <Link
                         to={`/admin/posts/edit/${postId}`}
-                        className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1 flex-shrink-0"
+                        className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1 flex-shrink-0 hidden sm:flex"
                       >
                         View Post
                         <ExternalLink className="w-3 h-3" />
                       </Link>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 ml-4">
+                  <div className="flex items-center gap-2 sm:ml-4 justify-end sm:justify-start">
                     <button
                       type="button"
                       onClick={(e) => handleAcceptInvitation(invitationId, e)}
@@ -378,63 +306,83 @@ const CollaborationsDashboard = () => {
       )}
 
       {/* Sent Invitations */}
-      {pendingSent.length > 0 && (
+      {(pendingSent.length > 0 || allSent.length > 0) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="surface-card p-6"
+          className="surface-card p-4 sm:p-6"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-primary flex items-center gap-2">
-              <Send className="w-5 h-5" />
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h2 className="text-lg sm:text-xl font-bold text-primary flex items-center gap-2">
+              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
               Sent Invitations
             </h2>
-            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
-              {pendingSent.length}
+            <span className="px-2 sm:px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 rounded-full text-xs sm:text-sm font-medium">
+              {pendingSent.length} {allSent.length > pendingSent.length ? `(${allSent.length} total)` : ''}
             </span>
           </div>
-          <div className="space-y-3">
-            {pendingSent.map((invitation) => {
+          {pendingSent.length > 0 ? (
+            <div className="space-y-3">
+              {pendingSent.map((invitation) => {
               const invitationId = invitation._id || invitation.id;
+              const postTitle = invitation.postTitle || invitation.post?.title || 'Unknown Post';
+              const postSlug = invitation.postSlug || invitation.post?.slug;
+              const postId = invitation.postId || invitation.post?._id || invitation.post;
               
               return (
                 <motion.div
                   key={invitationId}
-                  className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
                 >
-                  <div className="flex items-center gap-4 flex-1">
-                    <Send className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                  <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-primary truncate">
-                        {invitation.postTitle || 'Unknown Post'}
+                      <p className="text-sm font-medium text-primary break-words">
+                        {postTitle}
                       </p>
-                      <p className="text-xs text-muted">
+                      <p className="text-xs text-muted mt-1 break-words">
                         {invitation.email} • Invited as {invitation.role}
                       </p>
+                      {postId && (
+                        <Link
+                          to={`/admin/posts/edit/${postId}`}
+                          className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1 mt-2 sm:hidden"
+                        >
+                          View Post
+                          <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      )}
                     </div>
-                    {invitation.postId && (
+                    {postId && (
                       <Link
-                        to={`/admin/posts/edit/${invitation.postId}`}
-                        className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1 flex-shrink-0"
+                        to={`/admin/posts/edit/${postId}`}
+                        className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1 flex-shrink-0 hidden sm:flex"
                       >
                         View Post
                         <ExternalLink className="w-3 h-3" />
                       </Link>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRevokeInvitation(invitationId)}
-                    disabled={actionLoading}
-                    className="p-2 bg-red-100 dark:bg-red-900/20 text-red-600 rounded hover:bg-red-200 dark:hover:bg-red-900/30 disabled:opacity-50 transition-colors ml-4"
-                    title="Revoke invitation"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-2 sm:ml-4 justify-end sm:justify-start">
+                    <button
+                      type="button"
+                      onClick={() => handleRevokeInvitation(invitationId)}
+                      disabled={actionLoading}
+                      className="p-2 bg-red-100 dark:bg-red-900/20 text-red-600 rounded hover:bg-red-200 dark:hover:bg-red-900/30 disabled:opacity-50 transition-colors"
+                      title="Revoke invitation"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </motion.div>
               );
             })}
           </div>
+          ) : (
+            <div className="text-center py-4 text-muted text-sm px-4">
+              No pending sent invitations. All sent invitations have been accepted, rejected, or revoked.
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -443,16 +391,16 @@ const CollaborationsDashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="surface-card p-8 text-center"
+          className="surface-card p-6 sm:p-8 text-center"
         >
-          <Users className="w-16 h-16 mx-auto mb-4 text-muted" />
-          <h3 className="text-xl font-bold text-primary mb-2">No Pending Invitations</h3>
-          <p className="text-muted mb-6">
+          <Users className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-muted" />
+          <h3 className="text-lg sm:text-xl font-bold text-primary mb-2">No Pending Invitations</h3>
+          <p className="text-sm sm:text-base text-muted mb-6 px-4">
             You don't have any pending invitations at the moment.
           </p>
           <Link
             to="/admin/posts"
-            className="btn btn-primary inline-flex items-center gap-2"
+            className="btn btn-primary inline-flex items-center gap-2 text-sm sm:text-base"
           >
             <FileText className="w-4 h-4" />
             Manage Posts

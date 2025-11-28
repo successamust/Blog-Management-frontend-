@@ -13,7 +13,8 @@ import {
   ChevronDown,
   ChevronRight,
   Flag,
-  BadgeCheck
+  BadgeCheck,
+  Users
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -28,6 +29,7 @@ const CommentThread = ({
   onReport,
   reportedCommentIds,
   postAuthorId,
+  postCollaborators = [],
   level = 0,
   maxLevel = 3
 }) => {
@@ -63,6 +65,14 @@ const CommentThread = ({
   const hasReplies = comment.replies && comment.replies.length > 0;
   const isPostAuthorComment =
     postAuthorId && commentAuthorId && String(postAuthorId) === String(commentAuthorId);
+  
+  // Check if comment author is a collaborator
+  const isCollaborator = postCollaborators.some(collab => {
+    const collabUserId = collab.user?._id || collab.user || collab.userId || collab.user;
+    const collabEmail = collab.email || collab.user?.email;
+    return (collabUserId && commentAuthorId && String(collabUserId) === String(commentAuthorId)) ||
+           (collabEmail && comment.author?.email && collabEmail === comment.author.email);
+  });
   const isReported = useMemo(() => {
     if (!reportedCommentIds) return false;
     if (typeof reportedCommentIds.has === 'function') {
@@ -170,11 +180,33 @@ const CommentThread = ({
         <div className="flex items-start gap-4">
           <Link
             to={profileLink || '#'}
-            className="w-11 h-11 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] flex items-center justify-center text-base font-semibold shrink-0 hover:opacity-90 transition-opacity"
+            className="w-11 h-11 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] flex items-center justify-center text-base font-semibold shrink-0 hover:opacity-90 transition-opacity overflow-hidden relative"
             aria-label={`View ${comment.author?.username || 'user'} profile`}
           >
-            {comment.author?.username?.charAt(0).toUpperCase() || (
-              <User className="w-5 h-5" />
+            {comment.author?.profilePicture ? (
+              <>
+                <img
+                  src={comment.author.profilePicture}
+                  alt={comment.author?.username || 'User'}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    const fallback = e.target.nextElementSibling;
+                    if (fallback) {
+                      fallback.style.display = 'flex';
+                    }
+                  }}
+                />
+                <div className="w-full h-full items-center justify-center hidden" style={{ display: 'none' }}>
+                  {comment.author?.username?.charAt(0).toUpperCase() || (
+                    <User className="w-5 h-5" />
+                  )}
+                </div>
+              </>
+            ) : (
+              comment.author?.username?.charAt(0).toUpperCase() || (
+                <User className="w-5 h-5" />
+              )
             )}
           </Link>
 
@@ -193,9 +225,15 @@ const CommentThread = ({
                 </span>
               )}
               {isPostAuthorComment && (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                   <BadgeCheck className="w-3 h-3" />
                   Author
+                </span>
+              )}
+              {isCollaborator && !isPostAuthorComment && (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                  <Users className="w-3 h-3" />
+                  Collaborator
                 </span>
               )}
               <span>•</span>
@@ -421,6 +459,7 @@ const CommentThread = ({
               onReport={onReport}
               reportedCommentIds={reportedCommentIds}
               postAuthorId={postAuthorId}
+              postCollaborators={postCollaborators}
               level={level + 1}
               maxLevel={maxLevel}
             />

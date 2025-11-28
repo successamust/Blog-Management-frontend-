@@ -63,6 +63,8 @@ const AuthorManagement = () => {
       if (allApps.length === 0) {
         const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         
+        // COMMENTED OUT FOR TESTING
+        /*
         const fetchWithRetry = async (status, retries = 2) => {
           for (let i = 0; i <= retries; i++) {
             try {
@@ -77,11 +79,21 @@ const AuthorManagement = () => {
           }
           return { data: null, error: new Error('Max retries exceeded') };
         };
+        */
+        
+        // Simplified version without retry logic
+        const fetchWithRetry = async (status) => {
+          try {
+            return await authorsAPI.getApplications({ status });
+          } catch (err) {
+            return { data: null, error: err };
+          }
+        };
 
         const pendingRes = await Promise.resolve(fetchWithRetry('pending'));
-        await delay(300);
+        // await delay(300); // COMMENTED OUT FOR TESTING
         const approvedRes = await Promise.resolve(fetchWithRetry('approved'));
-        await delay(300);
+        // await delay(300); // COMMENTED OUT FOR TESTING
         const rejectedRes = await Promise.resolve(fetchWithRetry('rejected'));
 
         const extractApplications = (res, defaultStatus) => {
