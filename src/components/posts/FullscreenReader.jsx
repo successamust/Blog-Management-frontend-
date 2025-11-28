@@ -64,15 +64,15 @@ const FullscreenReader = ({ post, isOpen, onClose }) => {
         className="fixed inset-0 z-50 bg-[var(--page-bg)]"
       >
         {/* Header Controls */}
-        <div className="absolute top-0 left-0 right-0 z-10 bg-[var(--surface-bg)]/95 backdrop-blur-sm border-b border-[var(--border-subtle)] p-4">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h2 className="text-lg font-semibold text-primary truncate max-w-md">
+        <div className="absolute top-0 left-0 right-0 z-10 bg-[var(--surface-bg)]/95 backdrop-blur-sm border-b border-[var(--border-subtle)] px-3 py-3 sm:px-4 sm:py-4">
+          <div className="max-w-4xl mx-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <h2 className="text-base sm:text-lg font-semibold text-primary truncate">
                 {post.title}
               </h2>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 justify-end">
               {/* Font Size */}
               <div className="flex items-center gap-2 bg-[var(--surface-subtle)] rounded-lg px-2 py-1">
                 <button
@@ -156,7 +156,7 @@ const FullscreenReader = ({ post, isOpen, onClose }) => {
         </div>
 
         {/* Content */}
-        <div className="pt-20 pb-8 h-full overflow-y-auto">
+        <div className="pt-40 sm:pt-24 pb-8 h-full overflow-y-auto px-3 sm:px-4">
           <div
             className="mx-auto prose prose-lg dark:prose-invert"
             style={{

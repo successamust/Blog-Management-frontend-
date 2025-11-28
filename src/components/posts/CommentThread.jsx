@@ -54,7 +54,12 @@ const CommentThread = ({
 
   const commentAuthorId = normalizeId(comment.author);
   const canEdit = user?._id === commentAuthorId || isAdmin();
-  const isLiked = comment.likes?.includes(user?._id);
+
+  const normalizedUserId = user?._id ? String(user._id) : null;
+  const normalizedLikes = Array.isArray(comment.likes)
+    ? comment.likes.map((id) => String(id))
+    : [];
+  const isLiked = normalizedUserId ? normalizedLikes.includes(normalizedUserId) : false;
   const hasReplies = comment.replies && comment.replies.length > 0;
   const isPostAuthorComment =
     postAuthorId && commentAuthorId && String(postAuthorId) === String(commentAuthorId);

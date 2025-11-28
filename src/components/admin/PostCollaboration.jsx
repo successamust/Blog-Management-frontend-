@@ -106,28 +106,92 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
     }
   };
 
-  const handleAcceptInvitation = async (invitationId) => {
+  const handleAcceptInvitation = async (invitationId, event) => {
+    // Prevent any default behavior or navigation
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (!invitationId) {
+      toast.error('Invalid invitation ID');
+      return;
+    }
+
+    console.log('Accepting invitation with ID:', invitationId);
+
     try {
       setLoading(true);
-      await collaborationsAPI.acceptInvitation(invitationId);
+      const response = await collaborationsAPI.acceptInvitation(invitationId);
+      
+      console.log('Invitation accepted successfully:', response);
+      
+      // Check if response contains redirect URL and prevent navigation
+      if (response?.data?.redirect) {
+        console.warn('API returned redirect URL, but we will not navigate:', response.data.redirect);
+      }
+      
       toast.success('Invitation accepted! You are now a collaborator.');
       await fetchCollaborators();
       await fetchInvitations();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to accept invitation');
+      console.error('Error accepting invitation:', error);
+      console.error('Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+        url: error.config?.url
+      });
+      
+      // Handle different error types
+      if (error.response?.status === 404) {
+        toast.error('Invitation not found. It may have been deleted or already processed.');
+      } else if (error.response?.status === 401) {
+        toast.error('Please log in to accept invitations.');
+      } else if (error.response?.status === 403) {
+        toast.error('You do not have permission to accept this invitation.');
+      } else if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+        toast.error('Network error. Please check your connection and try again.');
+      } else {
+        const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to accept invitation';
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleRejectInvitation = async (invitationId) => {
+    if (!invitationId) {
+      toast.error('Invalid invitation ID');
+      return;
+    }
+
     try {
       setLoading(true);
-      await collaborationsAPI.rejectInvitation(invitationId);
+      const response = await collaborationsAPI.rejectInvitation(invitationId);
+      
+      // Check if response contains redirect URL and prevent navigation
+      if (response?.data?.redirect) {
+        console.warn('API returned redirect URL, but we will not navigate:', response.data.redirect);
+      }
+      
       toast.success('Invitation rejected');
       await fetchInvitations();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to reject invitation');
+      console.error('Error rejecting invitation:', error);
+      
+      // Handle different error types
+      if (error.response?.status === 404) {
+        toast.error('Invitation not found. It may have been deleted or already processed.');
+      } else if (error.response?.status === 401) {
+        toast.error('Please log in to reject invitations.');
+      } else if (error.response?.status === 403) {
+        toast.error('You do not have permission to reject this invitation.');
+      } else {
+        toast.error(error.response?.data?.message || error.message || 'Failed to reject invitation');
+      }
     } finally {
       setLoading(false);
     }
@@ -146,6 +210,7 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
         </h3>
         {isOwner && (
           <button
+            type="button"
             onClick={() => setShowInviteModal(true)}
             className="btn btn-outline text-sm"
           >
@@ -175,6 +240,7 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
               </div>
               {isOwner && (
                 <button
+                  type="button"
                   onClick={() => handleRemoveCollaborator(collaborator.id)}
                   className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-600 transition-colors"
                 >
@@ -210,13 +276,19 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
                   {user?.email === invitation.email && (
                     <>
                       <button
-                        onClick={() => handleAcceptInvitation(invitation._id || invitation.id)}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAcceptInvitation(invitation._id || invitation.id, e);
+                        }}
                         disabled={loading}
                         className="p-1.5 bg-green-100 dark:bg-green-900/20 text-green-600 rounded hover:bg-green-200 dark:hover:bg-green-900/30 disabled:opacity-50"
                       >
                         <Check className="w-4 h-4" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleRejectInvitation(invitation._id || invitation.id)}
                         disabled={loading}
                         className="p-1.5 bg-red-100 dark:bg-red-900/20 text-red-600 rounded hover:bg-red-200 dark:hover:bg-red-900/30 disabled:opacity-50"
@@ -243,6 +315,7 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-primary">Invite Collaborator</h3>
               <button
+                type="button"
                 onClick={() => setShowInviteModal(false)}
                 className="p-1 hover:bg-[var(--surface-subtle)] rounded"
               >
@@ -281,6 +354,7 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
 
               <div className="flex gap-2">
                 <button 
+                  type="button"
                   onClick={handleInvite} 
                   disabled={loading}
                   className="btn btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -289,6 +363,7 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
                   {loading ? 'Sending...' : 'Send Invitation'}
                 </button>
                 <button
+                  type="button"
                   onClick={() => setShowInviteModal(false)}
                   className="btn btn-outline"
                 >
