@@ -252,7 +252,7 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Email Address
                 </label>
                 <input
@@ -260,18 +260,18 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="collaborator@example.com"
-                  className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)]"
+                  className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Role
                 </label>
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
-                  className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)]"
+                  className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
                 >
                   <option value="co-author">Co-Author</option>
                   <option value="editor">Editor</option>

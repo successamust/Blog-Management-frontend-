@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Sparkles, ChevronDown, ChevronUp, PenLine, UsersRound, LineChart, Boxes } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, ChevronDown, ChevronUp, PenLine, UsersRound, LineChart, Boxes, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { postsAPI, categoriesAPI, searchAPI, newsletterAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -12,24 +12,194 @@ import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
 import TagCloud from '../components/common/TagCloud';
 
 const HOME_DESCRIPTION = 'Discover useful articles, insights, and writing from our community of creators.';
+const POSTS_PER_PAGE = 10;
+const NEWSLETTER_TOPICS = [
+  { value: 'weekly-digest', label: 'Weekly digest' },
+  { value: 'product-updates', label: 'Product updates' },
+  { value: 'community-highlights', label: 'Community highlights' },
+];
 
 const Home = () => {
   const { user, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  const [featuredPosts, setFeaturedPosts] = useState([]);
-  const [recentPosts, setRecentPosts] = useState([]);
-  const [trendingPosts, setTrendingPosts] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [categories, setCategories] = useState([]);
   const [popularTags, setPopularTags] = useState([]);
-  const [totalPosts, setTotalPosts] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isAuthorSectionOpen, setIsAuthorSectionOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribing, setSubscribing] = useState(false);
+  const [selectedTopics, setSelectedTopics] = useState(['weekly-digest']);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [showOptInModal, setShowOptInModal] = useState(false);
+  const [pendingSubscription, setPendingSubscription] = useState(null);
+  const postsRef = useRef([]);
   
   // Check if user can apply to become an author
   const canApplyForAuthor = isAuthenticated && user?.role !== 'author' && user?.role !== 'admin';
+
+  const normalizeDate = useCallback((value) => {
+    if (!value) return null;
+    try {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const getPostDate = useCallback(
+    (post) => {
+      if (!post) return new Date(0);
+      return (
+        normalizeDate(post.publishedAt) ||
+        normalizeDate(post.createdAt) ||
+        normalizeDate(post.updatedAt) ||
+        new Date(0)
+      );
+    },
+    [normalizeDate]
+  );
+
+  const mergePosts = useCallback(
+    (incoming = [], { reset = false } = {}) => {
+      setPosts((prev) => {
+        const base = reset ? [] : prev;
+        const map = new Map();
+        [...base, ...incoming].forEach((post) => {
+          if (!post) return;
+          const key = String(post._id || post.id || post.slug || Math.random());
+          map.set(key, post);
+        });
+        const merged = Array.from(map.values()).sort((a, b) => getPostDate(b) - getPostDate(a));
+        return merged;
+      });
+    },
+    [getPostDate]
+  );
+
+  const buildCategoryCounts = useCallback((categoriesList = [], referencePosts = []) => {
+    if (!Array.isArray(categoriesList) || !Array.isArray(referencePosts)) {
+      return [];
+    }
+
+    return categoriesList
+      .filter(Boolean)
+      .map((category) => {
+        const categoryId = category?._id ?? category?.id ?? category?.categoryId ?? null;
+        const categorySlug = category?.slug ?? null;
+
+        const postCount = referencePosts.filter((post) => {
+          if (!post) return false;
+          const postCategory = post.category;
+          const postCategories = post.categories;
+
+          const matchesSingleCategory = () => {
+            if (!postCategory) return false;
+            const postCategoryId = postCategory._id || postCategory.id || postCategory;
+            const postCategorySlug = postCategory.slug;
+            return (
+              (categoryId && String(postCategoryId) === String(categoryId)) ||
+              (categorySlug && postCategorySlug && postCategorySlug === categorySlug)
+            );
+          };
+
+          const matchesCategoryArray = () => {
+            if (!Array.isArray(postCategories)) return false;
+            return postCategories.some((cat) => {
+              const catId = cat?._id || cat?.id || cat;
+              const catSlug = cat?.slug;
+              return (
+                (categoryId && String(catId) === String(categoryId)) ||
+                (categorySlug && catSlug && catSlug === categorySlug)
+              );
+            });
+          };
+
+          return matchesSingleCategory() || matchesCategoryArray();
+        }).length;
+
+        return {
+          ...category,
+          postCount,
+        };
+      });
+  }, []);
+
+  useEffect(() => {
+    postsRef.current = posts;
+  }, [posts]);
+
+  const loadPostsPage = useCallback(
+    async (pageToFetch = 1, { reset = false } = {}) => {
+      const response = await postsAPI.getAll({ page: pageToFetch, limit: POSTS_PER_PAGE });
+      const postsData =
+        response.data?.posts ||
+        response.data?.data ||
+        (Array.isArray(response.data) ? response.data : []) ||
+        [];
+
+      const sanitizedPosts = Array.isArray(postsData)
+        ? postsData.filter((post) => post && (post.publishedAt || post.createdAt))
+        : [];
+
+      mergePosts(sanitizedPosts, { reset });
+
+      const totalFromApi =
+        response.data?.pagination?.total ||
+        response.data?.total ||
+        response.data?.count ||
+        null;
+      setHasMorePosts(sanitizedPosts.length === POSTS_PER_PAGE);
+      setCurrentPage(pageToFetch);
+      return sanitizedPosts;
+    },
+    [mergePosts]
+  );
+
+  const fetchCategoriesAndTags = useCallback(
+    async (referencePosts = []) => {
+      const [categoriesRes, tagsRes] = await Promise.all([
+        categoriesAPI.getAll().catch(() => ({ data: { categories: [] } })),
+        searchAPI.getPopularTags().catch(() => ({ data: { tags: [] } })),
+      ]);
+
+      const categoriesData =
+        categoriesRes.data?.categories ||
+        categoriesRes.data?.data ||
+        (Array.isArray(categoriesRes.data) ? categoriesRes.data : []) ||
+        [];
+
+      const tagsData =
+        tagsRes.data?.tags ||
+        tagsRes.data?.data ||
+        (Array.isArray(tagsRes.data) ? tagsRes.data : []) ||
+        [];
+
+      const sourcePosts = referencePosts.length ? referencePosts : postsRef.current;
+      const categoriesWithCounts = buildCategoryCounts(categoriesData, sourcePosts);
+
+      setCategories(Array.isArray(categoriesWithCounts) ? categoriesWithCounts.slice(0, 8) : []);
+      setPopularTags(Array.isArray(tagsData) ? tagsData.slice(0, 12) : []);
+    },
+    [buildCategoryCounts]
+  );
+
+  const featuredPosts = useMemo(() => posts.slice(0, 2), [posts]);
+  const recentPosts = useMemo(() => posts, [posts]);
+  const trendingPosts = useMemo(() => {
+    if (!posts.length) return [];
+    return [...posts]
+      .sort((a, b) => {
+        const scoreA = (a.viewCount || 0) + (a.likes?.length || 0) * 10;
+        const scoreB = (b.viewCount || 0) + (b.likes?.length || 0) * 10;
+        return scoreB - scoreA;
+      })
+      .slice(0, 5);
+  }, [posts]);
 
   // Check if mobile on mount and resize
   useEffect(() => {
@@ -49,141 +219,96 @@ const Home = () => {
     const fetchHomeData = async () => {
       try {
         setLoading(true);
-        const [postsRes, categoriesRes, tagsRes] = await Promise.all([
-          postsAPI.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { posts: [] } })),
-          categoriesAPI.getAll().catch(() => ({ data: { categories: [] } })),
-          searchAPI.getPopularTags().catch(() => ({ data: { tags: [] } }))
-        ]);
-
-        const postsData = postsRes.data?.posts || 
-                         postsRes.data?.data || 
-                         (Array.isArray(postsRes.data) ? postsRes.data : []) || 
-                         [];
-
-        const normalizeDate = (value) => {
-          if (!value) return null;
-          try {
-            const date = new Date(value);
-            return Number.isNaN(date.getTime()) ? null : date;
-          } catch {
-            return null;
-          }
-        };
-
-        const getPostDate = (post) => {
-          if (!post) return new Date(0);
-          const date = normalizeDate(post.publishedAt) || 
-                      normalizeDate(post.createdAt) || 
-                      normalizeDate(post.updatedAt);
-          return date || new Date(0);
-        };
-
-        const sortedPosts = Array.isArray(postsData)
-          ? [...postsData]
-              .filter(post => post && (post.publishedAt || post.createdAt))
-              .sort((a, b) => {
-                const dateA = getPostDate(a);
-                const dateB = getPostDate(b);
-                return dateB.getTime() - dateA.getTime();
-              })
-          : [];
-
-        // Calculate trending posts (by views and likes)
-        const trending = [...sortedPosts]
-          .sort((a, b) => {
-            const scoreA = (a.viewCount || 0) + ((a.likes?.length || 0) * 10);
-            const scoreB = (b.viewCount || 0) + ((b.likes?.length || 0) * 10);
-            return scoreB - scoreA;
-          })
-          .slice(0, 5);
-
-        const categoriesData = categoriesRes.data?.categories || 
-                               categoriesRes.data?.data || 
-                               (Array.isArray(categoriesRes.data) ? categoriesRes.data : []) || 
-                               [];
-        
-        const tagsData = tagsRes.data?.tags || 
-                        tagsRes.data?.data || 
-                        (Array.isArray(tagsRes.data) ? tagsRes.data : []) || 
-                        [];
-
-        const categoriesWithCounts = (Array.isArray(categoriesData) ? categoriesData : [])
-          .filter(Boolean)
-          .map(category => {
-          const categoryId = category?._id ?? category?.id ?? category?.categoryId ?? null;
-          const categorySlug = category?.slug ?? null;
-
-          const categoryPostCount = sortedPosts.filter(post => {
-            if (!post) return false;
-            const postCategory = post.category;
-            const postCategories = post.categories;
-
-            const matchesSingleCategory = () => {
-              if (!postCategory) return false;
-              const postCategoryId = postCategory._id || postCategory.id || postCategory;
-              const postCategorySlug = postCategory.slug;
-              return (
-                (categoryId && String(postCategoryId) === String(categoryId)) ||
-                (categorySlug && postCategorySlug && postCategorySlug === categorySlug)
-              );
-            };
-
-            const matchesCategoryArray = () => {
-              if (!Array.isArray(postCategories)) return false;
-              return postCategories.some(cat => {
-                const catId = cat?._id || cat?.id || cat;
-                const catSlug = cat?.slug;
-                return (
-                  (categoryId && String(catId) === String(categoryId)) ||
-                  (categorySlug && catSlug && catSlug === categorySlug)
-                );
-              });
-            };
-
-            return matchesSingleCategory() || matchesCategoryArray();
-          }).length;
-
-          return {
-            ...category,
-            postCount: categoryPostCount,
-          };
-        });
-
-        setFeaturedPosts(sortedPosts.slice(0, 2));
-        setRecentPosts(sortedPosts.slice(0, 10));
-        setTrendingPosts(trending);
-        setCategories(Array.isArray(categoriesWithCounts) ? categoriesWithCounts.slice(0, 8) : []);
-        setPopularTags(Array.isArray(tagsData) ? tagsData.slice(0, 12) : []);
-        setTotalPosts(sortedPosts.length);
+        const initialPosts = await loadPostsPage(1, { reset: true });
+        await fetchCategoriesAndTags(initialPosts);
       } catch (error) {
         console.error('Error fetching home data:', error);
-        setFeaturedPosts([]);
-        setRecentPosts([]);
-        setTrendingPosts([]);
+        setPosts([]);
+        setHasMorePosts(false);
         setCategories([]);
         setPopularTags([]);
+        toast.error('Failed to load the latest stories.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchHomeData();
-  }, []);
+  }, [loadPostsPage, fetchCategoriesAndTags]);
 
-  const handleNewsletterSubscribe = async (e) => {
+  const loadMorePosts = async () => {
+    if (!hasMorePosts || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      await loadPostsPage(currentPage + 1);
+    } catch (error) {
+      console.error('Failed to load more posts:', error);
+      toast.error('Unable to load more posts right now.');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const toggleTopic = (topicValue) => {
+    setSelectedTopics((prev) => {
+      if (prev.includes(topicValue)) {
+        return prev.filter((topic) => topic !== topicValue);
+      }
+      return [...prev, topicValue];
+    });
+  };
+
+  const resetNewsletterForm = () => {
+    setNewsletterEmail('');
+    setSelectedTopics(['weekly-digest']);
+    setConsentChecked(false);
+  };
+
+  const closeOptInModal = () => {
+    setShowOptInModal(false);
+    setPendingSubscription(null);
+  };
+
+  const handleNewsletterSubscribe = (e) => {
     e.preventDefault();
-    if (!newsletterEmail.trim()) {
+    const sanitizedEmail = newsletterEmail.trim();
+    if (!sanitizedEmail) {
       toast.error('Please enter your email');
       return;
     }
 
+    if (selectedTopics.length === 0) {
+      toast.error('Select at least one topic you care about.');
+      return;
+    }
+
+    if (!consentChecked) {
+      toast.error('Please confirm email consent to continue.');
+      return;
+    }
+
+    setPendingSubscription({ email: sanitizedEmail });
+    setShowOptInModal(true);
+  };
+
+  const confirmNewsletterSubscription = async () => {
+    if (!pendingSubscription?.email) return;
     setSubscribing(true);
     try {
-      await newsletterAPI.subscribe(newsletterEmail);
-      toast.success('Successfully subscribed to newsletter!');
-      setNewsletterEmail('');
+      await newsletterAPI.subscribe({
+        email: pendingSubscription.email,
+        topics: selectedTopics,
+        consent: {
+          marketing: true,
+          doubleOptIn: true,
+          timestamp: new Date().toISOString(),
+        },
+      });
+      toast.success('Check your inbox to confirm your subscription.');
+      resetNewsletterForm();
+      closeOptInModal();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to subscribe');
+      toast.error(error.response?.data?.message || 'Failed to start subscription. Please try again.');
     } finally {
       setSubscribing(false);
     }
@@ -293,15 +418,17 @@ const Home = () => {
             </section>
 
             {/* Load More */}
-            {recentPosts.length > 0 && (
+            {recentPosts.length > 0 && hasMorePosts && (
               <div className="text-center pt-8">
-                <Link
-                  to="/posts"
-                  className="btn btn-outline"
+                <button
+                  type="button"
+                  onClick={loadMorePosts}
+                  className="btn btn-outline inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                  disabled={loadingMore}
                 >
-                  Load more articles
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Link>
+                  {loadingMore ? 'Loading...' : 'Load more articles'}
+                  {!loadingMore && <ArrowRight className="ml-2 w-4 h-4" />}
+                </button>
               </div>
             )}
           </div>
@@ -331,14 +458,57 @@ const Home = () => {
                   placeholder="Enter your email"
                   required
                   className="w-full px-4 py-2.5 bg-surface border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-sm"
+                  disabled={subscribing}
                 />
+                <div>
+                  <p className="text-xs text-[var(--text-secondary)] mb-2">
+                    Choose the updates you want to receive:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {NEWSLETTER_TOPICS.map((topic) => (
+                      <label
+                        key={topic.value}
+                        className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                          selectedTopics.includes(topic.value)
+                            ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]'
+                            : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={selectedTopics.includes(topic.value)}
+                          onChange={() => toggleTopic(topic.value)}
+                          disabled={subscribing}
+                        />
+                        {topic.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <label className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={consentChecked}
+                    onChange={(e) => setConsentChecked(e.target.checked)}
+                    disabled={subscribing}
+                  />
+                  <span>
+                    I agree to receive emails from Nexus and understand I’ll need to confirm my
+                    subscription from my inbox.
+                  </span>
+                </label>
                 <button
                   type="submit"
                   disabled={subscribing}
                   className="btn btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {subscribing ? 'Subscribing...' : 'Subscribe'}
+                  {subscribing ? 'Working...' : 'Continue'}
                 </button>
+                <p className="text-[10px] text-[var(--text-muted)]">
+                  We send a confirmation email so no one can subscribe you without permission.
+                </p>
               </form>
             </motion.div>
 
@@ -520,6 +690,42 @@ const Home = () => {
         </div>
       </div>
       </div>
+      {showOptInModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 px-4 py-8">
+          <div className="surface-card max-w-md w-full rounded-2xl border border-[var(--border-subtle)] p-6 relative">
+            <button
+              className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              onClick={closeOptInModal}
+              disabled={subscribing}
+              aria-label="Close confirmation modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">Confirm your subscription</h3>
+            <p className="text-sm text-[var(--text-secondary)] mb-4">
+              We’ll send a confirmation email to{' '}
+              <span className="font-medium">{pendingSubscription?.email}</span>. Please click the link in your inbox to
+              finish subscribing.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={confirmNewsletterSubscription}
+                className="btn btn-primary w-full disabled:opacity-60"
+                disabled={subscribing}
+              >
+                {subscribing ? 'Sending confirmation...' : 'Send confirmation email'}
+              </button>
+              <button
+                onClick={closeOptInModal}
+                className="btn btn-outline w-full"
+                disabled={subscribing}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAuthToken, clearAuthToken } from '../utils/tokenStorage.js';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/v1';
 
@@ -18,7 +19,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -33,7 +34,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
+      clearAuthToken();
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
@@ -100,7 +101,10 @@ export const commentsAPI = {
 };
 
 export const newsletterAPI = {
-  subscribe: (email) => api.post('/newsletters/subscribe', { email }),
+  subscribe: (payload) => {
+    const body = typeof payload === 'string' ? { email: payload } : payload;
+    return api.post('/newsletters/subscribe', body);
+  },
   unsubscribe: (email) => api.get('/newsletters/unsubscribe', { params: { email } }),
   getAll: (params) => api.get('/newsletters', { params }),
   getArchive: (params) => api.get('/newsletters/archive', { params }),

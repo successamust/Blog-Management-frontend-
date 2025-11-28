@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import { getAuthToken, setAuthToken, clearAuthToken } from '../utils/tokenStorage.js';
 
 
 const authReducer = (state, action) => {
@@ -59,7 +60,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const verifyUser = async () => {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const user = localStorage.getItem('user');
       const lastAuthCheck = localStorage.getItem('lastAuthCheck');
       const now = Date.now();
@@ -139,7 +140,7 @@ export const AuthProvider = ({ children }) => {
               payload: { token, user: storedUser },
             });
           } else {
-            localStorage.removeItem('token');
+          clearAuthToken();
             localStorage.removeItem('user');
             localStorage.removeItem('lastAuthCheck');
             dispatch({ type: 'LOGOUT' });
@@ -177,7 +178,7 @@ export const AuthProvider = ({ children }) => {
       const response = await makeRequestWithRetry();
       const { token, user } = response.data;
       
-      localStorage.setItem('token', token);
+      setAuthToken(token);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('lastAuthCheck', Date.now().toString());
       
@@ -201,7 +202,7 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.register(userData);
       const { token, user } = response.data;
       
-      localStorage.setItem('token', token);
+      setAuthToken(token);
       localStorage.setItem('user', JSON.stringify(user));
       
       dispatch({ type: 'LOGIN_SUCCESS', payload: { token, user } });
@@ -216,7 +217,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    clearAuthToken();
     localStorage.removeItem('user');
     dispatch({ type: 'LOGOUT' });
     toast.success('Logged out successfully');

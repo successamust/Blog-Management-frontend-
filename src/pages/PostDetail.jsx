@@ -33,7 +33,6 @@ import OptimizedImage from '../components/common/OptimizedImage';
 import EmptyState from '../components/common/EmptyState';
 import FullscreenReader from '../components/posts/FullscreenReader';
 import ImageLightbox from '../components/common/ImageLightbox';
-import PostReactions from '../components/posts/PostReactions';
 import ReadingList from '../components/posts/ReadingList';
 import PostRecommendations from '../components/posts/PostRecommendations';
 import Poll from '../components/posts/Poll';
@@ -41,6 +40,7 @@ import { useReadingHistory } from '../hooks/useReadingHistory';
 import CommentThread from '../components/posts/CommentThread';
 
 const DEFAULT_POST_DESCRIPTION = 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.';
+const REPORTED_COMMENTS_KEY = 'nexus_reported_comments';
 
 const stripHtmlTags = (value) => {
   if (!value) return '';
@@ -59,6 +59,13 @@ const normalizeImageSource = (imagePath) => {
   return imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
 };
 
+const wrapTablesWithScroll = (html = '') => {
+  if (typeof html !== 'string' || !html.includes('<table')) return html;
+  return html
+    .replace(/<table/gi, '<div class="table-scroll"><table')
+    .replace(/<\/table>/gi, '</table></div>');
+};
+
 const PostDetail = () => {
   const { slug } = useParams();
   const { user, isAuthenticated, isAdmin } = useAuth();
@@ -74,13 +81,63 @@ const PostDetail = () => {
   const [showFullscreenReader, setShowFullscreenReader] = useState(false);
   const [lightboxImages, setLightboxImages] = useState([]);
   const [lightboxIndex, setLightboxIndex] = useState(-1);
-  const [postReactions, setPostReactions] = useState(null);
-  const [userReaction, setUserReaction] = useState(null);
-  const [loadingReactions, setLoadingReactions] = useState(false);
   const [poll, setPoll] = useState(null);
   const [loadingPoll, setLoadingPoll] = useState(false);
+  const [reportedComments, setReportedComments] = useState(() => {
+    if (typeof window === 'undefined') {
+      return {};
+    }
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(REPORTED_COMMENTS_KEY) || '{}');
+      return stored && typeof stored === 'object' ? stored : {};
+    } catch {
+      return {};
+    }
+  });
   const { addToHistory, updateReadingProgress } = useReadingHistory();
   const postId = post?._id;
+
+  const postAuthorId = useMemo(() => {
+    if (!post) return null;
+    const authorRef = post.author || post.createdBy || null;
+    if (!authorRef) return null;
+    if (typeof authorRef === 'string') return authorRef;
+    return authorRef._id || authorRef.id || null;
+  }, [post]);
+
+  const postKey = useMemo(() => {
+    if (!post) return null;
+    const identifier = post._id || post.id || post.slug;
+    return identifier ? String(identifier) : null;
+  }, [post]);
+
+  const reportedIdsForPost = useMemo(() => {
+    if (!postKey) return new Set();
+    return new Set(reportedComments[postKey] || []);
+  }, [reportedComments, postKey]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(REPORTED_COMMENTS_KEY, JSON.stringify(reportedComments));
+    } catch (error) {
+      console.warn('Failed to persist reported comments cache', error);
+    }
+  }, [reportedComments]);
+
+  const markCommentReported = useCallback(
+    (commentId) => {
+      if (!postKey || !commentId) return;
+      setReportedComments((prev) => {
+        const next = { ...prev };
+        const existing = new Set(next[postKey] || []);
+        existing.add(commentId);
+        next[postKey] = Array.from(existing);
+        return next;
+      });
+    },
+    [postKey]
+  );
 
   const seoDescription = useMemo(() => {
     if (!post) return DEFAULT_POST_DESCRIPTION;
@@ -101,14 +158,14 @@ const PostDetail = () => {
   const seoUrl = post ? `/posts/${post.slug || post._id}` : undefined;
 
   const shareUrl = useMemo(() => {
-    const origin = typeof window !== 'undefined' && window.location.origin
-      ? window.location.origin
-      : 'https://thenexusblog.vercel.app';
+    const origin =
+      (typeof window !== 'undefined' && window.location.origin) ||
+      'https://thenexusblog.vercel.app';
     if (!post) {
       return origin;
     }
     const identifier = post.slug || post._id || post.id;
-    return `${origin}/preview/posts/${identifier}`;
+    return `${origin}/posts/${identifier}`;
   }, [post]);
 
   useEffect(() => {
@@ -244,19 +301,57 @@ const PostDetail = () => {
     }
   }, [postId, ensureCommentTree]);
 
-  useEffect(() => {
-    const fetchReactions = async () => {
-      if (!post?._id) return;
-      try {
-        const response = await interactionsAPI.getReactions(post._id);
-        setPostReactions(response.data?.reactions || {});
-        setUserReaction(response.data?.userReaction || null);
-      } catch (error) {
-        console.error('Failed to fetch reactions:', error);
+  const handleReportComment = useCallback(
+    async (comment, reason) => {
+      if (!post || !comment?._id) {
+        return false;
       }
-    };
-    fetchReactions();
-  }, [post?._id]);
+
+      if (!reason || !reason.trim()) {
+        toast.error('Please include a short reason so moderators can follow up.');
+        return false;
+      }
+
+      if (reportedIdsForPost.has(comment._id)) {
+        toast.success('Thanks! This comment is already in the review queue.');
+        return true;
+      }
+
+      try {
+        const response = await fetch('/api/report-comment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            commentId: comment._id,
+            commentAuthor: comment.author?.username || comment.author?.email || 'unknown',
+            commentExcerpt: comment.content?.slice(0, 280) || '',
+            postId: post._id || post.id,
+            postSlug: post.slug,
+            postTitle: post.title,
+            reason: reason.trim(),
+            reporterId: user?._id || null,
+            reporterName: user?.username || user?.email || 'anonymous',
+          }),
+        });
+
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => ({}));
+          throw new Error(errorPayload?.message || 'Failed to submit report');
+        }
+
+        markCommentReported(comment._id);
+        toast.success('Thanks for flagging this comment. Our moderators will review it shortly.');
+        return true;
+      } catch (error) {
+        console.error('Failed to report comment:', error);
+        toast.error('Could not submit the report. Please try again in a moment.');
+        return false;
+      }
+    },
+    [post, user, reportedIdsForPost, markCommentReported]
+  );
 
   useEffect(() => {
     const fetchPoll = async () => {
@@ -285,25 +380,6 @@ const PostDetail = () => {
     };
     fetchPoll();
   }, [post?._id]);
-
-  const handleReaction = async (postId, reactionType) => {
-    if (!isAuthenticated) {
-      toast.error('Please login to react');
-      return;
-    }
-
-    try {
-      setLoadingReactions(true);
-      const response = await interactionsAPI.react(postId, reactionType);
-      setPostReactions(response.data?.reactions || {});
-      setUserReaction(response.data?.reactionType || null);
-      toast.success('Reaction saved!');
-    } catch (error) {
-      toast.error('Failed to save reaction');
-    } finally {
-      setLoadingReactions(false);
-    }
-  };
 
   const handlePollVote = async (pollId, optionId) => {
     if (!isAuthenticated) {
@@ -727,7 +803,7 @@ const PostDetail = () => {
 
               {/* Post Content */}
               <div 
-                className="prose prose-lg max-w-[680px] mx-auto mb-8"
+                className="article-content prose prose-lg max-w-[680px] mx-auto mb-8"
                 onClick={(e) => {
                   // Handle image clicks for lightbox
                   if (e.target.tagName === 'IMG' && e.target.src) {
@@ -747,7 +823,7 @@ const PostDetail = () => {
                   
                   if (isHTML) {
                     // Render HTML content (from rich text editor)
-                    const sanitizedHTML = DOMPurify.sanitize(post.content, {
+                    const sanitizedHTML = DOMPurify.sanitize(wrapTablesWithScroll(post.content), {
                       ALLOWED_TAGS: [
                         'p', 'br', 'strong', 'em', 'u', 's',
                         'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -761,7 +837,20 @@ const PostDetail = () => {
                     return <div dangerouslySetInnerHTML={{ __html: sanitizedHTML }} />;
                   } else {
                     // Render Markdown content (legacy posts)
-                    return <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>;
+                    return (
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          table: ({ node, ...props }) => (
+                            <div className="table-scroll">
+                              <table {...props} />
+                            </div>
+                          ),
+                        }}
+                      >
+                        {post.content}
+                      </ReactMarkdown>
+                    );
                   }
                 })()}
               </div>
@@ -862,19 +951,6 @@ const PostDetail = () => {
             </div>
           </motion.article>
 
-          {/* Post Reactions */}
-          {post && (
-            <div className="mt-6 p-4 bg-surface-subtle rounded-xl">
-              <PostReactions 
-                post={post} 
-                reactions={postReactions}
-                userReaction={userReaction}
-                onReaction={handleReaction}
-                loading={loadingReactions}
-              />
-            </div>
-          )}
-
           {/* Poll */}
           {post && poll && !loadingPoll && (
             <div className="mt-6 p-4 bg-surface-subtle rounded-xl">
@@ -954,6 +1030,9 @@ const PostDetail = () => {
                     onDelete={handleDeleteComment}
                     onLike={handleCommentLike}
                     onReply={handleReplyToComment}
+                    onReport={handleReportComment}
+                    reportedCommentIds={reportedIdsForPost}
+                    postAuthorId={postAuthorId}
                   />
                 ))
               ) : (
@@ -998,6 +1077,7 @@ const PostDetail = () => {
               </div>
             </div>
           </motion.div>
+
         </div>
       </div>
       {post && (

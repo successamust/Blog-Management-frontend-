@@ -18,6 +18,18 @@ const KeyboardShortcuts = () => {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      const activeElement = document.activeElement;
+      const isFormField =
+        activeElement &&
+        (activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.isContentEditable);
+      const isPlainShortcut = !e.ctrlKey && !e.metaKey && !e.altKey;
+
+      if (isFormField && isPlainShortcut) {
+        return;
+      }
+
       // Show shortcuts with ?
       if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();

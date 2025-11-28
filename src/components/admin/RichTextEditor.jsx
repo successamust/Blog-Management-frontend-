@@ -1065,7 +1065,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   );
 
   const editorContent = (
-    <div className={`border border-[var(--border-subtle)] rounded-lg overflow-hidden bg-[var(--surface-bg)] transition-colors ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}>
+    <div className={`rich-text-editor border border-[var(--border-subtle)] rounded-lg overflow-hidden bg-[var(--surface-bg)] transition-colors ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}>
       {/* Toolbar */}
       <div className={`border-b border-[var(--border-subtle)] ${isDark ? 'bg-[var(--surface-bg)]' : 'bg-[var(--surface-subtle)]'} p-2 flex flex-wrap items-center gap-1 overflow-x-auto`}>
         {/* Formatting */}
@@ -1462,123 +1462,132 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     <>
       {editorContent}
       <style>{`
-        .ProseMirror {
+        .rich-text-editor .ProseMirror {
           outline: none;
+          background-color: var(--surface-bg) !important;
+          color: var(--text-primary) !important;
+          caret-color: var(--accent) !important;
+          border-radius: 0.75rem;
+          padding: 1.5rem;
+          min-height: 320px;
+          border: 1px solid var(--border-subtle);
         }
-        .ProseMirror p {
-          line-height: 1.4;
-          margin-bottom: 0.75em;
+        .rich-text-editor .ProseMirror p {
+          line-height: 1.6;
+          margin-bottom: 0.85em;
           margin-top: 0;
+          color: inherit;
         }
-        .ProseMirror p.is-editor-empty:first-child::before {
+        .rich-text-editor .ProseMirror p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);
           float: left;
-          color: #9ca3af;
+          color: var(--text-muted);
           pointer-events: none;
           height: 0;
         }
-        .ProseMirror code {
-          background-color: rgba(97, 97, 97, 0.1);
-          color: #616161;
-          padding: 0.2em 0.4em;
-          border-radius: 0.25rem;
-          font-size: 0.9em;
+        .rich-text-editor .ProseMirror code {
+          background-color: rgba(148, 163, 184, 0.18);
+          color: var(--text-primary);
+          padding: 0.2em 0.45em;
+          border-radius: 0.4rem;
+          font-size: 0.92em;
         }
-        .ProseMirror pre {
-          background: #1e1e1e;
-          color: #d4d4d4;
+        .rich-text-editor .ProseMirror pre {
+          background: var(--surface-subtle);
+          color: var(--text-primary);
           padding: 1rem;
-          border-radius: 0.5rem;
+          border-radius: 0.75rem;
           overflow-x: auto;
         }
-        .ProseMirror pre code {
+        .rich-text-editor .ProseMirror pre code {
           background: transparent;
           color: inherit;
           padding: 0;
         }
-        .ProseMirror img {
+        .rich-text-editor .ProseMirror img {
           max-width: 100%;
           height: auto;
           border-radius: 0.5rem;
         }
-        .ProseMirror blockquote {
-          border-left: 4px solid #3b82f6;
+        .rich-text-editor .ProseMirror blockquote {
+          border-left: 4px solid var(--accent);
           padding-left: 1rem;
           margin-left: 0;
           font-style: italic;
         }
-        .ProseMirror table {
+        .rich-text-editor .ProseMirror table {
           width: 100%;
           border-collapse: collapse;
           margin: 1em 0;
           table-layout: fixed;
+          border: 1px solid var(--border-subtle);
         }
-        .ProseMirror table:first-child {
+        .rich-text-editor .ProseMirror table:first-child {
           margin-top: 0;
         }
-        .ProseMirror table:last-child {
+        .rich-text-editor .ProseMirror table:last-child {
           margin-bottom: 0;
         }
-        .ProseMirror p + table {
+        .rich-text-editor .ProseMirror p + table {
           margin-top: 0.75em;
         }
-        .ProseMirror table + p {
+        .rich-text-editor .ProseMirror table + p {
           margin-top: 0.75em;
         }
-        .ProseMirror th,
-        .ProseMirror td {
-          border: 1px solid #e5e7eb;
+        .rich-text-editor .ProseMirror th,
+        .rich-text-editor .ProseMirror td {
+          border: 1px solid var(--border-subtle);
           text-align: left;
           vertical-align: top;
         }
-        .ProseMirror th {
-          background-color: rgba(15, 23, 42, 0.04);
+        .rich-text-editor .ProseMirror th {
+          background-color: rgba(148, 163, 184, 0.08);
           font-weight: 600;
           padding: 0.5rem 1rem;
         }
-        .ProseMirror td {
+        .rich-text-editor .ProseMirror td {
           padding: 0.75rem 1rem 0.5rem 1rem;
         }
-        .ProseMirror .selectedCell {
+        .rich-text-editor .ProseMirror .selectedCell {
           outline: 2px solid var(--accent);
           outline-offset: -2px;
         }
-        .ProseMirror table[data-borderless="true"],
+        .rich-text-editor .ProseMirror table[data-borderless="true"],
         .prose table[data-borderless="true"] {
           border: none;
         }
-        .ProseMirror table[data-borderless="true"] th,
-        .ProseMirror table[data-borderless="true"] td,
+        .rich-text-editor .ProseMirror table[data-borderless="true"] th,
+        .rich-text-editor .ProseMirror table[data-borderless="true"] td,
         .prose table[data-borderless="true"] th,
         .prose table[data-borderless="true"] td {
           border-color: transparent;
         }
-        .ProseMirror ul, .ProseMirror ol {
+        .rich-text-editor .ProseMirror ul, .rich-text-editor .ProseMirror ol {
           padding-left: 1.5rem;
           list-style-position: outside;
         }
-        .ProseMirror ul {
+        .rich-text-editor .ProseMirror ul {
           list-style-type: disc;
         }
-        .ProseMirror ol {
+        .rich-text-editor .ProseMirror ol {
           list-style-type: decimal;
         }
-        .ProseMirror li {
+        .rich-text-editor .ProseMirror li {
           display: list-item;
           margin-left: 0;
         }
-        .ProseMirror h1, .ProseMirror h2, .ProseMirror h3 {
+        .rich-text-editor .ProseMirror h1, .rich-text-editor .ProseMirror h2, .rich-text-editor .ProseMirror h3 {
           font-weight: 700;
           margin-top: 1.5rem;
           margin-bottom: 0.75rem;
         }
-        .ProseMirror h1 {
+        .rich-text-editor .ProseMirror h1 {
           font-size: 2rem;
         }
-        .ProseMirror h2 {
+        .rich-text-editor .ProseMirror h2 {
           font-size: 1.5rem;
         }
-        .ProseMirror h3 {
+        .rich-text-editor .ProseMirror h3 {
           font-size: 1.25rem;
         }
         .ProseMirror a {

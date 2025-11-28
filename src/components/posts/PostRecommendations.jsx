@@ -103,17 +103,41 @@ const PostRecommendations = ({ currentPost, limit = 6 }) => {
   }
 
   return (
-    <div className="mt-12">
-      <div className="flex items-center gap-2 mb-6">
-        <Sparkles className="w-6 h-6 text-[var(--accent)]" />
-        <h2 className="text-2xl font-bold text-primary">You Might Also Like</h2>
+    <section className="mt-14 space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-[var(--accent)]/15 text-[var(--accent)] flex items-center justify-center">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-[var(--text-muted)]">
+              Keep Reading
+            </p>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+              You Might Also Like
+            </h2>
+          </div>
+        </div>
+        <div className="text-sm text-[var(--text-muted)] flex items-center gap-2">
+          <TrendingUp className="w-4 h-4" />
+          Curated for you
+        </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {recommendations.map((post, index) => (
-          <ModernPostCard key={post._id || post.id} post={post} delay={index * 0.1} />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        {recommendations.slice(0, limit).map((post, index) => (
+          <motion.div
+            key={post._id || post.id}
+            className="h-full"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.06 }}
+          >
+            <ModernPostCard post={post} />
+          </motion.div>
         ))}
       </div>
-    </div>
+    </section>
   );
 };
 

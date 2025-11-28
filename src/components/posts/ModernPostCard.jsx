@@ -202,10 +202,10 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.4, delay }}
-      className="group"
+      className="group h-full"
     >
-      <Link to={postHref} className="block" aria-label={`Read ${postTitle}`}>
-        <div className="flex flex-col sm:flex-row gap-6 pb-8 border-b border-[var(--border-subtle)] hover:border-[var(--border-subtle)] transition-colors">
+      <Link to={postHref} className="block h-full" aria-label={`Read ${postTitle}`}>
+        <div className="flex h-full flex-col sm:flex-row gap-6 pb-8 border-b border-[var(--border-subtle)] hover:border-[var(--border-subtle)] transition-colors">
           {/* Image */}
           {post.featuredImage && (
             <div className="flex-shrink-0 sm:w-48 sm:h-32 w-full h-48 overflow-hidden rounded-xl">
@@ -225,7 +225,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
           )}
 
           {/* Content */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 flex flex-col">
             {categoryLabel && (
               <div className="mb-2">
                 <span className="inline-flex items-center rounded-full border border-[var(--border-subtle)] px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-[var(--text-muted)]">
@@ -271,13 +271,13 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
 
             {/* Excerpt */}
             {postExcerpt && (
-              <p className="text-[var(--text-secondary)] mb-4 leading-relaxed line-clamp-3">
+              <p className="text-[var(--text-secondary)] mb-4 leading-relaxed line-clamp-3 flex-1">
                 {postExcerpt}
               </p>
             )}
 
             {/* Tags & Meta */}
-            <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center justify-between flex-wrap gap-3 mt-auto pt-2">
                 <div className="flex items-center space-x-4 text-sm text-[var(--text-muted)]">
                   {sanitizedTags.length > 0 && (
                     <div className="flex items-center space-x-2">

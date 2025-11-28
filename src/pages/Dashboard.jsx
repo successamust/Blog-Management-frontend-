@@ -1313,30 +1313,30 @@ const CreatePostTab = () => {
       <h2 className="text-2xl font-bold text-primary mb-6">Create New Post</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-secondary mb-2">Title</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Title</label>
           <input
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-surface"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-secondary mb-2">Excerpt</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Excerpt</label>
           <textarea
             name="excerpt"
             value={formData.excerpt}
             onChange={handleChange}
             rows="3"
-            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-surface"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-secondary mb-2">Content</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Content</label>
           <RichTextEditor
             value={formData.content}
             onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
@@ -1346,9 +1346,9 @@ const CreatePostTab = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-secondary mb-2">Category</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Category</label>
             {categoriesLoading ? (
-              <div className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg bg-surface-subtle flex items-center gap-2">
+              <div className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg bg-[var(--surface-subtle)] flex items-center gap-2">
                 <Spinner size="xs" />
                 <span className="text-sm text-muted">Loading categories...</span>
               </div>
@@ -1357,7 +1357,7 @@ const CreatePostTab = () => {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-surface"
+                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
               >
                 <option value="">Select a category</option>
                 {categories.length > 0 ? (
@@ -1374,20 +1374,20 @@ const CreatePostTab = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-secondary mb-2">Tags (comma-separated)</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Tags (comma-separated)</label>
             <input
               type="text"
               name="tags"
               value={formData.tags}
               onChange={handleChange}
               placeholder="tag1, tag2, tag3"
-              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-surface"
+              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-secondary mb-2">Featured Image</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Featured Image</label>
           {formData.featuredImage ? (
             <div className="space-y-2">
               <img
@@ -1397,11 +1397,11 @@ const CreatePostTab = () => {
                 onError={() => toast.error('Failed to load image')}
               />
               <div className="flex items-center gap-2">
-                <span className="text-sm text-secondary truncate">{formData.featuredImage}</span>
+                <span className="text-sm text-[var(--text-secondary)] truncate">{formData.featuredImage}</span>
                 <button
                   type="button"
                   onClick={handleDeleteImage}
-                  className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                className="px-3 py-1 text-sm rounded-lg border border-rose-400/40 text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition-colors"
                 >
                   Remove
                 </button>
@@ -1414,22 +1414,22 @@ const CreatePostTab = () => {
                 accept="image/*"
                 onChange={handleImageUpload}
                 disabled={uploadingImage}
-                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-surface"
+                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
               />
               {uploadingImage && (
-                <p className="text-sm text-muted mt-2">Uploading image...</p>
+                <p className="text-sm text-[var(--text-muted)] mt-2">Uploading image...</p>
               )}
             </div>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-secondary mb-2">Status</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Status</label>
           <select
             name="status"
             value={formData.status}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-surface"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           >
             <option value="published">Published</option>
             <option value="draft">Draft</option>
@@ -1450,7 +1450,7 @@ const CreatePostTab = () => {
                 status: 'published',
               });
             }}
-            className="px-6 py-2 border border-[var(--border-subtle)] rounded-lg text-secondary hover:bg-surface-subtle"
+            className="px-6 py-2 border border-[var(--border-subtle)] rounded-lg text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]"
           >
             Reset
           </button>

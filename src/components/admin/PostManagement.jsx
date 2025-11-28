@@ -794,7 +794,7 @@ const CreatePost = ({ onSuccess }) => {
                 <button
                   type="button"
                   onClick={handleDeleteImage}
-                  className="px-4 py-2 bg-red-100 text-red-700 border border-red-300 rounded-lg hover:bg-red-200 transition-colors flex items-center"
+                  className="px-4 py-2 rounded-lg border border-rose-400/40 text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition-colors flex items-center"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1222,7 +1222,7 @@ const EditPost = ({ onSuccess }) => {
                 <button
                   type="button"
                   onClick={handleDeleteImage}
-                  className="px-4 py-2 bg-red-100 text-red-700 border border-red-300 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center text-sm sm:text-base whitespace-nowrap"
+                  className="px-4 py-2 rounded-lg border border-rose-400/40 text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition-colors flex items-center justify-center text-sm sm:text-base whitespace-nowrap"
                 >
                   <X className="w-4 h-4" />
                 </button>
