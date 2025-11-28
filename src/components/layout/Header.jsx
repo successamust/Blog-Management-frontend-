@@ -218,6 +218,14 @@ const Header = () => {
                 />
               </div>
             </form>
+
+            {/* Utility Toggles */}
+            <div className="flex items-center justify-between px-2 mb-4 gap-3">
+              <span className="text-xs uppercase tracking-wide text-[var(--text-muted)]">
+                Appearance
+              </span>
+              <ThemeToggle className="p-2 rounded-lg bg-[var(--surface-subtle)]" />
+            </div>
             
             <div className="flex flex-col space-y-1">
               <Link
