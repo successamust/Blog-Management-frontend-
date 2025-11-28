@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, UserMinus, Search, UserCheck } from 'lucide-react';
+import { Users, Shield, UserMinus, Search, UserCheck, PenLine } from 'lucide-react';
 import { adminAPI, authorsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import SkeletonLoader from '../common/SkeletonLoader';
@@ -20,18 +20,36 @@ const UserManagement = () => {
     try {
       setLoading(true);
       const [usersRes, statsRes] = await Promise.all([
-        adminAPI.getUsers(),
-        adminAPI.getUserStats(),
+        adminAPI.getUsers({ limit: 1000 }).catch(() => ({ data: { users: [] } })),
+        adminAPI.getUserStats().catch(() => ({ data: {} })),
       ]);
       const usersData =
         usersRes.data?.users ||
         usersRes.data?.data ||
         (Array.isArray(usersRes.data) ? usersRes.data : []) ||
         [];
-      setUsers(Array.isArray(usersData) ? usersData : []);
+      const usersList = Array.isArray(usersData) ? usersData : [];
+      setUsers(usersList);
 
+      // Calculate stats from users list if API doesn't return proper stats
       const statsData = statsRes.data?.stats || statsRes.data || {};
-      setStats(statsData);
+      
+      // Calculate from users list
+      const totalUsers = usersList.length;
+      const totalAdmins = usersList.filter(u => u.role === 'admin' || u.role === 'administrator').length;
+      const totalAuthors = usersList.filter(u => u.role === 'author' || u.role === 'writer').length;
+      const totalRegularUsers = usersList.filter(u => {
+        const role = (u.role || 'user').toLowerCase();
+        return role !== 'admin' && role !== 'administrator' && role !== 'author' && role !== 'writer';
+      }).length;
+
+      // Use API stats if available, otherwise use calculated stats
+      setStats({
+        totalUsers: statsData.totalUsers || totalUsers,
+        totalAdmins: statsData.totalAdmins || totalAdmins,
+        totalAuthors: statsData.totalAuthors || totalAuthors,
+        totalRegularUsers: statsData.totalRegularUsers || totalRegularUsers,
+      });
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to load users');
@@ -90,7 +108,7 @@ const UserManagement = () => {
     <div className="space-y-6">
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -112,10 +130,19 @@ const UserManagement = () => {
           <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
             <div className="flex items-center justify-between">
               <div>
+                <p className="text-sm font-medium text-[var(--text-secondary)]">Authors</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)] mt-1">{stats.totalAuthors || 0}</p>
+              </div>
+              <PenLine className="w-8 h-8 text-emerald-400" />
+            </div>
+          </div>
+          <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+            <div className="flex items-center justify-between">
+              <div>
                 <p className="text-sm font-medium text-[var(--text-secondary)]">Regular Users</p>
                 <p className="text-2xl font-bold text-[var(--text-primary)] mt-1">{stats.totalRegularUsers || 0}</p>
               </div>
-              <UserMinus className="w-8 h-8 text-emerald-400" />
+              <UserMinus className="w-8 h-8 text-blue-400" />
             </div>
           </div>
         </div>
