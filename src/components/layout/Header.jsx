@@ -14,6 +14,8 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import BrandWordmark from '../common/BrandWordmark';
 import NotificationCenter from '../common/NotificationCenter';
+import ThemeToggle from '../common/ThemeToggle';
+import LanguageSwitcher from '../common/LanguageSwitcher';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -83,6 +85,8 @@ const Header = () => {
 
             {isAuthenticated ? (
               <div className="flex items-center space-x-2 ml-2 pl-2 border-l border-[var(--border-subtle)]">
+                <LanguageSwitcher />
+                <ThemeToggle />
                 <NotificationCenter />
                 {isAdmin() && (
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

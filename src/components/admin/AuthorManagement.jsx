@@ -93,13 +93,6 @@ const AuthorManagement = () => {
         new Map(allApps.map(app => [app._id, app])).values()
       );
 
-      console.log('Fetched applications:', {
-        total: uniqueApps.length,
-        pending: uniqueApps.filter(a => a.authorApplication?.status === 'pending').length,
-        approved: uniqueApps.filter(a => a.authorApplication?.status === 'approved').length,
-        rejected: uniqueApps.filter(a => a.authorApplication?.status === 'rejected').length,
-        apps: uniqueApps.map(a => ({ id: a._id, status: a.authorApplication?.status }))
-      });
 
       setAllApplications(uniqueApps);
       
@@ -195,10 +188,6 @@ const AuthorManagement = () => {
   const approvedCount = allApplications.filter(a => getStatus(a) === 'approved').length;
   const rejectedCount = allApplications.filter(a => getStatus(a) === 'rejected').length;
   
-  // Debug logging
-  if (allApplications.length > 0) {
-    console.log('Counts calculated:', { pendingCount, approvedCount, rejectedCount, total: allApplications.length });
-  }
 
   const getStatusIcon = (status) => {
     switch (status) {

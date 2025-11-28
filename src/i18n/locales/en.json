@@ -1,0 +1,80 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous"
+  },
+  "nav": {
+    "home": "Home",
+    "posts": "Posts",
+    "categories": "Categories",
+    "search": "Search",
+    "dashboard": "Dashboard",
+    "admin": "Admin",
+    "login": "Sign In",
+    "logout": "Logout"
+  },
+  "post": {
+    "title": "Post",
+    "create": "Create Post",
+    "edit": "Edit Post",
+    "delete": "Delete Post",
+    "publish": "Publish",
+    "draft": "Draft",
+    "views": "views",
+    "likes": "likes",
+    "comments": "comments",
+    "shares": "shares",
+    "readingTime": "min read",
+    "related": "Related Posts",
+    "recommended": "You Might Also Like",
+    "fullscreen": "Fullscreen",
+    "bookmark": "Bookmark",
+    "share": "Share"
+  },
+  "author": {
+    "profile": "Author Profile",
+    "posts": "Posts",
+    "stats": "Statistics",
+    "follow": "Follow",
+    "unfollow": "Unfollow"
+  },
+  "search": {
+    "placeholder": "Search articles...",
+    "noResults": "No results found",
+    "results": "results",
+    "savedSearches": "Saved Searches",
+    "saveSearch": "Save Search",
+    "searchHistory": "Search History"
+  },
+  "dashboard": {
+    "overview": "Overview",
+    "myPosts": "My Posts",
+    "comments": "Comments",
+    "likes": "Likes",
+    "history": "Reading History",
+    "bookmarks": "Bookmarks",
+    "settings": "Settings"
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "users": "Users",
+    "posts": "Posts",
+    "categories": "Categories",
+    "newsletters": "Newsletters",
+    "analytics": "Analytics"
+  }
+}
+

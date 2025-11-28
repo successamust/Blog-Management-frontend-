@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import ReadingProgress from './components/common/ReadingProgress';
@@ -30,6 +31,9 @@ const CategoryPosts = lazy(() => import('./pages/CategoryPosts'));
 const Search = lazy(() => import('./pages/Search'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Admin = lazy(() => import('./pages/Admin'));
+const AuthorProfile = lazy(() => import('./pages/AuthorProfile'));
+const TagPage = lazy(() => import('./pages/TagPage'));
+const NewsletterArchive = lazy(() => import('./pages/NewsletterArchive'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -71,6 +75,9 @@ function AppContent() {
                   <Route path="/posts/:slug" element={<PageTransition><PostDetail /></PageTransition>} />
                   <Route path="/categories" element={<PageTransition><Categories /></PageTransition>} />
                   <Route path="/categories/:slug" element={<PageTransition><CategoryPosts /></PageTransition>} />
+                  <Route path="/authors/:username" element={<PageTransition><AuthorProfile /></PageTransition>} />
+                  <Route path="/tags/:tag" element={<PageTransition><TagPage /></PageTransition>} />
+                  <Route path="/newsletter/archive" element={<PageTransition><NewsletterArchive /></PageTransition>} />
                   <Route path="/search" element={<PageTransition><Search /></PageTransition>} />
                   
                   <Route 
@@ -153,16 +160,18 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <Router
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
-          <AppContent />
-        </Router>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Router
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <AppContent />
+          </Router>
+        </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

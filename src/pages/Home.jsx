@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+import TagCloud from '../components/common/TagCloud';
 
 const HOME_DESCRIPTION = 'Discover useful articles, insights, and writing from our community of creators.';
 
@@ -511,21 +512,7 @@ const Home = () => {
                 className="surface-card p-6"
               >
                 <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Popular Tags</h3>
-                <div className="flex flex-wrap gap-2">
-                  {popularTags.map((tag) => {
-                    const tagName = typeof tag === 'string' ? tag : tag?.name;
-                    if (!tagName) return null;
-                    return (
-                      <Link
-                        key={tagName}
-                        to={`/search?tags=${encodeURIComponent(tagName)}`}
-                        className="px-3 py-1.5 bg-[var(--accent-soft)] text-[var(--text-secondary)] rounded-full text-xs font-medium hover:bg-[var(--accent)] hover:text-white transition-colors"
-                      >
-                        #{tagName}
-                      </Link>
-                    );
-                  })}
-                </div>
+                <TagCloud tags={popularTags} maxTags={20} />
               </motion.div>
             )}
           </aside>

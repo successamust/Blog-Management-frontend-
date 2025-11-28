@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search as SearchIcon, X, Filter, Clock, Calendar, User, Tag as TagIcon } from 'lucide-react';
+import { Search as SearchIcon, X, Filter, Clock, Calendar, User, Tag as TagIcon, Bookmark, Star } from 'lucide-react';
 import { searchAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import ModernPostCard from '../components/posts/ModernPostCard';
@@ -12,6 +12,7 @@ import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
 import { useDebounce } from '../hooks/useDebounce';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import EmptyState from '../components/common/EmptyState';
 
 const SEARCH_DESCRIPTION_BASE = 'Search Nexus to find stories, authors, tags, and categories that match your interests.';
 
@@ -26,6 +27,8 @@ const Search = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [searchHistory, setSearchHistory] = useLocalStorage('searchHistory', []);
+  const [savedSearches, setSavedSearches] = useLocalStorage('savedSearches', []);
+  const [showSavedSearches, setShowSavedSearches] = useState(false);
   const [filters, setFilters] = useState({
     author: searchParams.get('author') || '',
     category: searchParams.get('category') || '',
@@ -154,6 +157,60 @@ const Search = () => {
   const clearHistory = () => {
     setSearchHistory([]);
     toast.success('Search history cleared');
+  };
+
+  const saveSearch = () => {
+    if (!query.trim() && !tag.trim()) {
+      toast.error('Please enter a search query or tag');
+      return;
+    }
+
+    const searchParams = {
+      query: query.trim(),
+      tag: tag.trim(),
+      filters: { ...filters },
+    };
+
+    const savedSearch = {
+      id: Date.now().toString(),
+      name: query.trim() || tag.trim() || 'Saved Search',
+      params: searchParams,
+      createdAt: Date.now(),
+    };
+
+    setSavedSearches(prev => {
+      // Check if already exists
+      const exists = prev.some(s => 
+        s.params.query === searchParams.query && 
+        s.params.tag === searchParams.tag
+      );
+      if (exists) {
+        toast.error('This search is already saved');
+        return prev;
+      }
+      return [savedSearch, ...prev].slice(0, 20);
+    });
+
+    toast.success('Search saved');
+  };
+
+  const loadSavedSearch = (savedSearch) => {
+    setQuery(savedSearch.params.query || '');
+    setTag(savedSearch.params.tag || '');
+    setFilters(savedSearch.params.filters || {});
+    setShowSavedSearches(false);
+    
+    // Perform the search
+    const newParams = new URLSearchParams();
+    if (savedSearch.params.query) newParams.set('q', savedSearch.params.query);
+    if (savedSearch.params.tag) newParams.set('tags', savedSearch.params.tag);
+    setSearchParams(newParams);
+    performSearch();
+  };
+
+  const deleteSavedSearch = (id) => {
+    setSavedSearches(prev => prev.filter(s => s.id !== id));
+    toast.success('Saved search deleted');
   };
 
   const handleSuggestionClick = (suggestion) => {
@@ -333,7 +390,7 @@ const Search = () => {
             </div>
           </div>
           
-          {/* Filters Toggle */}
+          {/* Filters Toggle and Saved Searches */}
           <div className="flex items-center justify-between mt-4">
             <button
               type="button"
@@ -343,7 +400,69 @@ const Search = () => {
               <Filter className="w-4 h-4" />
               <span>{showFilters ? 'Hide' : 'Show'} Advanced Filters</span>
             </button>
+            <div className="flex items-center gap-2">
+              {savedSearches.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowSavedSearches(!showSavedSearches)}
+                  className="flex items-center gap-2 text-sm text-secondary hover:text-[var(--accent)] transition-colors"
+                >
+                  <Bookmark className="w-4 h-4" />
+                  <span>Saved Searches ({savedSearches.length})</span>
+                </button>
+              )}
+              {(query.trim() || tag.trim()) && (
+                <button
+                  type="button"
+                  onClick={saveSearch}
+                  className="flex items-center gap-2 text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                >
+                  <Star className="w-4 h-4" />
+                  <span>Save Search</span>
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* Saved Searches Dropdown */}
+          {showSavedSearches && savedSearches.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-2 p-4 bg-surface border border-[var(--border-subtle)] rounded-xl shadow-lg"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold text-primary">Saved Searches</span>
+              </div>
+              <div className="space-y-2">
+                {savedSearches.map((saved) => (
+                  <div
+                    key={saved.id}
+                    className="flex items-center justify-between p-2 bg-surface-subtle rounded-lg hover:bg-surface transition-colors"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => loadSavedSearch(saved)}
+                      className="flex-1 text-left text-sm text-secondary hover:text-[var(--accent)]"
+                    >
+                      <div className="font-medium">{saved.name}</div>
+                      <div className="text-xs text-muted">
+                        {saved.params.query && `Query: ${saved.params.query}`}
+                        {saved.params.tag && ` Tag: ${saved.params.tag}`}
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteSavedSearch(saved.id)}
+                      className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </motion.form>
 
         {/* Advanced Filters Panel */}
@@ -441,25 +560,17 @@ const Search = () => {
             ))}
           </div>
         ) : (query || tag) ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-16 border border-dashed border-[var(--border-subtle)] rounded-2xl bg-surface-subtle"
-          >
-            <SearchIcon className="w-12 h-12 mx-auto text-muted mb-4" />
-            <p className="text-secondary text-lg">No results found.</p>
-            <p className="text-sm text-muted mt-2">Try adjusting your keywords or filters.</p>
-          </motion.div>
+          <EmptyState
+            icon={SearchIcon}
+            title="No results found"
+            description="Try adjusting your keywords or filters to find what you're looking for."
+          />
         ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-16 border border-dashed border-[var(--border-subtle)] rounded-2xl bg-surface-subtle"
-          >
-            <SearchIcon className="w-12 h-12 mx-auto text-muted mb-4" />
-            <p className="text-secondary text-lg">Start typing to explore articles.</p>
-            <p className="text-sm text-muted mt-2">Search by topic, author, tag, or keyword.</p>
-          </motion.div>
+          <EmptyState
+            icon={SearchIcon}
+            title="Start searching"
+            description="Search by topic, author, tag, or keyword to find articles."
+          />
         )}
         </div>
       </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
+import {
   Calendar, 
   Eye, 
   Heart, 
@@ -15,13 +15,15 @@ import {
   Trash2,
   X,
   Check,
-  Tag
+  Tag,
+  Maximize,
+  BookOpen
 } from 'lucide-react';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DOMPurify from 'dompurify';
-import { postsAPI, commentsAPI } from '../services/api';
+import { postsAPI, commentsAPI, interactionsAPI, pollsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import ReadingProgress from '../components/common/ReadingProgress';
@@ -30,6 +32,16 @@ import { Clock } from 'lucide-react';
 import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
 import SocialShare from '../components/posts/SocialShare';
+import OptimizedImage from '../components/common/OptimizedImage';
+import EmptyState from '../components/common/EmptyState';
+import FullscreenReader from '../components/posts/FullscreenReader';
+import ImageLightbox from '../components/common/ImageLightbox';
+import PostReactions from '../components/posts/PostReactions';
+import ReadingList from '../components/posts/ReadingList';
+import PostRecommendations from '../components/posts/PostRecommendations';
+import QuickActions from '../components/common/QuickActions';
+import Poll from '../components/posts/Poll';
+import { useReadingHistory } from '../hooks/useReadingHistory';
 
 const DEFAULT_POST_DESCRIPTION = 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.';
 
@@ -64,6 +76,15 @@ const PostDetail = () => {
   const [editCommentText, setEditCommentText] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [showFullscreenReader, setShowFullscreenReader] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxIndex, setLightboxIndex] = useState(-1);
+  const [postReactions, setPostReactions] = useState(null);
+  const [userReaction, setUserReaction] = useState(null);
+  const [loadingReactions, setLoadingReactions] = useState(false);
+  const [poll, setPoll] = useState(null);
+  const [loadingPoll, setLoadingPoll] = useState(false);
+  const { addToHistory, updateReadingProgress } = useReadingHistory();
 
   const seoDescription = useMemo(() => {
     if (!post) return DEFAULT_POST_DESCRIPTION;
@@ -98,17 +119,11 @@ const PostDetail = () => {
     fetchPostData();
   }, [slug]);
 
-  // Update bookmark state when user or post changes
   useEffect(() => {
     if (post && isAuthenticated) {
-      // Normalize post ID to string for comparison
       const postId = String(post._id || post.id);
-      
-      // Check both user.bookmarkedPosts and localStorage
       const userFromStorage = JSON.parse(localStorage.getItem('user') || '{}');
       const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
-      
-      // Normalize all IDs to strings for comparison
       const userBookmarked = user?.bookmarkedPosts?.map(id => String(id)) || [];
       const storageBookmarked = userFromStorage?.bookmarkedPosts?.map(id => String(id)) || [];
       const savedPostsNormalized = savedPosts.map(id => String(id));
@@ -130,11 +145,9 @@ const PostDetail = () => {
       const postRes = await postsAPI.getBySlug(slug);
       const post = postRes.data;
       
-      // Check localStorage for saved posts if backend doesn't have bookmarks
       if (isAuthenticated && user?._id) {
         const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
         if (savedPosts.includes(post._id)) {
-          // If saved in localStorage but not in user.bookmarkedPosts, add it
           if (!user.bookmarkedPosts || !user.bookmarkedPosts.includes(post._id)) {
             const updatedUser = { ...user };
             if (!updatedUser.bookmarkedPosts) {
@@ -150,13 +163,9 @@ const PostDetail = () => {
       
       setPost(post);
       
-      // Set initial bookmark state - check multiple sources
-      // Normalize post ID to string for comparison
       const postId = String(post._id || post.id);
       const userFromStorage = JSON.parse(localStorage.getItem('user') || '{}');
       const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
-      
-      // Normalize all IDs to strings for comparison
       const userBookmarked = user?.bookmarkedPosts?.map(id => String(id)) || [];
       const storageBookmarked = userFromStorage?.bookmarkedPosts?.map(id => String(id)) || [];
       const savedPostsNormalized = savedPosts.map(id => String(id));
@@ -175,11 +184,102 @@ const PostDetail = () => {
 
       setComments(commentsRes.data.comments || []);
       setRelatedPosts(relatedRes.data.relatedPosts || []);
+      
+      if (post) {
+        addToHistory(post);
+      }
     } catch (error) {
       console.error('Error fetching post:', error);
       toast.error('Failed to load post');
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchReactions = async () => {
+      if (!post?._id) return;
+      try {
+        const response = await interactionsAPI.getReactions(post._id);
+        setPostReactions(response.data?.reactions || {});
+        setUserReaction(response.data?.userReaction || null);
+      } catch (error) {
+        console.error('Failed to fetch reactions:', error);
+      }
+    };
+    fetchReactions();
+  }, [post?._id]);
+
+  useEffect(() => {
+    const fetchPoll = async () => {
+      if (!post?._id) return;
+      try {
+        setLoadingPoll(true);
+        const response = await pollsAPI.getByPost(post._id);
+        if (response.data?.poll) {
+          setPoll({
+            id: response.data.poll.id || response.data.poll._id,
+            question: response.data.poll.question,
+            description: response.data.poll.description,
+            options: response.data.poll.options || [],
+            results: response.data.results || {},
+            userVote: response.data.userVote || null,
+            isActive: response.data.poll.isActive !== false
+          });
+        }
+      } catch (error) {
+        if (error.response?.status !== 404) {
+          console.error('Failed to fetch poll:', error);
+        }
+      } finally {
+        setLoadingPoll(false);
+      }
+    };
+    fetchPoll();
+  }, [post?._id]);
+
+  const handleReaction = async (postId, reactionType) => {
+    if (!isAuthenticated) {
+      toast.error('Please login to react');
+      return;
+    }
+
+    try {
+      setLoadingReactions(true);
+      const response = await interactionsAPI.react(postId, reactionType);
+      setPostReactions(response.data?.reactions || {});
+      setUserReaction(response.data?.reactionType || null);
+      toast.success('Reaction saved!');
+    } catch (error) {
+      toast.error('Failed to save reaction');
+    } finally {
+      setLoadingReactions(false);
+    }
+  };
+
+  const handlePollVote = async (pollId, optionId) => {
+    if (!isAuthenticated) {
+      toast.error('Please login to vote');
+      return;
+    }
+
+    try {
+      await pollsAPI.vote(pollId, optionId);
+      const resultsResponse = await pollsAPI.getResults(pollId);
+      if (resultsResponse.data) {
+        setPoll(prev => ({
+          ...prev,
+          results: resultsResponse.data.results || {},
+          userVote: resultsResponse.data.userVote
+        }));
+      }
+      toast.success('Vote recorded!');
+    } catch (error) {
+      if (error.response?.status === 400) {
+        toast.error(error.response.data?.message || 'You have already voted');
+      } else {
+        toast.error('Failed to vote');
+      }
     }
   };
 
@@ -193,15 +293,13 @@ const PostDetail = () => {
       setInteractionLoading(true);
       await postsAPI.like(post._id);
       
-      // Update post state directly without refetching all data
       setPost(prevPost => {
         if (!prevPost) return prevPost;
         const isLiked = prevPost.likes?.includes(user?._id);
-        const newLikes = isLiked 
-          ? prevPost.likes.filter(id => id !== user?._id)
-          : [...(prevPost.likes || []), user?._id];
+          const newLikes = isLiked 
+            ? prevPost.likes.filter(id => id !== user?._id)
+            : [...(prevPost.likes || []), user?._id];
         
-        // Remove from dislikes if it was disliked
         const newDislikes = prevPost.dislikes?.includes(user?._id)
           ? prevPost.dislikes.filter(id => id !== user?._id)
           : prevPost.dislikes || [];
@@ -231,15 +329,13 @@ const PostDetail = () => {
       setInteractionLoading(true);
       await postsAPI.dislike(post._id);
       
-      // Update post state directly without refetching all data
       setPost(prevPost => {
         if (!prevPost) return prevPost;
         const isDisliked = prevPost.dislikes?.includes(user?._id);
-        const newDislikes = isDisliked 
-          ? prevPost.dislikes.filter(id => id !== user?._id)
-          : [...(prevPost.dislikes || []), user?._id];
+          const newDislikes = isDisliked 
+            ? prevPost.dislikes.filter(id => id !== user?._id)
+            : [...(prevPost.dislikes || []), user?._id];
         
-        // Remove from likes if it was liked
         const newLikes = prevPost.likes?.includes(user?._id)
           ? prevPost.likes.filter(id => id !== user?._id)
           : prevPost.likes || [];
@@ -261,7 +357,6 @@ const PostDetail = () => {
 
   const handleShare = async () => {
     try {
-      // Show share modal
       setShowShareModal(true);
     } catch (error) {
       toast.error('Failed to open share dialog');
@@ -270,10 +365,8 @@ const PostDetail = () => {
 
   const handleShareTrack = async (platform) => {
     try {
-      // Track share on backend with platform info
       postsAPI.share(post._id, { platform }).catch(() => {});
       
-      // Update shares count optimistically
       setPost(prevPost => {
         if (!prevPost) return prevPost;
         return {
@@ -401,11 +494,9 @@ const PostDetail = () => {
       const response = await commentsAPI.create(post._id, { content: commentText });
       const newComment = response.data.comment;
       
-      // Add the new comment to the comments state directly (optimistic update)
       if (newComment) {
         setComments(prevComments => [newComment, ...prevComments]);
       } else {
-        // If backend doesn't return the comment, fetch only comments
         const commentsRes = await commentsAPI.getByPost(post._id);
         setComments(commentsRes.data.comments || []);
       }
@@ -429,7 +520,6 @@ const PostDetail = () => {
     try {
       await commentsAPI.like(commentId);
       
-      // Update comment state directly without refetching all data
       setComments(prevComments => 
         prevComments.map(comment => {
           if (comment._id === commentId) {
@@ -503,19 +593,15 @@ const PostDetail = () => {
   if (!post) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-page">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center surface-card p-6"
-        >
-          <h1 className="text-2xl font-bold text-primary mb-4">Post Not Found</h1>
-          <Link
-            to="/posts"
-            className="btn btn-primary !w-auto"
-          >
-            Back to Posts
-          </Link>
-        </motion.div>
+        <EmptyState
+          title="Post Not Found"
+          description="The post you're looking for doesn't exist or has been removed."
+          action={
+            <Link to="/posts" className="btn btn-primary">
+              Browse All Posts
+            </Link>
+          }
+        />
       </div>
     );
   }
@@ -556,10 +642,11 @@ const PostDetail = () => {
           >
             {/* Featured Image */}
             {post.featuredImage && (
-              <img
+              <OptimizedImage
                 src={post.featuredImage}
                 alt={post.title}
                 className="w-full h-48 sm:h-64 md:h-96 object-cover"
+                loading="eager"
               />
             )}
 
@@ -591,7 +678,21 @@ const PostDetail = () => {
               </div>
 
               {/* Post Content */}
-              <div className="prose prose-lg max-w-[680px] mx-auto mb-8">
+              <div 
+                className="prose prose-lg max-w-[680px] mx-auto mb-8"
+                onClick={(e) => {
+                  // Handle image clicks for lightbox
+                  if (e.target.tagName === 'IMG' && e.target.src) {
+                    const images = Array.from(document.querySelectorAll('.prose img'))
+                      .map(img => ({ src: img.src, alt: img.alt || '' }));
+                    const index = images.findIndex(img => img.src === e.target.src);
+                    if (index >= 0) {
+                      setLightboxImages(images);
+                      setLightboxIndex(index);
+                    }
+                  }
+                }}
+              >
                 {(() => {
                   // Check if content is HTML (contains HTML tags)
                   const isHTML = /<[a-z][\s\S]*>/i.test(post.content);
@@ -699,9 +800,60 @@ const PostDetail = () => {
                   <Bookmark className={`w-4 h-4 ${hasBookmarked ? 'fill-current' : ''}`} />
                   <span className="hidden sm:inline">{hasBookmarked ? 'Saved' : 'Save'}</span>
                 </motion.button>
+
+                <motion.button
+                  onClick={() => setShowFullscreenReader(true)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 glass-card text-secondary rounded-xl hover:bg-white/80 transition-all text-sm sm:text-base"
+                  title="Fullscreen reading mode"
+                >
+                  <Maximize className="w-4 h-4" />
+                  <span className="hidden sm:inline">Fullscreen</span>
+                </motion.button>
+
+                <QuickActions
+                  post={post}
+                  onShare={() => setShowShareModal(true)}
+                  onBookmark={handleSave}
+                  onFullscreen={() => setShowFullscreenReader(true)}
+                />
               </div>
             </div>
           </motion.article>
+
+          {/* Post Reactions */}
+          {post && (
+            <div className="mt-6 p-4 bg-surface-subtle rounded-xl">
+              <PostReactions 
+                post={post} 
+                reactions={postReactions}
+                userReaction={userReaction}
+                onReaction={handleReaction}
+                loading={loadingReactions}
+              />
+            </div>
+          )}
+
+          {/* Poll */}
+          {post && poll && !loadingPoll && (
+            <div className="mt-6 p-4 bg-surface-subtle rounded-xl">
+              <Poll 
+                poll={poll}
+                postId={post._id}
+                onVote={handlePollVote}
+                userVote={poll.userVote}
+                results={poll.results}
+              />
+            </div>
+          )}
+
+          {/* Reading List */}
+          {post && isAuthenticated && (
+            <div className="mt-6 p-4 bg-surface-subtle rounded-xl">
+              <ReadingList post={post} />
+            </div>
+          )}
 
           {/* Comments Section */}
           <motion.section
@@ -862,38 +1014,8 @@ const PostDetail = () => {
 
         {/* Sidebar */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Related Posts */}
-          {relatedPosts.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="card-elevated card-elevated-hover p-6"
-            >
-              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Related Posts</h3>
-              <div className="space-y-4">
-                {relatedPosts.map((relatedPost) => (
-                  <motion.div
-                    key={relatedPost._id}
-                    whileHover={{ x: 4 }}
-                    transition={{ type: 'spring', stiffness: 300 }}
-                  >
-                    <Link
-                      to={`/posts/${relatedPost.slug}`}
-                      className="block group glass-card-hover p-3 rounded-xl"
-                    >
-                      <h4 className="text-sm font-medium text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors line-clamp-2">
-                        {relatedPost.title}
-                      </h4>
-                      <p className="text-xs text-[var(--text-muted)] mt-1">
-                        {format(new Date(relatedPost.publishedAt), 'MMM d, yyyy')}
-                      </p>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
+          {/* Post Recommendations - Replaces Related Posts */}
+          {post && <PostRecommendations currentPost={post} limit={3} />}
 
           {/* Post Stats */}
           <motion.div
@@ -963,6 +1085,26 @@ const PostDetail = () => {
           />
         </motion.div>
       </div>
+    )}
+
+    {/* Fullscreen Reader */}
+    {post && (
+      <FullscreenReader
+        post={post}
+        isOpen={showFullscreenReader}
+        onClose={() => setShowFullscreenReader(false)}
+      />
+    )}
+
+    {/* Image Lightbox */}
+    {lightboxIndex >= 0 && lightboxImages.length > 0 && (
+      <ImageLightbox
+        images={lightboxImages}
+        currentIndex={lightboxIndex}
+        onClose={() => setLightboxIndex(-1)}
+        onNext={() => setLightboxIndex((lightboxIndex + 1) % lightboxImages.length)}
+        onPrevious={() => setLightboxIndex((lightboxIndex - 1 + lightboxImages.length) % lightboxImages.length)}
+      />
     )}
     </>
   );

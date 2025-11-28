@@ -1,11 +1,11 @@
-import { motion } from 'framer-motion';
+import React, { memo, useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Calendar, Eye, Heart, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
-import { useInView } from 'framer-motion';
-import { useRef } from 'react';
+import OptimizedImage from '../common/OptimizedImage';
 
-const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
+const InteractivePostCard = memo(({ post, featured = false, delay = 0 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-50px' });
 
@@ -84,15 +84,17 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
         >
           <div className="relative h-64 overflow-hidden">
             {post.featuredImage ? (
-              <motion.img
-                src={post.featuredImage}
-                alt={postTitle}
-                className="w-full h-full object-cover"
+              <motion.div
                 variants={imageVariants}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
+                className="w-full h-full"
+              >
+                <OptimizedImage
+                  src={post.featuredImage}
+                  alt={postTitle}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </motion.div>
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-[var(--accent)]/60 to-[var(--accent-hover)]/60" />
             )}
@@ -165,16 +167,18 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
         <div className="relative z-10">
           {post.featuredImage && (
             <div className="mb-4 rounded-lg overflow-hidden">
-              <motion.img
-                src={post.featuredImage}
-                alt={postTitle}
-                className="w-full h-40 object-cover"
+              <motion.div
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.3 }}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
+                className="w-full h-40"
+              >
+                <OptimizedImage
+                  src={post.featuredImage}
+                  alt={postTitle}
+                  className="w-full h-40 object-cover"
+                  loading="lazy"
+                />
+              </motion.div>
             </div>
           )}
           
@@ -218,7 +222,9 @@ const InteractivePostCard = ({ post, featured = false, delay = 0 }) => {
       </Link>
     </motion.div>
   );
-};
+});
+
+InteractivePostCard.displayName = 'InteractivePostCard';
 
 export default InteractivePostCard;
 

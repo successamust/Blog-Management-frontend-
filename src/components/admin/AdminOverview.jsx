@@ -176,18 +176,7 @@ const AdminOverview = () => {
             return null;
           });
           
-          // Log the raw API response for debugging
-          console.log('AdminOverview: Primary posts API response', {
-            primaryRes,
-            responseStructure: primaryRes ? Object.keys(primaryRes) : null,
-            dataStructure: primaryRes?.data ? Object.keys(primaryRes.data) : null,
-          });
-          
           const primaryPosts = normalizePosts(primaryRes);
-          console.log('AdminOverview: Normalized primary posts', {
-            count: primaryPosts.length,
-            sample: primaryPosts[0] || null,
-          });
           
           let aggregatedPosts = primaryPosts;
 
@@ -634,19 +623,6 @@ const AdminOverview = () => {
         if (Number(p?.commentCount) || Number(p?.comments)) return sum + (Number(p?.commentCount) || Number(p?.comments) || 0);
         return sum;
       }, 0);
-
-      // Log for debugging
-      console.log('AdminOverview: Posts data', {
-        totalFromArray,
-        totalFromCounts,
-        totalPosts,
-        published,
-        drafts,
-        scheduled,
-        archived,
-        counts,
-        samplePost: normalizedPostsData[0] || null,
-      });
 
       // Always update posts stats - the total should match the sum of all status counts
       setStats((prev) => ({

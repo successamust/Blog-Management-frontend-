@@ -8,17 +8,37 @@ import { format } from 'date-fns';
 import RichTextEditor from './RichTextEditor';
 import SkeletonLoader from '../common/SkeletonLoader';
 import Spinner from '../common/Spinner';
+import BulkOperations from './BulkOperations';
+import PostScheduler from './PostScheduler';
+import PostCollaboration from './PostCollaboration';
 
 const PostManagement = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedPosts, setSelectedPosts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     fetchPosts();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoriesAPI.getAll();
+      const categoriesData = response.data?.categories || 
+                            response.data?.data || 
+                            response.data || 
+                            [];
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setCategories([]);
+    }
+  };
 
   const fetchPosts = async () => {
     try {
@@ -123,7 +143,6 @@ const PostManagement = () => {
 
       const allPosts = aggregatedPosts;
       
-      // If user is author (not admin), filter to only show their own posts
       if (user?.role === 'author' && !isAdmin()) {
         const userPosts = allPosts.filter(post => {
           const postAuthorId = post.author?._id || post.author || post.authorId;
@@ -139,6 +158,30 @@ const PostManagement = () => {
       toast.error('Failed to load posts');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async (postIds) => {
+    try {
+      await postsAPI.bulkDelete(postIds);
+      toast.success(`Successfully deleted ${postIds.length} post(s)`);
+      setSelectedPosts([]);
+      fetchPosts();
+    } catch (error) {
+      toast.error('Failed to delete posts');
+      console.error('Bulk delete error:', error);
+    }
+  };
+
+  const handleBulkUpdate = async (postIds, updates) => {
+    try {
+      await postsAPI.bulkUpdate(postIds, updates);
+      toast.success(`Successfully updated ${postIds.length} post(s)`);
+      setSelectedPosts([]);
+      fetchPosts();
+    } catch (error) {
+      toast.error('Failed to update posts');
+      console.error('Bulk update error:', error);
     }
   };
 
@@ -187,6 +230,11 @@ const PostManagement = () => {
               statusFilter={statusFilter}
               setStatusFilter={setStatusFilter}
               onDelete={handleDelete}
+              selectedPosts={selectedPosts}
+              setSelectedPosts={setSelectedPosts}
+              onBulkDelete={handleBulkDelete}
+              onBulkUpdate={handleBulkUpdate}
+              categories={categories}
             />
           }
         />
@@ -197,7 +245,7 @@ const PostManagement = () => {
   );
 };
 
-const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusFilter, onDelete }) => {
+const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusFilter, onDelete, selectedPosts, setSelectedPosts, onBulkDelete, onBulkUpdate, categories = [] }) => {
   const { user, isAdmin } = useAuth();
   const isAuthor = user?.role === 'author' || isAdmin();
 
@@ -277,6 +325,20 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                      <input
+                        type="checkbox"
+                        checked={selectedPosts.length === posts.length && posts.length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedPosts(posts.map(p => p._id || p.id));
+                          } else {
+                            setSelectedPosts([]);
+                          }
+                        }}
+                        className="rounded border-gray-300 text-[var(--accent)] focus:ring-[var(--accent)]"
+                      />
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Title
                     </th>
@@ -299,6 +361,21 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
                     const { label, className } = getStatusMeta(post);
                     return (
                       <tr key={post._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedPosts.includes(post._id || post.id)}
+                            onChange={(e) => {
+                              const postId = post._id || post.id;
+                              if (e.target.checked) {
+                                setSelectedPosts([...selectedPosts, postId]);
+                              } else {
+                                setSelectedPosts(selectedPosts.filter(id => id !== postId));
+                              }
+                            }}
+                            className="rounded border-gray-300 text-[var(--accent)] focus:ring-[var(--accent)]"
+                          />
+                        </td>
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-gray-900 line-clamp-1">{post.title}</div>
                           <div className="text-sm text-gray-500 line-clamp-1">{post.excerpt}</div>
@@ -428,6 +505,16 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
           </div>
         </div>
       )}
+
+      {/* Bulk Operations */}
+      {selectedPosts.length > 0 && (
+        <BulkOperations
+          selectedPosts={selectedPosts}
+          onBulkDelete={onBulkDelete}
+          onBulkUpdate={onBulkUpdate}
+          categories={categories}
+        />
+      )}
     </>
   );
 };
@@ -442,6 +529,7 @@ const CreatePost = ({ onSuccess }) => {
     featuredImage: '',
     status: 'published',
   });
+  const [scheduledAt, setScheduledAt] = useState(null);
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -456,7 +544,6 @@ const CreatePost = ({ onSuccess }) => {
     try {
       setCategoriesLoading(true);
       const response = await categoriesAPI.getAll();
-      // Handle different possible response structures
       const categoriesData = response.data?.categories || 
                             response.data?.data || 
                             response.data || 
@@ -498,7 +585,6 @@ const CreatePost = ({ onSuccess }) => {
       const uploadFormData = new FormData();
       uploadFormData.append('image', file);
       const response = await imagesAPI.upload(uploadFormData);
-      // Backend returns { message, image: { url, publicId, ... } }
       const imageUrl = response.data.image?.url || response.data.url || response.data.imageUrl;
       if (!imageUrl) {
         toast.error('Failed to get image URL from response');
@@ -547,11 +633,11 @@ const CreatePost = ({ onSuccess }) => {
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
         featuredImage: formData.featuredImage || undefined,
         status: formData.status,
-        isPublished: formData.status === 'published', // Convert status to isPublished boolean
+        isPublished: scheduledAt ? false : formData.status === 'published',
+        scheduledAt: scheduledAt ? scheduledAt.toISOString() : undefined,
       };
       
       const response = await postsAPI.create(postData);
-      // Backend returns the post directly, not wrapped in { post: ... }
       const newPost = response.data.post || response.data;
       
       if (!newPost || !newPost._id) {
@@ -571,7 +657,6 @@ const CreatePost = ({ onSuccess }) => {
         }
       }
       
-      // Reset form
       setFormData({
         title: '',
         excerpt: '',
@@ -582,7 +667,6 @@ const CreatePost = ({ onSuccess }) => {
         status: 'published',
       });
       
-      // Refresh the posts list
       onSuccess();
     } catch (error) {
       console.error('Error creating post:', error);
@@ -769,6 +853,7 @@ const EditPost = ({ onSuccess }) => {
     featuredImage: '',
     status: 'published',
   });
+  const [scheduledAt, setScheduledAt] = useState(null);
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -783,8 +868,6 @@ const EditPost = ({ onSuccess }) => {
   const fetchPostData = async () => {
     try {
       setLoading(true);
-      // Try to get post by ID first, fallback to getting all posts
-      // Include drafts so authors can edit their own draft posts
       let post;
       const normalizePosts = (response) => {
         if (!response?.data) return [];
@@ -797,7 +880,6 @@ const EditPost = ({ onSuccess }) => {
       };
 
       try {
-        // Try to get post directly by ID if endpoint exists
         const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
         const posts = normalizePosts(response);
         post = posts.find((p) => {
@@ -806,7 +888,6 @@ const EditPost = ({ onSuccess }) => {
         });
       } catch (error) {
         console.error('Error in first fetch attempt:', error);
-        // If that fails, try getting all posts
         try {
           const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
           const posts = normalizePosts(response);
@@ -826,7 +907,6 @@ const EditPost = ({ onSuccess }) => {
         return;
       }
 
-      // Check if author can edit this post
       if (user?.role === 'author' && !isAdmin()) {
         const postAuthorId = post.author?._id || post.author || post.authorId;
         const userId = user._id || user.id;
@@ -844,8 +924,11 @@ const EditPost = ({ onSuccess }) => {
         category: post.category?._id || post.category || '',
         tags: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || ''),
         featuredImage: post.featuredImage || '',
-        status: post.isPublished ? 'published' : 'draft', // Map isPublished to status for form
+        status: post.isPublished ? 'published' : 'draft',
       });
+      if (post.scheduledAt) {
+        setScheduledAt(new Date(post.scheduledAt));
+      }
     } catch (error) {
       console.error('Error fetching post:', error);
       toast.error('Failed to load post');
@@ -859,7 +942,6 @@ const EditPost = ({ onSuccess }) => {
     try {
       setCategoriesLoading(true);
       const response = await categoriesAPI.getAll();
-      // Handle different possible response structures
       const categoriesData = response.data?.categories || 
                             response.data?.data || 
                             response.data || 
@@ -901,7 +983,6 @@ const EditPost = ({ onSuccess }) => {
       const uploadFormData = new FormData();
       uploadFormData.append('image', file);
       const response = await imagesAPI.upload(uploadFormData);
-      // Backend returns { message, image: { url, publicId, ... } }
       const imageUrl = response.data.image?.url || response.data.url || response.data.imageUrl;
       if (!imageUrl) {
         toast.error('Failed to get image URL from response');
@@ -944,17 +1025,16 @@ const EditPost = ({ onSuccess }) => {
     try {
       const isPublished = formData.status === 'published';
       
-      // Build postData object, only including defined values
       const postData = {
         title: formData.title,
         excerpt: formData.excerpt,
         content: formData.content,
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
         status: formData.status,
-        isPublished: isPublished, // Convert status to isPublished boolean - ALWAYS send this
+        isPublished: scheduledAt ? false : isPublished,
+        scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
       };
       
-      // Only add optional fields if they have values
       if (formData.category) {
         postData.category = formData.category;
       }
@@ -1071,13 +1151,37 @@ const EditPost = ({ onSuccess }) => {
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+              disabled={!!scheduledAt}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               <option value="published">Published</option>
               <option value="draft">Draft</option>
             </select>
+            {scheduledAt && (
+              <p className="mt-1 text-xs text-gray-500">Status will be set to draft when scheduled</p>
+            )}
           </div>
         </div>
+
+        <div>
+          <PostScheduler
+            onSchedule={setScheduledAt}
+            initialDate={scheduledAt ? new Date(scheduledAt).toISOString().split('T')[0] : null}
+            initialTime={scheduledAt ? new Date(scheduledAt).toTimeString().slice(0, 5) : null}
+          />
+        </div>
+
+        {id && (
+          <div>
+            <PostCollaboration
+              postId={id}
+              currentAuthor={user}
+              onCollaboratorsChange={(collaborators) => {
+                console.log('Collaborators updated:', collaborators);
+              }}
+            />
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Tags (comma-separated)</label>

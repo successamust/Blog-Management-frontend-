@@ -65,6 +65,8 @@ export const postsAPI = {
   share: (id) => api.post(`/interactions/${id}/share`),
   bookmark: (id) => api.post(`/interactions/${id}/bookmark`),
   getRelated: (id) => api.get(`/posts/${id}/related`),
+  bulkDelete: (postIds) => api.post('/posts/bulk-delete', { postIds }),
+  bulkUpdate: (postIds, updates) => api.put('/posts/bulk-update', { postIds, updates }),
 };
 
 export const interactionsAPI = {
@@ -75,6 +77,8 @@ export const interactionsAPI = {
   getPostInteractions: (postId) => api.get(`/interactions/${postId}/interactions`),
   getUserLikedPosts: (params) => api.get('/interactions/me/likes', { params }),
   getUserBookmarkedPosts: (params) => api.get('/interactions/me/bookmarks', { params }),
+  react: (postId, reactionType) => api.post(`/interactions/${postId}/react`, { reactionType }),
+  getReactions: (postId) => api.get(`/interactions/${postId}/reactions`),
 };
 
 export const categoriesAPI = {
@@ -98,6 +102,8 @@ export const commentsAPI = {
 export const newsletterAPI = {
   subscribe: (email) => api.post('/newsletters/subscribe', { email }),
   unsubscribe: (email) => api.get('/newsletters/unsubscribe', { params: { email } }),
+  getAll: (params) => api.get('/newsletters', { params }),
+  getArchive: (params) => api.get('/newsletters/archive', { params }),
 };
 
 export const searchAPI = {
@@ -139,6 +145,22 @@ export const authorsAPI = {
   getApplications: (params) => api.get('/authors/applications', { params }),
   reviewApplication: (applicationId, data) => api.post(`/authors/applications/${applicationId}/review`, data),
   promoteToAuthor: (userId) => api.post(`/authors/users/${userId}/promote`),
+};
+
+export const pollsAPI = {
+  create: (data) => api.post('/polls', data),
+  vote: (pollId, optionId) => api.post(`/polls/${pollId}/vote`, { optionId }),
+  getResults: (pollId) => api.get(`/polls/${pollId}/results`),
+  getByPost: (postId) => api.get(`/polls/post/${postId}`),
+};
+
+export const collaborationsAPI = {
+  invite: (postId, email, role) => api.post(`/collaborations/${postId}/invite`, { email, role }),
+  acceptInvitation: (invitationId) => api.post(`/collaborations/invitations/${invitationId}/accept`),
+  rejectInvitation: (invitationId) => api.post(`/collaborations/invitations/${invitationId}/reject`),
+  getCollaborators: (postId) => api.get(`/collaborations/${postId}/collaborators`),
+  removeCollaborator: (postId, userId) => api.delete(`/collaborations/${postId}/collaborators/${userId}`),
+  getMyInvitations: () => api.get('/collaborations/me/invitations'),
 };
 
 export default api;

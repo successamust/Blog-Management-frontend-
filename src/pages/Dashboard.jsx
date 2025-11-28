@@ -1181,7 +1181,6 @@ const CreatePostTab = () => {
     try {
       setCategoriesLoading(true);
       const response = await categoriesAPI.getAll();
-      console.log('Categories API response:', response);
       
       // Handle different possible response structures
       const categoriesData = response.data?.categories || 
@@ -1189,7 +1188,6 @@ const CreatePostTab = () => {
                             response.data || 
                             [];
       
-      console.log('Categories data:', categoriesData);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
       console.error('Error fetching categories:', error);

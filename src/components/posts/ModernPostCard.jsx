@@ -1,10 +1,12 @@
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Calendar, Clock, Eye, Heart, User, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
+import OptimizedImage from '../common/OptimizedImage';
 
-const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
+const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
   if (!post || !post.title) {
     return null;
   }
@@ -107,21 +109,23 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
         transition={{ duration: 0.45, delay }}
         className="group h-full"
       >
-        <Link to={postHref} className="block h-full">
+        <Link to={postHref} className="block h-full" aria-label={`Read ${postTitle}`}>
           <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-[var(--border-subtle)] bg-white transition-all duration-300 hover:border-[var(--border-subtle)] hover:shadow-lg" style={{ boxShadow: '0 2px 8px var(--shadow-default)' }}>
             <div className="relative w-full">
               <div className="aspect-[16/10] w-full bg-[var(--surface-subtle)]">
                 {post.featuredImage ? (
-                  <motion.img
-                    src={post.featuredImage}
-                    alt={postTitle}
-                    className="absolute inset-0 h-full w-full object-cover"
+                  <motion.div
+                    className="absolute inset-0 h-full w-full"
                     whileHover={{ scale: 1.03 }}
                     transition={{ duration: 0.6 }}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
+                  >
+                    <OptimizedImage
+                      src={post.featuredImage}
+                      alt={postTitle}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  </motion.div>
                 ) : (
                   <div className="flex h-full items-center justify-center text-6xl font-semibold text-[var(--text-muted)]">
                     {fallbackInitial || postTitle.charAt(0).toUpperCase()}
@@ -200,21 +204,23 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
       transition={{ duration: 0.4, delay }}
       className="group"
     >
-      <Link to={postHref} className="block">
+      <Link to={postHref} className="block" aria-label={`Read ${postTitle}`}>
         <div className="flex flex-col sm:flex-row gap-6 pb-8 border-b border-[var(--border-subtle)] hover:border-[var(--border-subtle)] transition-colors">
           {/* Image */}
           {post.featuredImage && (
             <div className="flex-shrink-0 sm:w-48 sm:h-32 w-full h-48 overflow-hidden rounded-xl">
-              <motion.img
-                src={post.featuredImage}
-                alt={postTitle}
-                className="w-full h-full object-cover"
+              <motion.div
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.3 }}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
+                className="w-full h-full"
+              >
+                <OptimizedImage
+                  src={post.featuredImage}
+                  alt={postTitle}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </motion.div>
             </div>
           )}
 
@@ -313,7 +319,9 @@ const ModernPostCard = ({ post, featured = false, delay = 0 }) => {
       </motion.div>
     </motion.article>
   );
-};
+});
+
+ModernPostCard.displayName = 'ModernPostCard';
 
 export default ModernPostCard;
 
