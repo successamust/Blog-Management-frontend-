@@ -110,10 +110,10 @@ const NotificationCenter = () => {
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 max-h-[500px] flex flex-col"
+            className="absolute right-0 mt-2 w-80 sm:w-96 bg-[var(--surface-bg)] rounded-xl shadow-2xl border border-[var(--border-subtle)] z-50 max-h-[500px] flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between p-4 border-b border-[var(--border-subtle)]">
               <h3 className="font-semibold text-primary">Notifications</h3>
               <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
@@ -126,7 +126,7 @@ const NotificationCenter = () => {
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                  className="p-1 hover:bg-[var(--surface-subtle)] rounded"
                   aria-label="Close"
                 >
                   <X className="w-4 h-4" />
@@ -142,13 +142,13 @@ const NotificationCenter = () => {
                   <p className="text-sm text-muted">No notifications yet</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                <div className="divide-y divide-[var(--border-subtle)]">
                   {notifications.map((notification) => (
                     <motion.div
                       key={notification.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer ${
+                      className={`p-4 hover:bg-[var(--surface-subtle)] transition-colors cursor-pointer ${
                         !notification.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
                       }`}
                       onClick={() => markAsRead(notification.id)}
@@ -173,7 +173,7 @@ const NotificationCenter = () => {
                             e.stopPropagation();
                             deleteNotification(notification.id);
                           }}
-                          className="flex-shrink-0 p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                          className="flex-shrink-0 p-1 hover:bg-[var(--surface-subtle)] rounded"
                           aria-label="Delete notification"
                         >
                           <X className="w-4 h-4 text-muted" />
@@ -187,7 +187,7 @@ const NotificationCenter = () => {
 
             {/* Footer */}
             {notifications.length > 0 && (
-              <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+              <div className="p-3 border-t border-[var(--border-subtle)]">
                 <button
                   onClick={clearAll}
                   className="w-full text-sm text-rose-600 hover:text-rose-700 text-center"

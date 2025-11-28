@@ -49,7 +49,7 @@ const BulkOperations = ({ selectedPosts, onBulkDelete, onBulkUpdate, categories 
         animate={{ opacity: 1, y: 0 }}
         className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40"
       >
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-[var(--surface-bg)] rounded-xl shadow-2xl border border-[var(--border-subtle)] p-4">
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-primary">
               {selectedPosts.length} post{selectedPosts.length !== 1 ? 's' : ''} selected
@@ -68,18 +68,18 @@ const BulkOperations = ({ selectedPosts, onBulkDelete, onBulkUpdate, categories 
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2"
+              className="mt-4 pt-4 border-t border-[var(--border-subtle)] space-y-2"
             >
               <button
                 onClick={() => setShowCategoryModal(true)}
-                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-left"
+                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-[var(--surface-subtle)] rounded-lg text-left"
               >
                 <Folder className="w-4 h-4" />
                 Change Category
               </button>
               <button
                 onClick={() => setShowStatusModal(true)}
-                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-left"
+                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-[var(--surface-subtle)] rounded-lg text-left"
               >
                 <Archive className="w-4 h-4" />
                 Change Status
@@ -102,13 +102,13 @@ const BulkOperations = ({ selectedPosts, onBulkDelete, onBulkUpdate, categories 
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full"
+            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-xl p-6 max-w-md w-full"
           >
             <h3 className="text-xl font-bold text-primary mb-4">Change Category</h3>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mb-4"
+              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg mb-4"
             >
               <option value="">Select Category</option>
               {categories.map(cat => (
@@ -133,13 +133,13 @@ const BulkOperations = ({ selectedPosts, onBulkDelete, onBulkUpdate, categories 
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full"
+            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-xl p-6 max-w-md w-full"
           >
             <h3 className="text-xl font-bold text-primary mb-4">Change Status</h3>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mb-4"
+              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg mb-4"
             >
               <option value="published">Published</option>
               <option value="draft">Draft</option>

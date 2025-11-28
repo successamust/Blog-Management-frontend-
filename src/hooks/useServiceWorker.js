@@ -6,6 +6,28 @@ import { useEffect } from 'react';
 export const useServiceWorker = () => {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
+      // Always unregister in development first - do this immediately
+      if (!import.meta.env.PROD) {
+        // Unregister all service workers immediately
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          if (registrations.length > 0) {
+            registrations.forEach((registration) => {
+              registration.unregister().catch(() => {
+                // Ignore errors during unregistration
+              });
+            });
+          }
+        });
+        
+        // Also try to unregister the controller if it exists
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+        }
+        
+        return; // Don't register in development
+      }
+
+      // Only register in production
       window.addEventListener('load', () => {
         navigator.serviceWorker
           .register('/sw.js')
@@ -18,9 +40,7 @@ export const useServiceWorker = () => {
               if (newWorker) {
                 newWorker.addEventListener('statechange', () => {
                   if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    // New service worker available
                     console.log('New service worker available');
-                    // You can show a notification to the user here
                   }
                 });
               }

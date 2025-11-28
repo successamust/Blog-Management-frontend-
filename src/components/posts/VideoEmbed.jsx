@@ -89,7 +89,7 @@ const VideoEmbed = ({ url, title, thumbnail, provider = 'auto' }) => {
       )}
       <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors flex items-center justify-center">
         <motion.div
-          className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center"
+          className="w-20 h-20 bg-[var(--surface-bg)]/90 rounded-full flex items-center justify-center"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
         >

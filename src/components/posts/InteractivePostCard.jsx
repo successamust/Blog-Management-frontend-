@@ -110,12 +110,12 @@ const InteractivePostCard = memo(({ post, featured = false, delay = 0 }) => {
             </div>
           </div>
           <div className="p-6">
-            <div className="relative mb-4 bg-slate-50 border-l-4 border-[var(--accent)] rounded-r-lg p-4 shadow-sm">
-              <p className="text-slate-700 text-base leading-relaxed line-clamp-2 font-normal tracking-normal">
+            <div className="relative mb-4 bg-[var(--surface-subtle)] border-l-4 border-[var(--accent)] rounded-r-lg p-4 shadow-sm">
+              <p className="text-[var(--text-primary)] text-base leading-relaxed line-clamp-2 font-normal tracking-normal">
                 {postExcerpt}
               </p>
             </div>
-            <div className="flex items-center justify-between text-sm text-slate-500">
+            <div className="flex items-center justify-between text-sm text-[var(--text-secondary)]">
               <div className="flex items-center space-x-4">
                 <span className="flex items-center">
                   <Calendar className="w-4 h-4 mr-1" />
@@ -183,18 +183,18 @@ const InteractivePostCard = memo(({ post, featured = false, delay = 0 }) => {
           )}
           
           <motion.h3
-            className="text-xl font-bold text-slate-900 mb-3 group-hover:text-[var(--accent)] transition-colors"
+            className="text-xl font-bold text-[var(--text-primary)] mb-3 group-hover:text-[var(--accent)] transition-colors"
             whileHover={{ x: 5 }}
           >
             {postTitle}
           </motion.h3>
           <div className="relative mb-4 bg-[var(--accent)]/8 border border-[var(--border-subtle)] rounded-lg p-3 shadow-sm group-hover:shadow-md transition-shadow">
-            <p className="text-slate-700 text-sm leading-relaxed line-clamp-2 font-medium tracking-normal">
+            <p className="text-[var(--text-primary)] text-sm leading-relaxed line-clamp-2 font-medium tracking-normal">
               {postExcerpt}
             </p>
           </div>
           
-          <div className="flex items-center justify-between text-sm text-slate-500 mb-4">
+          <div className="flex items-center justify-between text-sm text-[var(--text-secondary)] mb-4">
             <span className="flex items-center">
               <Calendar className="w-4 h-4 mr-1" />
               {format(postDateObject, 'MMM d, yyyy')}

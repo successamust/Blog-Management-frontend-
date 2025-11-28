@@ -110,7 +110,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
         className="group h-full"
       >
         <Link to={postHref} className="block h-full" aria-label={`Read ${postTitle}`}>
-          <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-[var(--border-subtle)] bg-white transition-all duration-300 hover:border-[var(--border-subtle)] hover:shadow-lg" style={{ boxShadow: '0 2px 8px var(--shadow-default)' }}>
+          <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-[var(--border-subtle)] bg-[var(--surface-bg)] transition-all duration-300 hover:border-[var(--border-subtle)] hover:shadow-lg" style={{ boxShadow: '0 2px 8px var(--shadow-default)' }}>
             <div className="relative w-full">
               <div className="aspect-[16/10] w-full bg-[var(--surface-subtle)]">
                 {post.featuredImage ? (

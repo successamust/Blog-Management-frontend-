@@ -50,7 +50,7 @@ const Login = () => {
         url={`/login${location.search || ''}`}
         image={DEFAULT_OG_IMAGE}
       />
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen auth-shell flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -71,10 +71,10 @@ const Login = () => {
               />
             </motion.div>
           </div>
-          <div className="mt-4 flex justify-center text-slate-900">
+          <div className="mt-4 flex justify-center text-[var(--text-primary)]">
             <BrandWordmark />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-[var(--text-primary)]">
             Sign in to your account
           </h2>
           <p className="mt-2 text-center text-sm text-secondary">
@@ -90,7 +90,7 @@ const Login = () => {
         <form className="mt-8 space-y-6 surface-card p-8" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-[var(--text-primary)]">
                 Email address
               </label>
               <div className="mt-1 relative">
@@ -105,13 +105,13 @@ const Login = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="appearance-none relative block w-full pl-10 pr-3 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 focus:z-10 sm:text-sm transition-all"
+                  className="appearance-none relative block w-full pl-10 pr-3 py-3 glass-card placeholder-[var(--text-muted)] text-[var(--text-primary)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-[var(--surface-bg)]/90 focus:z-10 sm:text-sm transition-all"
                   placeholder="Enter your email"
                 />
               </div>
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-[var(--text-primary)]">
                 Password
               </label>
               <div className="mt-1 relative">
@@ -126,7 +126,7 @@ const Login = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="appearance-none relative block w-full pl-10 pr-10 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 focus:z-10 sm:text-sm transition-all"
+                  className="appearance-none relative block w-full pl-10 pr-10 py-3 glass-card placeholder-[var(--text-muted)] text-[var(--text-primary)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-[var(--surface-bg)]/90 focus:z-10 sm:text-sm transition-all"
                   placeholder="Enter your password"
                 />
                 <button

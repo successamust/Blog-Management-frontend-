@@ -146,7 +146,7 @@ const QuickActions = ({ post, onEdit, onDelete, onShare, onBookmark, onFullscree
               initial={{ opacity: 0, scale: 0.95, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-[var(--border-subtle)] z-50 overflow-hidden"
+              className="absolute right-0 top-full mt-2 w-48 bg-[var(--surface-bg)] rounded-xl shadow-lg border border-[var(--border-subtle)] z-50 overflow-hidden"
             >
               {actions.map((action, index) => {
                 if (action.submenu) {
@@ -195,13 +195,13 @@ const QuickActions = ({ post, onEdit, onDelete, onShare, onBookmark, onFullscree
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full"
+            className="bg-[var(--surface-bg)] rounded-xl p-6 max-w-md w-full"
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-primary">QR Code</h3>
               <button
                 onClick={() => setShowQR(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                className="p-1 hover:bg-[var(--surface-subtle)] rounded"
               >
                 ×
               </button>

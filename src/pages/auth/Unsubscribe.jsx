@@ -68,7 +68,7 @@ const Unsubscribe = () => {
         url={seoUrl}
         image={DEFAULT_OG_IMAGE}
       />
-      <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5]">
+      <div className="min-h-screen auth-shell flex items-center justify-center px-4 py-12">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -87,7 +87,7 @@ const Unsubscribe = () => {
                   <CheckCircle className="w-10 h-10 text-emerald-600" />
                 </div>
               </motion.div>
-              <h1 className="text-2xl font-bold text-slate-900 mb-4">
+              <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-4">
                 Successfully Unsubscribed
               </h1>
               <p className="text-secondary">
@@ -117,7 +117,7 @@ const Unsubscribe = () => {
                   <XCircle className="w-10 h-10 text-rose-600" />
                 </div>
               </motion.div>
-              <h1 className="text-2xl font-bold text-slate-900 mb-4">
+              <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-4">
                 Unsubscribe Failed
               </h1>
               <p className="text-secondary mb-6">
@@ -145,7 +145,7 @@ const Unsubscribe = () => {
                   <Mail className="w-10 h-10 text-[var(--accent)]" />
                 </div>
               </motion.div>
-              <h1 className="text-2xl font-bold text-slate-900 mb-4">
+              <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-4">
                 Unsubscribe from Newsletter
               </h1>
               <p className="text-secondary mb-6">
@@ -161,7 +161,7 @@ const Unsubscribe = () => {
                     placeholder="Enter your email address"
                     required
                     disabled={loading}
-                    className="w-full px-4 py-3 glass-card rounded-xl focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 glass-card rounded-xl focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-[var(--surface-bg)]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 <motion.button

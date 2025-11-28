@@ -149,7 +149,7 @@ const CommentThread = ({
                   className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors ${
                     isLiked
                       ? 'text-rose-500 bg-rose-50 dark:bg-rose-900/20'
-                      : 'text-muted hover:text-rose-500 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      : 'text-[var(--text-muted)] hover:text-rose-500 hover:bg-[var(--surface-subtle)]'
                   }`}
                   aria-label={isLiked ? 'Unlike comment' : 'Like comment'}
                 >
@@ -195,7 +195,7 @@ const CommentThread = ({
               onChange={(e) => setReplyText(e.target.value)}
               placeholder="Write a reply..."
               rows="3"
-              className="w-full px-3 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none mb-2"
+              className="w-full px-3 py-2 glass-card rounded-xl focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-[var(--surface-bg)]/90 resize-none transition-all mb-2"
               autoFocus
             />
             <div className="flex gap-2">

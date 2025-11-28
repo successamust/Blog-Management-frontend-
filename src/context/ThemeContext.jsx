@@ -12,9 +12,11 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') return 'light';
+    
     // Check localStorage first
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
+    if (savedTheme === 'dark' || savedTheme === 'light') {
       return savedTheme;
     }
     
@@ -27,16 +29,39 @@ export const ThemeProvider = ({ children }) => {
   });
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const root = document.documentElement;
     
     if (theme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
       root.classList.add('dark');
     } else {
+      root.setAttribute('data-theme', 'light');
       root.classList.remove('dark');
     }
     
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // Apply theme immediately on mount to prevent flash
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const root = document.documentElement;
+    const savedTheme = localStorage.getItem('theme');
+    const initialTheme = savedTheme === 'dark' || savedTheme === 'light' 
+      ? savedTheme 
+      : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    
+    if (initialTheme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+      root.classList.add('dark');
+    } else {
+      root.setAttribute('data-theme', 'light');
+      root.classList.remove('dark');
+    }
+  }, []);
 
   // Listen for system theme changes
   useEffect(() => {

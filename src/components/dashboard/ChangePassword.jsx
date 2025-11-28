@@ -62,12 +62,12 @@ const ChangePassword = () => {
       <h2 className="text-2xl font-bold text-primary mb-6">Change Password</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
             Current Password
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
+              <Lock className="h-5 w-5 text-[var(--text-muted)]" />
             </div>
             <input
               type={showCurrentPassword ? 'text' : 'password'}
@@ -75,7 +75,7 @@ const ChangePassword = () => {
               value={formData.currentPassword}
               onChange={handleChange}
               required
-              className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:z-10 sm:text-sm"
+              className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-[var(--border-subtle)] placeholder-[var(--text-muted)] text-[var(--text-primary)] rounded-lg focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:z-10 sm:text-sm bg-[var(--surface-bg)]"
               placeholder="Enter current password"
             />
             <button
@@ -84,21 +84,21 @@ const ChangePassword = () => {
               onClick={() => setShowCurrentPassword(!showCurrentPassword)}
             >
               {showCurrentPassword ? (
-                <EyeOff className="h-5 w-5 text-gray-400" />
+                <EyeOff className="h-5 w-5 text-[var(--text-muted)]" />
               ) : (
-                <Eye className="h-5 w-5 text-gray-400" />
+                <Eye className="h-5 w-5 text-[var(--text-muted)]" />
               )}
             </button>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
             New Password
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
+              <Lock className="h-5 w-5 text-[var(--text-muted)]" />
             </div>
             <input
               type={showNewPassword ? 'text' : 'password'}
@@ -106,7 +106,7 @@ const ChangePassword = () => {
               value={formData.newPassword}
               onChange={handleChange}
               required
-              className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:z-10 sm:text-sm"
+              className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-[var(--border-subtle)] placeholder-[var(--text-muted)] text-[var(--text-primary)] rounded-lg focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:z-10 sm:text-sm bg-[var(--surface-bg)]"
               placeholder="Enter new password"
             />
             <button
@@ -115,21 +115,21 @@ const ChangePassword = () => {
               onClick={() => setShowNewPassword(!showNewPassword)}
             >
               {showNewPassword ? (
-                <EyeOff className="h-5 w-5 text-gray-400" />
+                <EyeOff className="h-5 w-5 text-[var(--text-muted)]" />
               ) : (
-                <Eye className="h-5 w-5 text-gray-400" />
+                <Eye className="h-5 w-5 text-[var(--text-muted)]" />
               )}
             </button>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
             Confirm New Password
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
+              <Lock className="h-5 w-5 text-[var(--text-muted)]" />
             </div>
             <input
               type={showConfirmPassword ? 'text' : 'password'}
@@ -137,7 +137,7 @@ const ChangePassword = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:z-10 sm:text-sm"
+              className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-[var(--border-subtle)] placeholder-[var(--text-muted)] text-[var(--text-primary)] rounded-lg focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:z-10 sm:text-sm bg-[var(--surface-bg)]"
               placeholder="Confirm new password"
             />
             <button
@@ -146,9 +146,9 @@ const ChangePassword = () => {
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             >
               {showConfirmPassword ? (
-                <EyeOff className="h-5 w-5 text-gray-400" />
+                <EyeOff className="h-5 w-5 text-[var(--text-muted)]" />
               ) : (
-                <Eye className="h-5 w-5 text-gray-400" />
+                <Eye className="h-5 w-5 text-[var(--text-muted)]" />
               )}
             </button>
           </div>

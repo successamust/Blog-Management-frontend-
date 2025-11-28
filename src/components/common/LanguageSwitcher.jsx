@@ -38,7 +38,7 @@ const LanguageSwitcher = ({ className = '' }) => {
 
       {/* Language Dropdown - Can be added if multiple languages */}
       {languages.length > 1 && (
-        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-[var(--border-subtle)] z-50">
+        <div className="absolute right-0 mt-2 w-48 bg-[var(--surface-bg)] rounded-xl shadow-lg border border-[var(--border-subtle)] z-50">
           {languages.map((lang) => (
             <button
               key={lang.code}

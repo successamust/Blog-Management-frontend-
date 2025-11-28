@@ -259,7 +259,7 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
       draft: 'bg-yellow-100 text-yellow-800',
       scheduled: 'bg-blue-100 text-blue-800',
       pending: 'bg-amber-100 text-amber-800',
-      archived: 'bg-slate-200 text-slate-700',
+      archived: 'bg-[var(--surface-subtle)] text-[var(--text-primary)]',
     };
 
     const label = baseStatus
@@ -269,14 +269,14 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
 
     return {
       label,
-      className: badgeClassMap[normalizedStatus] || 'bg-slate-100 text-slate-700',
+      className: badgeClassMap[normalizedStatus] || 'bg-[var(--surface-subtle)] text-[var(--text-primary)]',
     };
   };
   
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-[var(--text-primary)]">
           {isAuthor && !isAdmin() ? 'My Posts' : 'Posts Management'}
         </h2>
         {isAuthor && (
@@ -291,22 +291,22 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-5 h-5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search posts..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent md:w-60"
+            className="px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent md:w-60 bg-[var(--surface-bg)] text-[var(--text-primary)]"
           >
             <option value="all">All statuses</option>
             <option value="published">Published</option>
@@ -320,12 +320,12 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
       {/* Posts List */}
       {posts.length > 0 ? (
         <>
-          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="hidden md:block bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-[var(--surface-subtle)]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider w-12">
                       <input
                         type="checkbox"
                         checked={selectedPosts.length === posts.length && posts.length > 0}
@@ -336,31 +336,31 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
                             setSelectedPosts([]);
                           }
                         }}
-                        className="rounded border-gray-300 text-[var(--accent)] focus:ring-[var(--accent)]"
+                        className="rounded border-[var(--border-subtle)] text-[var(--accent)] focus:ring-[var(--accent)]"
                       />
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Title
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Author
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Published
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-[var(--surface-bg)] divide-y divide-[var(--border-subtle)]">
                   {posts.map((post) => {
                     const { label, className } = getStatusMeta(post);
                     return (
-                      <tr key={post._id} className="hover:bg-gray-50">
+                      <tr key={post._id} className="hover:bg-[var(--surface-subtle)]">
                         <td className="px-6 py-4">
                           <input
                             type="checkbox"
@@ -373,18 +373,18 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
                                 setSelectedPosts(selectedPosts.filter(id => id !== postId));
                               }
                             }}
-                            className="rounded border-gray-300 text-[var(--accent)] focus:ring-[var(--accent)]"
+                            className="rounded border-[var(--border-subtle)] text-[var(--accent)] focus:ring-[var(--accent)]"
                           />
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 line-clamp-1">{post.title}</div>
-                          <div className="text-sm text-gray-500 line-clamp-1">{post.excerpt}</div>
+                          <div className="text-sm font-medium text-[var(--text-primary)] line-clamp-1">{post.title}</div>
+                          <div className="text-sm text-[var(--text-secondary)] line-clamp-1">{post.excerpt}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{post.author?.username || '—'}</div>
+                          <div className="text-sm text-[var(--text-primary)]">{post.author?.username || '—'}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-[var(--text-secondary)]">
                             {(() => {
                               const dateSource = post.publishedAt || post.updatedAt || post.createdAt;
                               if (!dateSource) return '—';
@@ -437,27 +437,27 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
               return (
                 <div
                   key={post._id}
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3"
+                  className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-4 space-y-3"
                 >
                   <div className="flex flex-col gap-2">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-base font-semibold text-gray-900">{post.title}</p>
+                        <p className="text-base font-semibold text-[var(--text-primary)]">{post.title}</p>
                         {post.excerpt && (
-                          <p className="text-sm text-gray-500 line-clamp-2">{post.excerpt}</p>
+                          <p className="text-sm text-[var(--text-secondary)] line-clamp-2">{post.excerpt}</p>
                         )}
                       </div>
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${className}`}>
                         {label}
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-3 text-sm text-gray-500">
+                    <div className="flex flex-wrap gap-3 text-sm text-[var(--text-secondary)]">
                       <span className="inline-flex items-center gap-2">
-                        <span className="font-medium text-gray-700">Author:</span>
+                        <span className="font-medium text-[var(--text-primary)]">Author:</span>
                         {post.author?.username || '—'}
                       </span>
                       <span className="inline-flex items-center gap-2">
-                        <span className="font-medium text-gray-700">Updated:</span>
+                        <span className="font-medium text-[var(--text-primary)]">Updated:</span>
                         {(() => {
                           const dateSource = post.publishedAt || post.updatedAt || post.createdAt;
                           if (!dateSource) return '—';
@@ -498,9 +498,9 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
           </div>
         </>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="text-center py-12 text-gray-500">
-            <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+        <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)]">
+          <div className="text-center py-12 text-[var(--text-secondary)]">
+            <FileText className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
             <p>No posts found</p>
           </div>
         </div>
@@ -677,34 +677,34 @@ const CreatePost = ({ onSuccess }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Create New Post</h2>
+    <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+      <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Create New Post</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Title</label>
           <input
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Excerpt</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Excerpt</label>
           <textarea
             name="excerpt"
             value={formData.excerpt}
             onChange={handleChange}
             rows="3"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Content</label>
           <RichTextEditor
             value={formData.content}
             onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
@@ -714,18 +714,18 @@ const CreatePost = ({ onSuccess }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Category</label>
             {categoriesLoading ? (
-              <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 flex items-center gap-2">
+              <div className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg bg-[var(--surface-subtle)] flex items-center gap-2">
                 <Spinner size="xs" />
-                <span className="text-sm text-gray-500">Loading categories...</span>
+                <span className="text-sm text-[var(--text-secondary)]">Loading categories...</span>
               </div>
             ) : (
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
               >
                 <option value="">Select a category</option>
                 {categories.length > 0 ? (
@@ -742,12 +742,12 @@ const CreatePost = ({ onSuccess }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Status</label>
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
             >
               <option value="published">Published</option>
               <option value="draft">Draft</option>
@@ -756,19 +756,19 @@ const CreatePost = ({ onSuccess }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Tags (comma-separated)</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Tags (comma-separated)</label>
           <input
             type="text"
             name="tags"
             value={formData.tags}
             onChange={handleChange}
             placeholder="tag1, tag2, tag3"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Featured Image</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Featured Image</label>
           <div className="space-y-2">
             <div className="flex gap-2">
               <input
@@ -777,9 +777,9 @@ const CreatePost = ({ onSuccess }) => {
                 value={formData.featuredImage}
                 onChange={handleChange}
                 placeholder="Image URL or upload an image"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                className="flex-1 px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
               />
-              <label className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors flex items-center">
+              <label className="px-4 py-2 bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--surface-bg)] cursor-pointer transition-colors flex items-center">
                 <Upload className="w-4 h-4 mr-2" />
                 {uploadingImage ? 'Uploading...' : 'Upload'}
                 <input
@@ -805,14 +805,14 @@ const CreatePost = ({ onSuccess }) => {
                 <img
                   src={formData.featuredImage}
                   alt="Featured"
-                  className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                  className="w-full h-48 object-cover rounded-lg border border-[var(--border-subtle)]"
                   onError={(e) => {
                     console.error('Image failed to load:', formData.featuredImage);
                     e.target.style.display = 'none';
                     toast.error('Failed to load image. Please check the URL.');
                   }}
                 />
-                <div className="mt-2 text-xs text-gray-500 break-all">
+                <div className="mt-2 text-xs text-[var(--text-secondary)] break-all">
                   {formData.featuredImage}
                 </div>
               </div>
@@ -1064,9 +1064,9 @@ const EditPost = ({ onSuccess }) => {
   if (!formData.title && !loading) {
     // If formData is empty and not loading, there might be an issue
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-4 sm:p-6">
         <div className="text-center py-8">
-          <p className="text-gray-600 mb-4">Unable to load post data. Please try again.</p>
+          <p className="text-[var(--text-secondary)] mb-4">Unable to load post data. Please try again.</p>
           <Link
             to="/admin/posts"
             className="btn btn-primary"
@@ -1079,34 +1079,34 @@ const EditPost = ({ onSuccess }) => {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 overflow-x-hidden">
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Edit Post</h2>
+    <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-4 sm:p-6 overflow-x-hidden">
+      <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">Edit Post</h2>
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Title</label>
           <input
             type="text"
             name="title"
             value={formData.title || ''}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Excerpt</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Excerpt</label>
           <textarea
             name="excerpt"
             value={formData.excerpt || ''}
             onChange={handleChange}
             rows="3"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Content</label>
           {typeof window !== 'undefined' && (
             <RichTextEditor
               value={formData.content || ''}
@@ -1118,18 +1118,18 @@ const EditPost = ({ onSuccess }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Category</label>
             {categoriesLoading ? (
-              <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 flex items-center gap-2">
+              <div className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg bg-[var(--surface-subtle)] flex items-center gap-2">
                 <Spinner size="xs" />
-                <span className="text-sm text-gray-500">Loading categories...</span>
+                <span className="text-sm text-[var(--text-secondary)]">Loading categories...</span>
               </div>
             ) : (
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
               >
                 <option value="">Select a category</option>
                 {categories.length > 0 ? (
@@ -1146,19 +1146,19 @@ const EditPost = ({ onSuccess }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Status</label>
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
               disabled={!!scheduledAt}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)] disabled:bg-[var(--surface-subtle)] disabled:cursor-not-allowed"
             >
               <option value="published">Published</option>
               <option value="draft">Draft</option>
             </select>
             {scheduledAt && (
-              <p className="mt-1 text-xs text-gray-500">Status will be set to draft when scheduled</p>
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">Status will be set to draft when scheduled</p>
             )}
           </div>
         </div>
@@ -1184,19 +1184,19 @@ const EditPost = ({ onSuccess }) => {
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Tags (comma-separated)</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Tags (comma-separated)</label>
           <input
             type="text"
             name="tags"
             value={formData.tags}
             onChange={handleChange}
             placeholder="tag1, tag2, tag3"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Featured Image</label>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Featured Image</label>
           <div className="space-y-2">
             <div className="flex flex-col sm:flex-row gap-2">
               <input
@@ -1205,9 +1205,9 @@ const EditPost = ({ onSuccess }) => {
                 value={formData.featuredImage}
                 onChange={handleChange}
                 placeholder="Image URL or upload an image"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white text-sm sm:text-base"
+                className="flex-1 px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-sm sm:text-base text-[var(--text-primary)]"
               />
-              <label className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors flex items-center justify-center text-sm sm:text-base whitespace-nowrap">
+              <label className="px-4 py-2 bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--surface-bg)] cursor-pointer transition-colors flex items-center justify-center text-sm sm:text-base whitespace-nowrap">
                 <Upload className="w-4 h-4 mr-2" />
                 {uploadingImage ? 'Uploading...' : 'Upload'}
                 <input
@@ -1233,14 +1233,14 @@ const EditPost = ({ onSuccess }) => {
                 <img
                   src={formData.featuredImage}
                   alt="Featured"
-                  className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                  className="w-full h-48 object-cover rounded-lg border border-[var(--border-subtle)]"
                   onError={(e) => {
                     console.error('Image failed to load:', formData.featuredImage);
                     e.target.style.display = 'none';
                     toast.error('Failed to load image. Please check the URL.');
                   }}
                 />
-                <div className="mt-2 text-xs text-gray-500 break-all">
+                <div className="mt-2 text-xs text-[var(--text-secondary)] break-all">
                   {formData.featuredImage}
                 </div>
               </div>

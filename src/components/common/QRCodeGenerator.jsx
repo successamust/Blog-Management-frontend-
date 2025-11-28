@@ -38,7 +38,7 @@ const QRCodeGenerator = ({ url, title = 'QR Code' }) => {
 
   return (
     <div className="flex flex-col items-center gap-4 p-6 bg-surface-subtle rounded-xl">
-      <div className="p-4 bg-white rounded-lg">
+      <div className="p-4 bg-[var(--surface-bg)] rounded-lg">
         <img src={qrDataUrl} alt="QR Code" className="w-48 h-48" />
       </div>
       <p className="text-sm text-secondary text-center max-w-xs break-all">{url}</p>

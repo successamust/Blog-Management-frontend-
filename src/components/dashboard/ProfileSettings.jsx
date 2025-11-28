@@ -202,9 +202,9 @@ const ProfileSettings = () => {
   return (
     <div className="space-y-6">
       {/* Profile Information */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Profile Information</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Profile Information</h2>
           {!isEditing ? (
             <button
               onClick={handleEdit}
@@ -270,7 +270,7 @@ const ProfileSettings = () => {
               )}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-700 mb-2">Profile Picture</p>
+              <p className="text-sm font-medium text-[var(--text-primary)] mb-2">Profile Picture</p>
               {isEditing ? (
                 <div className="space-y-2">
                   <label className="btn btn-primary inline-flex items-center space-x-2 cursor-pointer shadow-[0_12px_24px_rgba(26,137,23,0.18)]">
@@ -295,10 +295,10 @@ const ProfileSettings = () => {
                       <span>Remove</span>
                     </button>
                   )}
-                  <p className="text-xs text-gray-500">JPG, PNG or GIF. Max size 5MB</p>
+                  <p className="text-xs text-[var(--text-muted)]">JPG, PNG or GIF. Max size 5MB</p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[var(--text-secondary)]">
                   {formData.profilePicture ? 'Click Edit to change your profile picture' : 'No profile picture set'}
                 </p>
               )}
@@ -307,13 +307,13 @@ const ProfileSettings = () => {
 
           {/* Username */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
               Username
             </label>
             {isEditing ? (
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
+                  <User className="h-5 w-5 text-[var(--text-muted)]" />
                 </div>
                 <input
                   type="text"
@@ -321,12 +321,12 @@ const ProfileSettings = () => {
                   value={formData.username}
                   onChange={handleChange}
                   required
-                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-[var(--border-subtle)] placeholder-[var(--text-muted)] text-[var(--text-primary)] rounded-lg focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:z-10 sm:text-sm bg-[var(--surface-bg)]"
                   placeholder="Enter username"
                 />
               </div>
             ) : (
-              <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+              <div className="px-4 py-3 bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]">
                 {formData.username || 'Not set'}
               </div>
             )}
@@ -334,13 +334,13 @@ const ProfileSettings = () => {
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
               Email Address
             </label>
             {isEditing ? (
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5 text-[var(--text-muted)]" />
                 </div>
                 <input
                   type="email"
@@ -348,12 +348,12 @@ const ProfileSettings = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-[var(--border-subtle)] placeholder-[var(--text-muted)] text-[var(--text-primary)] rounded-lg focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:z-10 sm:text-sm bg-[var(--surface-bg)]"
                   placeholder="Enter email address"
                 />
               </div>
             ) : (
-              <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+              <div className="px-4 py-3 bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]">
                 {formData.email || 'Not set'}
               </div>
             )}
@@ -361,7 +361,7 @@ const ProfileSettings = () => {
 
           {/* Bio */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
               Bio
             </label>
             {isEditing ? (
@@ -370,7 +370,7 @@ const ProfileSettings = () => {
                 value={formData.bio}
                 onChange={handleChange}
                 rows="4"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
+                className="w-full px-4 py-3 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none bg-[var(--surface-bg)] text-[var(--text-primary)]"
                 placeholder="Tell us about yourself..."
               />
             ) : (
@@ -381,26 +381,26 @@ const ProfileSettings = () => {
           </div>
 
           {/* Account Info */}
-          <div className="pt-6 border-t border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h3>
+          <div className="pt-6 border-t border-[var(--border-subtle)]">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Account Information</h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">User ID</span>
-                <span className="text-sm font-mono text-gray-900">{user?._id || user?.id || 'N/A'}</span>
+                <span className="text-sm text-[var(--text-secondary)]">User ID</span>
+                <span className="text-sm font-mono text-[var(--text-primary)]">{user?._id || user?.id || 'N/A'}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Role</span>
+                <span className="text-sm text-[var(--text-secondary)]">Role</span>
                 <span className={`text-sm font-semibold px-2 py-1 rounded-full ${
                   user.role === 'admin' 
                     ? 'bg-purple-100 text-purple-800' 
-                    : 'bg-gray-100 text-gray-800'
+                    : 'bg-[var(--surface-subtle)] text-[var(--text-primary)]'
                 }`}>
                   {user.role || 'user'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Member Since</span>
-                <span className="text-sm text-gray-900">
+                <span className="text-sm text-[var(--text-secondary)]">Member Since</span>
+                <span className="text-sm text-[var(--text-primary)]">
                   {(() => {
                     // Try to get createdAt from user object
                     let createdAt = user?.createdAt;

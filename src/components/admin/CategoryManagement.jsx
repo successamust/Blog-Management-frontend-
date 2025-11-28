@@ -75,7 +75,7 @@ const CategoryList = ({ categories, searchQuery, setSearchQuery, onDelete }) => 
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Categories Management</h2>
+        <h2 className="text-2xl font-bold text-[var(--text-primary)]">Categories Management</h2>
         <Link
           to="/admin/categories/create"
           className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
@@ -86,15 +86,15 @@ const CategoryList = ({ categories, searchQuery, setSearchQuery, onDelete }) => 
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-4 mb-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-5 h-5" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search categories..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+            className="w-full pl-10 pr-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)] placeholder-[var(--text-muted)]"
           />
         </div>
       </div>
@@ -102,38 +102,38 @@ const CategoryList = ({ categories, searchQuery, setSearchQuery, onDelete }) => 
       {/* Categories List */}
       {hasCategories ? (
         <>
-          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="hidden md:block bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-[var(--border-subtle)]">
+                <thead className="bg-[var(--surface-subtle)]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Description
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Slug
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-[var(--surface-bg)] divide-y divide-[var(--border-subtle)]">
                   {categories.map((category) => (
-                    <tr key={category._id} className="hover:bg-gray-50">
+                    <tr key={category._id} className="hover:bg-[var(--surface-subtle)]">
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">{category.name}</div>
+                        <div className="text-sm font-medium text-[var(--text-primary)]">{category.name}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-500 line-clamp-2">
+                        <div className="text-sm text-[var(--text-secondary)] line-clamp-2">
                           {category.description || 'No description'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{category.slug || '—'}</div>
+                        <div className="text-sm text-[var(--text-secondary)]">{category.slug || '—'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                         <Link
@@ -166,17 +166,17 @@ const CategoryList = ({ categories, searchQuery, setSearchQuery, onDelete }) => 
             {categories.map((category) => (
               <div
                 key={category._id}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3"
+                className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-4 space-y-3"
               >
                 <div className="flex flex-col gap-2">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-base font-semibold text-gray-900">{category.name}</p>
+                      <p className="text-base font-semibold text-[var(--text-primary)]">{category.name}</p>
                       {category.description && (
-                        <p className="text-sm text-gray-500 line-clamp-3">{category.description}</p>
+                        <p className="text-sm text-[var(--text-secondary)] line-clamp-3">{category.description}</p>
                       )}
                     </div>
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-[var(--surface-subtle)] text-[var(--text-secondary)]">
                       {category.slug || '—'}
                     </span>
                   </div>
@@ -209,9 +209,9 @@ const CategoryList = ({ categories, searchQuery, setSearchQuery, onDelete }) => 
           </div>
         </>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="text-center py-12 text-gray-500">
-            <Folder className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+        <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)]">
+          <div className="text-center py-12 text-[var(--text-secondary)]">
+            <Folder className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
             <p>No categories found</p>
           </div>
         </div>
@@ -252,18 +252,18 @@ const CreateCategory = ({ onSuccess }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Create New Category</h2>
+    <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+      <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Create New Category</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Name</label>
           <input
             type="text"
             name="name"
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 
@@ -274,7 +274,7 @@ const CreateCategory = ({ onSuccess }) => {
             value={formData.description}
             onChange={handleChange}
             rows="4"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 
@@ -383,7 +383,7 @@ const EditCategory = ({ onSuccess }) => {
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 
@@ -394,7 +394,7 @@ const EditCategory = ({ onSuccess }) => {
             value={formData.description}
             onChange={handleChange}
             rows="4"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 

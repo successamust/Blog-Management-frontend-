@@ -140,13 +140,13 @@ const AuthorApplication = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+        className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6"
       >
         <div className="flex items-center space-x-3 text-green-600">
           <CheckCircle className="w-6 h-6" />
           <h3 className="text-lg font-semibold">You are already an author!</h3>
         </div>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-[var(--text-secondary)]">
           You have author privileges and can create and manage posts.
         </p>
       </motion.div>
@@ -158,7 +158,7 @@ const AuthorApplication = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+        className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6"
       >
         <div className={`border rounded-lg p-4 ${getStatusColor()}`}>
           <div className="flex items-center space-x-3 mb-3">
@@ -186,7 +186,7 @@ const AuthorApplication = () => {
           )}
           
           {applicationStatus.adminNotes && (
-            <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+            <div className="mt-3 p-3 bg-[var(--surface-subtle)] rounded-lg">
               <p className="text-sm font-medium mb-1">Admin Notes:</p>
               <p className="text-sm whitespace-pre-wrap">{applicationStatus.adminNotes}</p>
             </div>
@@ -204,7 +204,7 @@ const AuthorApplication = () => {
     >
       <div className="flex items-center space-x-3 mb-6">
         <FileText className="w-6 h-6 text-[var(--accent)]" />
-        <h3 className="text-xl font-bold text-gray-900">Apply to Become an Author</h3>
+        <h3 className="text-xl font-bold text-[var(--text-primary)]">Apply to Become an Author</h3>
       </div>
 
       <div className="bg-[var(--accent)]/10 border border-[var(--accent)]/30 rounded-lg p-4 mb-6">
@@ -224,7 +224,7 @@ const AuthorApplication = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="message" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
             Why do you want to become an author? <span className="text-red-500">*</span>
           </label>
           <textarea
@@ -234,14 +234,14 @@ const AuthorApplication = () => {
             value={formData.message}
             onChange={handleChange}
             placeholder="Tell us about your motivation, experience, and what you'd like to write about..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
+            className="w-full px-4 py-3 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none bg-[var(--surface-bg)] text-[var(--text-primary)]"
             required
           />
-          <p className="mt-1 text-xs text-gray-500">This is required and will be reviewed by our team</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">This is required and will be reviewed by our team</p>
         </div>
 
         <div>
-          <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="bio" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
             Bio (Optional)
           </label>
           <textarea
@@ -251,12 +251,12 @@ const AuthorApplication = () => {
             value={formData.bio}
             onChange={handleChange}
             placeholder="Tell us about yourself..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
+            className="w-full px-4 py-3 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 
         <div>
-          <label htmlFor="expertise" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="expertise" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
             Areas of Expertise (Optional)
           </label>
           <input
@@ -268,11 +268,11 @@ const AuthorApplication = () => {
             placeholder="e.g., Web Development, Design, Marketing"
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
-          <p className="mt-1 text-xs text-gray-500">Comma-separated list of your expertise areas</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">Comma-separated list of your expertise areas</p>
         </div>
 
         <div>
-          <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="website" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
             Website/Portfolio (Optional)
           </label>
           <input

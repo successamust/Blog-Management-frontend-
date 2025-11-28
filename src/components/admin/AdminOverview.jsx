@@ -183,26 +183,35 @@ const AdminOverview = () => {
           if (!primaryPosts.length || !primaryPosts.some(isUnpublished)) {
             const extraQueries = [
               { status: 'draft', includeDrafts: true },
-              { status: 'scheduled', includeDrafts: true },
-              { status: 'archived', includeDrafts: true },
-              { status: 'unpublished', includeDrafts: true },
               { isPublished: false, includeDrafts: true },
-              { isPublished: 'false', includeDrafts: true },
-              { published: false, includeDrafts: true },
-              { published: 'false', includeDrafts: true },
             ];
 
-            const extraResponses = await Promise.all(
-              extraQueries.map((params) =>
-                postsAPI
-                  .getAll({ limit: 1000, ...params })
-                  .then((res) => normalizePosts(res))
-                  .catch((err) => {
-                    console.warn(`AdminOverview: failed to fetch posts with params ${JSON.stringify(params)}:`, err);
-                    return [];
-                  })
-              )
-            );
+            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+            const extraResponses = [];
+            
+            for (let i = 0; i < extraQueries.length; i++) {
+              if (i > 0) {
+                await delay(300);
+              }
+              try {
+                const res = await postsAPI.getAll({ limit: 1000, ...extraQueries[i] });
+                extraResponses.push(normalizePosts(res));
+              } catch (err) {
+                if (err.response?.status === 429) {
+                  await delay(1000);
+                  try {
+                    const res = await postsAPI.getAll({ limit: 1000, ...extraQueries[i] });
+                    extraResponses.push(normalizePosts(res));
+                  } catch (retryErr) {
+                    console.warn(`AdminOverview: failed to fetch posts with params ${JSON.stringify(extraQueries[i])} after retry:`, retryErr);
+                    extraResponses.push([]);
+                  }
+                } else {
+                  console.warn(`AdminOverview: failed to fetch posts with params ${JSON.stringify(extraQueries[i])}:`, err);
+                  extraResponses.push([]);
+                }
+              }
+            }
 
             aggregatedPosts = dedupeById([
               ...primaryPosts,
@@ -211,15 +220,28 @@ const AdminOverview = () => {
           }
 
           if (!aggregatedPosts.some(isUnpublished)) {
-            const dashboardRes = await dashboardAPI
-              .getPosts({ limit: 1000, status: 'all', includeDrafts: true })
-              .catch((err) => {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            try {
+              const dashboardRes = await dashboardAPI.getPosts({ limit: 1000, status: 'all', includeDrafts: true });
+              const dashboardPosts = normalizePosts(dashboardRes);
+              if (dashboardPosts.length) {
+                aggregatedPosts = dedupeById([...aggregatedPosts, ...dashboardPosts]);
+              }
+            } catch (err) {
+              if (err.response?.status === 429) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                try {
+                  const dashboardRes = await dashboardAPI.getPosts({ limit: 1000, status: 'all', includeDrafts: true });
+                  const dashboardPosts = normalizePosts(dashboardRes);
+                  if (dashboardPosts.length) {
+                    aggregatedPosts = dedupeById([...aggregatedPosts, ...dashboardPosts]);
+                  }
+                } catch (retryErr) {
+                  console.warn('AdminOverview: dashboard posts fallback failed after retry:', retryErr);
+                }
+              } else {
                 console.warn('AdminOverview: dashboard posts fallback failed:', err);
-                return null;
-              });
-            const dashboardPosts = normalizePosts(dashboardRes);
-            if (dashboardPosts.length) {
-              aggregatedPosts = dedupeById([...aggregatedPosts, ...dashboardPosts]);
+              }
             }
           }
 
@@ -232,21 +254,38 @@ const AdminOverview = () => {
 
       const postsPromise = fetchComprehensivePosts();
 
-      const [
-        userStatsRes,
-        usersRes,
-        categoriesRes,
-        newsletterStatsRes,
-        dashboardRes,
-      ] = await Promise.allSettled([
-        adminAPI.getUserStats(),
-        adminAPI.getUsers({ limit: 1000 }),
-        categoriesAPI.getAll(),
-        adminAPI.getNewsletterStats(),
-        dashboardAPI.getOverview(),
-      ]);
+      const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+      
+      const makeRequestWithRetry = async (requestFn, retries = 2) => {
+        for (let i = 0; i <= retries; i++) {
+          try {
+            return await requestFn();
+          } catch (err) {
+            if (err.response?.status === 429 && i < retries) {
+              const waitTime = (i + 1) * 1000;
+              await delay(waitTime);
+              continue;
+            }
+            return { error: err };
+          }
+        }
+        return { error: new Error('Max retries exceeded') };
+      };
 
-      const getData = (res) => res?.value?.data ?? res?.value ?? null;
+      const userStatsRes = await Promise.resolve(makeRequestWithRetry(() => adminAPI.getUserStats()));
+      await delay(400);
+      const usersRes = await Promise.resolve(makeRequestWithRetry(() => adminAPI.getUsers({ limit: 1000 })));
+      await delay(400);
+      const categoriesRes = await Promise.resolve(makeRequestWithRetry(() => categoriesAPI.getAll()));
+      await delay(400);
+      const newsletterStatsRes = await Promise.resolve(makeRequestWithRetry(() => adminAPI.getNewsletterStats()));
+      await delay(400);
+      const dashboardRes = await Promise.resolve(makeRequestWithRetry(() => dashboardAPI.getOverview()));
+
+      const getData = (res) => {
+        if (res?.error) return null;
+        return res?.value?.data ?? res?.value ?? res?.data ?? res ?? null;
+      };
 
       const toNumber = (value) => {
         if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -260,7 +299,7 @@ const AdminOverview = () => {
       let userData = null;
       let normalizedUsers = null;
 
-      if (userStatsRes.status === 'fulfilled') {
+      if (userStatsRes && !userStatsRes.error) {
         userData = getData(userStatsRes) || {};
 
         const totalUsers =
@@ -365,7 +404,7 @@ const AdminOverview = () => {
         };
       }
 
-      if (usersRes.status === 'fulfilled') {
+      if (usersRes && !usersRes.error) {
         const usersPayload = getData(usersRes) || {};
         const extractedUsers =
           usersPayload?.users ||
@@ -641,7 +680,7 @@ const AdminOverview = () => {
         },
       }));
 
-      if (categoriesRes.status === 'fulfilled') {
+      if (categoriesRes && !categoriesRes.error) {
         const rawCategories = getData(categoriesRes);
         const categoriesData = rawCategories?.categories || rawCategories?.data || (Array.isArray(rawCategories) ? rawCategories : []) || [];
         const normalizedCategories = Array.isArray(categoriesData) ? categoriesData.filter(Boolean) : [];
@@ -655,12 +694,12 @@ const AdminOverview = () => {
         }));
       }
 
-      if (newsletterStatsRes.status === 'fulfilled') {
+      if (newsletterStatsRes && !newsletterStatsRes.error) {
         const newsletterData = getData(newsletterStatsRes);
         setStats((prev) => ({ ...prev, newsletter: newsletterData || null }));
       }
 
-      if (dashboardRes.status === 'fulfilled') {
+      if (dashboardRes && !dashboardRes.error) {
         const dashboardData = getData(dashboardRes);
         const engagementStats = dashboardData?.overview?.stats || dashboardData?.stats || dashboardData || null;
         setStats((prev) => ({
@@ -1167,8 +1206,8 @@ const AdminOverview = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Admin Overview</h2>
-        <p className="text-gray-600">Comprehensive statistics and analytics dashboard</p>
+        <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Admin Overview</h2>
+        <p className="text-[var(--text-secondary)]">Comprehensive statistics and analytics dashboard</p>
       </motion.div>
 
       {/* Key Metrics Cards */}
@@ -1214,28 +1253,28 @@ const AdminOverview = () => {
       {/* Engagement Metrics */}
       {(stats.engagement || posts.length) && (
         <AnimatedCard delay={0.5}>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Engagement Metrics</h3>
+          <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Engagement Metrics</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-[var(--accent)]/12 rounded-lg">
+              <div className="text-center p-4 bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg">
                 <LineChartIcon className="w-8 h-8 text-[var(--accent)] mx-auto mb-2" />
-                <p className="text-2xl font-bold text-gray-900">{totalViews}</p>
-                <p className="text-sm text-gray-600">Total Views</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{totalViews}</p>
+                <p className="text-sm text-[var(--text-secondary)]">Total Views</p>
               </div>
-              <div className="text-center p-4 bg-red-50 rounded-lg">
-                <HeartHandshake className="w-8 h-8 text-red-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-gray-900">{totalLikes}</p>
-                <p className="text-sm text-gray-600">Total Likes</p>
+              <div className="text-center p-4 bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg">
+                <HeartHandshake className="w-8 h-8 text-rose-400 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{totalLikes}</p>
+                <p className="text-sm text-[var(--text-secondary)]">Total Likes</p>
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <MessageSquare className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-gray-900">{totalComments}</p>
-                <p className="text-sm text-gray-600">Total Comments</p>
+              <div className="text-center p-4 bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg">
+                <MessageSquare className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{totalComments}</p>
+                <p className="text-sm text-[var(--text-secondary)]">Total Comments</p>
               </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <TrendingUp className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-gray-900">{publishedPostsCount}</p>
-                <p className="text-sm text-gray-600">Published Posts</p>
+              <div className="text-center p-4 bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg">
+                <TrendingUp className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{publishedPostsCount}</p>
+                <p className="text-sm text-[var(--text-secondary)]">Published Posts</p>
               </div>
             </div>
           </div>
@@ -1247,8 +1286,8 @@ const AdminOverview = () => {
         {/* Roles Distribution */}
         {roleData.length > 0 && (
           <AnimatedCard delay={0.6}>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Roles Distribution</h3>
+            <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Roles Distribution</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -1280,8 +1319,8 @@ const AdminOverview = () => {
         {/* Post Status Distribution */}
         {statusData.length > 0 && (
           <AnimatedCard delay={0.7}>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Post Status Distribution</h3>
+            <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Post Status Distribution</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -1314,8 +1353,8 @@ const AdminOverview = () => {
         {/* Posts by Category */}
         {postsByCategoryData.length > 0 && (
           <AnimatedCard delay={0.8}>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Posts by Category</h3>
+            <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Posts by Category</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={postsByCategoryData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -1333,8 +1372,8 @@ const AdminOverview = () => {
         {/* Posts Over Time */}
         {postsByMonthData.length > 0 && (
           <AnimatedCard delay={0.9}>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Posts Over Time</h3>
+            <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Posts Over Time</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={postsByMonthData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -1353,8 +1392,8 @@ const AdminOverview = () => {
       {/* Top Posts */}
       {topPostsData.length > 0 && (
         <AnimatedCard delay={1.0}>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Top 5 Posts by Views</h3>
+          <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Top 5 Posts by Views</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={topPostsData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
@@ -1376,22 +1415,22 @@ const AdminOverview = () => {
 const StatCard = ({ title, value, icon, color, subtitle }) => {
   const colorClasses = {
     blue: 'bg-[var(--accent)]/12 text-[var(--accent)]',
-    purple: 'bg-purple-50 text-purple-600',
-    green: 'bg-green-50 text-green-600',
-    orange: 'bg-orange-50 text-orange-600',
+    purple: 'bg-purple-400/15 text-purple-300',
+    green: 'bg-emerald-400/15 text-emerald-300',
+    orange: 'bg-amber-400/15 text-amber-300',
   };
 
   return (
     <motion.div
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6"
       whileHover={{ scale: 1.02, y: -4 }}
       transition={{ duration: 0.2 }}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
-          {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+          <p className="text-sm font-medium text-[var(--text-secondary)]">{title}</p>
+          <p className="text-3xl font-bold text-[var(--text-primary)] mt-2">{value}</p>
+          {subtitle && <p className="text-xs text-[var(--text-muted)] mt-1">{subtitle}</p>}
         </div>
         <div className={`p-3 rounded-lg ${colorClasses[color]}`}>{icon}</div>
       </div>

@@ -145,13 +145,13 @@ const ReadingList = ({ post, onAdd, onRemove }) => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full"
+            className="bg-[var(--surface-bg)] rounded-xl p-6 max-w-md w-full"
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-primary">Create Reading List</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                className="p-1 hover:bg-[var(--surface-subtle)] rounded"
               >
                 <X className="w-5 h-5" />
               </button>

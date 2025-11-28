@@ -40,7 +40,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white sticky top-0 z-50 border-b border-[var(--border-subtle)]" style={{ boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)' }}>
+    <header className="bg-[var(--surface-bg)] sticky top-0 z-50 border-b border-[var(--border-subtle)]" style={{ boxShadow: '0 2px 10px var(--shadow-default)' }}>
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -176,7 +176,7 @@ const Header = () => {
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link
                     to="/register"
-                    className="btn btn-secondary !w-auto"
+                    className="btn btn-primary !w-auto"
                   >
                     Sign Up
                   </Link>
@@ -203,7 +203,7 @@ const Header = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="md:hidden py-4 border-t border-[var(--border-subtle)] will-change-transform bg-white"
+            className="md:hidden py-4 border-t border-[var(--border-subtle)] will-change-transform bg-[var(--surface-bg)]"
           >
             {/* Mobile Search Bar */}
             <form onSubmit={handleSearch} className="mb-4 px-2">
@@ -291,7 +291,7 @@ const Header = () => {
                   </Link>
                   <Link
                     to="/register"
-                    className="btn btn-secondary !justify-start text-left"
+                    className="btn btn-primary !justify-start text-left"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Sign Up

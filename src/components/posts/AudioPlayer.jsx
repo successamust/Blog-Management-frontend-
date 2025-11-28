@@ -103,7 +103,7 @@ const AudioPlayer = ({ src, title, artist, coverImage }) => {
           max={duration || 0}
           value={currentTime}
           onChange={handleSeek}
-          className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--accent)]"
+          className="w-full h-2 bg-[var(--surface-subtle)] rounded-lg appearance-none cursor-pointer accent-[var(--accent)]"
         />
         <div className="flex justify-between text-xs text-muted mt-1">
           <span>{formatTime(currentTime)}</span>
@@ -154,7 +154,7 @@ const AudioPlayer = ({ src, title, artist, coverImage }) => {
             step="0.01"
             value={isMuted ? 0 : volume}
             onChange={handleVolumeChange}
-            className="w-24 h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--accent)]"
+            className="w-24 h-1 bg-[var(--surface-subtle)] rounded-lg appearance-none cursor-pointer accent-[var(--accent)]"
             aria-label="Volume"
           />
         </div>

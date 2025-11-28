@@ -484,7 +484,7 @@ const Search = () => {
                   value={filters.author}
                   onChange={(e) => setFilters({ ...filters, author: e.target.value })}
                   placeholder="Author name"
-                  className="w-full px-3 py-2 bg-white border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  className="w-full px-3 py-2 bg-[var(--surface-bg)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 />
               </div>
               <div>
@@ -497,7 +497,7 @@ const Search = () => {
                   value={filters.category}
                   onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                   placeholder="Category name"
-                  className="w-full px-3 py-2 bg-white border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  className="w-full px-3 py-2 bg-[var(--surface-bg)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 />
               </div>
               <div>
@@ -509,7 +509,7 @@ const Search = () => {
                   type="date"
                   value={filters.dateFrom}
                   onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  className="w-full px-3 py-2 bg-[var(--surface-bg)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 />
               </div>
               <div>
@@ -521,7 +521,7 @@ const Search = () => {
                   type="date"
                   value={filters.dateTo}
                   onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  className="w-full px-3 py-2 bg-[var(--surface-bg)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 />
               </div>
             </div>

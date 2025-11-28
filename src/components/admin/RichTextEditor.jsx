@@ -354,8 +354,8 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     editorProps: {
       attributes: {
         class: isDark
-          ? 'prose prose-invert max-w-none focus:outline-none p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] dark:text-gray-100 bg-gray-800'
-          : 'prose max-w-none focus:outline-none p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] text-[var(--text-primary)] bg-white',
+          ? 'prose prose-invert max-w-none focus:outline-none p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] dark:text-[var(--text-primary)] bg-[var(--surface-bg)]'
+          : 'prose max-w-none focus:outline-none p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] text-[var(--text-primary)] bg-[var(--surface-bg)]',
       },
     },
   });
@@ -511,13 +511,13 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       if (isDark) {
         editorElement.classList.add('dark');
       editorElement.classList.add('prose-invert');
-      editorElement.style.backgroundColor = '#1f2937'; // bg-gray-800
-      editorElement.style.color = '#f3f4f6'; // text-gray-100
+      editorElement.style.backgroundColor = '#1f2937'; // bg-[var(--surface-bg)]
+      editorElement.style.color = '#f3f4f6'; // text-[var(--text-primary)]
       editorElement.style.caretColor = '#f3f4f6'; // cursor color
       } else {
         editorElement.classList.remove('dark');
       editorElement.classList.remove('prose-invert');
-      editorElement.style.backgroundColor = '#ffffff'; // bg-white
+      editorElement.style.backgroundColor = '#ffffff'; // bg-[var(--surface-bg)]
       editorElement.style.color = 'var(--text-primary)'; // text-primary
       editorElement.style.caretColor = 'var(--text-primary)'; // cursor color
     }
@@ -1057,7 +1057,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       className={`p-2 rounded-lg transition-colors ${
         isActive
           ? 'bg-[var(--accent)]/15 text-[var(--accent)] dark:bg-emerald-900/50 dark:text-emerald-200'
-          : `hover:bg-[var(--accent-soft)] dark:hover:bg-gray-700 ${isDark ? 'text-gray-300' : 'text-[var(--text-primary)]'}`
+          : `hover:bg-[var(--accent-soft)] ${isDark ? 'text-[var(--text-muted)]' : 'text-[var(--text-primary)]'}`
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
       {children}
@@ -1065,11 +1065,11 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   );
 
   const editorContent = (
-    <div className={`border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-white'} transition-colors ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}>
+    <div className={`border border-[var(--border-subtle)] rounded-lg overflow-hidden bg-[var(--surface-bg)] transition-colors ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}>
       {/* Toolbar */}
-      <div className={`border-b border-[var(--border-subtle)] dark:border-gray-700 ${isDark ? 'bg-gray-900' : 'bg-[var(--surface-subtle)]'} p-2 flex flex-wrap items-center gap-1 overflow-x-auto`}>
+      <div className={`border-b border-[var(--border-subtle)] ${isDark ? 'bg-[var(--surface-bg)]' : 'bg-[var(--surface-subtle)]'} p-2 flex flex-wrap items-center gap-1 overflow-x-auto`}>
         {/* Formatting */}
-        <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
+        <div className="flex items-center gap-1 border-r border-[var(--border-subtle)] pr-2 mr-2">
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBold().run()}
             isActive={editor.isActive('bold')}
@@ -1097,7 +1097,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         </div>
 
         {/* Headings */}
-        <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
+        <div className="flex items-center gap-1 border-r border-[var(--border-subtle)] pr-2 mr-2">
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
             isActive={editor.isActive('heading', { level: 1 })}
@@ -1125,7 +1125,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         </div>
 
         {/* Lists */}
-        <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
+        <div className="flex items-center gap-1 border-r border-[var(--border-subtle)] pr-2 mr-2">
           <ToolbarButton
             onClick={() => {
               editor.chain().focus().toggleBulletList().run();
@@ -1165,7 +1165,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         </div>
 
         {/* Alignment */}
-        <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
+        <div className="flex items-center gap-1 border-r border-[var(--border-subtle)] pr-2 mr-2">
           <ToolbarButton
             onClick={() => editor.chain().focus().setTextAlign('left').run()}
             isActive={editor.isActive({ textAlign: 'left' })}
@@ -1193,7 +1193,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         </div>
 
         {/* Code, Quote & Divider */}
-        <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
+        <div className="flex items-center gap-1 border-r border-[var(--border-subtle)] pr-2 mr-2">
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleCodeBlock().run()}
             isActive={editor.isActive('codeBlock')}
@@ -1221,7 +1221,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         </div>
 
         {/* Table tools */}
-        <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
+        <div className="flex items-center gap-1 border-r border-[var(--border-subtle)] pr-2 mr-2">
           <ToolbarButton
             onClick={handleOpenTableModal}
             isActive={isTableActive}
@@ -1273,7 +1273,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         </div>
 
         {/* Link & Image */}
-        <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
+        <div className="flex items-center gap-1 border-r border-[var(--border-subtle)] pr-2 mr-2">
           <ToolbarButton
             onClick={handleLink}
             isActive={editor.isActive('link')}
@@ -1292,7 +1292,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         </div>
 
         {/* History & cleanup */}
-        <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-2">
+        <div className="flex items-center gap-1 border-r border-[var(--border-subtle)] pr-2 mr-2">
           <ToolbarButton
             onClick={() => editor.chain().focus().undo().run()}
             isActive={false}
@@ -1358,7 +1358,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       {/* Editor Content */}
       <div className="relative">
         {isPreview ? (
-          <div className={`p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] max-h-[400px] sm:max-h-[600px] overflow-y-auto ${isDark ? 'bg-gray-800 text-gray-100' : 'bg-white'}`}>
+          <div className={`p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] max-h-[400px] sm:max-h-[600px] overflow-y-auto ${isDark ? 'bg-[var(--surface-bg)] text-[var(--text-primary)]' : 'bg-[var(--surface-bg)]'}`}>
             {isMarkdown ? (
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -1390,8 +1390,8 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
             }}
             className={`w-full min-h-[300px] sm:min-h-[400px] p-2 sm:p-4 border-0 focus:outline-none resize-none font-mono text-sm transition-colors ${
               isDark
-                ? 'bg-gray-800 text-gray-100 caret-gray-100'
-                : 'bg-white text-[var(--text-primary)] caret-[var(--text-primary)]'
+                ? 'bg-[var(--surface-bg)] text-[var(--text-primary)] caret-[var(--accent)]'
+                : 'bg-[var(--surface-bg)] text-[var(--text-primary)] caret-[var(--text-primary)]'
             }`}
             style={isDark ? { 
               color: '#f3f4f6', 
@@ -1403,14 +1403,14 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
             placeholder={placeholder}
           />
         ) : (
-          <div className={isDark ? 'bg-gray-800' : 'bg-white'}>
+          <div className={isDark ? 'bg-[var(--surface-bg)]' : 'bg-[var(--surface-bg)]'}>
           <EditorContent editor={editor} />
           </div>
         )}
 
         {/* Stats Bar */}
-        <div className={`border-t border-[var(--border-subtle)] dark:border-gray-700 px-4 py-2 flex items-center justify-between text-xs flex-wrap gap-2 transition-colors ${
-          isDark ? 'bg-gray-900 text-gray-400' : 'bg-[var(--surface-subtle)] text-[var(--text-primary)]'
+        <div className={`border-t border-[var(--border-subtle)] px-4 py-2 flex items-center justify-between text-xs flex-wrap gap-2 transition-colors ${
+          isDark ? 'bg-[var(--surface-bg)] text-[var(--text-muted)]' : 'bg-[var(--surface-subtle)] text-[var(--text-primary)]'
         }`}>
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
             <span>{wordCount} words</span>
@@ -1452,7 +1452,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
 
   if (isFullscreen) {
     return (
-      <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">
+      <div className="fixed inset-0 z-50 bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)]">
         {editorContent}
       </div>
     );
@@ -1724,16 +1724,16 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           onClick={handleCancelLink}
         >
           <div 
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
+            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)] dark:text-gray-100">
+            <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               Insert Link
             </h3>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] dark:text-[var(--text-muted)] mb-2">
                   URL
                 </label>
                 <input
@@ -1741,7 +1741,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
                   placeholder="https://example.com"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] dark:bg-gray-700 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--surface-bg)] text-[var(--text-primary)]"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -1755,7 +1755,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] dark:text-[var(--text-muted)] mb-2">
                   Link Text (Optional)
                 </label>
                 <input
@@ -1763,7 +1763,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
                   value={linkText}
                   onChange={(e) => setLinkText(e.target.value)}
                   placeholder="Link text"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] dark:bg-gray-700 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--surface-bg)] text-[var(--text-primary)]"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -1788,7 +1788,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
               <div className="flex justify-end gap-3 ml-auto">
                 <button
                   onClick={handleCancelLink}
-                  className="px-4 py-2 text-[var(--text-secondary)] dark:text-gray-300 bg-[var(--surface-subtle)] dark:bg-gray-700 rounded-lg hover:bg-[var(--accent-soft)] dark:hover:bg-gray-600 transition-colors"
+                  className="px-4 py-2 text-[var(--text-secondary)] bg-[var(--surface-subtle)] rounded-lg hover:bg-[var(--accent-soft)] transition-colors"
                 >
                   Cancel
                 </button>
@@ -1811,16 +1811,16 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           onClick={handleCancelTable}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
+            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)] dark:text-gray-100">
+            <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               Insert Table
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] dark:text-[var(--text-muted)] mb-2">
                   Rows
                 </label>
                 <input
@@ -1829,11 +1829,11 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
                   max={20}
                   value={tableRows}
                   onChange={(e) => setTableRows(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] dark:bg-gray-700 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--surface-bg)] text-[var(--text-primary)]"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] dark:text-[var(--text-muted)] mb-2">
                   Columns
                 </label>
                 <input
@@ -1842,7 +1842,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
                   max={12}
                   value={tableCols}
                   onChange={(e) => setTableCols(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] dark:bg-gray-700 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--surface-bg)] text-[var(--text-primary)]"
                 />
               </div>
             </div>
@@ -1853,11 +1853,11 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
                 type="checkbox"
                 checked={tableHasHeader}
                 onChange={(e) => setTableHasHeader(e.target.checked)}
-                className="h-4 w-4 text-[var(--accent)] border-gray-300 rounded focus:ring-[var(--accent)]"
+                className="h-4 w-4 text-[var(--accent)] border-[var(--border-subtle)] rounded focus:ring-[var(--accent)]"
               />
               <label
                 htmlFor="table-header-toggle"
-                className="text-sm text-[var(--text-secondary)] dark:text-gray-300 select-none"
+                className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-muted)] select-none"
               >
                 Include header row
               </label>
@@ -1869,11 +1869,11 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
                 type="checkbox"
                 checked={tableShowBorder}
                 onChange={(e) => setTableShowBorder(e.target.checked)}
-                className="h-4 w-4 text-[var(--accent)] border-gray-300 rounded focus:ring-[var(--accent)]"
+                className="h-4 w-4 text-[var(--accent)] border-[var(--border-subtle)] rounded focus:ring-[var(--accent)]"
               />
               <label
                 htmlFor="table-border-toggle"
-                className="text-sm text-[var(--text-secondary)] dark:text-gray-300 select-none"
+                className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-muted)] select-none"
               >
                 Show table borders
               </label>
@@ -1882,7 +1882,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={handleCancelTable}
-                className="px-4 py-2 text-[var(--text-secondary)] dark:text-gray-300 bg-[var(--surface-subtle)] dark:bg-gray-700 rounded-lg hover:bg-[var(--accent-soft)] dark:hover:bg-gray-600 transition-colors"
+                className="px-4 py-2 text-[var(--text-secondary)] bg-[var(--surface-subtle)] rounded-lg hover:bg-[var(--accent-soft)] transition-colors"
               >
                 Cancel
               </button>

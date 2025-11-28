@@ -338,7 +338,7 @@ const CategoryPosts = () => {
 
                 if (page === currentPage - 2 || page === currentPage + 2) {
                   return (
-                    <span key={page} className="px-2 text-gray-400">
+                    <span key={page} className="px-2 text-[var(--text-muted)]">
                       …
                     </span>
                   );

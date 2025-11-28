@@ -163,7 +163,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-primary">
@@ -174,7 +174,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
                   setShowCreateModal(false);
                   setEditingId(null);
                 }}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                className="p-1 hover:bg-[var(--surface-subtle)] rounded"
               >
                 <X className="w-5 h-5" />
               </button>

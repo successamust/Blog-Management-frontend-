@@ -2,7 +2,6 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
-const AuthContext = createContext();
 
 const authReducer = (state, action) => {
   switch (action.type) {
@@ -37,9 +36,23 @@ const initialState = {
   user: null,
   token: null,
   isAuthenticated: false,
-  loading: true, // Start with loading true to prevent premature redirects
+  loading: true,
   error: null,
 };
+
+const defaultContextValue = {
+  ...initialState,
+  login: async () => ({ success: false, error: 'Not initialized' }),
+  register: async () => ({ success: false, error: 'Not initialized' }),
+  logout: () => {},
+  clearError: () => {},
+  isAdmin: () => false,
+  isAuthor: () => false,
+  isAuthorOrAdmin: () => false,
+  changePassword: async () => ({ success: false, error: 'Not initialized' }),
+};
+
+const AuthContext = createContext(defaultContextValue);
 
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
@@ -48,11 +61,40 @@ export const AuthProvider = ({ children }) => {
     const verifyUser = async () => {
       const token = localStorage.getItem('token');
       const user = localStorage.getItem('user');
+      const lastAuthCheck = localStorage.getItem('lastAuthCheck');
+      const now = Date.now();
+      
+      // Throttle auth checks to once per 5 minutes to avoid rate limiting
+      if (lastAuthCheck && (now - parseInt(lastAuthCheck)) < 300000) {
+        const storedUser = JSON.parse(user);
+        dispatch({
+          type: 'LOGIN_SUCCESS',
+          payload: { user: storedUser, token },
+        });
+        return;
+      }
       
       if (token && user) {
         try {
-          const response = await authAPI.getMe();
+          const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+          const makeRequestWithRetry = async (retries = 2) => {
+            for (let i = 0; i <= retries; i++) {
+              try {
+                return await authAPI.getMe();
+              } catch (err) {
+                if (err.response?.status === 429 && i < retries) {
+                  const waitTime = (i + 1) * 1000;
+                  await delay(waitTime);
+                  continue;
+                }
+                throw err;
+              }
+            }
+          };
+
+          const response = await makeRequestWithRetry();
           const freshUser = response.data.user;
+          localStorage.setItem('lastAuthCheck', now.toString());
           
           // Preserve bookmarkedPosts from localStorage if backend doesn't return it
           const storedUser = JSON.parse(user);
@@ -89,9 +131,19 @@ export const AuthProvider = ({ children }) => {
             payload: { token, user: freshUser },
           });
         } catch (error) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          dispatch({ type: 'LOGOUT' });
+          // If rate limited, use cached user data instead of logging out
+          if (error.response?.status === 429) {
+            const storedUser = JSON.parse(user);
+            dispatch({
+              type: 'LOGIN_SUCCESS',
+              payload: { token, user: storedUser },
+            });
+          } else {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('lastAuthCheck');
+            dispatch({ type: 'LOGOUT' });
+          }
         }
       } else {
         // No token/user found, set loading to false
@@ -104,18 +156,39 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     dispatch({ type: 'LOGIN_START' });
+    
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    const makeRequestWithRetry = async (retries = 2) => {
+      for (let i = 0; i <= retries; i++) {
+        try {
+          return await authAPI.login(credentials);
+        } catch (err) {
+          if (err.response?.status === 429 && i < retries) {
+            const waitTime = (i + 1) * 1000;
+            await delay(waitTime);
+            continue;
+          }
+          throw err;
+        }
+      }
+    };
+
     try {
-      const response = await authAPI.login(credentials);
+      const response = await makeRequestWithRetry();
       const { token, user } = response.data;
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('lastAuthCheck', Date.now().toString());
       
       dispatch({ type: 'LOGIN_SUCCESS', payload: { token, user } });
       toast.success('Welcome back!');
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed';
+      let message = error.response?.data?.message || 'Login failed';
+      if (error.response?.status === 429) {
+        message = 'Too many login attempts. Please wait a moment and try again.';
+      }
       dispatch({ type: 'LOGIN_FAILURE', payload: message });
       toast.error(message);
       return { success: false, error: message };
@@ -198,7 +271,7 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (!context || typeof context.login !== 'function') {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

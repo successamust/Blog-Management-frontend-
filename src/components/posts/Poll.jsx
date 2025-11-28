@@ -96,7 +96,7 @@ const Poll = ({ poll, postId, onVote, userVote: propUserVote, results: propResul
               </div>
               
               {hasVoted && (
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-[var(--surface-subtle)] rounded-full h-2 overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${percentage}%` }}

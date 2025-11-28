@@ -155,12 +155,12 @@ const NewsletterManagement = () => {
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {statsCards.map((card) => (
-            <div key={card.title} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div key={card.title} className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{card.title}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{card.value}</p>
-                  <p className="text-xs text-gray-500 mt-1 truncate" title={card.description}>
+                  <p className="text-sm font-medium text-[var(--text-secondary)]">{card.title}</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)] mt-1">{card.value}</p>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1 truncate" title={card.description}>
                     {card.description}
                   </p>
                 </div>
@@ -172,15 +172,15 @@ const NewsletterManagement = () => {
       )}
 
       {/* Send Newsletter */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">Send Newsletter</h2>
+          <h2 className="text-2xl font-bold text-[var(--text-primary)]">Send Newsletter</h2>
           <div className="flex items-center gap-3">
             {showSendForm && (
               <button
                 type="button"
                 onClick={() => setPreviewMode((prev) => !prev)}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--surface-subtle)] transition-colors"
               >
                 {previewMode ? <Pencil className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 <span>{previewMode ? 'Back to Editor' : 'Preview Newsletter'}</span>
@@ -202,26 +202,26 @@ const NewsletterManagement = () => {
         {showSendForm && (
           <form onSubmit={handleSendNewsletter} className="space-y-6 mt-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Subject</label>
               <input
                 type="text"
                 value={sendFormData.subject}
                 onChange={(e) => setSendFormData({ ...sendFormData, subject: e.target.value })}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-white"
+                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)]"
               />
             </div>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">Content</label>
-                <span className="text-xs text-gray-500">
+                <label className="block text-sm font-medium text-[var(--text-secondary)]">Content</label>
+                <span className="text-xs text-[var(--text-secondary)]">
                   {previewMode ? 'Previewing final email' : 'Use the editor to compose rich content'}
                 </span>
               </div>
-              <div className="border border-gray-200 rounded-xl overflow-hidden">
+              <div className="border border-[var(--border-subtle)] rounded-xl overflow-hidden">
                 {previewMode ? (
-                  <div className="prose max-w-none p-6 bg-white" dangerouslySetInnerHTML={{
-                    __html: sendFormData.content || '<p class="text-gray-400">No content yet.</p>',
+                  <div className="prose max-w-none p-6 bg-[var(--surface-bg)]" dangerouslySetInnerHTML={{
+                    __html: sendFormData.content || '<p class="text-[var(--text-muted)]">No content yet.</p>',
                   }} />
                 ) : (
                   <RichTextEditor
@@ -245,35 +245,35 @@ const NewsletterManagement = () => {
       </div>
 
       {/* Subscribers List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">Subscribers</h2>
+      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] overflow-hidden">
+        <div className="p-6 border-b border-[var(--border-subtle)]">
+          <h2 className="text-2xl font-bold text-[var(--text-primary)]">Subscribers</h2>
         </div>
         {subscribers.length > 0 ? (
           <>
             <div className="hidden md:block overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-[var(--border-subtle)]">
+                <thead className="bg-[var(--surface-subtle)]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Email
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Subscribed At
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Status
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-[var(--surface-bg)] divide-y divide-[var(--border-subtle)]">
                   {subscribers.map((subscriber) => (
-                    <tr key={subscriber._id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={subscriber._id} className="hover:bg-[var(--surface-subtle)] transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{subscriber.email}</div>
+                        <div className="text-sm font-medium text-[var(--text-primary)]">{subscriber.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-[var(--text-secondary)]">
                           {new Date(subscriber.subscribedAt).toLocaleString()}
                         </div>
                       </td>
@@ -298,13 +298,13 @@ const NewsletterManagement = () => {
               {subscribers.map((subscriber) => (
                 <div
                   key={subscriber._id}
-                  className="rounded-xl border border-gray-200 p-4 flex flex-col gap-3 bg-white shadow-sm"
+                  className="rounded-xl border border-[var(--border-subtle)] p-4 flex flex-col gap-3 bg-[var(--surface-bg)] shadow-sm"
                 >
                   <div>
-                    <p className="text-base font-semibold text-gray-900 break-words">
+                    <p className="text-base font-semibold text-[var(--text-primary)] break-words">
                       {subscriber.email}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-[var(--text-secondary)]">
                       {new Date(subscriber.subscribedAt).toLocaleString()}
                     </p>
                   </div>
@@ -322,8 +322,8 @@ const NewsletterManagement = () => {
             </div>
           </>
         ) : (
-          <div className="text-center py-12 text-gray-500">
-            <Mail className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <div className="text-center py-12 text-[var(--text-secondary)]">
+            <Mail className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
             <p>No subscribers yet</p>
           </div>
         )}

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { format } from 'date-fns';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -7,19 +8,15 @@ import {
   Heart, 
   Share2, 
   MessageCircle, 
-  User,
   Bookmark,
   ThumbsUp,
   ThumbsDown,
-  Edit,
-  Trash2,
   X,
-  Check,
   Tag,
   Maximize,
-  BookOpen
+  BookOpen,
+  User
 } from 'lucide-react';
-import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DOMPurify from 'dompurify';
@@ -39,9 +36,9 @@ import ImageLightbox from '../components/common/ImageLightbox';
 import PostReactions from '../components/posts/PostReactions';
 import ReadingList from '../components/posts/ReadingList';
 import PostRecommendations from '../components/posts/PostRecommendations';
-import QuickActions from '../components/common/QuickActions';
 import Poll from '../components/posts/Poll';
 import { useReadingHistory } from '../hooks/useReadingHistory';
+import CommentThread from '../components/posts/CommentThread';
 
 const DEFAULT_POST_DESCRIPTION = 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.';
 
@@ -72,8 +69,6 @@ const PostDetail = () => {
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [interactionLoading, setInteractionLoading] = useState(false);
-  const [editingCommentId, setEditingCommentId] = useState(null);
-  const [editCommentText, setEditCommentText] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showFullscreenReader, setShowFullscreenReader] = useState(false);
@@ -85,6 +80,7 @@ const PostDetail = () => {
   const [poll, setPoll] = useState(null);
   const [loadingPoll, setLoadingPoll] = useState(false);
   const { addToHistory, updateReadingProgress } = useReadingHistory();
+  const postId = post?._id;
 
   const seoDescription = useMemo(() => {
     if (!post) return DEFAULT_POST_DESCRIPTION;
@@ -116,10 +112,6 @@ const PostDetail = () => {
   }, [post]);
 
   useEffect(() => {
-    fetchPostData();
-  }, [slug]);
-
-  useEffect(() => {
     if (post && isAuthenticated) {
       const postId = String(post._id || post.id);
       const userFromStorage = JSON.parse(localStorage.getItem('user') || '{}');
@@ -127,19 +119,61 @@ const PostDetail = () => {
       const userBookmarked = user?.bookmarkedPosts?.map(id => String(id)) || [];
       const storageBookmarked = userFromStorage?.bookmarkedPosts?.map(id => String(id)) || [];
       const savedPostsNormalized = savedPosts.map(id => String(id));
-      
-      const bookmarked = 
+
+      const bookmarked =
         userBookmarked.includes(postId) ||
         storageBookmarked.includes(postId) ||
         savedPostsNormalized.includes(postId);
-      
+
       setIsBookmarked(bookmarked);
     } else if (post && !isAuthenticated) {
       setIsBookmarked(false);
     }
   }, [post, user, isAuthenticated]);
 
-  const fetchPostData = async () => {
+  const ensureCommentTree = useCallback((incoming = []) => {
+    if (!Array.isArray(incoming)) return [];
+    const alreadyNested = incoming.some(
+      (comment) => Array.isArray(comment.replies) && comment.replies.length > 0
+    );
+    if (alreadyNested) {
+      return incoming;
+    }
+
+    const map = new Map();
+    incoming.forEach((comment) => {
+      const normalizedId =
+        typeof comment._id === 'object' && comment._id !== null && 'toString' in comment._id
+          ? comment._id.toString()
+          : comment._id || comment.id;
+      const normalizedParent =
+        typeof comment.parentComment === 'object' && comment.parentComment !== null && 'toString' in comment.parentComment
+          ? comment.parentComment.toString()
+          : comment.parentComment ?? null;
+
+      map.set(normalizedId, {
+        ...comment,
+        _id: normalizedId,
+        parentComment: normalizedParent,
+        likes: comment.likes || [],
+        replies: [],
+      });
+    });
+
+    const roots = [];
+    map.forEach((comment) => {
+      if (comment.parentComment && map.has(comment.parentComment)) {
+        const parent = map.get(comment.parentComment);
+        parent.replies = [comment, ...(parent.replies || [])];
+      } else {
+        roots.unshift(comment);
+      }
+    });
+
+    return roots;
+  }, []);
+
+  const fetchPostData = useCallback(async () => {
     try {
       setLoading(true);
       const postRes = await postsAPI.getBySlug(slug);
@@ -182,7 +216,7 @@ const PostDetail = () => {
         postsAPI.getRelated(post._id).catch(() => ({ data: { relatedPosts: [] } }))
       ]);
 
-      setComments(commentsRes.data.comments || []);
+      setComments(ensureCommentTree(commentsRes.data.comments || []));
       setRelatedPosts(relatedRes.data.relatedPosts || []);
       
       if (post) {
@@ -194,7 +228,21 @@ const PostDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug, isAuthenticated, user, ensureCommentTree]);
+
+  useEffect(() => {
+    fetchPostData();
+  }, [fetchPostData]);
+
+  const refreshComments = useCallback(async () => {
+    if (!postId) return;
+    try {
+      const commentsRes = await commentsAPI.getByPost(postId);
+      setComments(ensureCommentTree(commentsRes.data?.comments || []));
+    } catch (error) {
+      console.error('Failed to refresh comments:', error);
+    }
+  }, [postId, ensureCommentTree]);
 
   useEffect(() => {
     const fetchReactions = async () => {
@@ -489,19 +537,16 @@ const PostDetail = () => {
       return;
     }
 
+    if (!postId) {
+      toast.error('Post not found');
+      return;
+    }
+
     try {
       setSubmittingComment(true);
-      const response = await commentsAPI.create(post._id, { content: commentText });
-      const newComment = response.data.comment;
-      
-      if (newComment) {
-        setComments(prevComments => [newComment, ...prevComments]);
-      } else {
-        const commentsRes = await commentsAPI.getByPost(post._id);
-        setComments(commentsRes.data.comments || []);
-      }
-      
+      await commentsAPI.create(postId, { content: commentText.trim() });
       setCommentText('');
+      await refreshComments();
       toast.success('Comment added!');
     } catch (error) {
       console.error('Error adding comment:', error);
@@ -519,66 +564,69 @@ const PostDetail = () => {
 
     try {
       await commentsAPI.like(commentId);
-      
-      setComments(prevComments => 
-        prevComments.map(comment => {
-          if (comment._id === commentId) {
-            const isLiked = comment.likes?.includes(user?._id);
-            const newLikes = isLiked
-              ? comment.likes.filter(id => id !== user?._id)
-              : [...(comment.likes || []), user?._id];
-            
-            return {
-              ...comment,
-              likes: newLikes
-            };
-          }
-          return comment;
-        })
-      );
+      await refreshComments();
     } catch (error) {
       toast.error('Failed to like comment');
     }
   };
 
-  const handleEditComment = (comment) => {
-    setEditingCommentId(comment._id);
-    setEditCommentText(comment.content);
-  };
+  const handleUpdateComment = async (commentId, newContent) => {
+    if (!isAuthenticated) {
+      toast.error('Please login to edit comments');
+      throw new Error('Not authenticated');
+    }
 
-  const handleCancelEdit = () => {
-    setEditingCommentId(null);
-    setEditCommentText('');
-  };
-
-  const handleUpdateComment = async (commentId) => {
-    if (!editCommentText.trim()) {
-      toast.error('Comment cannot be empty');
-      return;
+    if (!postId) {
+      toast.error('Post not found');
+      throw new Error('Post missing');
     }
 
     try {
-      await commentsAPI.update(commentId, { content: editCommentText });
-      toast.success('Comment updated successfully');
-      setEditingCommentId(null);
-      setEditCommentText('');
-      await fetchPostData();
+      await commentsAPI.update(commentId, { content: newContent.trim() });
+      await refreshComments();
     } catch (error) {
-      toast.error('Failed to update comment');
+      throw error;
     }
   };
 
   const handleDeleteComment = async (commentId) => {
-    if (!window.confirm('Are you sure you want to delete this comment?')) {
-      return;
+    if (!isAuthenticated) {
+      toast.error('Please login to delete comments');
+      throw new Error('Not authenticated');
+    }
+
+    if (!postId) {
+      toast.error('Post not found');
+      throw new Error('Post missing');
     }
 
     try {
       await commentsAPI.delete(commentId);
-      toast.success('Comment deleted successfully');
-      await fetchPostData();
+      await refreshComments();
     } catch (error) {
-      toast.error('Failed to delete comment');
+      throw error;
+    }
+  };
+
+  const handleReplyToComment = async (parentCommentId, replyContent) => {
+    if (!isAuthenticated) {
+      toast.error('Please login to reply');
+      throw new Error('Not authenticated');
+    }
+
+    if (!postId) {
+      toast.error('Post not found');
+      throw new Error('Post missing');
+    }
+
+    try {
+      await commentsAPI.create(postId, {
+        content: replyContent.trim(),
+        parentComment: parentCommentId
+      });
+      await refreshComments();
+    } catch (error) {
+      throw error;
     }
   };
 
@@ -732,7 +780,7 @@ const PostDetail = () => {
                       <Link
                         key={tag}
                         to={`/search?tags=${tag}`}
-                        className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-sm font-medium text-secondary transition-all hover:bg-[var(--accent)] hover:text-white hover:shadow-[0_8px_20px_rgba(26,137,23,0.2)]"
+                        className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-bg)] px-3 py-1 text-sm font-medium text-[var(--text-secondary)] transition-all hover:bg-[var(--accent)] hover:text-white hover:shadow-[0_8px_20px_rgba(26,137,23,0.2)]"
                       >
                         <span>#</span>
                         <span>{tag}</span>
@@ -743,58 +791,56 @@ const PostDetail = () => {
               )}
 
               {/* Interaction Buttons */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 border-t border-[var(--border-subtle)] pt-4 sm:pt-6">
-                <div className="flex items-center space-x-2 sm:space-x-4">
-                  <motion.button
-                    onClick={handleLike}
-                    disabled={interactionLoading}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
-                      hasLiked
-                        ? 'bg-[var(--accent)] text-white shadow-[0_12px_30px_rgba(26,137,23,0.22)] hover:text-white'
-                        : 'glass-card text-secondary hover:bg-white/80'
-                    }`}
-                  >
-                    <ThumbsUp className="w-4 h-4" />
-                    <span>{post.likes?.length || 0}</span>
-                  </motion.button>
+              <div className="flex flex-wrap items-center gap-3 border-t border-[var(--border-subtle)] pt-4 sm:pt-6">
+                <motion.button
+                  onClick={handleLike}
+                  disabled={interactionLoading}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
+                    hasLiked
+                      ? 'bg-[var(--accent)] text-white shadow-[0_12px_30px_rgba(26,137,23,0.22)] hover:text-white'
+                      : 'glass-card text-[var(--text-secondary)] hover:bg-[var(--surface-bg)]/80'
+                  }`}
+                >
+                  <ThumbsUp className="w-4 h-4" />
+                  <span>{post.likes?.length || 0}</span>
+                </motion.button>
 
-                  <motion.button
-                    onClick={handleDislike}
-                    disabled={interactionLoading}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
-                      hasDisliked
-                        ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg shadow-rose-500/25'
-                        : 'glass-card text-secondary hover:bg-white/80'
-                    }`}
-                  >
-                    <ThumbsDown className="w-4 h-4" />
-                    <span>{post.dislikes?.length || 0}</span>
-                  </motion.button>
+                <motion.button
+                  onClick={handleDislike}
+                  disabled={interactionLoading}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
+                    hasDisliked
+                      ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg shadow-rose-500/25'
+                      : 'glass-card text-[var(--text-secondary)] hover:bg-[var(--surface-bg)]/80'
+                  }`}
+                >
+                  <ThumbsDown className="w-4 h-4" />
+                  <span>{post.dislikes?.length || 0}</span>
+                </motion.button>
 
-                  <motion.button
-                    onClick={handleShare}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 glass-card text-secondary rounded-xl hover:bg-white/80 transition-all text-sm sm:text-base"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    <span className="hidden sm:inline">Share</span>
-                  </motion.button>
-                </div>
+                <motion.button
+                  onClick={handleShare}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center space-x-2 px-3 sm:px-4 py-2 glass-card text-secondary rounded-xl hover:bg-[var(--surface-bg)]/80 transition-all text-sm sm:text-base"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Share</span>
+                </motion.button>
 
                 <motion.button
                   onClick={handleSave}
                   disabled={interactionLoading}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
+                  className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
                     hasBookmarked
                       ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/25'
-                      : 'glass-card text-secondary hover:bg-white/80'
+                      : 'glass-card text-secondary hover:bg-[var(--surface-bg)]/80'
                   }`}
                 >
                   <Bookmark className={`w-4 h-4 ${hasBookmarked ? 'fill-current' : ''}`} />
@@ -805,19 +851,13 @@ const PostDetail = () => {
                   onClick={() => setShowFullscreenReader(true)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 glass-card text-secondary rounded-xl hover:bg-white/80 transition-all text-sm sm:text-base"
+                  className="flex items-center space-x-2 px-3 sm:px-4 py-2 glass-card text-secondary rounded-xl hover:bg-[var(--surface-bg)]/80 transition-all text-sm sm:text-base"
                   title="Fullscreen reading mode"
                 >
                   <Maximize className="w-4 h-4" />
                   <span className="hidden sm:inline">Fullscreen</span>
                 </motion.button>
 
-                <QuickActions
-                  post={post}
-                  onShare={() => setShowShareModal(true)}
-                  onBookmark={handleSave}
-                  onFullscreen={() => setShowFullscreenReader(true)}
-                />
               </div>
             </div>
           </motion.article>
@@ -876,7 +916,7 @@ const PostDetail = () => {
                     onChange={(e) => setCommentText(e.target.value)}
                     placeholder="Share your thoughts..."
                     rows="4"
-                    className="w-full px-4 py-3 glass-card rounded-xl focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 resize-none transition-all"
+                    className="w-full px-4 py-3 glass-card rounded-xl focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-[var(--surface-bg)]/90 resize-none transition-all"
                   />
                 </div>
                 <motion.button
@@ -905,108 +945,21 @@ const PostDetail = () => {
 
             {/* Comments List */}
             <div className="space-y-6">
-              {comments.map((comment) => (
-                <motion.div
-                  key={comment._id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="border-b border-[var(--border-subtle)] pb-6 last:border-b-0"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 bg-[var(--accent)]/15 text-[var(--accent)] rounded-full flex items-center justify-center text-xs font-semibold">
-                        {comment.author?.username?.charAt(0).toUpperCase() || <User className="w-4 h-4" />}
-                      </div>
-                      <div>
-                    <span className="font-medium text-primary">
-                          {comment.author?.username}
-                        </span>
-                    <span className="text-sm text-muted ml-2">
-                          {format(new Date(comment.createdAt), 'MMM d, yyyy')}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {editingCommentId === comment._id ? (
-                        <>
-                          <motion.button
-                            onClick={() => handleUpdateComment(comment._id)}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            className="text-emerald-600 hover:text-emerald-700 transition-colors"
-                          >
-                            <Check className="w-4 h-4" />
-                          </motion.button>
-                          <motion.button
-                            onClick={handleCancelEdit}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            className="text-secondary hover:text-primary transition-colors"
-                          >
-                            <X className="w-4 h-4" />
-                          </motion.button>
-                        </>
-                      ) : (
-                        <>
-                          {isAuthenticated && (user?._id === comment.author?._id || isAdmin()) && (
-                            <>
-                              <motion.button
-                                onClick={() => handleEditComment(comment)}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                className="text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </motion.button>
-                              <motion.button
-                                onClick={() => handleDeleteComment(comment._id)}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                className="text-rose-600 hover:text-rose-700 transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </motion.button>
-                            </>
-                          )}
-                          <motion.button
-                            onClick={() => handleCommentLike(comment._id)}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            className={`flex items-center space-x-1 transition-colors ${
-                              comment.likes?.includes(user?._id)
-                                ? 'text-rose-500 hover:text-rose-600'
-                        : 'text-[var(--text-muted)] hover:text-[var(--accent)]'
-                            }`}
-                          >
-                            <Heart className={`w-4 h-4 ${comment.likes?.includes(user?._id) ? 'fill-current' : ''}`} />
-                            <span className="text-sm">{comment.likes?.length || 0}</span>
-                          </motion.button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {editingCommentId === comment._id ? (
-                    <textarea
-                      value={editCommentText}
-                      onChange={(e) => setEditCommentText(e.target.value)}
-                      rows="3"
-                      className="w-full px-4 py-2 glass-card rounded-xl focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 resize-none transition-all"
-                    />
-                  ) : (
-                    <p className="text-[var(--text-secondary)] leading-relaxed">{comment.content}</p>
-                  )}
-                </motion.div>
-              ))}
-
-              {comments.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center py-8 text-[var(--text-muted)]"
-                >
-                  <MessageCircle className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
-                  <p>No comments yet. Be the first to share your thoughts!</p>
-                </motion.div>
+              {comments.length > 0 ? (
+                comments.map((comment) => (
+                  <CommentThread
+                    key={comment._id}
+                    comment={comment}
+                    onEdit={handleUpdateComment}
+                    onDelete={handleDeleteComment}
+                    onLike={handleCommentLike}
+                    onReply={handleReplyToComment}
+                  />
+                ))
+              ) : (
+                <p className="text-center text-[var(--text-muted)]">
+                  No comments yet. Be the first to share your thoughts!
+                </p>
               )}
             </div>
           </motion.section>
@@ -1014,9 +967,6 @@ const PostDetail = () => {
 
         {/* Sidebar */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Post Recommendations - Replaces Related Posts */}
-          {post && <PostRecommendations currentPost={post} limit={3} />}
-
           {/* Post Stats */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -1050,6 +1000,11 @@ const PostDetail = () => {
           </motion.div>
         </div>
       </div>
+      {post && (
+        <div className="mt-12 pb-6">
+          <PostRecommendations currentPost={post} limit={6} />
+        </div>
+      )}
       </div>
     </div>
 

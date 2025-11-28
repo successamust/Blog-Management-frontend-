@@ -50,7 +50,7 @@ const SocialShare = ({ post, shareUrl, onShare }) => {
     {
       name: 'Email',
       icon: Mail,
-      color: 'bg-gray-600 hover:bg-gray-700',
+      color: 'bg-[var(--text-secondary)] hover:bg-[var(--text-primary)]',
       url: `mailto:?subject=${encodedText}&body=${encodedUrl}`,
     },
   ];
@@ -100,7 +100,7 @@ const SocialShare = ({ post, shareUrl, onShare }) => {
   return (
     <div className="space-y-6">
       {/* Share Preview Card */}
-      <div className="border border-[var(--border-subtle)] rounded-xl overflow-hidden bg-white dark:bg-gray-800">
+      <div className="border border-[var(--border-subtle)] rounded-xl overflow-hidden bg-[var(--surface-bg)]">
         {post.featuredImage && (
           <div className="w-full h-48 overflow-hidden">
             <img

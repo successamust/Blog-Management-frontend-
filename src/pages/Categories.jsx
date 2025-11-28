@@ -24,11 +24,8 @@ const Categories = () => {
       // Fetch categories and posts in parallel
       const [categoriesRes, postsRes] = await Promise.all([
         categoriesAPI.getAll(),
-        postsAPI.getAll({ limit: 1000 }).catch(() => ({ data: { posts: [] } })), // Fallback if posts API fails
+        postsAPI.getAll({ limit: 1000 }).catch(() => ({ data: { posts: [] } })),
       ]);
-      
-      console.log('Categories API response:', categoriesRes);
-      console.log('Posts API response:', postsRes);
       
       // Handle different possible response structures
       const categoriesData = categoriesRes.data?.categories || 
@@ -41,9 +38,6 @@ const Categories = () => {
                       postsRes.data?.data || 
                       (Array.isArray(postsRes.data) ? postsRes.data : []) || 
                       [];
-      
-      console.log('Categories data:', categoriesData);
-      console.log('All posts:', allPosts);
       
       // Calculate post count for each category
       const categoriesWithCounts = categoriesData.map(category => {
@@ -67,7 +61,6 @@ const Categories = () => {
         };
       });
       
-      console.log('Categories with post counts:', categoriesWithCounts);
       setCategories(Array.isArray(categoriesWithCounts) ? categoriesWithCounts : []);
     } catch (error) {
       console.error('Error fetching categories:', error);

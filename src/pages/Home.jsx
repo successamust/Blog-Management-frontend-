@@ -356,7 +356,7 @@ const Home = () => {
                   className="w-full flex items-center justify-between focus:outline-none"
                 >
                   <div className="flex items-center flex-1">
-                    <div className="p-2 bg-gray-100 rounded-lg mr-3">
+                    <div className="p-2 bg-[var(--surface-subtle)] rounded-lg mr-3">
                       <PenLine className="w-5 h-5 text-[var(--text-primary)]" />
                     </div>
                     <div className="text-left">
@@ -382,7 +382,7 @@ const Home = () => {
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden"
                     >
-                      <div className="pt-4 mt-4 border-t border-gray-100">
+                      <div className="pt-4 mt-4 border-t border-[var(--border-subtle)]">
                         <p className="text-sm text-[var(--text-secondary)] mb-4">
                           Join our community of writers and share your stories with readers around the world.
                         </p>

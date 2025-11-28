@@ -206,7 +206,7 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d' }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-[var(--border-subtle)]"
+              className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-xl p-6 border border-[var(--border-subtle)]"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 rounded-lg bg-${stat.color.split('-')[1]}-100 dark:bg-${stat.color.split('-')[1]}-900/20`}>
@@ -231,7 +231,7 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d' }) => {
 
       {/* Top Posts */}
       {analytics.topPosts.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-[var(--border-subtle)]">
+        <div className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-xl p-6 border border-[var(--border-subtle)]">
           <h3 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
             Top Performing Posts
@@ -254,7 +254,7 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d' }) => {
 
       {/* Category Distribution */}
       {Object.keys(analytics.categoryDistribution).length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-[var(--border-subtle)]">
+        <div className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-xl p-6 border border-[var(--border-subtle)]">
           <h3 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
             <PieChart className="w-5 h-5" />
             Category Distribution
@@ -266,7 +266,7 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d' }) => {
                   <span className="text-sm text-secondary">{category}</span>
                   <span className="text-sm font-medium text-primary">{count}</span>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="w-full bg-[var(--surface-subtle)] rounded-full h-2">
                   <div
                     className="bg-[var(--accent)] h-2 rounded-full"
                     style={{

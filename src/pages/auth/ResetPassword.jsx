@@ -76,7 +76,7 @@ const ResetPassword = () => {
     return (
       <>
         {seoNode}
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen auth-shell flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -84,7 +84,7 @@ const ResetPassword = () => {
           className="max-w-md w-full space-y-8"
         >
           <div className="surface-card p-8 text-center">
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Invalid Reset Link</h2>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Invalid Reset Link</h2>
             <p className="text-secondary mb-6">
               The password reset link is invalid or has expired.
             </p>
@@ -106,7 +106,7 @@ const ResetPassword = () => {
   return (
     <>
       {seoNode}
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f4f9f3] via-[#eef7ec] to-[#f6faf5] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen auth-shell flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -122,10 +122,10 @@ const ResetPassword = () => {
               B
             </motion.div>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-[var(--text-primary)]">
             Reset Password
           </h2>
-          <p className="mt-2 text-center text-sm text-slate-600">
+          <p className="mt-2 text-center text-sm text-[var(--text-secondary)]">
             Enter your new password below.
           </p>
         </div>
@@ -147,7 +147,7 @@ const ResetPassword = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="appearance-none relative block w-full pl-10 pr-10 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 focus:z-10 sm:text-sm transition-all"
+                  className="appearance-none relative block w-full pl-10 pr-10 py-3 glass-card placeholder-[var(--text-muted)] text-[var(--text-primary)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-[var(--surface-bg)]/90 focus:z-10 sm:text-sm transition-all"
                   placeholder="Enter new password"
                 />
                 <button
@@ -179,7 +179,7 @@ const ResetPassword = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="appearance-none relative block w-full pl-10 pr-10 py-3 glass-card placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-white/90 focus:z-10 sm:text-sm transition-all"
+                  className="appearance-none relative block w-full pl-10 pr-10 py-3 glass-card placeholder-[var(--text-muted)] text-[var(--text-primary)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-[var(--surface-bg)]/90 focus:z-10 sm:text-sm transition-all"
                   placeholder="Confirm new password"
                 />
                 <button

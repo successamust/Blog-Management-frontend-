@@ -173,7 +173,7 @@ const AuthorProfile = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 sm:p-8 mb-8"
+            className="bg-[var(--surface-bg)] rounded-2xl shadow-lg p-6 sm:p-8 mb-8"
           >
             <div className="flex flex-col sm:flex-row gap-6">
               {/* Author Avatar */}
@@ -258,7 +258,7 @@ const AuthorProfile = () => {
                       href={socialLinks.github}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-secondary hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                      className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                     >
                       <Github className="w-4 h-4" />
                     </a>

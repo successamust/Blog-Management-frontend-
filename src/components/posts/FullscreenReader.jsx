@@ -61,10 +61,10 @@ const FullscreenReader = ({ post, isOpen, onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-white dark:bg-gray-900"
+        className="fixed inset-0 z-50 bg-[var(--page-bg)]"
       >
         {/* Header Controls */}
-        <div className="absolute top-0 left-0 right-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 p-4">
+        <div className="absolute top-0 left-0 right-0 z-10 bg-[var(--surface-bg)]/95 backdrop-blur-sm border-b border-[var(--border-subtle)] p-4">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h2 className="text-lg font-semibold text-primary truncate max-w-md">
@@ -74,10 +74,10 @@ const FullscreenReader = ({ post, isOpen, onClose }) => {
             
             <div className="flex items-center gap-2">
               {/* Font Size */}
-              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-2 py-1">
+              <div className="flex items-center gap-2 bg-[var(--surface-subtle)] rounded-lg px-2 py-1">
                 <button
                   onClick={() => setFontSize(p => Math.max(12, p - 2))}
-                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  className="p-1 hover:bg-[var(--surface-bg)] rounded"
                   aria-label="Decrease font size"
                 >
                   <MinusIcon className="w-4 h-4" />
@@ -85,7 +85,7 @@ const FullscreenReader = ({ post, isOpen, onClose }) => {
                 <span className="text-sm text-secondary w-12 text-center">{fontSize}px</span>
                 <button
                   onClick={() => setFontSize(p => Math.min(24, p + 2))}
-                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  className="p-1 hover:bg-[var(--surface-bg)] rounded"
                   aria-label="Increase font size"
                 >
                   <Plus className="w-4 h-4" />
@@ -93,10 +93,10 @@ const FullscreenReader = ({ post, isOpen, onClose }) => {
               </div>
 
               {/* Line Height */}
-              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-2 py-1">
+              <div className="flex items-center gap-2 bg-[var(--surface-subtle)] rounded-lg px-2 py-1">
                 <button
                   onClick={() => setLineHeight(p => Math.max(1.2, p - 0.1))}
-                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  className="p-1 hover:bg-[var(--surface-bg)] rounded"
                   aria-label="Decrease line height"
                 >
                   <MinusIcon className="w-4 h-4" />
@@ -104,7 +104,7 @@ const FullscreenReader = ({ post, isOpen, onClose }) => {
                 <span className="text-sm text-secondary w-12 text-center">{lineHeight.toFixed(1)}</span>
                 <button
                   onClick={() => setLineHeight(p => Math.min(2.5, p + 0.1))}
-                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  className="p-1 hover:bg-[var(--surface-bg)] rounded"
                   aria-label="Increase line height"
                 >
                   <Plus className="w-4 h-4" />
@@ -112,10 +112,10 @@ const FullscreenReader = ({ post, isOpen, onClose }) => {
               </div>
 
               {/* Max Width */}
-              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-2 py-1">
+              <div className="flex items-center gap-2 bg-[var(--surface-subtle)] rounded-lg px-2 py-1">
                 <button
                   onClick={() => setMaxWidth(p => Math.max(400, p - 40))}
-                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  className="p-1 hover:bg-[var(--surface-bg)] rounded"
                   aria-label="Decrease width"
                 >
                   <AlignLeft className="w-4 h-4" />
@@ -123,7 +123,7 @@ const FullscreenReader = ({ post, isOpen, onClose }) => {
                 <span className="text-sm text-secondary w-16 text-center">{maxWidth}px</span>
                 <button
                   onClick={() => setMaxWidth(p => Math.min(1200, p + 40))}
-                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  className="p-1 hover:bg-[var(--surface-bg)] rounded"
                   aria-label="Increase width"
                 >
                   <AlignJustify className="w-4 h-4" />
@@ -133,7 +133,7 @@ const FullscreenReader = ({ post, isOpen, onClose }) => {
               {/* Fullscreen Toggle */}
               <button
                 onClick={toggleFullscreen}
-                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-[var(--surface-subtle)] rounded-lg transition-colors"
                 aria-label="Toggle fullscreen"
               >
                 {isFullscreen ? (
@@ -146,7 +146,7 @@ const FullscreenReader = ({ post, isOpen, onClose }) => {
               {/* Close */}
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-[var(--surface-subtle)] rounded-lg transition-colors"
                 aria-label="Close reader"
               >
                 <X className="w-5 h-5" />
