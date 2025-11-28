@@ -18,8 +18,10 @@ const Login = () => {
   const { login, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const redirectParam = searchParams.get('redirect');
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from = location.state?.from?.pathname || redirectParam || '/dashboard';
 
   useEffect(() => {
     if (isAuthenticated) {

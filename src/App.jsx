@@ -24,6 +24,7 @@ const Register = lazy(() => import('./pages/auth/Register'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 const Unsubscribe = lazy(() => import('./pages/auth/Unsubscribe'));
+const AcceptCollaboration = lazy(() => import('./pages/auth/AcceptCollaboration'));
 const Posts = lazy(() => import('./pages/Posts'));
 const PostDetail = lazy(() => import('./pages/PostDetail'));
 const Categories = lazy(() => import('./pages/Categories'));
@@ -71,6 +72,7 @@ function AppContent() {
                   <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
                   <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
                   <Route path="/unsubscribe" element={<PageTransition><Unsubscribe /></PageTransition>} />
+                  <Route path="/collaboration/accept/:invitationId" element={<PageTransition><AcceptCollaboration /></PageTransition>} />
                   <Route path="/posts" element={<PageTransition><Posts /></PageTransition>} />
                   <Route path="/posts/:slug" element={<PageTransition><PostDetail /></PageTransition>} />
                   <Route path="/categories" element={<PageTransition><Categories /></PageTransition>} />
