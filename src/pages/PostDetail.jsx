@@ -85,6 +85,9 @@ const PostDetail = () => {
   const [lightboxIndex, setLightboxIndex] = useState(-1);
   const [poll, setPoll] = useState(null);
   const [loadingPoll, setLoadingPoll] = useState(false);
+  const [canChangeVote, setCanChangeVote] = useState(false);
+  const [timeRemainingMinutes, setTimeRemainingMinutes] = useState(0);
+  const [changesRemaining, setChangesRemaining] = useState(0);
   const [reportedComments, setReportedComments] = useState(() => {
     if (typeof window === 'undefined') {
       return {};
@@ -384,11 +387,16 @@ const PostDetail = () => {
             userVote: response.data.userVote || null,
             isActive: response.data.poll.isActive !== false
           });
+          setCanChangeVote(response.data.canChangeVote || false);
+          setTimeRemainingMinutes(response.data.timeRemainingMinutes || 0);
+          setChangesRemaining(response.data.changesRemaining || 0);
         }
       } catch (error) {
+        // 404 is expected when post doesn't have a poll - handle silently
         if (error.response?.status !== 404) {
           console.error('Failed to fetch poll:', error);
         }
+        // Don't set poll state on 404 - it's expected
       } finally {
         setLoadingPoll(false);
       }
@@ -399,11 +407,11 @@ const PostDetail = () => {
   const handlePollVote = async (pollId, optionId) => {
     if (!isAuthenticated) {
       toast.error('Please login to vote');
-      return;
+      throw new Error('Not authenticated');
     }
 
     try {
-      await pollsAPI.vote(pollId, optionId);
+      const voteResponse = await pollsAPI.vote(pollId, optionId);
       const resultsResponse = await pollsAPI.getResults(pollId);
       if (resultsResponse.data) {
         setPoll(prev => ({
@@ -411,14 +419,26 @@ const PostDetail = () => {
           results: resultsResponse.data.results || {},
           userVote: resultsResponse.data.userVote
         }));
+        setCanChangeVote(resultsResponse.data.canChangeVote || false);
+        setTimeRemainingMinutes(resultsResponse.data.timeRemainingMinutes || 0);
+        setChangesRemaining(resultsResponse.data.changesRemaining || 0);
       }
-      toast.success('Vote recorded!');
+      
+      // Show appropriate message
+      if (voteResponse.data?.canChangeAgain) {
+        toast.success(`Vote ${poll.userVote ? 'updated' : 'recorded'}! You can change it ${voteResponse.data.changesRemaining} more time${voteResponse.data.changesRemaining !== 1 ? 's' : ''}.`);
+      } else {
+        toast.success('Vote recorded!');
+      }
     } catch (error) {
       if (error.response?.status === 400) {
         toast.error(error.response.data?.message || 'You have already voted');
+      } else if (error.response?.status === 404) {
+        toast.error('Poll not found');
       } else {
-        toast.error('Failed to vote');
+        toast.error('Failed to vote. Please try again.');
       }
+      throw error; // Re-throw for component to handle rollback
     }
   };
 
@@ -1007,13 +1027,16 @@ const PostDetail = () => {
 
           {/* Poll */}
           {post && poll && !loadingPoll && (
-            <div className="mt-6 p-4 bg-surface-subtle rounded-xl">
+            <div className="mt-4 sm:mt-6 -mx-4 sm:mx-0 px-4 sm:px-0">
               <Poll 
                 poll={poll}
                 postId={post._id}
                 onVote={handlePollVote}
                 userVote={poll.userVote}
                 results={poll.results}
+                canChangeVote={canChangeVote}
+                timeRemainingMinutes={timeRemainingMinutes}
+                changesRemaining={changesRemaining}
               />
             </div>
           )}

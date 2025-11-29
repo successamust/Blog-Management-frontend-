@@ -623,12 +623,7 @@ const AdminOverview = () => {
       const postsData = await postsPromise;
       const normalizedPostsData = Array.isArray(postsData) ? postsData : [];
       
-      // Log raw posts data for debugging
-      console.log('AdminOverview: Raw posts data', {
-        postsData,
-        normalizedPostsDataLength: normalizedPostsData.length,
-        samplePost: normalizedPostsData[0] || null,
-      });
+      // Process posts data
       
       setPosts(normalizedPostsData);
 
@@ -670,7 +665,15 @@ const AdminOverview = () => {
         return sum;
       }, 0);
       const totalComments = normalizedPostsData.reduce((sum, p) => {
-        if (Array.isArray(p?.comments)) return sum + p.comments.length;
+        // Count all comments including replies (consistent with Analytics)
+        if (Array.isArray(p?.comments)) {
+          const countAllComments = (comments) => {
+            return comments.reduce((total, comment) => {
+              return total + 1 + (comment.replies ? countAllComments(comment.replies) : 0);
+            }, 0);
+          };
+          return sum + countAllComments(p.comments);
+        }
         if (Number(p?.commentCount) || Number(p?.comments)) return sum + (Number(p?.commentCount) || Number(p?.comments) || 0);
         return sum;
       }, 0);
@@ -734,7 +737,6 @@ const AdminOverview = () => {
         if (!hasValidPosts && dashboardData) {
           const dashboardPosts = normalizePosts(dashboardData);
           if (dashboardPosts.length > 0) {
-            console.log('AdminOverview: Using posts from dashboard API fallback', dashboardPosts.length);
             setPosts(dashboardPosts);
             
             // Recalculate stats with dashboard posts
@@ -777,19 +779,18 @@ const AdminOverview = () => {
               return sum;
             }, 0);
             const totalComments = dashboardPosts.reduce((sum, p) => {
-              if (Array.isArray(p?.comments)) return sum + p.comments.length;
+              // Count all comments including replies (consistent with Analytics)
+              if (Array.isArray(p?.comments)) {
+                const countAllComments = (comments) => {
+                  return comments.reduce((total, comment) => {
+                    return total + 1 + (comment.replies ? countAllComments(comment.replies) : 0);
+                  }, 0);
+                };
+                return sum + countAllComments(p.comments);
+              }
               if (Number(p?.commentCount) || Number(p?.comments)) return sum + (Number(p?.commentCount) || Number(p?.comments) || 0);
               return sum;
             }, 0);
-
-            console.log('AdminOverview: Dashboard fallback posts', {
-              totalFromArray,
-              totalFromCounts,
-              dashboardTotalPosts,
-              totalPosts,
-              published,
-              counts,
-            });
 
             setStats((prev) => ({
               ...prev,
@@ -808,7 +809,6 @@ const AdminOverview = () => {
             }));
           } else if (dashboardTotalPosts && Number(dashboardTotalPosts) > 0) {
             // If we have a total posts count from dashboard but no posts array, use the count
-            console.log('AdminOverview: Using total posts count from dashboard API', dashboardTotalPosts);
             setStats((prev) => ({
               ...prev,
               posts: {
@@ -827,14 +827,6 @@ const AdminOverview = () => {
               
               // Only update if the total is different and we have a valid count
               if (recalculatedTotal > 0 && prev.posts.total !== recalculatedTotal) {
-                console.log('AdminOverview: Recalculating total posts', {
-                  oldTotal: prev.posts.total,
-                  newTotal: recalculatedTotal,
-                  totalFromCounts,
-                  totalFromArray,
-                  statusCounts: prev.posts.statusCounts,
-                });
-                
                 return {
                   ...prev,
                   posts: {
@@ -891,19 +883,6 @@ const AdminOverview = () => {
         (recalculatedTotal > 0 && stats.posts.total !== recalculatedTotal) ||
         (stats.posts.total === 0 && (published > 0 || drafts > 0 || scheduled > 0 || archived > 0))
       ) {
-        console.log('AdminOverview: Correcting total posts in useEffect', {
-          oldTotal: stats.posts.total,
-          newTotal: recalculatedTotal,
-          totalFromCounts,
-          totalFromArray,
-          totalFromIndividualCounts,
-          published,
-          drafts,
-          scheduled,
-          archived,
-          statusCounts: stats.posts.statusCounts,
-        });
-        
         setStats((prev) => ({
           ...prev,
           posts: {
@@ -1160,21 +1139,7 @@ const AdminOverview = () => {
       totalFromStored
     );
 
-    // Log if there's a discrepancy
-    if (calculatedTotal > 0 && totalFromStored !== calculatedTotal) {
-      console.log('AdminOverview: Total posts discrepancy detected', {
-        calculatedTotal,
-        totalFromStored,
-        totalFromStatusCounts,
-        totalFromIndividualCounts,
-        totalFromArray,
-        published,
-        drafts,
-        scheduled,
-        archived,
-        statusCounts: stats.posts?.statusCounts,
-      });
-    }
+    // Note: Discrepancies are handled silently
 
     return calculatedTotal;
   };

@@ -51,6 +51,42 @@
   --shadow-default: rgba(0, 0, 0, 0.3);
 }
 
+/* Select dropdown styling for proper visibility */
+select {
+  background-color: var(--surface-bg) !important;
+  color: var(--text-primary) !important;
+  position: relative;
+  height: 2.5rem !important;
+  min-height: 2.5rem !important;
+  max-height: 2.5rem !important;
+  overflow: hidden !important;
+}
+
+select option {
+  background-color: var(--surface-bg) !important;
+  color: var(--text-primary) !important;
+  padding: 0.5rem;
+}
+
+/* Ensure select dropdown works in modals */
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+  height: 2.5rem !important;
+  max-height: 2.5rem !important;
+}
+
+/* Prevent select dropdown from expanding container when open */
+select:not([size]) {
+  height: 2.5rem !important;
+  max-height: 2.5rem !important;
+  overflow: hidden !important;
+}
+
+/* Note: Native browser dropdown menus are rendered by the OS and cannot be fully constrained.
+   The select element itself is constrained, but the dropdown menu will appear as the browser renders it. */
+
 @layer base {
   * {
     @apply antialiased;

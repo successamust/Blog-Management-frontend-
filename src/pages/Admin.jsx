@@ -1,12 +1,14 @@
 import React from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Users, FileText, Mail, LayoutDashboard, Folder, UserCheck } from 'lucide-react';
+import { Users, FileText, Mail, LayoutDashboard, Folder, UserCheck, BarChart3, LineChart } from 'lucide-react';
 import UserManagement from '../components/admin/UserManagement';
 import PostManagement from '../components/admin/PostManagement';
 import NewsletterManagement from '../components/admin/NewsletterManagement';
 import CategoryManagement from '../components/admin/CategoryManagement';
 import AuthorManagement from '../components/admin/AuthorManagement';
+import PollManagement from '../components/admin/PollManagement';
+import AnalyticsPage from '../components/admin/AnalyticsPage';
 import AdminOverview from '../components/admin/AdminOverview';
 import { useAuth } from '../context/AuthContext';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
@@ -39,6 +41,8 @@ const Admin = () => {
     ...(!isAuthorOnly ? [{ id: 'users', path: '/admin/users', label: 'Users', mobileLabel: 'Users', icon: <Users className="w-4 h-4" /> }] : []),
     { id: 'posts', path: '/admin/posts', label: 'Posts', mobileLabel: 'Posts', icon: <FileText className="w-4 h-4" /> },
     ...(!isAuthorOnly ? [{ id: 'categories', path: '/admin/categories', label: 'Categories', mobileLabel: 'Categories', icon: <Folder className="w-4 h-4" /> }] : []),
+    ...(!isAuthorOnly ? [{ id: 'polls', path: '/admin/polls', label: 'Polls', mobileLabel: 'Polls', icon: <BarChart3 className="w-4 h-4" /> }] : []),
+    ...(!isAuthorOnly ? [{ id: 'analytics', path: '/admin/analytics', label: 'Analytics', mobileLabel: 'Analytics', icon: <LineChart className="w-4 h-4" /> }] : []),
     ...(!isAuthorOnly ? [{ id: 'newsletter', path: '/admin/newsletter', label: 'Newsletter', mobileLabel: 'Newsletter', icon: <Mail className="w-4 h-4" /> }] : []),
     ...(!isAuthorOnly ? [{ id: 'authors', path: '/admin/authors', label: 'Authors', mobileLabel: 'Authors', icon: <UserCheck className="w-4 h-4" /> }] : []),
   ];
@@ -114,6 +118,8 @@ const Admin = () => {
           {!isAuthorOnly && <Route path="users" element={<UserManagement />} />}
           <Route path="posts/*" element={<PostManagement />} />
           {!isAuthorOnly && <Route path="categories/*" element={<CategoryManagement />} />}
+          {!isAuthorOnly && <Route path="polls/*" element={<PollManagement />} />}
+          {!isAuthorOnly && <Route path="analytics" element={<AnalyticsPage />} />}
           {!isAuthorOnly && <Route path="newsletter" element={<NewsletterManagement />} />}
           {!isAuthorOnly && <Route path="authors" element={<AuthorManagement />} />}
           {isAuthorOnly && <Route path="*" element={<Navigate to="/admin/posts" replace />} />}

@@ -38,6 +38,18 @@ api.interceptors.response.use(
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
+    
+    // Suppress console errors for expected 404s (e.g., polls that don't exist)
+    // These are handled gracefully in components
+    if (error.response?.status === 404) {
+      const url = error.config?.url || '';
+      // Don't log 404s for polls - these are expected when posts don't have polls
+      if (url.includes('/polls/')) {
+        // Silently handle - component will handle the 404 gracefully
+        return Promise.reject(error);
+      }
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -152,10 +164,19 @@ export const authorsAPI = {
 };
 
 export const pollsAPI = {
+  getAll: (params) => api.get('/polls', { params }),
+  getById: (pollId) => api.get(`/polls/${pollId}`),
   create: (data) => api.post('/polls', data),
+  update: (pollId, data) => api.put(`/polls/${pollId}`, data),
+  delete: (pollId) => api.delete(`/polls/${pollId}`),
   vote: (pollId, optionId) => api.post(`/polls/${pollId}/vote`, { optionId }),
   getResults: (pollId) => api.get(`/polls/${pollId}/results`),
   getByPost: (postId) => api.get(`/polls/post/${postId}`),
+  getAnalytics: (pollId) => api.get(`/polls/${pollId}/analytics`),
+  exportResults: (pollId, format = 'json') => api.get(`/polls/${pollId}/export`, { 
+    params: { format },
+    responseType: format === 'csv' ? 'blob' : 'json'
+  }),
 };
 
 export const collaborationsAPI = {
@@ -172,6 +193,16 @@ export const collaborationsAPI = {
   getSentInvitations: (postId) => api.get(`/collaborations/${postId}/invitations/sent`),
   getPostInvitations: (postId) => api.get(`/collaborations/${postId}/invitations`),
   getMySentInvitations: () => api.get('/collaborations/me/invitations/sent'),
+};
+
+export const templatesAPI = {
+  getAll: () => api.get('/templates'),
+  getById: (templateId) => api.get(`/templates/${templateId}`),
+  create: (data) => api.post('/templates', data),
+  update: (templateId, data) => api.put(`/templates/${templateId}`, data),
+  delete: (templateId) => api.delete(`/templates/${templateId}`),
+  use: (templateId) => api.post(`/templates/${templateId}/use`),
+  initializeDefaults: () => api.post('/templates/initialize-defaults'),
 };
 
 export default api;

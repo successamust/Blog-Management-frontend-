@@ -203,31 +203,35 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
       {collaborators.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-secondary">Active Collaborators</h4>
-          {collaborators.map((collaborator) => (
-            <motion.div
-              key={collaborator.id}
-              className="flex items-center justify-between p-3 bg-surface-subtle rounded-lg"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-[var(--accent)]/20 rounded-full flex items-center justify-center">
-                  <Users className="w-4 h-4 text-[var(--accent)]" />
+          {collaborators.map((collaborator, index) => {
+            const collaboratorId = collaborator.user?._id || collaborator.user || collaborator._id || collaborator.id || `collab-${index}`;
+            const userId = collaborator.user?._id || collaborator.user || collaboratorId;
+            return (
+              <motion.div
+                key={collaboratorId}
+                className="flex items-center justify-between p-3 bg-surface-subtle rounded-lg"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-[var(--accent)]/20 rounded-full flex items-center justify-center">
+                    <Users className="w-4 h-4 text-[var(--accent)]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-primary">{collaborator.email || collaborator.user?.email}</p>
+                    <p className="text-xs text-muted capitalize">{collaborator.role}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-primary">{collaborator.email}</p>
-                  <p className="text-xs text-muted capitalize">{collaborator.role}</p>
-                </div>
-              </div>
-              {isOwner && (
-                <button
-                  type="button"
-                  onClick={() => handleRemoveCollaborator(collaborator.id)}
-                  className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-600 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </motion.div>
-          ))}
+                {isOwner && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveCollaborator(userId)}
+                    className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-600 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
@@ -240,8 +244,8 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
           </h4>
           {receivedInvitations
             .filter(inv => inv.status === 'pending')
-            .map((invitation) => {
-              const invitationId = invitation._id || invitation.id;
+            .map((invitation, index) => {
+              const invitationId = invitation._id || invitation.id || `inv-${index}`;
               return (
                 <motion.div
                   key={invitationId}

@@ -7,7 +7,7 @@ import ChangePassword from './ChangePassword';
 import Spinner from '../common/Spinner';
 
 const ProfileSettings = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
@@ -172,8 +172,13 @@ const ProfileSettings = () => {
         profilePicture: updatedUser.profilePicture || updatedUser.avatar || '',
       });
       
-      // Reload page to refresh auth context
-      window.location.reload();
+      // Update auth context without page reload
+      updateUser({
+        username: updatedUser.username || user.username,
+        email: updatedUser.email || user.email,
+        bio: updatedUser.bio || user.bio,
+        profilePicture: updatedUser.profilePicture || updatedUser.avatar || user.profilePicture || user.avatar,
+      });
       
       toast.success('Profile updated successfully');
       setIsEditing(false);

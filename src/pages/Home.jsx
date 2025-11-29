@@ -494,10 +494,10 @@ const Home = () => {
                     onChange={(e) => setConsentChecked(e.target.checked)}
                     disabled={subscribing}
                   />
-                  <span>
-                    I agree to receive emails from Nexus and understand I’ll need to confirm my
-                    subscription from my inbox.
-                  </span>
+                    <span>
+                      I agree to receive updates and announcements from Nexus and understand I can unsubscribe at any time using the link in the email.
+                    </span>
+                   
                 </label>
                 <button
                   type="submit"

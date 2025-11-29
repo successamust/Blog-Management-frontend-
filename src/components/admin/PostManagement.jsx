@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
-import { FileText, Plus, Edit, Trash2, Eye, Search, Upload, X } from 'lucide-react';
-import { postsAPI, categoriesAPI, adminAPI, imagesAPI, dashboardAPI, collaborationsAPI } from '../../services/api';
+import { FileText, Plus, Edit, Trash2, Eye, Search, Upload, X, BarChart3, History } from 'lucide-react';
+import { postsAPI, categoriesAPI, adminAPI, imagesAPI, dashboardAPI, collaborationsAPI, pollsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -11,6 +11,8 @@ import Spinner from '../common/Spinner';
 import BulkOperations from './BulkOperations';
 import PostScheduler from './PostScheduler';
 import PostCollaboration from './PostCollaboration';
+import PostTemplates from './PostTemplates';
+import PostVersioning from './PostVersioning';
 
 const PostManagement = () => {
   const [posts, setPosts] = useState([]);
@@ -520,6 +522,7 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
 };
 
 const CreatePost = ({ onSuccess }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
     excerpt: '',
@@ -535,6 +538,7 @@ const CreatePost = ({ onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -550,8 +554,6 @@ const CreatePost = ({ onSuccess }) => {
                             [];
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
-      console.error('Error fetching categories:', error);
-      console.error('Error response:', error.response);
       toast.error('Failed to load categories. Please try again.');
       setCategories([]);
     } finally {
@@ -647,7 +649,7 @@ const CreatePost = ({ onSuccess }) => {
         return;
       }
       
-      toast.success('Post created successfully');
+      toast.success('Post created successfully! Redirecting...');
       
       if (postData.isPublished && newPost._id) {
         try {
@@ -657,17 +659,11 @@ const CreatePost = ({ onSuccess }) => {
         }
       }
       
-      setFormData({
-        title: '',
-        excerpt: '',
-        content: '',
-        category: '',
-        tags: '',
-        featuredImage: '',
-        status: 'published',
-      });
-      
+      // Refresh the posts list in the background (non-blocking)
       onSuccess();
+      
+      // Navigate to edit page immediately (React Router handles this smoothly, no full page reload)
+      navigate(`/admin/posts/edit/${newPost._id}`, { replace: false });
     } catch (error) {
       console.error('Error creating post:', error);
       toast.error(error.response?.data?.message || 'Failed to create post');
@@ -676,9 +672,42 @@ const CreatePost = ({ onSuccess }) => {
     }
   };
 
+  const handleTemplateSelect = (template) => {
+    // Match category name to category ID
+    let categoryId = '';
+    if (template.category && categories.length > 0) {
+      const matchedCategory = categories.find(
+        cat => cat.name?.toLowerCase() === template.category?.toLowerCase()
+      );
+      if (matchedCategory) {
+        categoryId = matchedCategory._id || matchedCategory.id;
+      }
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      title: template.title || prev.title,
+      excerpt: template.excerpt || prev.excerpt,
+      content: template.content || prev.content,
+      category: categoryId || prev.category,
+      tags: template.tags || prev.tags,
+    }));
+    setShowTemplates(false);
+  };
+
   return (
     <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
-      <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Create New Post</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <h2 className="text-2xl font-bold text-[var(--text-primary)]">Create New Post</h2>
+        <button
+          type="button"
+          onClick={() => setShowTemplates(true)}
+          className="btn btn-outline !w-auto flex items-center gap-2"
+        >
+          <FileText className="w-4 h-4" />
+          <span>Use Template</span>
+        </button>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Title</label>
@@ -836,6 +865,31 @@ const CreatePost = ({ onSuccess }) => {
           </button>
         </div>
       </form>
+
+      {/* Post Templates Modal */}
+      {showTemplates && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowTemplates(false);
+            }
+          }}
+        >
+          <div className="bg-[var(--surface-bg)] rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
+            <button
+              onClick={() => setShowTemplates(false)}
+              className="absolute top-4 right-4 z-10 p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-subtle)] rounded-lg transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="p-6">
+              <PostTemplates onSelectTemplate={handleTemplateSelect} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -859,10 +913,23 @@ const EditPost = ({ onSuccess }) => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [poll, setPoll] = useState(null);
+  const [loadingPoll, setLoadingPoll] = useState(false);
+  const [showPollForm, setShowPollForm] = useState(false);
+  const [pollFormData, setPollFormData] = useState({
+    question: '',
+    description: '',
+    options: [{ text: '' }, { text: '' }],
+    isActive: true,
+    expiresAt: '',
+  });
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [showVersioning, setShowVersioning] = useState(false);
 
   useEffect(() => {
     fetchPostData();
     fetchCategories();
+    fetchPoll();
   }, [id]);
 
   const fetchPostData = async () => {
@@ -956,6 +1023,153 @@ const EditPost = ({ onSuccess }) => {
     }
   };
 
+  const fetchPoll = async () => {
+    if (!id) return;
+    try {
+      setLoadingPoll(true);
+      const response = await pollsAPI.getByPost(id);
+      if (response.data?.poll) {
+        setPoll(response.data.poll);
+        setPollFormData({
+          question: response.data.poll.question || '',
+          description: response.data.poll.description || '',
+          options: response.data.poll.options || [{ text: '' }, { text: '' }],
+          isActive: response.data.poll.isActive !== false,
+          expiresAt: response.data.poll.expiresAt 
+            ? new Date(response.data.poll.expiresAt).toISOString().slice(0, 16)
+            : '',
+        });
+        setShowPollForm(false);
+      } else {
+        setPoll(null);
+        setShowPollForm(false);
+      }
+    } catch (error) {
+      // 404 is expected when post doesn't have a poll - handle silently
+      if (error.response?.status === 404) {
+        setPoll(null);
+      } else {
+        console.error('Error fetching poll:', error);
+        setPoll(null);
+      }
+    } finally {
+      setLoadingPoll(false);
+    }
+  };
+
+  const handlePollOptionChange = (index, value) => {
+    const newOptions = [...pollFormData.options];
+    newOptions[index] = { text: value };
+    setPollFormData({
+      ...pollFormData,
+      options: newOptions,
+    });
+  };
+
+  const addPollOption = () => {
+    setPollFormData({
+      ...pollFormData,
+      options: [...pollFormData.options, { text: '' }],
+    });
+  };
+
+  const removePollOption = (index) => {
+    if (pollFormData.options.length <= 2) {
+      toast.error('A poll must have at least 2 options');
+      return;
+    }
+    const newOptions = pollFormData.options.filter((_, i) => i !== index);
+    setPollFormData({
+      ...pollFormData,
+      options: newOptions,
+    });
+  };
+
+  const handlePollSubmit = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    if (!pollFormData.question.trim()) {
+      toast.error('Please enter a poll question');
+      return;
+    }
+
+    const validOptions = pollFormData.options.filter(opt => opt.text.trim());
+    if (validOptions.length < 2) {
+      toast.error('A poll must have at least 2 options');
+      return;
+    }
+
+    // Check for duplicate options
+    const optionTexts = validOptions.map(opt => opt.text.trim().toLowerCase());
+    const uniqueOptions = new Set(optionTexts);
+    if (uniqueOptions.size !== optionTexts.length) {
+      toast.error('Poll options must be unique');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const pollData = {
+        postId: id,
+        question: pollFormData.question.trim(),
+        description: pollFormData.description.trim() || undefined,
+        options: validOptions.map(opt => ({ text: opt.text.trim() })),
+        isActive: pollFormData.isActive,
+        expiresAt: pollFormData.expiresAt ? new Date(pollFormData.expiresAt).toISOString() : null,
+      };
+
+      let response;
+      if (poll) {
+        response = await pollsAPI.update(poll.id || poll._id, pollData);
+        toast.success('Poll updated successfully');
+      } else {
+        response = await pollsAPI.create(pollData);
+        
+        if (!response || !response.data) {
+          throw new Error('Invalid response from server');
+        }
+        
+        toast.success('Poll created successfully');
+        
+        // If poll was created, update local state immediately
+        if (response.data?.poll) {
+          setPoll({
+            id: response.data.poll._id || response.data.poll.id,
+            question: response.data.poll.question,
+            description: response.data.poll.description,
+            options: response.data.poll.options || [],
+            isActive: response.data.poll.isActive !== false
+          });
+        }
+      }
+
+      // Refresh the poll data from server to ensure we have latest
+      await fetchPoll();
+      setShowPollForm(false);
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to save poll';
+      
+      if (error.response) {
+        toast.error(`Error ${error.response.status}: ${errorMessage}`);
+      } else if (error.request) {
+        toast.error('No response from server. Please check your connection.');
+      } else {
+        toast.error(`Error: ${errorMessage}`);
+      }
+      
+      // If it's a permission error, show more details
+      if (error.response?.status === 403) {
+        toast.error('You do not have permission to create polls for this post. Only the post author, collaborators, or admins can create polls.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const fetchCategories = async () => {
     try {
       setCategoriesLoading(true);
@@ -966,8 +1180,6 @@ const EditPost = ({ onSuccess }) => {
                             [];
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
-      console.error('Error fetching categories:', error);
-      console.error('Error response:', error.response);
       toast.error('Failed to load categories. Please try again.');
       setCategories([]);
     } finally {
@@ -1096,10 +1308,67 @@ const EditPost = ({ onSuccess }) => {
     );
   }
 
+  const handleTemplateSelect = (template) => {
+    // Match category name to category ID
+    let categoryId = '';
+    if (template.category && categories.length > 0) {
+      const matchedCategory = categories.find(
+        cat => cat.name?.toLowerCase() === template.category?.toLowerCase()
+      );
+      if (matchedCategory) {
+        categoryId = matchedCategory._id || matchedCategory.id;
+      }
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      title: template.title || prev.title,
+      excerpt: template.excerpt || prev.excerpt,
+      content: template.content || prev.content,
+      category: categoryId || prev.category,
+      tags: template.tags || prev.tags,
+    }));
+    setShowTemplates(false);
+  };
+
+  const handleVersionRestore = (content) => {
+    setFormData(prev => ({
+      ...prev,
+      content: content,
+    }));
+    setShowVersioning(false);
+  };
+
   return (
     <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-4 sm:p-6 overflow-x-hidden">
-      <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">Edit Post</h2>
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Edit Post</h2>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowTemplates(true)}
+            className="btn btn-outline !w-auto text-sm"
+          >
+            <FileText className="w-4 h-4 mr-1" />
+            Templates
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowVersioning(true)}
+            className="btn btn-outline !w-auto text-sm"
+          >
+            <History className="w-4 h-4 mr-1" />
+            Versions
+          </button>
+        </div>
+      </div>
+      <form 
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit(e);
+        }} 
+        className="space-y-4 sm:space-y-6"
+      >
         <div>
           <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Title</label>
           <input
@@ -1128,7 +1397,30 @@ const EditPost = ({ onSuccess }) => {
           {typeof window !== 'undefined' && (
             <RichTextEditor
               value={formData.content || ''}
-              onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+              onChange={(value) => {
+                setFormData(prev => ({ ...prev, content: value }));
+                // Auto-save version when content changes significantly (every 30 seconds of editing)
+                if (id && value && value.length > 50) {
+                  const lastSaveKey = `lastVersionSave_${id}`;
+                  const lastSave = localStorage.getItem(lastSaveKey);
+                  const now = Date.now();
+                  // Auto-save every 30 seconds if content has changed
+                  if (!lastSave || (now - parseInt(lastSave)) > 30000) {
+                    // Save version in background (don't show toast for auto-saves)
+                    const versions = JSON.parse(localStorage.getItem(`postVersions_${id}`) || '[]');
+                    const newVersion = {
+                      id: now.toString(),
+                      content: value,
+                      label: 'Auto-saved',
+                      timestamp: now,
+                      author: user?.name || user?.username || user?.email || 'Current User',
+                    };
+                    const updated = [newVersion, ...versions.filter(v => v.label !== 'Auto-saved' || (now - v.timestamp) > 300000)].slice(0, 20);
+                    localStorage.setItem(`postVersions_${id}`, JSON.stringify(updated));
+                    localStorage.setItem(lastSaveKey, now.toString());
+                  }
+                }
+              }}
               placeholder="Write your post content here..."
             />
           )}
@@ -1195,7 +1487,6 @@ const EditPost = ({ onSuccess }) => {
               postId={id}
               currentAuthor={user}
               onCollaboratorsChange={(collaborators) => {
-                console.log('Collaborators updated:', collaborators);
               }}
             />
           </div>
@@ -1266,6 +1557,232 @@ const EditPost = ({ onSuccess }) => {
           </div>
         </div>
 
+        {/* Poll Section */}
+        <div className="border-t border-[var(--border-subtle)] pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-[var(--accent)]" />
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">Poll</h3>
+            </div>
+            {poll && !showPollForm && (
+              <button
+                type="button"
+                onClick={() => setShowPollForm(true)}
+                className="text-sm text-[var(--accent)] hover:underline"
+              >
+                Edit Poll
+              </button>
+            )}
+            {!poll && !showPollForm && (
+              <button
+                type="button"
+                onClick={() => setShowPollForm(true)}
+                className="text-sm text-[var(--accent)] hover:underline"
+              >
+                Add Poll
+              </button>
+            )}
+            {showPollForm && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPollForm(false);
+                  if (poll) {
+                    setPollFormData({
+                      question: poll.question || '',
+                      description: poll.description || '',
+                      options: poll.options || [{ text: '' }, { text: '' }],
+                      isActive: poll.isActive !== false,
+                    });
+                  } else {
+                    setPollFormData({
+                      question: '',
+                      description: '',
+                      options: [{ text: '' }, { text: '' }],
+                      isActive: true,
+                    });
+                  }
+                }}
+                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+
+          {loadingPoll ? (
+            <div className="flex items-center justify-center py-8">
+              <Spinner size="sm" />
+            </div>
+          ) : showPollForm ? (
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                handlePollSubmit(e);
+                return false;
+              }} 
+              onClick={(e) => e.stopPropagation()}
+              className="space-y-4 bg-[var(--surface-subtle)] p-4 rounded-lg"
+            >
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                  Poll Question <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={pollFormData.question}
+                  onChange={(e) => setPollFormData({ ...pollFormData, question: e.target.value })}
+                  required
+                  placeholder="What would you like to ask?"
+                  className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={pollFormData.description}
+                  onChange={(e) => setPollFormData({ ...pollFormData, description: e.target.value })}
+                  rows="2"
+                  placeholder="Additional context about the poll..."
+                  className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-[var(--text-primary)]">
+                    Poll Options <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addPollOption}
+                    className="text-sm text-[var(--accent)] hover:underline"
+                  >
+                    + Add Option
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {pollFormData.options.map((option, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={option.text}
+                        onChange={(e) => handlePollOptionChange(index, e.target.value)}
+                        placeholder={`Option ${index + 1}`}
+                        className="flex-1 px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+                      />
+                      {pollFormData.options.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => removePollOption(index)}
+                          className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-[var(--text-muted)] mt-2">
+                  Minimum 2 options required
+                </p>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="pollIsActive"
+                  checked={pollFormData.isActive}
+                  onChange={(e) => setPollFormData({ ...pollFormData, isActive: e.target.checked })}
+                  className="h-4 w-4 text-[var(--accent)] focus:ring-[var(--accent)] border-[var(--border-subtle)] rounded"
+                />
+                <label htmlFor="pollIsActive" className="ml-2 block text-sm text-[var(--text-secondary)]">
+                  Active (poll will be visible to users)
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                  Expiration Date (Optional)
+                </label>
+                <input
+                  type="datetime-local"
+                  value={pollFormData.expiresAt}
+                  onChange={(e) => setPollFormData({ ...pollFormData, expiresAt: e.target.value })}
+                  min={new Date().toISOString().slice(0, 16)}
+                  className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+                />
+                <p className="text-xs text-[var(--text-muted)] mt-1">
+                  Poll will automatically deactivate after this date. Leave empty for no expiration.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handlePollSubmit(e);
+                  }}
+                  disabled={submitting}
+                  className="btn btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'Saving...' : (poll ? 'Update Poll' : 'Create Poll')}
+                </button>
+                <Link
+                  to="/admin/polls"
+                  className="btn btn-outline text-sm"
+                >
+                  Manage Polls
+                </Link>
+              </div>
+            </form>
+          ) : poll ? (
+            <div className="bg-[var(--surface-subtle)] p-4 rounded-lg">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-[var(--text-primary)] mb-1">{poll.question}</h4>
+                  {poll.description && (
+                    <p className="text-sm text-[var(--text-secondary)] mb-3">{poll.description}</p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {poll.options?.map((option, index) => (
+                      <span
+                        key={option.id || index}
+                        className="px-3 py-1 bg-[var(--surface-bg)] rounded-lg text-sm text-[var(--text-secondary)]"
+                      >
+                        {option.text}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    {poll.isActive === false && (
+                      <span className="inline-block px-2 py-1 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded text-xs font-medium">
+                        Inactive
+                      </span>
+                    )}
+                    {poll.expiresAt && (
+                      <span className="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 rounded text-xs font-medium">
+                        Expires: {new Date(poll.expiresAt).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-[var(--surface-subtle)] p-4 rounded-lg text-center text-[var(--text-secondary)]">
+              <p className="text-sm">No poll attached to this post</p>
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
           <Link
             to="/admin/posts"
@@ -1282,6 +1799,60 @@ const EditPost = ({ onSuccess }) => {
           </button>
         </div>
       </form>
+
+      {/* Post Templates Modal */}
+      {showTemplates && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowTemplates(false);
+            }
+          }}
+        >
+          <div className="bg-[var(--surface-bg)] rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
+            <button
+              onClick={() => setShowTemplates(false)}
+              className="absolute top-4 right-4 z-10 p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-subtle)] rounded-lg transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="p-6">
+              <PostTemplates onSelectTemplate={handleTemplateSelect} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Post Versioning Modal */}
+      {showVersioning && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowVersioning(false);
+            }
+          }}
+        >
+          <div className="bg-[var(--surface-bg)] rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
+            <button
+              onClick={() => setShowVersioning(false)}
+              className="absolute top-4 right-4 z-10 p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-subtle)] rounded-lg transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="p-6">
+              <PostVersioning 
+                postId={id} 
+                currentContent={formData.content}
+                onRestore={handleVersionRestore}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

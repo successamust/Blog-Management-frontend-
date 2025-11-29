@@ -28,6 +28,11 @@ const authReducer = (state, action) => {
       };
     case 'CLEAR_ERROR':
       return { ...state, error: null };
+    case 'UPDATE_USER':
+      return {
+        ...state,
+        user: { ...state.user, ...action.payload },
+      };
     default:
       return state;
   }
@@ -47,6 +52,7 @@ const defaultContextValue = {
   register: async () => ({ success: false, error: 'Not initialized' }),
   logout: () => {},
   clearError: () => {},
+  updateUser: () => {},
   isAdmin: () => false,
   isAuthor: () => false,
   isAuthorOrAdmin: () => false,
@@ -237,6 +243,12 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
   };
 
+  const updateUser = (userData) => {
+    const updatedUser = { ...state.user, ...userData };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    dispatch({ type: 'UPDATE_USER', payload: userData });
+  };
+
   const isAdmin = () => {
     return state.user?.role === 'admin';
   };
@@ -269,6 +281,7 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         clearError,
+        updateUser,
         isAdmin,
         isAuthor,
         isAuthorOrAdmin,

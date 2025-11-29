@@ -36,8 +36,23 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d' }) => {
       return sum + (p.likeCount || 0);
     }, 0);
     const totalComments = filteredPosts.reduce((sum, p) => {
-      if (Array.isArray(p.comments)) return sum + p.comments.length;
-      return sum + (p.commentCount || 0);
+      // Try multiple ways to get comment count
+      if (Array.isArray(p.comments)) {
+        // Count all comments including replies
+        const countAllComments = (comments) => {
+          return comments.reduce((total, comment) => {
+            return total + 1 + (comment.replies ? countAllComments(comment.replies) : 0);
+          }, 0);
+        };
+        return sum + countAllComments(p.comments);
+      }
+      // Try various comment count fields
+      if (typeof p.commentCount === 'number') return sum + p.commentCount;
+      if (typeof p.comments === 'number') return sum + p.comments;
+      if (p.comments && typeof p.comments === 'object' && p.comments.length !== undefined) {
+        return sum + p.comments.length;
+      }
+      return sum;
     }, 0);
     const totalShares = filteredPosts.reduce((sum, p) => sum + (p.shareCount || 0), 0);
 
@@ -75,6 +90,10 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d' }) => {
   };
 
   const filterByTimeRange = (posts, range) => {
+    if (range === 'alltime') {
+      return posts;
+    }
+
     const now = new Date();
     let cutoffDate;
 
@@ -102,6 +121,29 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d' }) => {
   };
 
   const generateTrendData = (posts, metric, range) => {
+    if (range === 'alltime' || range === '1y') {
+      // For alltime or 1y, use monthly data
+      const months = range === 'alltime' ? 12 : 12;
+      const data = Array(months).fill(0);
+      
+      posts.forEach(post => {
+        const postDate = new Date(post.publishedAt || post.createdAt);
+        const monthsAgo = Math.floor((Date.now() - postDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+        
+        if (monthsAgo >= 0 && monthsAgo < months) {
+          let value = 0;
+          if (metric === 'viewCount') {
+            value = post.viewCount || 0;
+          } else if (metric === 'likes') {
+            value = Array.isArray(post.likes) ? post.likes.length : (post.likeCount || 0);
+          }
+          data[months - 1 - monthsAgo] += value;
+        }
+      });
+      
+      return data;
+    }
+    
     const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
     const data = Array(days).fill(0);
 
@@ -197,7 +239,7 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d' }) => {
   return (
     <div className="space-y-6">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -206,18 +248,20 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d' }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-xl p-6 border border-[var(--border-subtle)]"
+              className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 border border-[var(--border-subtle)]"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-lg bg-${stat.color.split('-')[1]}-100 dark:bg-${stat.color.split('-')[1]}-900/20`}>
-                  <Icon className={`w-6 h-6 ${stat.color}`} />
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className={`p-2 sm:p-3 rounded-lg bg-${stat.color.split('-')[1]}-100 dark:bg-${stat.color.split('-')[1]}-900/20`}>
+                  <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${stat.color}`} />
                 </div>
                 {stat.trend && (
-                  <Sparkline data={stat.trend} color={stat.color} />
+                  <div className="hidden sm:block">
+                    <Sparkline data={stat.trend} color={stat.color} />
+                  </div>
                 )}
               </div>
-              <p className="text-sm text-muted mb-1">{stat.label}</p>
-              <p className="text-2xl font-bold text-primary">
+              <p className="text-xs sm:text-sm text-muted mb-1">{stat.label}</p>
+              <p className="text-xl sm:text-2xl font-bold text-primary">
                 {typeof stat.value === 'number' ? (
                   <AnimatedCounter value={stat.value} />
                 ) : (
@@ -231,18 +275,18 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d' }) => {
 
       {/* Top Posts */}
       {analytics.topPosts.length > 0 && (
-        <div className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-xl p-6 border border-[var(--border-subtle)]">
-          <h3 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
+        <div className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 border border-[var(--border-subtle)]">
+          <h3 className="text-base sm:text-lg font-semibold text-primary mb-3 sm:mb-4 flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />
             Top Performing Posts
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {analytics.topPosts.map((post, index) => (
-              <div key={post._id} className="flex items-center justify-between p-3 bg-surface-subtle rounded-lg">
-                <div className="flex items-center gap-3">
-                  <span className="text-lg font-bold text-[var(--accent)]">#{index + 1}</span>
-                  <div>
-                    <p className="font-medium text-primary line-clamp-1">{post.title}</p>
+              <div key={post._id} className="flex items-center justify-between p-2 sm:p-3 bg-surface-subtle rounded-lg gap-2">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <span className="text-base sm:text-lg font-bold text-[var(--accent)] flex-shrink-0">#{index + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-primary line-clamp-1 text-sm sm:text-base">{post.title}</p>
                     <p className="text-xs text-muted">{post.viewCount || 0} views</p>
                   </div>
                 </div>
@@ -254,9 +298,9 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d' }) => {
 
       {/* Category Distribution */}
       {Object.keys(analytics.categoryDistribution).length > 0 && (
-        <div className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-xl p-6 border border-[var(--border-subtle)]">
-          <h3 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
-            <PieChart className="w-5 h-5" />
+        <div className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 border border-[var(--border-subtle)]">
+          <h3 className="text-base sm:text-lg font-semibold text-primary mb-3 sm:mb-4 flex items-center gap-2">
+            <PieChart className="w-4 h-4 sm:w-5 sm:h-5" />
             Category Distribution
           </h3>
           <div className="space-y-2">
@@ -276,6 +320,45 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d' }) => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Time-based Distribution */}
+      {Object.keys(analytics.timeDistribution).length > 0 && (
+        <div className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 border border-[var(--border-subtle)]">
+          <h3 className="text-base sm:text-lg font-semibold text-primary mb-3 sm:mb-4 flex items-center gap-2">
+            <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+            Publishing Time Distribution
+          </h3>
+          <div className="space-y-2 sm:space-y-3">
+            {[
+              { label: 'Morning (6 AM - 12 PM)', key: 'morning', color: 'bg-yellow-500' },
+              { label: 'Afternoon (12 PM - 6 PM)', key: 'afternoon', color: 'bg-orange-500' },
+              { label: 'Evening (6 PM - 10 PM)', key: 'evening', color: 'bg-blue-500' },
+              { label: 'Night (10 PM - 6 AM)', key: 'night', color: 'bg-purple-500' },
+            ].map(({ label, key, color }) => {
+              const count = analytics.timeDistribution[key] || 0;
+              const total = Object.values(analytics.timeDistribution).reduce((sum, val) => sum + val, 0);
+              const percentage = total > 0 ? (count / total) * 100 : 0;
+              
+              return (
+                <div key={key}>
+                  <div className="flex items-center justify-between mb-1 gap-2">
+                    <span className="text-xs sm:text-sm text-secondary break-words flex-1">{label}</span>
+                    <span className="text-xs sm:text-sm font-medium text-primary flex-shrink-0">{count} posts</span>
+                  </div>
+                  <div className="w-full bg-[var(--surface-subtle)] rounded-full h-3">
+                    <div
+                      className={`${color} h-3 rounded-full transition-all`}
+                      style={{
+                        width: `${percentage}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

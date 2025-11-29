@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { History, RotateCcw, Eye, Calendar } from 'lucide-react';
+import { History, RotateCcw, Eye, Calendar, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
+import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const PostVersioning = ({ postId, currentContent, onRestore }) => {
+  const { user } = useAuth();
   const [versions, setVersions] = useLocalStorage(`postVersions_${postId}`, []);
   const [selectedVersion, setSelectedVersion] = useState(null);
 
@@ -22,7 +24,7 @@ const PostVersioning = ({ postId, currentContent, onRestore }) => {
       content,
       label,
       timestamp: Date.now(),
-      author: 'Current User', // You can get this from auth context
+      author: user?.name || user?.username || user?.email || 'Current User',
     };
 
     setVersions(prev => {
@@ -50,14 +52,14 @@ const PostVersioning = ({ postId, currentContent, onRestore }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h3 className="font-semibold text-primary flex items-center gap-2">
           <History className="w-5 h-5" />
           Version History
         </h3>
         <button
           onClick={() => saveVersion(currentContent, 'Manual save')}
-          className="btn btn-outline text-sm"
+          className="btn btn-outline text-sm w-full sm:w-auto"
         >
           Save Current Version
         </button>
@@ -101,17 +103,17 @@ const PostVersioning = ({ postId, currentContent, onRestore }) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 mt-3">
+              <div className="flex flex-wrap items-center gap-2 mt-3">
                 <button
                   onClick={() => setSelectedVersion(version)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-surface hover:bg-surface-subtle rounded-lg transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-surface hover:bg-surface-subtle rounded-lg transition-colors flex-1 sm:flex-initial min-w-[100px] justify-center"
                 >
                   <Eye className="w-4 h-4" />
                   Preview
                 </button>
                 <button
                   onClick={() => restoreVersion(version)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)]/20 rounded-lg transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)]/20 rounded-lg transition-colors flex-1 sm:flex-initial min-w-[100px] justify-center"
                 >
                   <RotateCcw className="w-4 h-4" />
                   Restore
@@ -119,7 +121,7 @@ const PostVersioning = ({ postId, currentContent, onRestore }) => {
                 {index > 0 && (
                   <button
                     onClick={() => deleteVersion(version.id)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex-1 sm:flex-initial min-w-[100px] justify-center"
                   >
                     Delete
                   </button>
@@ -136,20 +138,21 @@ const PostVersioning = ({ postId, currentContent, onRestore }) => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-primary">
+            <div className="flex items-center justify-between mb-4 gap-2">
+              <h3 className="text-lg sm:text-xl font-bold text-primary break-words flex-1">
                 {selectedVersion.label}
               </h3>
               <button
                 onClick={() => setSelectedVersion(null)}
-                className="p-1 hover:bg-[var(--surface-subtle)] rounded"
+                className="p-1.5 hover:bg-[var(--surface-subtle)] rounded flex-shrink-0"
+                aria-label="Close"
               >
-                ×
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="prose max-w-none">
+            <div className="prose dark:prose-invert max-w-none prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-strong:text-[var(--text-primary)] prose-li:text-[var(--text-secondary)]">
               <div dangerouslySetInnerHTML={{ __html: selectedVersion.content }} />
             </div>
           </motion.div>

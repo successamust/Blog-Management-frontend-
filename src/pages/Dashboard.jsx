@@ -26,10 +26,12 @@ import {
   MessageSquare,
   HeartHandshake,
   LineChart,
-  Users
+  Users,
+  BarChart,
+  X
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { dashboardAPI, postsAPI, categoriesAPI, imagesAPI } from '../services/api';
+import { dashboardAPI, postsAPI, categoriesAPI, imagesAPI, pollsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ProfileSettings from '../components/dashboard/ProfileSettings';
 import AuthorApplication from '../components/dashboard/AuthorApplication';
@@ -37,10 +39,12 @@ import CollaborationsDashboard from '../components/dashboard/CollaborationsDashb
 import AnimatedCounter from '../components/common/AnimatedCounter';
 import Sparkline from '../components/common/Sparkline';
 import RichTextEditor from '../components/admin/RichTextEditor';
+import PostTemplates from '../components/admin/PostTemplates';
 import SkeletonLoader from '../components/common/SkeletonLoader';
 import toast from 'react-hot-toast';
 import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+import PollAnalytics from '../components/admin/PollAnalytics';
 
 const DASHBOARD_DESCRIPTION = 'Manage your Nexus profile, author tools, analytics, and saved posts from one workspace.';
 const DASHBOARD_TAB_LABELS = {
@@ -68,6 +72,7 @@ const Dashboard = () => {
     bookmarks: [],
   });
   const [tabLoading, setTabLoading] = useState(false);
+  const [showPollAnalytics, setShowPollAnalytics] = useState(null);
   const { user, isAdmin } = useAuth();
 
   const tabLabel = DASHBOARD_TAB_LABELS[activeTab] || 'Overview';
@@ -645,7 +650,7 @@ const Dashboard = () => {
             <div className="space-y-4">
               {recentPosts && recentPosts.length > 0 ? (
                 recentPosts.map((post) => (
-                  <PostItem key={post._id} post={post} />
+                  <PostItem key={post._id} post={post} onShowPollAnalytics={setShowPollAnalytics} />
                 ))
               ) : (
                 <div className="text-center py-8 text-muted">
@@ -857,7 +862,7 @@ const Dashboard = () => {
           ) : tabData.posts.length > 0 ? (
             <div className="space-y-4">
               {tabData.posts.map((post) => (
-                <PostItem key={post._id} post={post} />
+                <PostItem key={post._id} post={post} onShowPollAnalytics={setShowPollAnalytics} />
               ))}
             </div>
           ) : (
@@ -925,7 +930,7 @@ const Dashboard = () => {
           ) : tabData.likes.length > 0 ? (
             <div className="space-y-4">
               {tabData.likes.map((post) => (
-                <PostItem key={post._id} post={post} />
+                <PostItem key={post._id} post={post} onShowPollAnalytics={setShowPollAnalytics} />
               ))}
             </div>
           ) : (
@@ -951,7 +956,7 @@ const Dashboard = () => {
           ) : tabData.bookmarks.length > 0 ? (
             <div className="space-y-4">
               {tabData.bookmarks.map((post) => (
-                <PostItem key={post._id} post={post} />
+                <PostItem key={post._id} post={post} onShowPollAnalytics={setShowPollAnalytics} />
               ))}
             </div>
           ) : (
@@ -977,7 +982,7 @@ const Dashboard = () => {
           ) : tabData.history.length > 0 ? (
             <div className="space-y-4">
               {tabData.history.map((post) => (
-                <PostItem key={post._id} post={post} />
+                <PostItem key={post._id} post={post} onShowPollAnalytics={setShowPollAnalytics} />
               ))}
             </div>
           ) : (
@@ -1015,6 +1020,32 @@ const Dashboard = () => {
       {activeTab === 'settings' && (
         <div className="max-w-6xl mx-auto">
           <ProfileSettings />
+        </div>
+      )}
+
+      {/* Poll Analytics Modal */}
+      {showPollAnalytics && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowPollAnalytics(null);
+            }
+          }}
+        >
+          <div className="bg-[var(--surface-bg)] rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
+            <button
+              onClick={() => setShowPollAnalytics(null)}
+              className="absolute top-4 right-4 z-10 p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-subtle)] rounded-lg transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <PollAnalytics 
+              pollId={showPollAnalytics} 
+              onClose={() => setShowPollAnalytics(null)} 
+            />
+          </div>
         </div>
       )}
     </div>
@@ -1122,8 +1153,11 @@ const StatCard = ({ icon, title, value, change, color, trend }) => {
   );
 };
 
-const PostItem = ({ post }) => {
+const PostItem = ({ post, onShowPollAnalytics }) => {
   const { user, isAdmin } = useAuth();
+  const [hasPoll, setHasPoll] = useState(false);
+  const [pollId, setPollId] = useState(null);
+  const [loadingPoll, setLoadingPoll] = useState(false);
   const isAuthor = user?.role === 'author' || isAdmin();
   
   // Better author ID comparison - handle both object and string formats
@@ -1140,6 +1174,32 @@ const PostItem = ({ post }) => {
   });
   
   const canEdit = isPostOwner || isCollaborator;
+
+  // Check if post has a poll
+  useEffect(() => {
+    const checkPoll = async () => {
+      if (!post?._id) return;
+      try {
+        setLoadingPoll(true);
+        const response = await pollsAPI.getByPost(post._id);
+        if (response.data?.poll) {
+          setHasPoll(true);
+          setPollId(response.data.poll.id || response.data.poll._id);
+        }
+      } catch (error) {
+        // 404 is expected when post doesn't have a poll
+        if (error.response?.status !== 404) {
+          // Silently handle other errors
+        }
+      } finally {
+        setLoadingPoll(false);
+      }
+    };
+    
+    if (canEdit) {
+      checkPoll();
+    }
+  }, [post?._id, canEdit]);
   
   return (
     <motion.div
@@ -1183,6 +1243,15 @@ const PostItem = ({ post }) => {
       </Link>
       {canEdit && (
         <div className="ml-4 flex-shrink-0 flex items-center gap-2">
+          {hasPoll && pollId && onShowPollAnalytics && (
+            <button
+              onClick={() => onShowPollAnalytics(pollId)}
+              className="btn-icon-square text-blue-500 hover:bg-blue-500/10 transition-colors"
+              title="View Poll Analytics"
+            >
+              <BarChart className="w-4 h-4" />
+            </button>
+          )}
           <Link
             to={`/admin/posts/edit/${post._id}`}
             className="btn-icon-square text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors"
@@ -1244,6 +1313,7 @@ const CreatePostTab = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -1276,6 +1346,29 @@ const CreatePostTab = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleTemplateSelect = (template) => {
+    // Match category name to category ID
+    let categoryId = '';
+    if (template.category && categories.length > 0) {
+      const matchedCategory = categories.find(
+        cat => cat.name?.toLowerCase() === template.category?.toLowerCase()
+      );
+      if (matchedCategory) {
+        categoryId = matchedCategory._id || matchedCategory.id;
+      }
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      title: template.title || prev.title,
+      excerpt: template.excerpt || prev.excerpt,
+      content: template.content || prev.content,
+      category: categoryId || prev.category,
+      tags: template.tags || prev.tags,
+    }));
+    setShowTemplates(false);
   };
 
   const handleImageUpload = async (e) => {
@@ -1382,7 +1475,17 @@ const CreatePostTab = () => {
       animate={{ opacity: 1, y: 0 }}
       className="surface-card p-6"
     >
-      <h2 className="text-2xl font-bold text-primary mb-6">Create New Post</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <h2 className="text-2xl font-bold text-primary">Create New Post</h2>
+        <button
+          type="button"
+          onClick={() => setShowTemplates(true)}
+          className="btn btn-outline !w-auto flex items-center gap-2"
+        >
+          <FileText className="w-4 h-4" />
+          <span>Use Template</span>
+        </button>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Title</label>
@@ -1535,6 +1638,31 @@ const CreatePostTab = () => {
           </button>
         </div>
       </form>
+
+      {/* Post Templates Modal */}
+      {showTemplates && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowTemplates(false);
+            }
+          }}
+        >
+          <div className="bg-[var(--surface-bg)] rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
+            <button
+              onClick={() => setShowTemplates(false)}
+              className="absolute top-4 right-4 z-10 p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-subtle)] rounded-lg transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="p-6">
+              <PostTemplates onSelectTemplate={handleTemplateSelect} />
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };
