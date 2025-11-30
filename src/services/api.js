@@ -30,6 +30,15 @@ api.interceptors.request.use(
     const token = getAuthToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      // Log when token is missing for protected endpoints (in dev only)
+      if (import.meta.env.DEV && config.url && (
+        config.url.startsWith('/admin/') ||
+        config.url.startsWith('/auth/') ||
+        config.url.includes('/dashboard')
+      )) {
+        console.warn('[API] Request to protected endpoint without token:', config.url);
+      }
     }
     
     if (typeof window !== 'undefined') {
@@ -99,17 +108,27 @@ api.interceptors.response.use(
     
     // Log errors (but not sensitive data) - only in development
     if (!error.silent && import.meta.env.DEV) {
+      const fullUrl = error.config?.baseURL 
+        ? `${error.config.baseURL}${error.config.url}` 
+        : error.config?.url;
       console.error('API request failed:', {
         url: error.config?.url,
+        fullUrl: fullUrl,
+        baseURL: error.config?.baseURL,
         method: error.config?.method,
         status: error.response?.status,
         message: error.message,
+        hasToken: !!error.config?.headers?.Authorization,
       });
     }
     
     // Network errors (no response from server)
     if (!error.response) {
       console.error('Network error:', error.message);
+      // For network errors, don't treat as auth issue - just reject
+      // Don't clear tokens on network errors
+      error.silent = true; // Don't show error toasts for network issues
+      return Promise.reject(error);
     }
     
     
@@ -218,6 +237,8 @@ api.interceptors.response.use(
       
       if (isPostsEndpoint) {
         // Legitimate 404 for public content - don't clear token or redirect
+        // Mark as silent to avoid error toasts for missing posts
+        error.silent = true;
         // Just let the error propagate normally so components can handle it
         return Promise.reject(error);
       }

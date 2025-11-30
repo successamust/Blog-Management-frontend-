@@ -49,6 +49,9 @@ export const getAuthToken = () => {
     return inMemoryToken;
   }
 
+  let foundToken = null;
+  let source = '';
+
   // Prioritize cookies over sessionStorage since cookies persist across tab closes
   // Cookies are more reliable for "remember me" functionality
   if (typeof document !== 'undefined') {
@@ -58,15 +61,9 @@ export const getAuthToken = () => {
       if (key === TOKEN_COOKIE_KEY && value) {
         try {
           const decoded = decodeURIComponent(value);
-          inMemoryToken = decoded;
-          // Also sync to localStorage and sessionStorage for faster access
-          if (typeof localStorage !== 'undefined') {
-            localStorage.setItem(TOKEN_COOKIE_KEY, decoded);
-          }
-          if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.setItem(TOKEN_COOKIE_KEY, decoded);
-          }
-          return decoded;
+          foundToken = decoded;
+          source = 'cookie';
+          break;
         } catch (error) {
           console.warn('Failed to decode auth token cookie', error);
         }
@@ -75,25 +72,50 @@ export const getAuthToken = () => {
   }
 
   // Fallback to localStorage (persists across tab closes)
-  if (typeof localStorage !== 'undefined') {
+  if (!foundToken && typeof localStorage !== 'undefined') {
     const localToken = localStorage.getItem(TOKEN_COOKIE_KEY);
     if (localToken) {
-      inMemoryToken = localToken;
-      // Sync to sessionStorage for faster access
-      if (typeof sessionStorage !== 'undefined') {
-        sessionStorage.setItem(TOKEN_COOKIE_KEY, localToken);
-      }
-      return localToken;
+      foundToken = localToken;
+      source = 'localStorage';
     }
   }
 
   // Fallback to sessionStorage if cookie and localStorage not found
-  if (typeof sessionStorage !== 'undefined') {
+  if (!foundToken && typeof sessionStorage !== 'undefined') {
     const sessionToken = sessionStorage.getItem(TOKEN_COOKIE_KEY);
     if (sessionToken) {
-      inMemoryToken = sessionToken;
-      return sessionToken;
+      foundToken = sessionToken;
+      source = 'sessionStorage';
     }
+  }
+
+  if (foundToken) {
+    inMemoryToken = foundToken;
+    // Sync to all storage locations for consistency
+    if (source !== 'cookie' && typeof document !== 'undefined') {
+      try {
+        const expires = new Date(Date.now() + TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000);
+        document.cookie = buildCookie(encodeURIComponent(foundToken), expires);
+      } catch (e) {
+        // Ignore cookie setting errors
+      }
+    }
+    if (source !== 'localStorage' && typeof localStorage !== 'undefined') {
+      localStorage.setItem(TOKEN_COOKIE_KEY, foundToken);
+    }
+    if (source !== 'sessionStorage' && typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(TOKEN_COOKIE_KEY, foundToken);
+    }
+    
+    if (import.meta.env.DEV) {
+      console.log(`[Token] Retrieved from ${source}`);
+    }
+    
+    return foundToken;
+  }
+
+  if (import.meta.env.DEV) {
+    console.warn('[Token] No token found in any storage');
   }
 
   return null;
