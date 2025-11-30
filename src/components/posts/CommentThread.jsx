@@ -61,14 +61,14 @@ const CommentThread = ({
   const normalizedUserId = user?._id ? String(user._id) : null;
   const normalizedLikes = useMemo(() => {
     return Array.isArray(comment.likes)
-      ? comment.likes.map((id) => {
-          // Handle both string IDs and object IDs
-          if (typeof id === 'object' && id !== null && 'toString' in id) {
-            return id.toString();
-          }
-          return String(id);
-        })
-      : [];
+    ? comment.likes.map((id) => {
+        // Handle both string IDs and object IDs
+        if (typeof id === 'object' && id !== null && 'toString' in id) {
+          return id.toString();
+        }
+        return String(id);
+      })
+    : [];
   }, [comment.likes]);
   const isLiked = useMemo(() => {
     return normalizedUserId ? normalizedLikes.includes(normalizedUserId) : false;

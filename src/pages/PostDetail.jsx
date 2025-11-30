@@ -613,8 +613,8 @@ const PostDetail = () => {
     const userId = String(user._id);
     
     // Optimistic update - update UI immediately
-    setPost(prevPost => {
-      if (!prevPost) return prevPost;
+      setPost(prevPost => {
+        if (!prevPost) return prevPost;
       
       // Normalize all like IDs to strings for comparison
       const normalizedLikes = (prevPost.likes || []).map(id => {
@@ -627,7 +627,7 @@ const PostDetail = () => {
       const isLiked = normalizedLikes.includes(userId);
       
       // Toggle like state
-      const newLikes = isLiked 
+          const newLikes = isLiked 
         ? normalizedLikes.filter(id => id !== userId)
         : [...normalizedLikes, userId];
       
@@ -640,13 +640,13 @@ const PostDetail = () => {
       });
       
       const newDislikes = normalizedDislikes.filter(id => id !== userId);
-      
-      return {
-        ...prevPost,
-        likes: newLikes,
-        dislikes: newDislikes
-      };
-    });
+        
+        return {
+          ...prevPost,
+          likes: newLikes,
+          dislikes: newDislikes
+        };
+      });
 
     try {
       setInteractionLoading(true);
@@ -681,8 +681,8 @@ const PostDetail = () => {
     const userId = String(user._id);
     
     // Optimistic update - update UI immediately
-    setPost(prevPost => {
-      if (!prevPost) return prevPost;
+      setPost(prevPost => {
+        if (!prevPost) return prevPost;
       
       // Normalize all dislike IDs to strings for comparison
       const normalizedDislikes = (prevPost.dislikes || []).map(id => {
@@ -695,7 +695,7 @@ const PostDetail = () => {
       const isDisliked = normalizedDislikes.includes(userId);
       
       // Toggle dislike state
-      const newDislikes = isDisliked 
+          const newDislikes = isDisliked 
         ? normalizedDislikes.filter(id => id !== userId)
         : [...normalizedDislikes, userId];
       
@@ -708,13 +708,13 @@ const PostDetail = () => {
       });
       
       const newLikes = normalizedLikes.filter(id => id !== userId);
-      
-      return {
-        ...prevPost,
-        dislikes: newDislikes,
-        likes: newLikes
-      };
-    });
+        
+        return {
+          ...prevPost,
+          dislikes: newDislikes,
+          likes: newLikes
+        };
+      });
 
     try {
       setInteractionLoading(true);
