@@ -225,6 +225,7 @@ export const AuthProvider = ({ children }) => {
       }
     }, []);
     
+  useEffect(() => {
     // Initial verification on mount
     verifyUser();
     
@@ -288,7 +289,7 @@ export const AuthProvider = ({ children }) => {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       }
     };
-  }, [verifyUser]);
+  }, [verifyUser, state.isAuthenticated]);
 
   const login = async (credentials) => {
     dispatch({ type: 'LOGIN_START' });
