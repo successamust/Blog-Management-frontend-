@@ -206,6 +206,22 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
       
+      // Posts endpoints are public - 404s are legitimate (post doesn't exist, etc.)
+      // Don't treat them as auth issues
+      const isPostsEndpoint = 
+        normalizedUrl === 'posts' ||
+        normalizedUrl.startsWith('posts/') ||
+        normalizedUrl.startsWith('categories/') ||
+        normalizedUrl.startsWith('tags/') ||
+        normalizedUrl.startsWith('authors/') ||
+        normalizedUrl.startsWith('search');
+      
+      if (isPostsEndpoint) {
+        // Legitimate 404 for public content - don't clear token or redirect
+        // Just let the error propagate normally so components can handle it
+        return Promise.reject(error);
+      }
+      
       // Check if this is a protected endpoint (admin, auth, dashboard related)
       // Exclude /auth/me and /auth/login/register as they're handled separately
       const isProtectedEndpoint = 
