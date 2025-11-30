@@ -230,7 +230,8 @@ export const AuthProvider = ({ children }) => {
     verifyUser();
     
     // Re-verify user when tab becomes visible again (user comes back to tab)
-    // This ensures token is restored and auth state is refreshed
+    // This ensures token is restored and auth state is refreshed IMMEDIATELY
+    // to prevent race conditions where components make API calls before token is restored
     let visibilityTimeout = null;
     const handleVisibilityChange = () => {
       if (!document.hidden && typeof document !== 'undefined') {
@@ -239,39 +240,48 @@ export const AuthProvider = ({ children }) => {
           clearTimeout(visibilityTimeout);
         }
         
-        // Tab became visible - immediately restore token from storage
-        // This is critical because inMemoryToken might be cleared
-        const token = getAuthToken(); // This will restore from cookies/localStorage
+        // Tab became visible - IMMEDIATELY restore token from storage (synchronous)
+        // This is critical because inMemoryToken might be cleared when tab is inactive
+        // We MUST restore it before any components try to make API calls
+        const token = getAuthToken(); // This synchronously restores from cookies/localStorage
         const user = localStorage.getItem('user');
         
         if (token && user) {
-          // If we have token and user, ensure auth state is set
-          // Use a small delay to avoid race conditions with other components
+          // Immediately restore auth state to prevent API calls from failing
+          // This happens synchronously, so components will have the token available
+          try {
+            const storedUser = JSON.parse(user);
+            if (!state.isAuthenticated) {
+              // Immediately set auth state so API calls have the token
+              dispatch({
+                type: 'LOGIN_SUCCESS',
+                payload: { token, user: storedUser },
+              });
+            }
+          } catch (e) {
+            // If parsing fails, verify immediately
+            verifyUser();
+            return;
+          }
+          
+          // Then verify in the background (with a small delay to avoid race conditions)
+          // But the token is already available, so API calls won't fail
           visibilityTimeout = setTimeout(() => {
-            // Only verify if we're not already authenticated or if it's been a while
             const lastCheck = localStorage.getItem('lastAuthCheck');
             const now = Date.now();
             const timeSinceLastCheck = lastCheck ? (now - parseInt(lastCheck)) : Infinity;
             
             // Re-verify if it's been more than 1 minute since last check
-            if (timeSinceLastCheck > 60000 || !state.isAuthenticated) {
+            if (timeSinceLastCheck > 60000) {
               verifyUser();
-            } else {
-              // Just ensure state is set with cached data
-              try {
-                const storedUser = JSON.parse(user);
-                if (!state.isAuthenticated) {
-                  dispatch({
-                    type: 'LOGIN_SUCCESS',
-                    payload: { token, user: storedUser },
-                  });
-                }
-              } catch (e) {
-                // If parsing fails, verify
-                verifyUser();
-              }
             }
-          }, 300);
+          }, 100); // Reduced delay since token is already restored
+        } else if (!token && state.isAuthenticated) {
+          // Token was lost - clear auth state immediately
+          clearAuthToken();
+          localStorage.removeItem('user');
+          localStorage.removeItem('lastAuthCheck');
+          dispatch({ type: 'LOGOUT' });
         }
       }
     };

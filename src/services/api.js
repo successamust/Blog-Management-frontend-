@@ -47,6 +47,8 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
+    // Always get fresh token - it might have been restored from storage
+    // This is especially important when tab becomes visible again
     const token = getAuthToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
