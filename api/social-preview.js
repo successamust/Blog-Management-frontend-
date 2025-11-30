@@ -77,17 +77,38 @@ const isCrawler = (userAgent) => {
 };
 
 const handler = async (req, res) => {
-  const slugParam = req.query?.slug;
-  const slugValue = Array.isArray(slugParam) ? slugParam[0] : slugParam;
-  const userAgent = req.headers['user-agent'] || '';
-
-  if (!slugValue) {
-    res.status(400).send('Missing slug');
-    return;
-  }
-
   try {
-    const post = await fetchPostBySlug(slugValue);
+    const slugParam = req.query?.slug;
+    const slugValue = Array.isArray(slugParam) ? slugParam[0] : slugParam;
+    const userAgent = req.headers['user-agent'] || '';
+
+    if (!slugValue) {
+      res.status(400).send('Missing slug');
+      return;
+    }
+
+    // Set timeout for post fetching (10 seconds)
+    const fetchTimeout = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Post fetch timeout')), 10000)
+    );
+
+    let post;
+    try {
+      post = await Promise.race([fetchPostBySlug(slugValue), fetchTimeout]);
+    } catch (fetchError) {
+      console.error('[social-preview] Error fetching post:', fetchError);
+      // If fetch fails or times out, redirect to post page for browsers
+      if (!isCrawler(userAgent)) {
+        const postPath = `/posts/${slugValue}`;
+        const canonicalUrl = `${DEFAULT_SITE_URL}${postPath}`;
+        res.redirect(302, canonicalUrl);
+        return;
+      }
+      // For crawlers, return 500 with error message
+      res.status(500).send('Failed to fetch post data');
+      return;
+    }
+
     if (!post) {
       res.status(404).send('Post not found');
       return;
@@ -186,7 +207,24 @@ const handler = async (req, res) => {
       message: error.message,
       stack: error.stack,
     });
-    res.status(500).send('Failed to generate preview page');
+    
+    // If response hasn't been sent yet, try to redirect or send error
+    if (!res.headersSent) {
+      const userAgent = req.headers['user-agent'] || '';
+      // For browsers, redirect to the post page even on error
+      if (!isCrawler(userAgent)) {
+        try {
+          const postPath = `/posts/${slugValue}`;
+          const canonicalUrl = `${DEFAULT_SITE_URL}${postPath}`;
+          res.redirect(302, canonicalUrl);
+          return;
+        } catch (redirectError) {
+          console.error('[social-preview] Failed to redirect:', redirectError);
+        }
+      }
+      // For crawlers or if redirect failed, send error
+      res.status(500).send('Failed to generate preview page');
+    }
   }
 };
 

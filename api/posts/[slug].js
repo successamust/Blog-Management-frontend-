@@ -101,93 +101,113 @@ const INDEX_HTML = `<!doctype html>
 </html>`;
 
 export default async (req, res) => {
-  const userAgent = req.headers['user-agent'] || '';
-  const urlPath = req.url || '';
-  
-  // IMPORTANT: Don't handle asset requests - let them pass through to static files
-  // Assets should be served directly, not through this API function
-  if (urlPath.includes('/assets/') || urlPath.includes('/email-assets/') || 
-      urlPath.endsWith('.js') || urlPath.endsWith('.css') || urlPath.endsWith('.png') || 
-      urlPath.endsWith('.jpg') || urlPath.endsWith('.svg') || urlPath.endsWith('.woff') ||
-      urlPath.endsWith('.woff2') || urlPath.endsWith('.ttf') || urlPath.endsWith('.eot')) {
-    // This shouldn't happen if routing is correct, but just in case, return 404
-    res.status(404).send('Not found');
-    return;
-  }
-  
-  // Extract slug - in Vercel, [slug].js makes the slug available in different ways
-  // Try multiple methods to extract it
-  let slug = null;
-  
-  // Method 1: Check req.query.slug (standard Vercel dynamic route)
-  if (req.query?.slug) {
-    slug = Array.isArray(req.query.slug) ? req.query.slug[0] : req.query.slug;
-  }
-  
-  // Method 2: Extract from URL path
-  if (!slug && urlPath) {
-    // Remove query string and hash
-    const cleanPath = urlPath.split('?')[0].split('#')[0];
+  try {
+    const userAgent = req.headers['user-agent'] || '';
+    const urlPath = req.url || '';
     
-    // Try to match /api/posts/slug or /posts/slug or just slug
-    const patterns = [
-      /\/api\/posts\/([^/]+)/,
-      /\/posts\/([^/]+)/,
-      /^\/([^/]+)$/,
-      /^([^/]+)$/
-    ];
+    // IMPORTANT: Don't handle asset requests - let them pass through to static files
+    // Assets should be served directly, not through this API function
+    if (urlPath.includes('/assets/') || urlPath.includes('/email-assets/') || 
+        urlPath.endsWith('.js') || urlPath.endsWith('.css') || urlPath.endsWith('.png') || 
+        urlPath.endsWith('.jpg') || urlPath.endsWith('.svg') || urlPath.endsWith('.woff') ||
+        urlPath.endsWith('.woff2') || urlPath.endsWith('.ttf') || urlPath.endsWith('.eot')) {
+      // This shouldn't happen if routing is correct, but just in case, return 404
+      res.status(404).send('Not found');
+      return;
+    }
     
-    for (const pattern of patterns) {
-      const match = cleanPath.match(pattern);
-      if (match && match[1]) {
-        slug = decodeURIComponent(match[1]);
-        break;
+    // Extract slug - in Vercel, [slug].js makes the slug available in different ways
+    // Try multiple methods to extract it
+    let slug = null;
+    
+    // Method 1: Check req.query.slug (standard Vercel dynamic route)
+    if (req.query?.slug) {
+      slug = Array.isArray(req.query.slug) ? req.query.slug[0] : req.query.slug;
+    }
+    
+    // Method 2: Extract from URL path
+    if (!slug && urlPath) {
+      // Remove query string and hash
+      const cleanPath = urlPath.split('?')[0].split('#')[0];
+      
+      // Try to match /api/posts/slug or /posts/slug or just slug
+      const patterns = [
+        /\/api\/posts\/([^/]+)/,
+        /\/posts\/([^/]+)/,
+        /^\/([^/]+)$/,
+        /^([^/]+)$/
+      ];
+      
+      for (const pattern of patterns) {
+        const match = cleanPath.match(pattern);
+        if (match && match[1]) {
+          slug = decodeURIComponent(match[1]);
+          break;
+        }
       }
     }
-  }
-  
-  // Method 3: Check if slug is in the pathname (some Vercel setups)
-  if (!slug && urlPath) {
-    // Sometimes Vercel provides the path differently
-    const pathParts = urlPath.split('/').filter(Boolean);
-    const postsIndex = pathParts.indexOf('posts');
-    if (postsIndex >= 0 && pathParts[postsIndex + 1]) {
-      slug = decodeURIComponent(pathParts[postsIndex + 1].split('?')[0]);
+    
+    // Method 3: Check if slug is in the pathname (some Vercel setups)
+    if (!slug && urlPath) {
+      // Sometimes Vercel provides the path differently
+      const pathParts = urlPath.split('/').filter(Boolean);
+      const postsIndex = pathParts.indexOf('posts');
+      if (postsIndex >= 0 && pathParts[postsIndex + 1]) {
+        slug = decodeURIComponent(pathParts[postsIndex + 1].split('?')[0]);
+      }
+    }
+    
+    // Always log for debugging
+    console.log('[posts/slug] Request details:', {
+      url: urlPath,
+      query: req.query,
+      method: req.method,
+      headers: {
+        'user-agent': userAgent ? userAgent.substring(0, 100) : 'none',
+      },
+      extractedSlug: slug || 'NOT_FOUND',
+      isCrawler: isCrawler(userAgent),
+    });
+    
+    // If it's a crawler and we have a slug, serve the social preview
+    if (isCrawler(userAgent)) {
+      if (slug) {
+        // Pass slug to social preview handler
+        req.query = { slug: slug };
+        try {
+          return await handler(req, res);
+        } catch (error) {
+          console.error('[posts/slug] Error in social preview handler:', error);
+          // Fall through to serve regular HTML if preview fails
+        }
+      } else {
+        // Crawler but no slug found - this is a problem
+        console.error('[posts/slug] ERROR: Crawler detected but slug extraction failed:', {
+          url: urlPath,
+          query: req.query,
+          userAgent: userAgent,
+        });
+        // Fall through to serve regular HTML
+      }
+    }
+    
+    // For regular users (browsers) or if crawler handling failed, serve the React app
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.status(200).send(INDEX_HTML);
+  } catch (error) {
+    // Catch any unexpected errors and still serve the React app
+    console.error('[posts/slug] Unexpected error:', error);
+    try {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.status(200).send(INDEX_HTML);
+    } catch (sendError) {
+      // If we can't send response, log it
+      console.error('[posts/slug] Failed to send response:', sendError);
     }
   }
-  
-  // Always log for debugging
-  console.log('[posts/slug] Request details:', {
-    url: urlPath,
-    query: req.query,
-    method: req.method,
-    headers: {
-      'user-agent': userAgent ? userAgent.substring(0, 100) : 'none',
-    },
-    extractedSlug: slug || 'NOT_FOUND',
-    isCrawler: isCrawler(userAgent),
-  });
-  
-  // If it's a crawler and we have a slug, serve the social preview
-  if (isCrawler(userAgent)) {
-    if (slug) {
-      // Pass slug to social preview handler
-      req.query = { slug: slug };
-      return handler(req, res);
-    } else {
-      // Crawler but no slug found - this is a problem
-      console.error('[posts/slug] ERROR: Crawler detected but slug extraction failed:', {
-        url: urlPath,
-        query: req.query,
-        userAgent: userAgent,
-      });
-      // Still try to serve something, but log the error
-    }
-  }
-  
-  // For regular users (browsers), serve the React app
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.status(200).send(INDEX_HTML);
 };
 
