@@ -24,6 +24,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DOMPurify from 'dompurify';
 import { postsAPI, commentsAPI, interactionsAPI, pollsAPI, collaborationsAPI, followsAPI } from '../services/api';
+import { clearCache } from '../utils/apiCache';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import toast from 'react-hot-toast';
@@ -76,6 +77,7 @@ const PostDetail = () => {
   const { addNotification } = useNotifications();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
+  const optimisticLikesRef = useRef(new Map()); // Track optimistic like updates
   const [relatedPosts, setRelatedPosts] = useState([]);
   const [collaborators, setCollaborators] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -381,12 +383,93 @@ const PostDetail = () => {
   const refreshComments = useCallback(async () => {
     if (!postId) return;
     try {
+      // Clear cache to ensure we get fresh data
+      clearCache(`/comments/${postId}/comments`);
+      clearCache('/comments');
       const commentsRes = await commentsAPI.getByPost(postId);
-      setComments(ensureCommentTree(commentsRes.data?.comments || []));
+      const freshComments = ensureCommentTree(commentsRes.data?.comments || []);
+      
+      // Preserve optimistic like updates that happened recently (within last 3 seconds)
+      const now = Date.now();
+      const optimisticThreshold = 3000; // 3 seconds
+      
+      setComments(prevComments => {
+        // If we have recent optimistic updates, merge them with fresh data
+        const hasRecentOptimistic = Array.from(optimisticLikesRef.current.values()).some(
+          timestamp => (now - timestamp) < optimisticThreshold
+        );
+        
+        if (!hasRecentOptimistic) {
+          // No recent optimistic updates, use fresh data as-is
+          return freshComments;
+        }
+        
+        // Merge optimistic updates with fresh data
+        const mergeOptimisticLikes = (commentList) => {
+          return commentList.map((comment) => {
+            const commentId = String(comment._id || comment.id);
+            const optimisticTimestamp = optimisticLikesRef.current.get(commentId);
+            
+            // If this comment has a recent optimistic update, preserve it from prevComments
+            if (optimisticTimestamp && (now - optimisticTimestamp) < optimisticThreshold) {
+              const prevComment = prevComments.find(
+                c => String(c._id || c.id) === commentId
+              ) || prevComments
+                .flatMap(c => c.replies || [])
+                .find(c => String(c._id || c.id) === commentId);
+              
+              if (prevComment) {
+                return {
+                  ...comment,
+                  likes: prevComment.likes // Preserve optimistic likes
+                };
+              }
+            }
+            
+            // Check replies recursively
+            if (comment.replies && comment.replies.length > 0) {
+              return {
+                ...comment,
+                replies: mergeOptimisticLikes(comment.replies)
+              };
+            }
+            
+            return comment;
+          });
+        };
+        
+        return mergeOptimisticLikes(freshComments);
+      });
     } catch (error) {
       console.error('Failed to refresh comments:', error);
     }
   }, [postId, ensureCommentTree]);
+
+  const refreshPost = useCallback(async () => {
+    if (!slug) return;
+    try {
+      // Clear cache for this post to ensure we get fresh data
+      clearCache(`/posts/${slug}`);
+      // Also clear the general posts cache
+      clearCache('/posts');
+      
+      // Temporarily reset the fetched slug ref to allow refetch
+      const previousSlug = fetchedSlugRef.current;
+      fetchedSlugRef.current = null;
+      
+      const postRes = await postsAPI.getBySlug(slug);
+      const updatedPost = postRes.data?.post || postRes.data?.data || postRes.data;
+      
+      if (updatedPost && (updatedPost._id || updatedPost.id)) {
+        setPost(updatedPost);
+      }
+      
+      // Restore the fetched slug ref
+      fetchedSlugRef.current = previousSlug;
+    } catch (error) {
+      console.error('Failed to refresh post:', error);
+    }
+  }, [slug]);
 
   const handleReportComment = useCallback(
     async (comment, reason) => {
@@ -521,30 +604,62 @@ const PostDetail = () => {
       return;
     }
 
+    if (!user?._id) {
+      toast.error('User information not available');
+      return;
+    }
+
+    // Normalize user ID
+    const userId = String(user._id);
+    
+    // Optimistic update - update UI immediately
+    setPost(prevPost => {
+      if (!prevPost) return prevPost;
+      
+      // Normalize all like IDs to strings for comparison
+      const normalizedLikes = (prevPost.likes || []).map(id => {
+        if (typeof id === 'object' && id !== null && 'toString' in id) {
+          return id.toString();
+        }
+        return String(id);
+      });
+      
+      const isLiked = normalizedLikes.includes(userId);
+      
+      // Toggle like state
+      const newLikes = isLiked 
+        ? normalizedLikes.filter(id => id !== userId)
+        : [...normalizedLikes, userId];
+      
+      // Remove from dislikes if present
+      const normalizedDislikes = (prevPost.dislikes || []).map(id => {
+        if (typeof id === 'object' && id !== null && 'toString' in id) {
+          return id.toString();
+        }
+        return String(id);
+      });
+      
+      const newDislikes = normalizedDislikes.filter(id => id !== userId);
+      
+      return {
+        ...prevPost,
+        likes: newLikes,
+        dislikes: newDislikes
+      };
+    });
+
     try {
       setInteractionLoading(true);
       await postsAPI.like(post._id);
       
-      setPost(prevPost => {
-        if (!prevPost) return prevPost;
-        const isLiked = prevPost.likes?.includes(user?._id);
-          const newLikes = isLiked 
-            ? prevPost.likes.filter(id => id !== user?._id)
-            : [...(prevPost.likes || []), user?._id];
-        
-        const newDislikes = prevPost.dislikes?.includes(user?._id)
-          ? prevPost.dislikes.filter(id => id !== user?._id)
-          : prevPost.dislikes || [];
-        
-        return {
-          ...prevPost,
-          likes: newLikes,
-          dislikes: newDislikes
-        };
-      });
+      // Refetch to sync with server (in case of any discrepancies)
+      await refreshPost();
       
       toast.success('Post liked!');
     } catch (error) {
+      console.error('Like error:', error);
+      // Rollback on error by refetching
+      await refreshPost();
       toast.error('Failed to like post');
     } finally {
       setInteractionLoading(false);
@@ -557,30 +672,62 @@ const PostDetail = () => {
       return;
     }
 
+    if (!user?._id) {
+      toast.error('User information not available');
+      return;
+    }
+
+    // Normalize user ID
+    const userId = String(user._id);
+    
+    // Optimistic update - update UI immediately
+    setPost(prevPost => {
+      if (!prevPost) return prevPost;
+      
+      // Normalize all dislike IDs to strings for comparison
+      const normalizedDislikes = (prevPost.dislikes || []).map(id => {
+        if (typeof id === 'object' && id !== null && 'toString' in id) {
+          return id.toString();
+        }
+        return String(id);
+      });
+      
+      const isDisliked = normalizedDislikes.includes(userId);
+      
+      // Toggle dislike state
+      const newDislikes = isDisliked 
+        ? normalizedDislikes.filter(id => id !== userId)
+        : [...normalizedDislikes, userId];
+      
+      // Remove from likes if present
+      const normalizedLikes = (prevPost.likes || []).map(id => {
+        if (typeof id === 'object' && id !== null && 'toString' in id) {
+          return id.toString();
+        }
+        return String(id);
+      });
+      
+      const newLikes = normalizedLikes.filter(id => id !== userId);
+      
+      return {
+        ...prevPost,
+        dislikes: newDislikes,
+        likes: newLikes
+      };
+    });
+
     try {
       setInteractionLoading(true);
       await postsAPI.dislike(post._id);
       
-      setPost(prevPost => {
-        if (!prevPost) return prevPost;
-        const isDisliked = prevPost.dislikes?.includes(user?._id);
-          const newDislikes = isDisliked 
-            ? prevPost.dislikes.filter(id => id !== user?._id)
-            : [...(prevPost.dislikes || []), user?._id];
-        
-        const newLikes = prevPost.likes?.includes(user?._id)
-          ? prevPost.likes.filter(id => id !== user?._id)
-          : prevPost.likes || [];
-        
-        return {
-          ...prevPost,
-          dislikes: newDislikes,
-          likes: newLikes
-        };
-      });
+      // Refetch to sync with server (in case of any discrepancies)
+      await refreshPost();
       
       toast.success('Post disliked!');
     } catch (error) {
+      console.error('Dislike error:', error);
+      // Rollback on error by refetching
+      await refreshPost();
       toast.error('Failed to dislike post');
     } finally {
       setInteractionLoading(false);
@@ -781,11 +928,92 @@ const PostDetail = () => {
       return;
     }
 
+    if (!user?._id) {
+      toast.error('User information not available');
+      return;
+    }
+
+    const userId = String(user._id);
+    const normalizedCommentId = String(commentId);
+
+    // Helper to normalize comment ID
+    const normalizeCommentId = (id) => {
+      if (!id) return null;
+      if (typeof id === 'object' && id !== null && 'toString' in id) {
+        return id.toString();
+      }
+      return String(id);
+    };
+
+    // Optimistically update the comment state
+    const updateCommentLikes = (commentList) => {
+      return commentList.map((comment) => {
+        const commentIdNormalized = normalizeCommentId(comment._id || comment.id);
+        
+        // Check if this is the comment being liked
+        if (commentIdNormalized === normalizedCommentId) {
+          const currentLikes = Array.isArray(comment.likes) 
+            ? comment.likes.map(id => {
+                if (typeof id === 'object' && id !== null && 'toString' in id) {
+                  return id.toString();
+                }
+                return String(id);
+              })
+            : [];
+          const isLiked = currentLikes.includes(userId);
+          
+          const newLikes = isLiked
+            ? currentLikes.filter(id => id !== userId)
+            : [...currentLikes, userId];
+          
+          return {
+            ...comment,
+            likes: newLikes
+          };
+        }
+        
+        // Check replies recursively
+        if (comment.replies && comment.replies.length > 0) {
+          return {
+            ...comment,
+            replies: updateCommentLikes(comment.replies)
+          };
+        }
+        
+        return comment;
+      });
+    };
+
+    // Track this optimistic update
+    optimisticLikesRef.current.set(normalizedCommentId, Date.now());
+
+    // Optimistic update - update UI immediately using functional form to ensure we have latest state
+    setComments(prevComments => {
+      try {
+        return updateCommentLikes(prevComments);
+      } catch (error) {
+        console.error('Error updating comment likes:', error);
+        return prevComments;
+      }
+    });
+
     try {
       await commentsAPI.like(commentId);
-      await refreshComments();
+      
+      // Clear the optimistic tracking after successful API call (after a delay to ensure server processed it)
+      setTimeout(() => {
+        optimisticLikesRef.current.delete(normalizedCommentId);
+      }, 2000);
+      
+      // Don't refresh on success - the optimistic update is already correct
+      // The optimistic update shows the correct state immediately
+      // Only refresh on error to rollback if something went wrong
     } catch (error) {
-      toast.error('Failed to like comment');
+      // Clear optimistic tracking on error
+      optimisticLikesRef.current.delete(normalizedCommentId);
+      // Rollback optimistic update on error by refreshing from server
+      await refreshComments();
+      toast.error(error.response?.data?.message || 'Failed to like comment');
     }
   };
 
@@ -861,8 +1089,23 @@ const PostDetail = () => {
     );
   }
 
-  const hasLiked = post.likes?.includes(user?._id);
-  const hasDisliked = post.dislikes?.includes(user?._id);
+  // Normalize IDs for comparison
+  const normalizedUserId = user?._id ? String(user._id) : null;
+  const normalizedLikes = (post.likes || []).map(id => {
+    if (typeof id === 'object' && id !== null && 'toString' in id) {
+      return id.toString();
+    }
+    return String(id);
+  });
+  const normalizedDislikes = (post.dislikes || []).map(id => {
+    if (typeof id === 'object' && id !== null && 'toString' in id) {
+      return id.toString();
+    }
+    return String(id);
+  });
+  
+  const hasLiked = normalizedUserId ? normalizedLikes.includes(normalizedUserId) : false;
+  const hasDisliked = normalizedUserId ? normalizedDislikes.includes(normalizedUserId) : false;
   const hasBookmarked = isBookmarked;
 
   return (

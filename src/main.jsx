@@ -3,14 +3,23 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './styles/index.css'
 
-// Suppress browser extension errors (MetaMask, uBlock Origin, etc.)
+// Suppress browser extension errors (MetaMask, uBlock Origin, Web3 wallets, etc.)
 if (typeof window !== 'undefined') {
-  // Suppress MetaMask errors
+  // Suppress MetaMask and Web3 wallet errors
   const originalError = console.error;
   console.error = (...args) => {
     const errorMessage = args[0]?.toString() || '';
+    const fullMessage = args.map(arg => String(arg)).join(' ');
+    
     // Suppress MetaMask ethereum provider errors
     if (errorMessage.includes('MetaMask') && errorMessage.includes('ethereum')) {
+      return; // Silently ignore
+    }
+    // Suppress evmAsk and Web3 wallet injection errors
+    if (errorMessage.includes('evmAsk') || 
+        errorMessage.includes('Cannot redefine property: ethereum') ||
+        fullMessage.includes('evmAsk') ||
+        (errorMessage.includes('ethereum') && errorMessage.includes('redefine'))) {
       return; // Silently ignore
     }
     // Suppress uBlock Origin errors
@@ -24,7 +33,11 @@ if (typeof window !== 'undefined') {
   // Suppress unhandled promise rejections from browser extensions
   window.addEventListener('unhandledrejection', (event) => {
     const reason = event.reason?.toString() || '';
-    if (reason.includes('MetaMask') || reason.includes('ethereum') || reason.includes('uBOL')) {
+    if (reason.includes('MetaMask') || 
+        reason.includes('ethereum') || 
+        reason.includes('uBOL') ||
+        reason.includes('evmAsk') ||
+        reason.includes('Cannot redefine property')) {
       event.preventDefault(); // Suppress the error
       return;
     }
@@ -33,7 +46,14 @@ if (typeof window !== 'undefined') {
   // Suppress errors from browser extensions in error event
   window.addEventListener('error', (event) => {
     const errorMessage = event.message || event.error?.message || '';
-    if (errorMessage.includes('MetaMask') || errorMessage.includes('ethereum') || errorMessage.includes('uBOL')) {
+    const errorSource = event.filename || '';
+    
+    if (errorMessage.includes('MetaMask') || 
+        errorMessage.includes('ethereum') || 
+        errorMessage.includes('uBOL') ||
+        errorMessage.includes('evmAsk') ||
+        errorMessage.includes('Cannot redefine property: ethereum') ||
+        errorSource.includes('evmAsk')) {
       event.preventDefault(); // Suppress the error
       return;
     }

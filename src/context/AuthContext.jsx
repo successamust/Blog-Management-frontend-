@@ -148,17 +148,44 @@ export const AuthProvider = ({ children }) => {
               payload: { token, user: storedUser },
             });
           } else if (error.response?.status === 401) {
-            // If 401 on /auth/me, token is invalid - clear it but don't force logout
-            // This allows users to browse public content even with invalid token
+            // If 401 on /auth/me, token is invalid/expired - clear it
             clearAuthToken();
-            // Keep user in localStorage for now, just mark as not authenticated
+            localStorage.removeItem('user');
+            localStorage.removeItem('lastAuthCheck');
+            // Mark as not authenticated - ProtectedRoute will handle redirect
             dispatch({ type: 'LOGOUT' });
-          } else {
-            // For other errors, clear everything
+          } else if (error.response?.status === 404) {
+            // If 404 on /auth/me, endpoint might not exist or user doesn't exist
+            // Clear token and mark as not authenticated
             clearAuthToken();
             localStorage.removeItem('user');
             localStorage.removeItem('lastAuthCheck');
             dispatch({ type: 'LOGOUT' });
+          } else {
+            // For other errors (network, 500, etc.), try to use cached data if available
+            // Only clear everything if it's a critical error
+            if (error.response?.status >= 500 || !error.response) {
+              // Network error or server error - try to use cached user data
+              try {
+                const storedUser = JSON.parse(user);
+                dispatch({
+                  type: 'LOGIN_SUCCESS',
+                  payload: { token, user: storedUser },
+                });
+              } catch (parseError) {
+                // If we can't parse user data, clear everything
+                clearAuthToken();
+                localStorage.removeItem('user');
+                localStorage.removeItem('lastAuthCheck');
+                dispatch({ type: 'LOGOUT' });
+              }
+            } else {
+              // For other client errors, clear everything
+              clearAuthToken();
+              localStorage.removeItem('user');
+              localStorage.removeItem('lastAuthCheck');
+              dispatch({ type: 'LOGOUT' });
+            }
           }
         }
       } else {

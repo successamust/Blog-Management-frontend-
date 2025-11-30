@@ -44,6 +44,7 @@ const CommentThread = ({
   const [showReportForm, setShowReportForm] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reporting, setReporting] = useState(false);
+  const [liking, setLiking] = useState(false);
 
   const normalizeId = (value) => {
     if (!value) return null;
@@ -58,10 +59,20 @@ const CommentThread = ({
   const canEdit = user?._id === commentAuthorId || isAdmin();
 
   const normalizedUserId = user?._id ? String(user._id) : null;
-  const normalizedLikes = Array.isArray(comment.likes)
-    ? comment.likes.map((id) => String(id))
-    : [];
-  const isLiked = normalizedUserId ? normalizedLikes.includes(normalizedUserId) : false;
+  const normalizedLikes = useMemo(() => {
+    return Array.isArray(comment.likes)
+      ? comment.likes.map((id) => {
+          // Handle both string IDs and object IDs
+          if (typeof id === 'object' && id !== null && 'toString' in id) {
+            return id.toString();
+          }
+          return String(id);
+        })
+      : [];
+  }, [comment.likes]);
+  const isLiked = useMemo(() => {
+    return normalizedUserId ? normalizedLikes.includes(normalizedUserId) : false;
+  }, [normalizedUserId, normalizedLikes]);
   const hasReplies = comment.replies && comment.replies.length > 0;
   const isPostAuthorComment =
     postAuthorId && commentAuthorId && String(postAuthorId) === String(commentAuthorId);
@@ -139,7 +150,15 @@ const CommentThread = ({
   };
 
   const handleReactionClick = async () => {
-    await onLike(comment._id);
+    if (liking) return; // Prevent double-clicks
+    setLiking(true);
+    try {
+      await onLike(comment._id);
+    } catch (error) {
+      // Error is handled by parent component
+    } finally {
+      setLiking(false);
+    }
   };
 
   const handleReportSubmit = async (event) => {
@@ -304,14 +323,15 @@ const CommentThread = ({
               <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-[var(--text-muted)]">
                 <button
                   onClick={handleReactionClick}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full border border-transparent transition-colors ${
+                  disabled={liking}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-full border border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                     isLiked
                       ? 'text-rose-400 border-rose-300/60 bg-rose-300/10'
                       : 'text-[var(--text-muted)] hover:text-rose-400 hover:border-rose-300/60'
                   }`}
                   aria-label={isLiked ? 'Unlike comment' : 'Love comment'}
                 >
-                  <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+                  <Heart className={`w-4 h-4 transition-all ${isLiked ? 'fill-current' : ''}`} />
                   <span>{comment.likes?.length || 0}</span>
                 </button>
 

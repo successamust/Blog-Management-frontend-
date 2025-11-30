@@ -197,7 +197,24 @@ api.interceptors.response.use(
     
     if (error.response?.status === 404) {
       const url = error.config?.url || '';
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      
+      // Silent 404s for optional resources
       if (url.includes('/polls/post/')) {
+        error.silent = true;
+      }
+      
+      // If 404 on a protected endpoint and user is on a protected page, 
+      // it might be due to expired token - let ProtectedRoute handle redirect
+      const isProtectedPage = currentPath && (
+        currentPath.startsWith('/admin/') ||
+        currentPath.startsWith('/dashboard') ||
+        currentPath.startsWith('/settings')
+      );
+      
+      if (isProtectedPage && !url.includes('/polls/post/')) {
+        // Don't show 404 error toast for protected pages - likely auth issue
+        // The ProtectedRoute will handle redirecting to login
         error.silent = true;
       }
     }
@@ -323,7 +340,12 @@ export const commentsAPI = {
     clearCache('/comments');
     return response;
   },
-  like: (id) => api.post(`/comments/like/${id}`),
+  like: async (id) => {
+    const response = await api.post(`/comments/like/${id}`);
+    // Clear cache to ensure fresh data on next fetch
+    clearCache('/comments');
+    return response;
+  },
 };
 
 export const newsletterAPI = {
