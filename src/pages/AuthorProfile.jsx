@@ -17,9 +17,12 @@ import {
   ArrowLeft,
   BookOpen,
   TrendingUp,
+  UserPlus,
+  UserMinus,
+  Users,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { postsAPI } from '../services/api';
+import { postsAPI, followsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ModernPostCard from '../components/posts/ModernPostCard';
 import Spinner from '../components/common/Spinner';
@@ -39,6 +42,12 @@ const AuthorProfile = () => {
     totalLikes: 0,
     totalComments: 0,
   });
+  const [followStats, setFollowStats] = useState({
+    followers: 0,
+    following: 0,
+  });
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [postsLoading, setPostsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,8 +60,73 @@ const AuthorProfile = () => {
   useEffect(() => {
     if (author) {
       fetchAuthorPosts();
+      fetchFollowData();
     }
   }, [author, currentPage]);
+
+  const fetchFollowData = async () => {
+    if (!currentUser || !author?._id) return;
+    
+    // Don't fetch follow data if user is viewing their own profile
+    const currentUserId = currentUser._id || currentUser.id;
+    const authorId = author._id || author.id;
+    if (currentUserId && authorId && String(currentUserId) === String(authorId)) {
+      return;
+    }
+    
+    try {
+      const [statusResponse, statsResponse] = await Promise.all([
+        followsAPI.getStatus(author._id).catch(() => ({ data: { isFollowing: false } })),
+        followsAPI.getStats(author._id).catch(() => ({ data: { followers: 0, following: 0 } })),
+      ]);
+      
+      setIsFollowing(statusResponse.data?.isFollowing || false);
+      setFollowStats({
+        followers: statsResponse.data?.followers || 0,
+        following: statsResponse.data?.following || 0,
+      });
+    } catch (error) {
+      // Silently handle - follow system might not be available
+      console.error('Error fetching follow data:', error);
+    }
+  };
+
+  const handleFollow = async () => {
+    if (!currentUser) {
+      toast.error('Please login to follow users');
+      return;
+    }
+
+    if (!author?._id) return;
+
+    // Prevent users from following themselves
+    const currentUserId = currentUser._id || currentUser.id;
+    const authorId = author._id || author.id;
+    if (currentUserId && authorId && String(currentUserId) === String(authorId)) {
+      toast.error('You cannot follow yourself');
+      return;
+    }
+
+    try {
+      setFollowLoading(true);
+      if (isFollowing) {
+        await followsAPI.unfollow(author._id);
+        setIsFollowing(false);
+        setFollowStats(prev => ({ ...prev, followers: Math.max(0, prev.followers - 1) }));
+        toast.success('Unfollowed successfully');
+      } else {
+        await followsAPI.follow(author._id);
+        setIsFollowing(true);
+        setFollowStats(prev => ({ ...prev, followers: prev.followers + 1 }));
+        toast.success('Following successfully');
+      }
+    } catch (error) {
+      console.error('Error following/unfollowing:', error);
+      toast.error(error.response?.data?.message || 'Failed to update follow status');
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   const fetchAuthorData = async () => {
     try {
@@ -200,8 +274,33 @@ const AuthorProfile = () => {
                   <p className="text-secondary mb-4 max-w-2xl">{authorBio}</p>
                 )}
 
+                {/* Follow Button */}
+                {currentUser && String(currentUser._id || currentUser.id) !== String(author._id || author.id) && (
+                  <div className="mb-4">
+                    <button
+                      onClick={handleFollow}
+                      disabled={followLoading}
+                      className={`btn ${isFollowing ? 'btn-outline' : 'btn-primary'} flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start`}
+                    >
+                      {followLoading ? (
+                        <Spinner size="sm" />
+                      ) : isFollowing ? (
+                        <>
+                          <UserMinus className="w-4 h-4" />
+                          <span>Unfollow</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="w-4 h-4" />
+                          <span>Follow</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
                 {/* Stats */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4 mb-4">
                   <div className="text-center sm:text-left">
                     <div className="text-2xl font-bold text-primary">{stats.totalPosts}</div>
                     <div className="text-sm text-muted">Posts</div>
@@ -217,6 +316,17 @@ const AuthorProfile = () => {
                   <div className="text-center sm:text-left">
                     <div className="text-2xl font-bold text-primary">{stats.totalComments.toLocaleString()}</div>
                     <div className="text-sm text-muted">Comments</div>
+                  </div>
+                  <div className="text-center sm:text-left">
+                    <div className="text-2xl font-bold text-primary flex items-center gap-1 justify-center sm:justify-start">
+                      <Users className="w-5 h-5" />
+                      {followStats.followers.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-muted">Followers</div>
+                  </div>
+                  <div className="text-center sm:text-left">
+                    <div className="text-2xl font-bold text-primary">{followStats.following.toLocaleString()}</div>
+                    <div className="text-sm text-muted">Following</div>
                   </div>
                 </div>
 

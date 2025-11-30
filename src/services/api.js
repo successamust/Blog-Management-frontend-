@@ -44,9 +44,9 @@ api.interceptors.response.use(
     if (error.response?.status === 404) {
       const url = error.config?.url || '';
       // Don't log 404s for polls - these are expected when posts don't have polls
-      if (url.includes('/polls/')) {
-        // Silently handle - component will handle the 404 gracefully
-        return Promise.reject(error);
+      if (url.includes('/polls/post/')) {
+        // Return error without logging - component handles it gracefully
+        error.silent = true;
       }
     }
     
@@ -80,6 +80,18 @@ export const postsAPI = {
   getRelated: (id) => api.get(`/posts/${id}/related`),
   bulkDelete: (postIds) => api.post('/posts/bulk-delete', { postIds }),
   bulkUpdate: (postIds, updates) => api.put('/posts/bulk-update', { postIds, updates }),
+};
+
+export const notificationsAPI = {
+  getAll: (params) => api.get('/notifications', { params }),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markAsRead: (notificationId) => api.patch(`/notifications/${notificationId}/read`),
+  markAsViewed: (notificationId) => api.patch(`/notifications/${notificationId}/viewed`),
+  markAllAsRead: () => api.patch('/notifications/mark-all-read'),
+  getSettings: () => api.get('/notifications/settings'),
+  updateSettings: (settings) => api.put('/notifications/settings', settings),
+  delete: (notificationId) => api.delete(`/notifications/${notificationId}`),
+  deleteAll: () => api.delete('/notifications/clear-all'),
 };
 
 export const interactionsAPI = {
@@ -171,7 +183,16 @@ export const pollsAPI = {
   delete: (pollId) => api.delete(`/polls/${pollId}`),
   vote: (pollId, optionId) => api.post(`/polls/${pollId}/vote`, { optionId }),
   getResults: (pollId) => api.get(`/polls/${pollId}/results`),
-  getByPost: (postId) => api.get(`/polls/post/${postId}`),
+  getByPost: (postId) => {
+    // Use validateStatus to prevent axios from treating 404 as an error
+    // This prevents console logging of expected 404s
+    return api.get(`/polls/post/${postId}`, {
+      validateStatus: function (status) {
+        // Accept both 200 (success) and 404 (no poll) as valid responses
+        return status === 200 || status === 404;
+      }
+    });
+  },
   getAnalytics: (pollId) => api.get(`/polls/${pollId}/analytics`),
   exportResults: (pollId, format = 'json') => api.get(`/polls/${pollId}/export`, { 
     params: { format },
@@ -193,6 +214,15 @@ export const collaborationsAPI = {
   getSentInvitations: (postId) => api.get(`/collaborations/${postId}/invitations/sent`),
   getPostInvitations: (postId) => api.get(`/collaborations/${postId}/invitations`),
   getMySentInvitations: () => api.get('/collaborations/me/invitations/sent'),
+};
+
+export const followsAPI = {
+  follow: (userId) => api.post(`/follows/${userId}/follow`),
+  unfollow: (userId) => api.delete(`/follows/${userId}/follow`),
+  getStatus: (userId) => api.get(`/follows/${userId}/status`),
+  getFollowers: (userId, params) => api.get(`/follows/${userId}/followers`, { params }),
+  getFollowing: (userId, params) => api.get(`/follows/${userId}/following`, { params }),
+  getStats: (userId) => api.get(`/follows/${userId}/stats`),
 };
 
 export const templatesAPI = {

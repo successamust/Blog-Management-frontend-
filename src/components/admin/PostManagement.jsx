@@ -3,6 +3,7 @@ import { Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import { FileText, Plus, Edit, Trash2, Eye, Search, Upload, X, BarChart3, History } from 'lucide-react';
 import { postsAPI, categoriesAPI, adminAPI, imagesAPI, dashboardAPI, collaborationsAPI, pollsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import RichTextEditor from './RichTextEditor';
@@ -22,6 +23,7 @@ const PostManagement = () => {
   const [selectedPosts, setSelectedPosts] = useState([]);
   const [categories, setCategories] = useState([]);
   const { user, isAdmin } = useAuth();
+  const { addNotification } = useNotifications();
 
   useEffect(() => {
     fetchPosts();

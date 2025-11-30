@@ -220,6 +220,14 @@ const Header = () => {
             </form>
 
             {/* Utility Toggles */}
+            {isAuthenticated && (
+              <div className="flex items-center justify-between px-2 mb-4 gap-3">
+                <span className="text-xs uppercase tracking-wide text-[var(--text-muted)]">
+                  Notifications
+                </span>
+                <NotificationCenter />
+              </div>
+            )}
             <div className="flex items-center justify-between px-2 mb-4 gap-3">
               <span className="text-xs uppercase tracking-wide text-[var(--text-muted)]">
                 Appearance

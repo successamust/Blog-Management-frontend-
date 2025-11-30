@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { format } from 'date-fns';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -16,13 +16,16 @@ import {
   Maximize,
   BookOpen,
   User,
-  Users
+  Users,
+  UserPlus,
+  UserMinus
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DOMPurify from 'dompurify';
-import { postsAPI, commentsAPI, interactionsAPI, pollsAPI, collaborationsAPI } from '../services/api';
+import { postsAPI, commentsAPI, interactionsAPI, pollsAPI, collaborationsAPI, followsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import toast from 'react-hot-toast';
 import ReadingProgress from '../components/common/ReadingProgress';
 import { calculateReadingTime, formatReadingTime } from '../utils/readingTime';
@@ -70,6 +73,7 @@ const wrapTablesWithScroll = (html = '') => {
 const PostDetail = () => {
   const { slug } = useParams();
   const { user, isAuthenticated, isAdmin } = useAuth();
+  const { addNotification } = useNotifications();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [relatedPosts, setRelatedPosts] = useState([]);
@@ -88,6 +92,8 @@ const PostDetail = () => {
   const [canChangeVote, setCanChangeVote] = useState(false);
   const [timeRemainingMinutes, setTimeRemainingMinutes] = useState(0);
   const [changesRemaining, setChangesRemaining] = useState(0);
+  const [isFollowingAuthor, setIsFollowingAuthor] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   const [reportedComments, setReportedComments] = useState(() => {
     if (typeof window === 'undefined') {
       return {};
@@ -101,6 +107,7 @@ const PostDetail = () => {
   });
   const { addToHistory, updateReadingProgress } = useReadingHistory();
   const postId = post?._id;
+  const fetchedSlugRef = useRef(null);
 
   const postAuthorId = useMemo(() => {
     if (!post) return null;
@@ -236,10 +243,23 @@ const PostDetail = () => {
   }, []);
 
   const fetchPostData = useCallback(async () => {
+    // Prevent duplicate fetches for the same slug
+    if (fetchedSlugRef.current === slug) {
+      return;
+    }
+    
     try {
       setLoading(true);
+      fetchedSlugRef.current = slug;
       const postRes = await postsAPI.getBySlug(slug);
       const post = postRes.data;
+      
+      if (!post) {
+        toast.error('Post not found');
+        setLoading(false);
+        fetchedSlugRef.current = null;
+        return;
+      }
       
       if (isAuthenticated && user?._id) {
         const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
@@ -294,20 +314,46 @@ const PostDetail = () => {
         }
       }
       
-      if (post) {
-        addToHistory(post);
+      // Add to history after post is loaded
+      addToHistory(post);
+      
+      // Fetch follow status if user is authenticated and post has an author (non-blocking)
+      const currentUserId = user?._id || user?.id;
+      const authorId = post?.author?._id || post?.author;
+      if (isAuthenticated && currentUserId && authorId && String(currentUserId) !== String(authorId)) {
+        followsAPI.getStatus(post.author._id)
+          .then(followStatus => {
+            setIsFollowingAuthor(followStatus.data?.isFollowing || false);
+          })
+          .catch(error => {
+            // Silently fail if follow status can't be fetched (404 or other errors)
+            // This is expected if follow system isn't fully set up or user doesn't exist
+            if (error.response?.status !== 404) {
+              console.error('Error fetching follow status:', error);
+            }
+          });
       }
+      
     } catch (error) {
       console.error('Error fetching post:', error);
       toast.error('Failed to load post');
+      fetchedSlugRef.current = null;
     } finally {
       setLoading(false);
     }
-  }, [slug, isAuthenticated, user, ensureCommentTree]);
+  }, [slug, isAuthenticated, user?._id, ensureCommentTree, addToHistory]);
+
+  // Reset fetched slug ref when slug changes
+  useEffect(() => {
+    fetchedSlugRef.current = null;
+  }, [slug]);
 
   useEffect(() => {
-    fetchPostData();
-  }, [fetchPostData]);
+    if (slug) {
+      fetchPostData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
 
   const refreshComments = useCallback(async () => {
     if (!postId) return;
@@ -390,13 +436,17 @@ const PostDetail = () => {
           setCanChangeVote(response.data.canChangeVote || false);
           setTimeRemainingMinutes(response.data.timeRemainingMinutes || 0);
           setChangesRemaining(response.data.changesRemaining || 0);
+        } else {
+          setPoll(null);
         }
       } catch (error) {
         // 404 is expected when post doesn't have a poll - handle silently
-        if (error.response?.status !== 404) {
+        if (error.response?.status === 404) {
+          setPoll(null);
+        } else {
           console.error('Failed to fetch poll:', error);
+          setPoll(null);
         }
-        // Don't set poll state on 404 - it's expected
       } finally {
         setLoadingPoll(false);
       }
@@ -511,6 +561,41 @@ const PostDetail = () => {
       toast.error('Failed to dislike post');
     } finally {
       setInteractionLoading(false);
+    }
+  };
+
+  const handleFollowAuthor = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to follow authors');
+      return;
+    }
+
+    if (!postAuthorId || !post?.author) return;
+
+    // Prevent users from following themselves
+    const currentUserId = user?._id || user?.id;
+    const authorId = postAuthorId;
+    if (currentUserId && authorId && String(currentUserId) === String(authorId)) {
+      toast.error('You cannot follow yourself');
+      return;
+    }
+
+    try {
+      setFollowLoading(true);
+      if (isFollowingAuthor) {
+        await followsAPI.unfollow(postAuthorId);
+        setIsFollowingAuthor(false);
+        toast.success('Unfollowed successfully');
+      } else {
+        await followsAPI.follow(postAuthorId);
+        setIsFollowingAuthor(true);
+        toast.success('Following successfully');
+      }
+    } catch (error) {
+      console.error('Error following/unfollowing:', error);
+      toast.error(error.response?.data?.message || 'Failed to update follow status');
+    } finally {
+      setFollowLoading(false);
     }
   };
 
@@ -817,9 +902,43 @@ const PostDetail = () => {
                 </h1>
                 
                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted mb-3 sm:mb-4">
-                  <div className="flex items-center">
-                    <User className="w-4 h-4 mr-2" />
-                    <span className="font-medium">{post.author?.username}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center">
+                      <User className="w-4 h-4 mr-2" />
+                      <Link 
+                        to={`/authors/${post.author?.username}`}
+                        className="font-medium hover:text-[var(--accent)] transition-colors"
+                      >
+                        {post.author?.username}
+                      </Link>
+                    </div>
+                    {isAuthenticated && user && postAuthorId && String(user._id || user.id) !== String(postAuthorId) && (
+                      <button
+                        onClick={handleFollowAuthor}
+                        disabled={followLoading}
+                        className={`ml-2 px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-colors flex items-center gap-1 min-w-[2rem] sm:min-w-auto ${
+                          isFollowingAuthor
+                            ? 'bg-[var(--surface-subtle)] text-secondary hover:bg-[var(--surface-subtle)]'
+                            : 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]'
+                        }`}
+                        title={isFollowingAuthor ? 'Unfollow' : 'Follow'}
+                        aria-label={isFollowingAuthor ? 'Unfollow' : 'Follow'}
+                      >
+                        {followLoading ? (
+                          <Spinner size="xs" />
+                        ) : isFollowingAuthor ? (
+                          <>
+                            <UserMinus className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden sm:inline">Following</span>
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden sm:inline">Follow</span>
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-2" />

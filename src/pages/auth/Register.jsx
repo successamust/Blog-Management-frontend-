@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationContext';
 import Spinner from '../../components/common/Spinner';
 import BrandWordmark from '../../components/common/BrandWordmark';
 import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
@@ -19,6 +20,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const { register, loading, isAuthenticated } = useAuth();
+  const { addNotification } = useNotifications();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,6 +76,7 @@ const Register = () => {
     const result = await register(registerData);
     
     if (result.success) {
+      // Welcome notification can be sent from backend if needed
       navigate('/dashboard', { replace: true });
     }
   };

@@ -124,7 +124,7 @@ select:not([size]) {
   
   p {
     @apply leading-relaxed;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     line-height: 1.8;
   }
   
@@ -259,8 +259,30 @@ select:not([size]) {
 
 /* Prose styles for markdown content */
 .prose {
-  color: var(--text-secondary);
+  color: var(--text-primary);
   max-width: 680px;
+  font-size: 18px; /* Slightly smaller to match Medium's visual size with sans-serif */
+  line-height: 1.6; /* Optimal line height for readability */
+}
+
+/* Mobile-friendly font sizes */
+@media (max-width: 768px) {
+  .prose {
+    font-size: 16px; /* Slightly smaller on mobile for better fit */
+    line-height: 1.65; /* Slightly tighter line height on mobile */
+  }
+  
+  .prose h1 {
+    font-size: 1.875em; /* Smaller H1 on mobile */
+  }
+  
+  .prose h2 {
+    font-size: 1.5em; /* Smaller H2 on mobile */
+  }
+  
+  .prose h3 {
+    font-size: 1.25em; /* Smaller H3 on mobile */
+  }
 }
 
 .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
@@ -286,7 +308,9 @@ select:not([size]) {
 
 .prose p {
   margin-bottom: 1.5em;
-  line-height: 1.75;
+  line-height: 1.6; /* Match Medium's visual line spacing */
+  color: var(--text-primary);
+  font-size: inherit; /* Inherit 18px from .prose */
 }
 
 .prose ul, .prose ol {
@@ -302,6 +326,7 @@ select:not([size]) {
 
 .prose li {
   margin-bottom: 0.5em;
+  color: var(--text-primary);
 }
 
 .prose table {
@@ -327,6 +352,20 @@ select:not([size]) {
   }
   .prose table::-webkit-scrollbar-track {
     background-color: transparent;
+  }
+}
+
+.article-content {
+  color: var(--text-primary);
+  font-size: 18px; /* Match Medium's visual size with sans-serif font */
+  line-height: 1.6;
+}
+
+/* Mobile-friendly article content */
+@media (max-width: 768px) {
+  .article-content {
+    font-size: 16px; /* Slightly smaller on mobile */
+    line-height: 1.65;
   }
 }
 
@@ -411,7 +450,7 @@ select:not([size]) {
   padding-left: 1.5em;
   margin: 2em 0;
   font-style: italic;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .prose code {

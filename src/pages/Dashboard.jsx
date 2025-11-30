@@ -33,6 +33,7 @@ import {
 import { format } from 'date-fns';
 import { dashboardAPI, postsAPI, categoriesAPI, imagesAPI, pollsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import ProfileSettings from '../components/dashboard/ProfileSettings';
 import AuthorApplication from '../components/dashboard/AuthorApplication';
 import CollaborationsDashboard from '../components/dashboard/CollaborationsDashboard';
@@ -74,6 +75,7 @@ const Dashboard = () => {
   const [tabLoading, setTabLoading] = useState(false);
   const [showPollAnalytics, setShowPollAnalytics] = useState(null);
   const { user, isAdmin } = useAuth();
+  const { addNotification } = useNotifications();
 
   const tabLabel = DASHBOARD_TAB_LABELS[activeTab] || 'Overview';
   const queryString = searchParams.toString();
@@ -1155,6 +1157,7 @@ const StatCard = ({ icon, title, value, change, color, trend }) => {
 
 const PostItem = ({ post, onShowPollAnalytics }) => {
   const { user, isAdmin } = useAuth();
+  const { addNotification } = useNotifications();
   const [hasPoll, setHasPoll] = useState(false);
   const [pollId, setPollId] = useState(null);
   const [loadingPoll, setLoadingPoll] = useState(false);
