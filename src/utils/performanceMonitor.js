@@ -67,13 +67,11 @@ class PerformanceMonitor {
   trackWebVitals() {
     if (!this.isEnabled || typeof window === 'undefined') return;
 
-    // Track Largest Contentful Paint (LCP)
     if ('PerformanceObserver' in window) {
       try {
-        const observer = new PerformanceObserver((list) => {
+        const lcpObserver = new PerformanceObserver((list) => {
           const entries = list.getEntries();
           const lastEntry = entries[entries.length - 1];
-          
           if (lastEntry) {
             const lcp = lastEntry.renderTime || lastEntry.loadTime;
             if (lcp > 2500) {
@@ -83,16 +81,15 @@ class PerformanceMonitor {
             }
           }
         });
-        observer.observe({ entryTypes: ['largest-contentful-paint'] });
+        lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
       } catch (e) {
         // PerformanceObserver not supported
       }
     }
 
-    // Track First Input Delay (FID)
     if ('PerformanceObserver' in window) {
       try {
-        const observer = new PerformanceObserver((list) => {
+        const fidObserver = new PerformanceObserver((list) => {
           const entries = list.getEntries();
           entries.forEach((entry) => {
             const fid = entry.processingStart - entry.startTime;
@@ -103,33 +100,29 @@ class PerformanceMonitor {
             }
           });
         });
-        
-        observer.observe({ entryTypes: ['first-input'] });
+        fidObserver.observe({ entryTypes: ['first-input'] });
       } catch (e) {
         // PerformanceObserver not supported
       }
     }
 
-    // Track Cumulative Layout Shift (CLS)
     if ('PerformanceObserver' in window) {
       try {
         let clsValue = 0;
-        const observer = new PerformanceObserver((list) => {
+        const clsObserver = new PerformanceObserver((list) => {
           const entries = list.getEntries();
           entries.forEach((entry) => {
             if (!entry.hadRecentInput) {
               clsValue += entry.value;
             }
           });
-          
           if (clsValue > 0.1) {
             console.warn(`⚠️ CLS (Cumulative Layout Shift) is ${clsValue.toFixed(3)} (target: < 0.1)`);
           } else {
             console.log(`✅ CLS: ${clsValue.toFixed(3)}`);
           }
         });
-        
-        observer.observe({ entryTypes: ['layout-shift'] });
+        clsObserver.observe({ entryTypes: ['layout-shift'] });
       } catch (e) {
         // PerformanceObserver not supported
       }
