@@ -20,6 +20,11 @@ const NEWSLETTER_TOPICS = [
 ];
 
 const Home = () => {
+  // Diagnostic: Verify Home component is rendering
+  React.useEffect(() => {
+    console.error('[Home] Home component mounted');
+  }, []);
+
   const { user, isAuthenticated } = useAuth();
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -137,11 +142,13 @@ const Home = () => {
   const loadPostsPage = useCallback(
     async (pageToFetch = 1, { reset = false } = {}) => {
       try {
-        console.log(`[Home] Loading posts page ${pageToFetch}...`);
+        console.error(`[Home] Loading posts page ${pageToFetch}...`);
         const response = await postsAPI.getAll({ page: pageToFetch, limit: POSTS_PER_PAGE });
-        console.log('[Home] API response received:', {
+        console.error('[Home] API response received:', {
           hasData: !!response?.data,
           status: response?.status,
+          hasPosts: !!response?.data?.posts,
+          hasDataArray: Array.isArray(response?.data?.data),
         });
         
         const postsData =
@@ -154,7 +161,7 @@ const Home = () => {
           ? postsData.filter((post) => post && (post.publishedAt || post.createdAt))
           : [];
 
-        console.log(`[Home] Sanitized ${sanitizedPosts.length} posts`);
+        console.error(`[Home] Sanitized ${sanitizedPosts.length} posts`);
 
         mergePosts(sanitizedPosts, { reset });
 
@@ -177,14 +184,14 @@ const Home = () => {
   const fetchCategoriesAndTags = useCallback(
     async (referencePosts = []) => {
       try {
-        console.log('[Home] Fetching categories and tags...');
+        console.error('[Home] Fetching categories and tags...');
         const [categoriesRes, tagsRes] = await Promise.all([
           categoriesAPI.getAll().catch((err) => {
-            console.warn('[Home] Categories API failed:', err);
+            console.error('[Home] Categories API failed:', err);
             return { data: { categories: [] } };
           }),
           searchAPI.getPopularTags().catch((err) => {
-            console.warn('[Home] Tags API failed:', err);
+            console.error('[Home] Tags API failed:', err);
             return { data: { tags: [] } };
           }),
         ]);
@@ -201,7 +208,7 @@ const Home = () => {
           (Array.isArray(tagsRes.data) ? tagsRes.data : []) ||
           [];
 
-        console.log(`[Home] Loaded ${categoriesData.length} categories and ${tagsData.length} tags`);
+        console.error(`[Home] Loaded ${categoriesData.length} categories and ${tagsData.length} tags`);
 
         const sourcePosts = referencePosts.length ? referencePosts : postsRef.current;
         const categoriesWithCounts = buildCategoryCounts(categoriesData, sourcePosts);
@@ -251,28 +258,38 @@ const Home = () => {
     const fetchHomeData = async () => {
       try {
         setLoading(true);
-        console.log('[Home] Starting data fetch...');
-        console.log('[Home] API Base URL:', import.meta.env.VITE_API_BASE_URL || '/v1');
+        console.error('[Home] Starting data fetch...');
+        console.error('[Home] API Base URL:', import.meta.env.VITE_API_BASE_URL || '/v1');
+        console.error('[Home] Environment:', {
+          mode: import.meta.env.MODE,
+          prod: import.meta.env.PROD,
+          dev: import.meta.env.DEV,
+        });
         
         const initialPosts = await loadPostsPage(1, { reset: true });
-        console.log('[Home] Posts loaded:', initialPosts?.length || 0);
+        console.error('[Home] Posts loaded:', initialPosts?.length || 0);
         
         if (!isMounted) return;
         
         await fetchCategoriesAndTags(initialPosts);
-        console.log('[Home] Categories and tags loaded');
+        console.error('[Home] Categories and tags loaded');
         
         if (!isMounted) return;
         
-        console.log('[Home] Data fetch completed successfully');
+        console.error('[Home] Data fetch completed successfully');
       } catch (error) {
-        console.error('[Home] Error fetching home data:', error);
+        console.error('[Home] ERROR fetching home data:', error);
+        console.error('[Home] Error type:', error?.constructor?.name);
+        console.error('[Home] Error message:', error?.message);
+        console.error('[Home] Error stack:', error?.stack);
         console.error('[Home] Error details:', {
           message: error?.message,
           response: error?.response?.data,
           status: error?.response?.status,
           url: error?.config?.url,
           baseURL: error?.config?.baseURL,
+          code: error?.code,
+          name: error?.name,
         });
         
         if (!isMounted) return;
@@ -291,7 +308,7 @@ const Home = () => {
       } finally {
         if (isMounted) {
           setLoading(false);
-          console.log('[Home] Loading state set to false');
+          console.error('[Home] Loading state set to false');
         }
       }
     };

@@ -78,6 +78,15 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Diagnostic: Verify HTML is loading -->
+    <script>
+      console.error('[HTML] HTML loaded, about to load main.jsx');
+      // Verify root element exists before React tries to mount
+      if (!document.getElementById('root')) {
+        console.error('[HTML] ERROR: Root element not found!');
+        document.body.innerHTML = '<div style="padding: 20px; color: red; font-family: monospace;">ERROR: Root element not found!</div>';
+      }
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

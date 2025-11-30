@@ -52,6 +52,13 @@ import './styles/globals.css';
 
 function AppContent() {
   const location = useLocation();
+  
+  // Diagnostic: Verify AppContent is rendering
+  React.useEffect(() => {
+    console.error('[App] AppContent component mounted');
+    console.error('[App] Current pathname:', location.pathname);
+  }, []);
+
   useServiceWorker();
 
   // Track page loads
