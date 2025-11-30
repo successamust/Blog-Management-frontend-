@@ -164,10 +164,21 @@ const PostDetail = () => {
 
   const seoImage = useMemo(() => {
     if (!post) return DEFAULT_OG_IMAGE;
-    return normalizeImageSource(post.featuredImage);
+    const imagePath = normalizeImageSource(post.featuredImage);
+    if (!imagePath) return DEFAULT_OG_IMAGE;
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    const origin = (typeof window !== 'undefined' && window.location?.origin) || 'https://www.nexusblog.xyz';
+    return imagePath.startsWith('/') ? `${origin}${imagePath}` : `${origin}/${imagePath}`;
   }, [post]);
 
-  const seoUrl = post ? `/posts/${post.slug || post._id}` : undefined;
+  const seoUrl = useMemo(() => {
+    if (!post) return undefined;
+    const origin = (typeof window !== 'undefined' && window.location?.origin) || 'https://www.nexusblog.xyz';
+    const identifier = post.slug || post._id;
+    return `${origin}/posts/${identifier}`;
+  }, [post]);
 
   const shareUrl = useMemo(() => {
     const origin =
@@ -856,22 +867,20 @@ const PostDetail = () => {
 
   return (
     <>
-      {post && (
-        <Seo
-          title={post.title}
-          description={seoDescription}
-          url={seoUrl}
-          image={seoImage}
-          type="article"
-          imageAlt={post.title}
-          post={post}
-          breadcrumbs={[
-            { name: 'Home', url: '/' },
-            { name: 'Posts', url: '/posts' },
-            { name: post.title, url: seoUrl },
-          ]}
-        />
-      )}
+      <Seo
+        title={post?.title}
+        description={seoDescription}
+        url={seoUrl}
+        image={seoImage}
+        type={post ? "article" : "website"}
+        imageAlt={post?.title}
+        post={post}
+        breadcrumbs={post ? [
+          { name: 'Home', url: '/' },
+          { name: 'Posts', url: '/posts' },
+          { name: post.title, url: seoUrl },
+        ] : undefined}
+      />
       <ReadingProgress />
       <div className="bg-page min-h-screen">
       <div className="layout-container-wide py-6 sm:py-8">
