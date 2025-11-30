@@ -207,10 +207,28 @@ const PostManagement = () => {
     const matchesSearch =
       post.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.excerpt?.toLowerCase().includes(searchQuery.toLowerCase());
-    const status = (post.status || post.state || (post.isPublished ? 'published' : 'draft'))
-      .toString()
-      .trim()
-      .toLowerCase();
+    
+    // Determine post status - check multiple fields
+    let status = '';
+    if (post.status) {
+      status = post.status.toString().trim().toLowerCase();
+    } else if (post.state) {
+      status = post.state.toString().trim().toLowerCase();
+    } else {
+      // Fallback: check isPublished, publishedAt, or published field
+      if (post.isPublished === true || post.published === true) {
+        status = 'published';
+      } else if (post.publishedAt && new Date(post.publishedAt) <= new Date()) {
+        // If there's a publishedAt date in the past, consider it published
+        status = 'published';
+      } else if (post.isPublished === false || post.published === false) {
+        status = 'draft';
+      } else {
+        // Default to published if no explicit draft status
+        status = 'published';
+      }
+    }
+    
     const matchesStatus = statusFilter === 'all' ? true : status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -254,8 +272,28 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
   const isAuthor = user?.role === 'author' || isAdmin();
 
   const getStatusMeta = (post) => {
-    const rawStatus = (post.status || post.state || '').toString().trim().toLowerCase();
-    const baseStatus = rawStatus || (post.isPublished ? 'published' : 'draft');
+    // Determine post status - check multiple fields
+    let rawStatus = '';
+    if (post.status) {
+      rawStatus = post.status.toString().trim().toLowerCase();
+    } else if (post.state) {
+      rawStatus = post.state.toString().trim().toLowerCase();
+    } else {
+      // Fallback: check isPublished, publishedAt, or published field
+      if (post.isPublished === true || post.published === true) {
+        rawStatus = 'published';
+      } else if (post.publishedAt && new Date(post.publishedAt) <= new Date()) {
+        // If there's a publishedAt date in the past, consider it published
+        rawStatus = 'published';
+      } else if (post.isPublished === false || post.published === false) {
+        rawStatus = 'draft';
+      } else {
+        // Default to published if no explicit draft status
+        rawStatus = 'published';
+      }
+    }
+    
+    const baseStatus = rawStatus || 'published';
     const normalizedStatus = baseStatus.replace(/\s+/g, '-');
 
     const badgeClassMap = {

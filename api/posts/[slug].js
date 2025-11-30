@@ -139,8 +139,10 @@ export default async (req, res) => {
     if (urlPath.includes('/assets/') || urlPath.includes('/email-assets/') || 
         urlPath.endsWith('.js') || urlPath.endsWith('.css') || urlPath.endsWith('.png') || 
         urlPath.endsWith('.jpg') || urlPath.endsWith('.svg') || urlPath.endsWith('.woff') ||
-        urlPath.endsWith('.woff2') || urlPath.endsWith('.ttf') || urlPath.endsWith('.eot')) {
+        urlPath.endsWith('.woff2') || urlPath.endsWith('.ttf') || urlPath.endsWith('.eot') ||
+        urlPath.endsWith('.map')) {
       // This shouldn't happen if routing is correct, but just in case, return 404
+      // Source maps (.map) should also return 404 to prevent unnecessary requests
       res.status(404).send('Not found');
       return;
     }

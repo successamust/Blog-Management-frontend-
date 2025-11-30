@@ -3,6 +3,43 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './styles/index.css'
 
+// Suppress browser extension errors (MetaMask, uBlock Origin, etc.)
+if (typeof window !== 'undefined') {
+  // Suppress MetaMask errors
+  const originalError = console.error;
+  console.error = (...args) => {
+    const errorMessage = args[0]?.toString() || '';
+    // Suppress MetaMask ethereum provider errors
+    if (errorMessage.includes('MetaMask') && errorMessage.includes('ethereum')) {
+      return; // Silently ignore
+    }
+    // Suppress uBlock Origin errors
+    if (errorMessage.includes('uBOL') || errorMessage.includes('uBlock')) {
+      return; // Silently ignore
+    }
+    // Call original console.error for other errors
+    originalError.apply(console, args);
+  };
+
+  // Suppress unhandled promise rejections from browser extensions
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason = event.reason?.toString() || '';
+    if (reason.includes('MetaMask') || reason.includes('ethereum') || reason.includes('uBOL')) {
+      event.preventDefault(); // Suppress the error
+      return;
+    }
+  });
+
+  // Suppress errors from browser extensions in error event
+  window.addEventListener('error', (event) => {
+    const errorMessage = event.message || event.error?.message || '';
+    if (errorMessage.includes('MetaMask') || errorMessage.includes('ethereum') || errorMessage.includes('uBOL')) {
+      event.preventDefault(); // Suppress the error
+      return;
+    }
+  }, true);
+}
+
 try {
   const rootElement = document.getElementById('root');
   if (!rootElement) {
