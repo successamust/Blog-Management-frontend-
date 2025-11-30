@@ -103,40 +103,78 @@ const INDEX_HTML = `<!doctype html>
 export default async (req, res) => {
   const userAgent = req.headers['user-agent'] || '';
   
-  // Extract slug from various possible sources
-  // In Vercel, dynamic route params like [slug] are available in req.query
-  let slug = req.query?.slug;
+  // Extract slug - in Vercel, [slug].js makes the slug available in different ways
+  // Try multiple methods to extract it
+  let slug = null;
   
-  // Also check if slug is passed as a path parameter (for direct API calls)
-  if (!slug) {
-    // Try to extract from the URL path
-    const urlPath = req.url || '';
-    const pathMatch = urlPath.match(/\/posts\/([^/?&#]+)/) || urlPath.match(/\/api\/posts\/([^/?&#]+)/);
-    if (pathMatch) {
-      slug = decodeURIComponent(pathMatch[1]);
+  // Method 1: Check req.query.slug (standard Vercel dynamic route)
+  if (req.query?.slug) {
+    slug = Array.isArray(req.query.slug) ? req.query.slug[0] : req.query.slug;
+  }
+  
+  // Method 2: Extract from URL path
+  if (!slug && req.url) {
+    const urlPath = req.url;
+    // Remove query string and hash
+    const cleanPath = urlPath.split('?')[0].split('#')[0];
+    
+    // Try to match /api/posts/slug or /posts/slug or just slug
+    const patterns = [
+      /\/api\/posts\/([^/]+)/,
+      /\/posts\/([^/]+)/,
+      /^\/([^/]+)$/,
+      /^([^/]+)$/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = cleanPath.match(pattern);
+      if (match && match[1]) {
+        slug = decodeURIComponent(match[1]);
+        break;
+      }
     }
   }
   
-  // Log for debugging (helpful for troubleshooting)
-  if (process.env.NODE_ENV !== 'production' || process.env.VERCEL_ENV === 'preview') {
-    console.log('[posts/slug] Request:', {
-      url: req.url,
-      query: req.query,
-      userAgent: userAgent.substring(0, 100), // Truncate for logs
-      isCrawler: isCrawler(userAgent),
-      slug,
-    });
+  // Method 3: Check if slug is in the pathname (some Vercel setups)
+  if (!slug && req.url) {
+    // Sometimes Vercel provides the path differently
+    const pathParts = req.url.split('/').filter(Boolean);
+    const postsIndex = pathParts.indexOf('posts');
+    if (postsIndex >= 0 && pathParts[postsIndex + 1]) {
+      slug = decodeURIComponent(pathParts[postsIndex + 1].split('?')[0]);
+    }
   }
   
+  // Always log for debugging
+  console.log('[posts/slug] Request details:', {
+    url: req.url,
+    query: req.query,
+    method: req.method,
+    headers: {
+      'user-agent': userAgent ? userAgent.substring(0, 100) : 'none',
+    },
+    extractedSlug: slug || 'NOT_FOUND',
+    isCrawler: isCrawler(userAgent),
+  });
+  
   // If it's a crawler and we have a slug, serve the social preview
-  if (isCrawler(userAgent) && slug) {
-    // Pass slug to social preview handler
-    req.query = { slug: slug };
-    return handler(req, res);
+  if (isCrawler(userAgent)) {
+    if (slug) {
+      // Pass slug to social preview handler
+      req.query = { slug: slug };
+      return handler(req, res);
+    } else {
+      // Crawler but no slug found - this is a problem
+      console.error('[posts/slug] ERROR: Crawler detected but slug extraction failed:', {
+        url: req.url,
+        query: req.query,
+        userAgent: userAgent,
+      });
+      // Still try to serve something, but log the error
+    }
   }
   
   // For regular users (browsers), serve the React app
-  // The React app will handle client-side routing and set OG tags dynamically
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache');
   res.status(200).send(INDEX_HTML);
