@@ -29,23 +29,32 @@ export default defineConfig({
     cssCodeSplit: true,
     // Optimize chunk size
     chunkSizeWarningLimit: 600,
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
+    // Ensure proper module resolution
+    modulePreload: {
+      polyfill: true,
+    },
     rollupOptions: {
       output: {
         manualChunks: (id) => {
           // Split node_modules into smaller chunks
           if (id.includes('node_modules')) {
-            // React core - must be together and precise to avoid multiple instances
+            // React core - check for exact React packages first
             if (
-              id.includes('/react/') || 
-              id.includes('/react-dom/') ||
               id === 'react' || 
               id === 'react-dom' ||
               id.endsWith('/react') ||
-              id.endsWith('/react-dom')
+              id.endsWith('/react-dom') ||
+              id.includes('/react/') || 
+              id.includes('/react-dom/') ||
+              id.includes('scheduler')
             ) {
               return 'react-vendor';
             }
-            // React Router - keep with React to avoid issues
+            // React Router - keep with React
             if (id.includes('react-router')) {
               return 'react-vendor';
             }
@@ -53,16 +62,21 @@ export default defineConfig({
             if (id.includes('@tanstack/react-query')) {
               return 'react-vendor';
             }
-            // React-related libraries
-            if (id.includes('react-hot-toast') || id.includes('react-markdown')) {
+            // ALL React-related libraries - be comprehensive
+            if (
+              id.includes('react-hot-toast') || 
+              id.includes('react-markdown') ||
+              id.includes('react-quill') ||
+              id.includes('@tiptap/react')
+            ) {
               return 'react-vendor';
             }
-            // UI libraries
+            // UI libraries (these don't bundle React, but depend on it)
             if (id.includes('framer-motion') || id.includes('lucide-react')) {
               return 'ui-vendor';
             }
-            // Editor libraries
-            if (id.includes('quill') || id.includes('react-quill') || id.includes('tiptap') || id.includes('@tiptap')) {
+            // Editor libraries (non-React parts)
+            if (id.includes('quill') || (id.includes('tiptap') && !id.includes('react'))) {
               return 'editor-vendor';
             }
             // Chart libraries
