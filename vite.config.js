@@ -40,9 +40,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Split node_modules into smaller chunks
+          // Don't split React - keep it in entry chunk to ensure it's always available
+          // This prevents "Cannot set properties of undefined" errors
           if (id.includes('node_modules')) {
-            // React core - check for exact React packages first
+            // React core - keep in entry chunk (don't split)
             if (
               id === 'react' || 
               id === 'react-dom' ||
@@ -50,26 +51,30 @@ export default defineConfig({
               id.endsWith('/react-dom') ||
               id.includes('/react/') || 
               id.includes('/react-dom/') ||
-              id.includes('scheduler')
+              id.includes('scheduler') ||
+              id.includes('/react/jsx-runtime') ||
+              id.includes('/react/jsx-dev-runtime')
             ) {
-              return 'react-vendor';
+              // Return undefined to keep in entry chunk
+              return undefined;
             }
-            // React Router - keep with React
+            // React Router - keep with React in entry
             if (id.includes('react-router')) {
-              return 'react-vendor';
+              return undefined;
             }
-            // React Query - keep with React
+            // React Query - keep with React in entry
             if (id.includes('@tanstack/react-query')) {
-              return 'react-vendor';
+              return undefined;
             }
-            // ALL React-related libraries - be comprehensive
+            // ALL React-related libraries - keep in entry
             if (
               id.includes('react-hot-toast') || 
               id.includes('react-markdown') ||
               id.includes('react-quill') ||
-              id.includes('@tiptap/react')
+              id.includes('@tiptap/react') ||
+              (id.includes('react-') && !id.includes('react-dom'))
             ) {
-              return 'react-vendor';
+              return undefined;
             }
             // UI libraries (these don't bundle React, but depend on it)
             if (id.includes('framer-motion') || id.includes('lucide-react')) {
