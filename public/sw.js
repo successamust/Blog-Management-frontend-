@@ -1,5 +1,5 @@
-const CACHE_NAME = 'nexus-blog-v4';
-const RUNTIME_CACHE = 'nexus-runtime-v4';
+const CACHE_NAME = 'nexus-blog-v5';
+const RUNTIME_CACHE = 'nexus-runtime-v5';
 
 // Detect if we're in development mode
 const isDevelopment = 
@@ -28,15 +28,26 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
+      // Delete ALL old caches (including current ones to force fresh load)
       return Promise.all(
-        cacheNames
-          .filter((cacheName) => {
-            return cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE;
-          })
-          .map((cacheName) => caches.delete(cacheName))
+        cacheNames.map((cacheName) => {
+          console.log('[SW] Deleting cache:', cacheName);
+          return caches.delete(cacheName);
+        })
       );
     })
+    .then(() => {
+      // Force all clients to reload to get fresh content
+      return self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({ type: 'CACHE_CLEARED', action: 'reload' });
+        });
+      });
+    })
     .then(() => self.clients.claim())
+    .catch((error) => {
+      console.error('[SW] Error during activation:', error);
+    })
   );
 });
 

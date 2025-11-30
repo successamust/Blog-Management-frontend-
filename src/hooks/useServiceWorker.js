@@ -34,6 +34,11 @@ export const useServiceWorker = () => {
           .then((registration) => {
             console.log('Service Worker registered:', registration.scope);
             
+            // If service worker is already active, check for updates
+            if (registration.active) {
+              registration.update();
+            }
+            
             // Check for updates
             registration.addEventListener('updatefound', () => {
               const newWorker = registration.installing;
@@ -51,6 +56,14 @@ export const useServiceWorker = () => {
           });
       });
 
+      // Listen for service worker messages
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'CACHE_CLEARED') {
+          console.log('Cache cleared by service worker, reloading page');
+          window.location.reload();
+        }
+      });
+      
       // Handle service worker updates
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
