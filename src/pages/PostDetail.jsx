@@ -264,9 +264,10 @@ const PostDetail = () => {
       setLoading(true);
       fetchedSlugRef.current = slug;
       const postRes = await postsAPI.getBySlug(slug);
-      const post = postRes.data;
+      // Handle different API response structures
+      const post = postRes.data?.post || postRes.data?.data || postRes.data;
       
-      if (!post) {
+      if (!post || (!post._id && !post.id)) {
         toast.error('Post not found');
         setLoading(false);
         fetchedSlugRef.current = null;
@@ -310,8 +311,12 @@ const PostDetail = () => {
         postsAPI.getRelated(post._id).catch(() => ({ data: { relatedPosts: [] } }))
       ]);
 
-      setComments(ensureCommentTree(commentsRes.data.comments || []));
-      setRelatedPosts(relatedRes.data.relatedPosts || []);
+      // Handle different response structures for comments and related posts
+      const comments = commentsRes.data?.comments || commentsRes.data?.data?.comments || commentsRes.data?.data || [];
+      const relatedPosts = relatedRes.data?.relatedPosts || relatedRes.data?.data?.relatedPosts || relatedRes.data?.data || [];
+      
+      setComments(ensureCommentTree(Array.isArray(comments) ? comments : []));
+      setRelatedPosts(Array.isArray(relatedPosts) ? relatedPosts : []);
       
       // Fetch collaborators
       try {
@@ -350,9 +355,11 @@ const PostDetail = () => {
       console.error('Error fetching post:', error);
       // Don't show error toast if it's a 401 - the API interceptor handles it
       if (error.response?.status !== 401) {
-        toast.error('Failed to load post');
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to load post';
+        toast.error(errorMessage);
       }
       fetchedSlugRef.current = null;
+      setPost(null);
     } finally {
       setLoading(false);
     }
