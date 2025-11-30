@@ -110,18 +110,15 @@ export const AuthProvider = ({ children }) => {
           const freshUser = response.data.user;
           localStorage.setItem('lastAuthCheck', now.toString());
           
-          // Preserve bookmarkedPosts from localStorage if backend doesn't return it
           const storedUser = JSON.parse(user);
           if (storedUser?.bookmarkedPosts && !freshUser.bookmarkedPosts) {
             freshUser.bookmarkedPosts = storedUser.bookmarkedPosts;
           }
           
-          // Preserve createdAt from localStorage if backend doesn't return it
           if (storedUser?.createdAt && !freshUser.createdAt) {
             freshUser.createdAt = storedUser.createdAt;
           }
           
-          // Preserve profilePicture from localStorage if backend doesn't return it
           if (storedUser?.profilePicture && !freshUser.profilePicture && !freshUser.avatar) {
             freshUser.profilePicture = storedUser.profilePicture;
           }
@@ -129,13 +126,11 @@ export const AuthProvider = ({ children }) => {
             freshUser.profilePicture = storedUser.avatar;
           }
           
-          // Also check savedPosts array and merge
           const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
           if (savedPosts.length > 0) {
             if (!freshUser.bookmarkedPosts) {
               freshUser.bookmarkedPosts = [];
             }
-            // Merge savedPosts with bookmarkedPosts, removing duplicates
             freshUser.bookmarkedPosts = [...new Set([...freshUser.bookmarkedPosts, ...savedPosts])];
           }
           
@@ -160,7 +155,6 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } else {
-        // No token/user found, set loading to false
         dispatch({ type: 'LOGOUT' });
       }
     };

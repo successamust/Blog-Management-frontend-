@@ -14,6 +14,7 @@
     "export:logos": "node scripts/export-logos.mjs"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.11",
     "@tiptap/extension-character-count": "^3.10.4",
     "@tiptap/extension-code-block-lowlight": "^3.10.4",
     "@tiptap/extension-color": "^3.10.4",

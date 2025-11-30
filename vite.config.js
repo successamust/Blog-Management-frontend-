@@ -1,8 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { removeConsolePlugin } from './vite-plugin-remove-console.js'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // Remove console.log in production (keeps console.error and console.warn)
+    ...(process.env.NODE_ENV === 'production' ? [removeConsolePlugin()] : []),
+  ],
   server: {
     port: 3000,
     proxy: {
@@ -19,13 +24,36 @@ export default defineConfig({
     minify: 'esbuild',
     target: 'es2015',
     cssCodeSplit: true,
+    // Optimize chunk size
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['framer-motion', 'lucide-react'],
-          'editor-vendor': ['react-quill', 'quill'],
-          'chart-vendor': ['recharts'],
+        manualChunks: (id) => {
+          // Split node_modules into smaller chunks
+          if (id.includes('node_modules')) {
+            // React core
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            // UI libraries
+            if (id.includes('framer-motion') || id.includes('lucide-react')) {
+              return 'ui-vendor';
+            }
+            // Editor libraries
+            if (id.includes('quill') || id.includes('react-quill') || id.includes('tiptap')) {
+              return 'editor-vendor';
+            }
+            // Chart libraries
+            if (id.includes('recharts')) {
+              return 'chart-vendor';
+            }
+            // Other large vendors
+            if (id.includes('axios') || id.includes('socket.io')) {
+              return 'network-vendor';
+            }
+            // Everything else
+            return 'vendor';
+          }
         },
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',

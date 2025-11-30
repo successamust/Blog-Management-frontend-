@@ -3,11 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Search, 
-  User, 
   LogOut, 
   Menu, 
   X,
-  PenSquare,
   LayoutDashboard,
   UserCheck
 } from 'lucide-react';
@@ -23,7 +21,6 @@ const Header = () => {
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   
-  // Check if user can apply to become an author
   const canApplyForAuthor = isAuthenticated && user?.role !== 'author' && user?.role !== 'admin';
 
   const handleSearch = (e) => {
@@ -43,12 +40,10 @@ const Header = () => {
     <header className="bg-[var(--surface-bg)] sticky top-0 z-50 border-b border-[var(--border-subtle)]" style={{ boxShadow: '0 2px 10px var(--shadow-default)' }}>
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <Link to="/" className="flex items-center group">
             <BrandWordmark variant="navigation" className="text-[var(--text-primary)]" />
           </Link>
 
-          {/* Search Bar - Compact */}
           <form onSubmit={handleSearch} className="hidden md:block flex-1 max-w-md mx-6">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-4 h-4" />
@@ -62,7 +57,6 @@ const Header = () => {
             </div>
           </form>
 
-          {/* Navigation - Compact with Icons */}
           <nav className="hidden md:flex items-center space-x-2">
             <Link
               to="/"
@@ -111,16 +105,6 @@ const Header = () => {
                     </Link>
                   </motion.div>
                 )}
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Link
-                    to="/dashboard"
-                    className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !w-auto transition-all duration-200"
-                    title="Dashboard"
-                  >
-                    <User className="w-4 h-4" />
-                  </Link>
-                </motion.div>
-                {/* Profile Avatar */}
                 <Link to="/dashboard?tab=settings">
                   <motion.div
                     whileHover={{ scale: 1.1 }}
@@ -185,7 +169,6 @@ const Header = () => {
             )}
           </nav>
 
-          {/* Mobile menu button */}
           <motion.button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             whileHover={{ scale: 1.1 }}
@@ -196,7 +179,6 @@ const Header = () => {
           </motion.button>
         </div>
 
-        {/* Mobile menu */}
         {isMenuOpen && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
@@ -205,7 +187,6 @@ const Header = () => {
             transition={{ duration: 0.18, ease: 'easeOut' }}
             className="md:hidden py-4 border-t border-[var(--border-subtle)] will-change-transform bg-[var(--surface-bg)]"
           >
-            {/* Mobile Search Bar */}
             <form onSubmit={handleSearch} className="mb-4 px-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-4 h-4" />
@@ -219,7 +200,6 @@ const Header = () => {
               </div>
             </form>
 
-            {/* Utility Toggles */}
             {isAuthenticated && (
               <div className="flex items-center justify-between px-2 mb-4 gap-3">
                 <span className="text-xs uppercase tracking-wide text-[var(--text-muted)]">

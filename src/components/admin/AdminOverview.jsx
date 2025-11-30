@@ -275,7 +275,6 @@ const AdminOverview = () => {
       };
       */
 
-      // Simplified version without retry logic
       const makeRequestWithRetry = async (requestFn) => {
         try {
           return await requestFn();

@@ -59,10 +59,8 @@ import { imagesAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import Spinner from '../common/Spinner';
 
-// Create lowlight instance with common languages
 const lowlight = createLowlight();
 
-// Register common languages for syntax highlighting
 const registerLanguages = async () => {
   try {
     const [
@@ -105,10 +103,8 @@ const registerLanguages = async () => {
   }
 };
 
-// Register languages on module load
 registerLanguages();
 
-// Configure markdown converters once
 marked.setOptions({
   breaks: true,
   gfm: true,
@@ -125,50 +121,40 @@ const turndownService = new TurndownService({
 });
 turndownService.use(turndownGfm);
 
-// Preprocess HTML to clean up TipTap table structure before markdown conversion
 const preprocessTableHTML = (html) => {
   if (!html) return html;
   
   try {
-    // Create a temporary DOM element to parse and clean the HTML
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     
-    // Find all tables
     const tables = doc.querySelectorAll('table');
     tables.forEach(table => {
-      // Remove colgroup elements (not needed for markdown)
       const colgroups = table.querySelectorAll('colgroup');
       colgroups.forEach(colgroup => colgroup.remove());
       
-      // Clean up header cells - extract text from nested h3/h2/h1 tags
       const thElements = table.querySelectorAll('th');
       thElements.forEach(th => {
         const heading = th.querySelector('h1, h2, h3, h4, h5, h6');
         if (heading) {
           th.innerHTML = heading.textContent || heading.innerText;
         }
-        // Remove unnecessary attributes
         th.removeAttribute('colwidth');
         th.removeAttribute('colspan');
         th.removeAttribute('rowspan');
       });
       
-      // Clean up data cells - extract text from nested p tags and preserve formatting
       const tdElements = table.querySelectorAll('td');
       tdElements.forEach(td => {
-        // If cell only contains a single p tag, unwrap it but keep the content
         const pTag = td.querySelector('p');
         if (pTag && td.children.length === 1) {
           td.innerHTML = pTag.innerHTML;
         }
-        // Remove unnecessary attributes
         td.removeAttribute('colwidth');
         td.removeAttribute('colspan');
         td.removeAttribute('rowspan');
       });
       
-      // Remove style attributes from table and cells
       table.removeAttribute('style');
       table.querySelectorAll('th, td').forEach(cell => {
         cell.removeAttribute('style');
@@ -319,6 +305,18 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     extensions,
     content: value || '',
     immediatelyRender: false,
+    onCreate: ({ editor }) => {
+      // When editor is created, ensure background is set correctly in fullscreen
+      if (isFullscreen && isDark && editor.view && editor.view.dom) {
+        setTimeout(() => {
+          const editorElement = editor.view.dom.closest('.ProseMirror') || editor.view.dom;
+          if (editorElement) {
+            editorElement.style.setProperty('background-color', '#1E293B', 'important');
+            editorElement.style.setProperty('background', '#1E293B', 'important');
+          }
+        }, 100);
+      }
+    },
     onUpdate: ({ editor }) => {
       // Skip update if we're programmatically updating content
       if (isUpdatingRef.current) return;
@@ -353,7 +351,9 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     },
     editorProps: {
       attributes: {
-        class: isDark
+        class: isFullscreen && isDark
+          ? 'prose prose-invert max-w-none focus:outline-none p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] dark:text-[var(--text-primary)]'
+          : isDark
           ? 'prose prose-invert max-w-none focus:outline-none p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] dark:text-[var(--text-primary)] bg-[var(--surface-bg)]'
           : 'prose max-w-none focus:outline-none p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] text-[var(--text-primary)] bg-[var(--surface-bg)]',
       },
@@ -442,37 +442,42 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       if (!editorElement) return;
       
       if (isDark) {
-        // Set cursor color on the editor element itself
-        editorElement.style.setProperty('caret-color', '#f3f4f6', 'important');
-        editorElement.style.setProperty('color', '#f3f4f6', 'important');
+        const textColor = isFullscreen ? '#F1F5F9' : '#f3f4f6';
+        const caretColor = isFullscreen ? '#FFFFFF' : '#f3f4f6';
+        const bgColor = isFullscreen ? '#1E293B' : '#1f2937';
+        
+        editorElement.style.setProperty('background-color', bgColor, 'important');
+        editorElement.style.setProperty('background', bgColor, 'important');
+        editorElement.style.setProperty('caret-color', caretColor, 'important');
+        editorElement.style.setProperty('color', textColor, 'important');
         
         // Specifically target headers first with more aggressive approach
         const headers = editorElement.querySelectorAll('h1, h2, h3, h4, h5, h6');
         headers.forEach(header => {
-          header.style.setProperty('color', '#f3f4f6', 'important');
-          header.style.setProperty('caret-color', '#f3f4f6', 'important');
+          header.style.setProperty('color', textColor, 'important');
+          header.style.setProperty('caret-color', caretColor, 'important');
           // Also set on any text nodes or nested elements within headers
           const headerChildren = header.querySelectorAll('*');
           headerChildren.forEach(child => {
-            child.style.setProperty('color', '#f3f4f6', 'important');
+            child.style.setProperty('color', textColor, 'important');
           });
         });
         
         // Force all text elements to be light in dark mode with !important
         const allTextElements = editorElement.querySelectorAll('p, li, span, strong, em, blockquote, div');
         allTextElements.forEach(el => {
-          el.style.setProperty('color', '#f3f4f6', 'important');
-          el.style.setProperty('caret-color', '#f3f4f6', 'important');
+          el.style.setProperty('color', textColor, 'important');
+          el.style.setProperty('caret-color', caretColor, 'important');
         });
         
         // Also set on any nested elements that might be headers
         const allElements = editorElement.querySelectorAll('*');
         allElements.forEach(el => {
           if (el.tagName && ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(el.tagName)) {
-            el.style.setProperty('color', '#f3f4f6', 'important');
-            el.style.setProperty('caret-color', '#f3f4f6', 'important');
+            el.style.setProperty('color', textColor, 'important');
+            el.style.setProperty('caret-color', caretColor, 'important');
           } else if (el.tagName && ['P', 'LI', 'SPAN', 'STRONG', 'EM', 'BLOCKQUOTE', 'DIV'].includes(el.tagName)) {
-            el.style.setProperty('color', '#f3f4f6', 'important');
+            el.style.setProperty('color', textColor, 'important');
           }
         });
       } else {
@@ -493,7 +498,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         isApplyingStylesRef.current = false;
       }, 50);
     }
-  }, [editor, isDark]);
+  }, [editor, isDark, isFullscreen]);
 
   // Toggle dark mode - apply to editor and parent container
   useEffect(() => {
@@ -511,9 +516,16 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       if (isDark) {
         editorElement.classList.add('dark');
       editorElement.classList.add('prose-invert');
-      editorElement.style.backgroundColor = '#1f2937'; // bg-[var(--surface-bg)]
-      editorElement.style.color = '#f3f4f6'; // text-[var(--text-primary)]
-      editorElement.style.caretColor = '#f3f4f6'; // cursor color
+      if (isFullscreen) {
+        editorElement.style.setProperty('background-color', '#1E293B', 'important');
+        editorElement.style.setProperty('background', '#1E293B', 'important');
+        editorElement.style.setProperty('color', '#F1F5F9', 'important');
+        editorElement.style.setProperty('caret-color', '#FFFFFF', 'important');
+      } else {
+        editorElement.style.backgroundColor = '#1f2937'; // bg-[var(--surface-bg)]
+        editorElement.style.color = '#f3f4f6'; // text-[var(--text-primary)]
+        editorElement.style.caretColor = '#f3f4f6'; // cursor color
+      }
       } else {
         editorElement.classList.remove('dark');
       editorElement.classList.remove('prose-invert');
@@ -577,7 +589,243 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         clearTimeout(styleTimeoutRef.current);
       }
     };
-  }, [isDark, editor, applyDarkModeStyles]);
+  }, [isDark, editor, applyDarkModeStyles, isFullscreen]);
+
+  // Update editor attributes when fullscreen changes
+  useEffect(() => {
+    if (!editor) return;
+    
+    // Update editor props when fullscreen mode changes
+    try {
+      if (editor.setOptions) {
+        editor.setOptions({
+          editorProps: {
+            attributes: {
+              class: isFullscreen && isDark
+                ? 'prose prose-invert max-w-none focus:outline-none p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] dark:text-[var(--text-primary)]'
+                : isDark
+                ? 'prose prose-invert max-w-none focus:outline-none p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] dark:text-[var(--text-primary)] bg-[var(--surface-bg)]'
+                : 'prose max-w-none focus:outline-none p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] text-[var(--text-primary)] bg-[var(--surface-bg)]',
+            },
+          },
+        });
+      }
+    } catch (e) {
+      // Editor might not support setOptions, that's okay
+    }
+  }, [isFullscreen, isDark, editor]);
+
+  // Force update background when entering fullscreen in dark mode
+  useEffect(() => {
+    if (!isFullscreen || !isDark || !editor || !editor.view || !editor.view.dom) return;
+    
+    // Use a more aggressive approach - directly find and update all relevant elements
+    const updateFullscreenBackground = () => {
+      // First, try to update via editor view DOM directly
+      if (editor.view && editor.view.dom) {
+        const viewDom = editor.view.dom;
+        // The ProseMirror element is usually the view.dom itself or its parent
+        if (viewDom.classList && viewDom.classList.contains('ProseMirror')) {
+          viewDom.style.setProperty('background-color', '#1E293B', 'important');
+          viewDom.style.setProperty('background', '#1E293B', 'important');
+          viewDom.style.backgroundColor = '#1E293B';
+          viewDom.style.background = '#1E293B';
+        }
+      }
+      // Find ProseMirror element - try multiple methods
+      let editorElement = editor.view.dom.closest('.ProseMirror') || editor.view.dom;
+      if (!editorElement || !editorElement.classList.contains('ProseMirror')) {
+        // Fallback: find by querySelector
+        editorElement = document.querySelector('[data-fullscreen-editor="true"] .ProseMirror');
+      }
+      if (!editorElement) return;
+      
+      // Remove any background classes that might be white
+      editorElement.classList.remove('bg-[var(--surface-bg)]', 'bg-white', 'bg-gray-50', 'bg-slate-50');
+      
+      // Remove any background classes that might be white
+      editorElement.classList.remove('bg-[var(--surface-bg)]', 'bg-white', 'bg-gray-50', 'bg-slate-50');
+      
+      // Force set background on ProseMirror with maximum priority
+      editorElement.style.setProperty('background-color', '#1E293B', 'important');
+      editorElement.style.setProperty('background', '#1E293B', 'important');
+      editorElement.style.backgroundColor = '#1E293B';
+      editorElement.style.background = '#1E293B';
+      
+      // Also remove background from computed styles if any
+      const computedStyle = window.getComputedStyle(editorElement);
+      const bgColor = computedStyle.backgroundColor;
+      // Check if background is white or light
+      if (bgColor === 'rgb(255, 255, 255)' || bgColor === 'white' || bgColor.includes('255, 255, 255')) {
+        editorElement.style.setProperty('background-color', '#1E293B', 'important');
+        editorElement.style.setProperty('background', '#1E293B', 'important');
+        editorElement.style.backgroundColor = '#1E293B';
+        editorElement.style.background = '#1E293B';
+      }
+      
+      // Also check and update the wrapper div that contains EditorContent
+      const editorContentWrapper = editorElement.closest('div.relative')?.parentElement;
+      if (editorContentWrapper) {
+        editorContentWrapper.classList.remove('bg-[var(--surface-bg)]', 'bg-white', 'bg-gray-50', 'bg-slate-50');
+        editorContentWrapper.style.setProperty('background-color', '#1E293B', 'important');
+        editorContentWrapper.style.setProperty('background', '#1E293B', 'important');
+        editorContentWrapper.style.backgroundColor = '#1E293B';
+        editorContentWrapper.style.background = '#1E293B';
+      }
+      
+      // Find and update ALL parent divs
+      let current = editorElement.parentElement;
+      while (current && current !== document.body) {
+        if (current.classList.contains('relative') || current.classList.contains('rich-text-editor') || current.tagName === 'DIV') {
+          current.style.setProperty('background-color', '#1E293B', 'important');
+          current.style.setProperty('background', '#1E293B', 'important');
+          current.style.backgroundColor = '#1E293B';
+          current.style.background = '#1E293B';
+        }
+        current = current.parentElement;
+      }
+      
+      // Also update parent wrapper divs specifically
+      const relativeDiv = editorElement.closest('.rich-text-editor > div.relative');
+      if (relativeDiv) {
+        relativeDiv.style.setProperty('background-color', '#1E293B', 'important');
+        relativeDiv.style.setProperty('background', '#1E293B', 'important');
+        relativeDiv.style.backgroundColor = '#1E293B';
+        relativeDiv.style.background = '#1E293B';
+      }
+      
+      // Update all divs inside relative div
+      const allDivsInRelative = relativeDiv?.querySelectorAll('div');
+      if (allDivsInRelative) {
+        allDivsInRelative.forEach(div => {
+          div.style.setProperty('background-color', '#1E293B', 'important');
+          div.style.setProperty('background', '#1E293B', 'important');
+          div.style.backgroundColor = '#1E293B';
+          div.style.background = '#1E293B';
+        });
+      }
+      
+      // Update the rich-text-editor container
+      const richTextEditor = editorElement.closest('.rich-text-editor');
+      if (richTextEditor) {
+        richTextEditor.style.setProperty('background-color', '#0F172A', 'important');
+        richTextEditor.style.setProperty('background', '#0F172A', 'important');
+        richTextEditor.style.backgroundColor = '#0F172A';
+        richTextEditor.style.background = '#0F172A';
+      }
+      
+      // Also find by class name as fallback - update ALL ProseMirror elements
+      const allProseMirrors = document.querySelectorAll('[data-fullscreen-editor="true"] .ProseMirror');
+      allProseMirrors.forEach(el => {
+        // Remove all background classes
+        Array.from(el.classList).forEach(cls => {
+          if (cls.includes('bg-') || cls.includes('background')) {
+            el.classList.remove(cls);
+          }
+        });
+        
+        el.style.setProperty('background-color', '#1E293B', 'important');
+        el.style.setProperty('background', '#1E293B', 'important');
+        el.style.backgroundColor = '#1E293B';
+        el.style.background = '#1E293B';
+        
+        // Also update all parent divs of each ProseMirror
+        let parent = el.parentElement;
+        while (parent && parent !== document.body && parent !== document.querySelector('[data-fullscreen-editor="true"]')) {
+          if (parent.tagName === 'DIV') {
+            // Remove background classes from parent too
+            Array.from(parent.classList).forEach(cls => {
+              if (cls.includes('bg-') || cls.includes('background')) {
+                parent.classList.remove(cls);
+              }
+            });
+            
+            parent.style.setProperty('background-color', '#1E293B', 'important');
+            parent.style.setProperty('background', '#1E293B', 'important');
+            parent.style.backgroundColor = '#1E293B';
+            parent.style.background = '#1E293B';
+          }
+          parent = parent.parentElement;
+        }
+      });
+      
+      // Also find and update ALL divs inside the fullscreen container that might have white backgrounds
+      const fullscreenContainer = document.querySelector('[data-fullscreen-editor="true"]');
+      if (fullscreenContainer) {
+        const allDivs = fullscreenContainer.querySelectorAll('div');
+        allDivs.forEach(div => {
+          const computedBg = window.getComputedStyle(div).backgroundColor;
+          // If background is white or light, update it
+          if (computedBg === 'rgb(255, 255, 255)' || 
+              computedBg === 'white' || 
+              computedBg.includes('255, 255, 255') ||
+              computedBg === 'rgba(255, 255, 255, 1)' ||
+              computedBg === 'rgba(255, 255, 255, 0)') {
+            // Remove background classes
+            Array.from(div.classList).forEach(cls => {
+              if (cls.includes('bg-') || cls.includes('background')) {
+                div.classList.remove(cls);
+              }
+            });
+            
+            div.style.setProperty('background-color', '#1E293B', 'important');
+            div.style.setProperty('background', '#1E293B', 'important');
+            div.style.backgroundColor = '#1E293B';
+            div.style.background = '#1E293B';
+          }
+        });
+      }
+      
+      // Also update editor attributes if editor API supports it
+      if (editor && editor.setOptions) {
+        try {
+          editor.setOptions({
+            editorProps: {
+              attributes: {
+                class: 'prose prose-invert max-w-none focus:outline-none p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] dark:text-[var(--text-primary)]',
+                style: 'background-color: #1E293B !important; background: #1E293B !important; color: #F1F5F9 !important;'
+              },
+            },
+          });
+        } catch (e) {
+          // Editor might not support setOptions, that's okay
+        }
+      }
+    };
+    
+    // Apply immediately
+    updateFullscreenBackground();
+    
+    // Use MutationObserver to watch for ProseMirror element creation
+    const observer = new MutationObserver(() => {
+      updateFullscreenBackground();
+    });
+    
+    // Observe the fullscreen container
+    const fullscreenContainer = document.querySelector('[data-fullscreen-editor="true"]');
+    if (fullscreenContainer) {
+      observer.observe(fullscreenContainer, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class']
+      });
+    }
+    
+    // Apply again after delays to catch any late DOM updates
+    const timeout1 = setTimeout(updateFullscreenBackground, 50);
+    const timeout2 = setTimeout(updateFullscreenBackground, 200);
+    const timeout3 = setTimeout(updateFullscreenBackground, 500);
+    const timeout4 = setTimeout(updateFullscreenBackground, 1000);
+    
+    return () => {
+      observer.disconnect();
+      clearTimeout(timeout1);
+      clearTimeout(timeout2);
+      clearTimeout(timeout3);
+      clearTimeout(timeout4);
+    };
+  }, [isFullscreen, isDark, editor]);
 
   // Reapply dark mode styles when editor content updates
   useEffect(() => {
@@ -1065,9 +1313,9 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   );
 
   const editorContent = (
-    <div className={`rich-text-editor border border-[var(--border-subtle)] rounded-lg overflow-hidden bg-[var(--surface-bg)] transition-colors ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}>
+    <div className={`rich-text-editor border border-[var(--border-subtle)] rounded-lg overflow-hidden bg-[var(--surface-bg)] transition-colors ${isFullscreen ? 'rounded-none h-full flex flex-col' : ''}`} style={isFullscreen && isDark ? { backgroundColor: '#0F172A', borderColor: '#334155' } : isFullscreen ? { backgroundColor: '#ffffff', borderColor: '#E2E8F0' } : {}}>
       {/* Toolbar */}
-      <div className={`border-b border-[var(--border-subtle)] ${isDark ? 'bg-[var(--surface-bg)]' : 'bg-[var(--surface-subtle)]'} p-2 flex flex-wrap items-center gap-1 overflow-x-auto`}>
+      <div className={`border-b border-[var(--border-subtle)] ${isDark ? 'bg-[var(--surface-bg)]' : 'bg-[var(--surface-subtle)]'} p-2 flex flex-wrap items-center gap-1 overflow-x-auto flex-shrink-0`} style={isFullscreen && isDark ? { backgroundColor: '#0F172A', borderColor: '#334155' } : {}}>
         {/* Formatting */}
         <div className="flex items-center gap-1 border-r border-[var(--border-subtle)] pr-2 mr-2">
           <ToolbarButton
@@ -1356,9 +1604,9 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       </div>
 
       {/* Editor Content */}
-      <div className="relative">
+      <div className={`relative ${isFullscreen ? 'h-full flex flex-col' : ''}`}>
         {isPreview ? (
-          <div className={`p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] max-h-[400px] sm:max-h-[600px] overflow-y-auto ${isDark ? 'bg-[var(--surface-bg)] text-[var(--text-primary)]' : 'bg-[var(--surface-bg)]'}`}>
+          <div className={`p-2 sm:p-4 ${isFullscreen ? 'flex-1 overflow-y-auto' : 'min-h-[300px] sm:min-h-[400px] max-h-[400px] sm:max-h-[600px] overflow-y-auto'} ${isDark ? 'bg-[var(--surface-bg)] text-[var(--text-primary)]' : 'bg-[var(--surface-bg)]'}`}>
             {isMarkdown ? (
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -1403,8 +1651,32 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
             placeholder={placeholder}
           />
         ) : (
-          <div className={isDark ? 'bg-[var(--surface-bg)]' : 'bg-[var(--surface-bg)]'}>
-          <EditorContent editor={editor} />
+          <div 
+            className={`${isFullscreen && isDark ? '' : isDark ? 'bg-[var(--surface-bg)]' : 'bg-[var(--surface-bg)]'} ${isFullscreen ? 'flex-1 overflow-y-auto h-full' : ''}`} 
+            style={isFullscreen && isDark ? { 
+              backgroundColor: '#1E293B', 
+              background: '#1E293B',
+              color: '#F1F5F9' 
+            } : isFullscreen ? { 
+              backgroundColor: '#ffffff', 
+              color: '#0F172A' 
+            } : {}}
+            ref={(el) => {
+              if (el && isFullscreen && isDark) {
+                // Remove any background classes
+                Array.from(el.classList).forEach(cls => {
+                  if (cls.includes('bg-')) {
+                    el.classList.remove(cls);
+                  }
+                });
+                el.style.setProperty('background-color', '#1E293B', 'important');
+                el.style.setProperty('background', '#1E293B', 'important');
+                el.style.backgroundColor = '#1E293B';
+                el.style.background = '#1E293B';
+              }
+            }}
+          >
+            <EditorContent editor={editor} />
           </div>
         )}
 
@@ -1452,9 +1724,91 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
 
   if (isFullscreen) {
     return (
-      <div className="fixed inset-0 z-50 bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)]">
-        {editorContent}
-      </div>
+      <>
+        <div 
+          className="fixed inset-0 z-50"
+          style={{
+            backgroundColor: isDark ? '#0F172A' : '#ffffff'
+          }}
+        >
+          {editorContent}
+        </div>
+        <style>{`
+          [data-fullscreen-editor="true"] {
+            background-color: ${isDark ? '#0F172A' : '#ffffff'} !important;
+          }
+          [data-fullscreen-editor="true"] .rich-text-editor {
+            background-color: ${isDark ? '#0F172A' : '#ffffff'} !important;
+            background: ${isDark ? '#0F172A' : '#ffffff'} !important;
+          }
+          [data-fullscreen-editor="true"] .rich-text-editor > div.relative {
+            background-color: ${isDark ? '#1E293B' : '#ffffff'} !important;
+            background: ${isDark ? '#1E293B' : '#ffffff'} !important;
+          }
+          [data-fullscreen-editor="true"] .rich-text-editor > div.relative > div,
+          [data-fullscreen-editor="true"] div.relative > div,
+          [data-fullscreen-editor="true"] .rich-text-editor div.relative div {
+            background-color: ${isDark ? '#1E293B' : '#ffffff'} !important;
+            background: ${isDark ? '#1E293B' : '#ffffff'} !important;
+          }
+          /* Target the wrapper div that contains EditorContent */
+          [data-fullscreen-editor="true"] .rich-text-editor > div.relative > div[class*="flex"],
+          [data-fullscreen-editor="true"] .rich-text-editor div[class*="overflow-y-auto"],
+          [data-fullscreen-editor="true"] .rich-text-editor div[class*="h-full"] {
+            background-color: ${isDark ? '#1E293B' : '#ffffff'} !important;
+            background: ${isDark ? '#1E293B' : '#ffffff'} !important;
+          }
+          [data-fullscreen-editor="true"] .rich-text-editor .ProseMirror,
+          [data-fullscreen-editor="true"] .ProseMirror,
+          [data-fullscreen-editor="true"] div.ProseMirror,
+          [data-fullscreen-editor="true"] .rich-text-editor div.ProseMirror,
+          [data-fullscreen-editor="true"] .ProseMirror.prose,
+          [data-fullscreen-editor="true"] .ProseMirror[class*="prose"] {
+            min-height: auto !important;
+            height: 100% !important;
+            border-radius: 0 !important;
+            border: none !important;
+            background-color: ${isDark ? '#1E293B' : '#ffffff'} !important;
+            background: ${isDark ? '#1E293B' : '#ffffff'} !important;
+            color: ${isDark ? '#F1F5F9' : '#0F172A'} !important;
+            padding: 1.5rem !important;
+          }
+          /* Maximum specificity override for ProseMirror - target all possible selectors */
+          [data-fullscreen-editor="true"] .rich-text-editor > div.relative > div > .ProseMirror,
+          [data-fullscreen-editor="true"] .rich-text-editor > div > div > .ProseMirror,
+          [data-fullscreen-editor="true"] div.relative div.ProseMirror,
+          [data-fullscreen-editor="true"] .rich-text-editor div.relative .ProseMirror,
+          [data-fullscreen-editor="true"] .ProseMirror.editor,
+          [data-fullscreen-editor="true"] .ProseMirror[contenteditable] {
+            background-color: ${isDark ? '#1E293B' : '#ffffff'} !important;
+            background: ${isDark ? '#1E293B' : '#ffffff'} !important;
+          }
+          /* Override any Tailwind classes that might be setting white background */
+          [data-fullscreen-editor="true"] .ProseMirror.bg-\\[var\\(--surface-bg\\)\\],
+          [data-fullscreen-editor="true"] .ProseMirror.bg-white,
+          [data-fullscreen-editor="true"] .ProseMirror[class*="bg-"] {
+            background-color: ${isDark ? '#1E293B' : '#ffffff'} !important;
+            background: ${isDark ? '#1E293B' : '#ffffff'} !important;
+          }
+          [data-fullscreen-editor="true"] .rich-text-editor .ProseMirror * {
+            color: ${isDark ? '#F1F5F9' : '#0F172A'} !important;
+          }
+          .rich-text-editor .ProseMirror p,
+          .rich-text-editor .ProseMirror h1,
+          .rich-text-editor .ProseMirror h2,
+          .rich-text-editor .ProseMirror h3,
+          .rich-text-editor .ProseMirror h4,
+          .rich-text-editor .ProseMirror h5,
+          .rich-text-editor .ProseMirror h6,
+          .rich-text-editor .ProseMirror li,
+          .rich-text-editor .ProseMirror span,
+          .rich-text-editor .ProseMirror strong,
+          .rich-text-editor .ProseMirror em,
+          .rich-text-editor .ProseMirror blockquote {
+            color: ${isDark ? '#F1F5F9' : '#0F172A'} !important;
+          }
+        `}</style>
+      </>
     );
   }
 
@@ -1472,6 +1826,58 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           min-height: 320px;
           border: 1px solid var(--border-subtle);
         }
+        ${isFullscreen && isDark ? `
+        .rich-text-editor .ProseMirror::selection {
+          background-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        ` : ''}
+        ${isFullscreen ? `
+        [data-fullscreen-editor="true"],
+        [data-fullscreen-editor="true"] *,
+        .rich-text-editor,
+        .rich-text-editor * {
+          background-color: ${isDark ? '#0F172A' : '#ffffff'} !important;
+        }
+        .rich-text-editor > div.relative,
+        .rich-text-editor > div.relative * {
+          background-color: ${isDark ? '#1E293B' : '#ffffff'} !important;
+        }
+        .rich-text-editor .ProseMirror {
+          min-height: auto !important;
+          height: 100% !important;
+          border-radius: 0 !important;
+          border: none !important;
+          background-color: ${isDark ? '#1E293B' : '#ffffff'} !important;
+          background: ${isDark ? '#1E293B' : '#ffffff'} !important;
+          color: ${isDark ? '#F1F5F9' : '#0F172A'} !important;
+          caret-color: ${isDark ? '#FFFFFF' : '#0F172A'} !important;
+          padding: 1.5rem !important;
+        }
+        .rich-text-editor .ProseMirror * {
+          background-color: transparent !important;
+          color: ${isDark ? '#F1F5F9' : '#0F172A'} !important;
+        }
+        .rich-text-editor .ProseMirror p,
+        .rich-text-editor .ProseMirror h1,
+        .rich-text-editor .ProseMirror h2,
+        .rich-text-editor .ProseMirror h3,
+        .rich-text-editor .ProseMirror h4,
+        .rich-text-editor .ProseMirror h5,
+        .rich-text-editor .ProseMirror h6,
+        .rich-text-editor .ProseMirror li,
+        .rich-text-editor .ProseMirror span,
+        .rich-text-editor .ProseMirror strong,
+        .rich-text-editor .ProseMirror em,
+        .rich-text-editor .ProseMirror blockquote,
+        .rich-text-editor .ProseMirror div {
+          color: ${isDark ? '#F1F5F9' : '#0F172A'} !important;
+          background-color: transparent !important;
+        }
+        .rich-text-editor .border-b {
+          background-color: ${isDark ? '#0F172A' : '#ffffff'} !important;
+          border-color: ${isDark ? '#334155' : '#E2E8F0'} !important;
+        }
+        ` : ''}
         .rich-text-editor .ProseMirror p {
           line-height: 1.6;
           margin-bottom: 0.85em;
@@ -1910,3 +2316,4 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
 };
 
 export default RichTextEditor;
+

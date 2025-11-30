@@ -470,5 +470,5 @@ const CommentThread = ({
   );
 };
 
-export default CommentThread;
+export default React.memo(CommentThread);
 

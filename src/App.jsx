@@ -6,6 +6,7 @@ import { CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { QueryProvider } from './providers/QueryProvider';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import ReadingProgress from './components/common/ReadingProgress';
@@ -52,6 +53,27 @@ import './styles/globals.css';
 function AppContent() {
   const location = useLocation();
   useServiceWorker();
+
+  // Track page loads
+  React.useEffect(() => {
+    const startTime = performance.now();
+    const pageName = location.pathname;
+    
+    const handleLoad = () => {
+      const loadTime = performance.now() - startTime;
+      import('./utils/performanceMonitor.js').then(({ default: perfMonitor }) => {
+        perfMonitor.trackPageLoad(pageName, loadTime);
+      });
+    };
+    
+    // Track when page is fully loaded
+    if (document.readyState === 'complete') {
+      handleLoad();
+    } else {
+      window.addEventListener('load', handleLoad);
+      return () => window.removeEventListener('load', handleLoad);
+    }
+  }, [location.pathname]);
 
   const baseToastClasses = 'flex items-start gap-3 w-full max-w-sm rounded-2xl px-4 py-3 sm:px-5 sm:py-4 shadow-xl shadow-[rgba(26,137,23,0.12)] border border-white/30 bg-white/95 backdrop-blur-md text-slate-900';
   const iconBadgeClasses = 'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold';
@@ -164,18 +186,20 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <AuthProvider>
-          <NotificationProvider>
-            <Router
-              future={{
-                v7_startTransition: true,
-                v7_relativeSplatPath: true,
-              }}
-            >
-              <AppContent />
-            </Router>
-          </NotificationProvider>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <NotificationProvider>
+              <Router
+                future={{
+                  v7_startTransition: true,
+                  v7_relativeSplatPath: true,
+                }}
+              >
+                <AppContent />
+              </Router>
+            </NotificationProvider>
+          </AuthProvider>
+        </QueryProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

@@ -1,5 +1,7 @@
 import axios from 'axios';
 import { getAuthToken, clearAuthToken } from '../utils/tokenStorage.js';
+import { getCachedResponse, setCachedResponse, shouldCache, CACHE_CONFIG, clearCache } from '../utils/apiCache.js';
+import { deduplicateRequest } from '../utils/requestDeduplication.js';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/v1';
 
@@ -23,6 +25,22 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    if (typeof window !== 'undefined') {
+      config._startTime = Date.now();
+    }
+    
+    if (shouldCache(config.method, config.url)) {
+      const cached = getCachedResponse(config.url, config.params);
+      if (cached) {
+        return Promise.reject({
+          __cached: true,
+          data: cached,
+          config,
+        });
+      }
+    }
+    
     return config;
   },
   (error) => {
@@ -31,21 +49,57 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (typeof window !== 'undefined' && response.config._startTime) {
+      const duration = Date.now() - response.config._startTime;
+      import('../utils/performanceMonitor.js').then(({ default: perfMonitor }) => {
+        perfMonitor.trackAPICall(
+          response.config.url,
+          response.config.method,
+          duration,
+          response.status
+        );
+      });
+    }
+
+    const config = response.config;
+    if (shouldCache(config.method, config.url)) {
+      let ttl = CACHE_CONFIG.posts.ttl;
+      
+      if (config.url.includes('/categories') || config.url.includes('/tags')) {
+        ttl = CACHE_CONFIG.categories.ttl;
+      } else if (config.url.includes('/notifications')) {
+        ttl = CACHE_CONFIG.notifications.ttl;
+      } else if (config.url.includes('/auth/profile') || config.url.includes('/authors/')) {
+        ttl = CACHE_CONFIG.authorProfile.ttl;
+      }
+      
+      setCachedResponse(config.url, config.params, response.data, ttl);
+    }
+    
+    return response;
+  },
   (error) => {
+    if (error.__cached) {
+      return Promise.resolve({
+        data: error.data,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: error.config,
+        __fromCache: true,
+      });
+    }
+    
     if (error.response?.status === 401) {
       clearAuthToken();
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
     
-    // Suppress console errors for expected 404s (e.g., polls that don't exist)
-    // These are handled gracefully in components
     if (error.response?.status === 404) {
       const url = error.config?.url || '';
-      // Don't log 404s for polls - these are expected when posts don't have polls
       if (url.includes('/polls/post/')) {
-        // Return error without logging - component handles it gracefully
         error.silent = true;
       }
     }
@@ -68,18 +122,47 @@ export const authAPI = {
 };
 
 export const postsAPI = {
-  getAll: (params) => api.get('/posts', { params }),
-  getBySlug: (slug) => api.get(`/posts/${slug}`),
-  create: (data) => api.post('/posts/create', data),
-  update: (id, data) => api.put(`/posts/update/${id}`, data),
-  delete: (id) => api.delete(`/posts/delete/${id}`),
+  getAll: (params) => {
+    const requestKey = `get:/posts:${JSON.stringify(params || {})}`;
+    return deduplicateRequest(requestKey, () => api.get('/posts', { params }));
+  },
+  getBySlug: (slug) => {
+    const requestKey = `get:/posts/${slug}:`;
+    return deduplicateRequest(requestKey, () => api.get(`/posts/${slug}`));
+  },
+  create: async (data) => {
+    const response = await api.post('/posts/create', data);
+    clearCache('/posts');
+    clearCache('/categories');
+    return response;
+  },
+  update: async (id, data) => {
+    const response = await api.put(`/posts/update/${id}`, data);
+    clearCache('/posts');
+    clearCache(`/posts/${id}`);
+    return response;
+  },
+  delete: async (id) => {
+    const response = await api.delete(`/posts/delete/${id}`);
+    clearCache('/posts');
+    clearCache(`/posts/${id}`);
+    return response;
+  },
   like: (id) => api.post(`/interactions/${id}/like`),
   dislike: (id) => api.post(`/interactions/${id}/dislike`),
   share: (id) => api.post(`/interactions/${id}/share`),
   bookmark: (id) => api.post(`/interactions/${id}/bookmark`),
   getRelated: (id) => api.get(`/posts/${id}/related`),
-  bulkDelete: (postIds) => api.post('/posts/bulk-delete', { postIds }),
-  bulkUpdate: (postIds, updates) => api.put('/posts/bulk-update', { postIds, updates }),
+  bulkDelete: async (postIds) => {
+    const response = await api.post('/posts/bulk-delete', { postIds });
+    clearCache('/posts');
+    return response;
+  },
+  bulkUpdate: async (postIds, updates) => {
+    const response = await api.put('/posts/bulk-update', { postIds, updates });
+    clearCache('/posts');
+    return response;
+  },
 };
 
 export const notificationsAPI = {
@@ -118,9 +201,22 @@ export const categoriesAPI = {
 
 export const commentsAPI = {
   getByPost: (postId, params) => api.get(`/comments/${postId}/comments`, { params }),
-  create: (postId, data) => api.post(`/comments/create/${postId}`, data),
-  update: (id, data) => api.put(`/comments/update/${id}`, data),
-  delete: (id) => api.delete(`/comments/delete/${id}`),
+  create: async (postId, data) => {
+    const response = await api.post(`/comments/create/${postId}`, data);
+    clearCache(`/comments/${postId}`);
+    clearCache(`/posts/${postId}`);
+    return response;
+  },
+  update: async (id, data) => {
+    const response = await api.put(`/comments/update/${id}`, data);
+    clearCache('/comments');
+    return response;
+  },
+  delete: async (id) => {
+    const response = await api.delete(`/comments/delete/${id}`);
+    clearCache('/comments');
+    return response;
+  },
   like: (id) => api.post(`/comments/like/${id}`),
 };
 
@@ -184,11 +280,8 @@ export const pollsAPI = {
   vote: (pollId, optionId) => api.post(`/polls/${pollId}/vote`, { optionId }),
   getResults: (pollId) => api.get(`/polls/${pollId}/results`),
   getByPost: (postId) => {
-    // Use validateStatus to prevent axios from treating 404 as an error
-    // This prevents console logging of expected 404s
     return api.get(`/polls/post/${postId}`, {
       validateStatus: function (status) {
-        // Accept both 200 (success) and 404 (no poll) as valid responses
         return status === 200 || status === 404;
       }
     });
