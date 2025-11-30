@@ -202,6 +202,14 @@ api.interceptors.response.use(
       }
     }
     
+    // Mark collaborations 401 errors as silent (expected for public posts)
+    if (error.response?.status === 401) {
+      const url = error.config?.url || '';
+      if (url.includes('/collaborations/') && url.includes('/collaborators')) {
+        error.silent = true;
+      }
+    }
+    
     return Promise.reject(error);
   }
 );

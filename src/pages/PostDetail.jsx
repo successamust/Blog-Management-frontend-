@@ -318,16 +318,16 @@ const PostDetail = () => {
       setComments(ensureCommentTree(Array.isArray(comments) ? comments : []));
       setRelatedPosts(Array.isArray(relatedPosts) ? relatedPosts : []);
       
-      // Fetch collaborators
+      // Fetch collaborators (optional - may fail for public posts)
       try {
         const collaboratorsRes = await collaborationsAPI.getCollaborators(post._id);
         if (collaboratorsRes.data?.collaborators) {
           setCollaborators(collaboratorsRes.data.collaborators);
         }
       } catch (error) {
-        // Silently fail if collaborators endpoint doesn't exist or returns 404
-        if (error.response?.status !== 404) {
-          console.error('Failed to fetch collaborators:', error);
+        // Silently fail if collaborators endpoint doesn't exist, returns 404, or 401 (expected for public posts)
+        if (error.response?.status !== 404 && error.response?.status !== 401) {
+          console.debug('Failed to fetch collaborators:', error);
         }
       }
       
