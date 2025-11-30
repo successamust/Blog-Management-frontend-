@@ -1882,6 +1882,7 @@ const CreatePostTab = () => {
         >
           <div className="bg-[var(--surface-bg)] rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
             <button
+              type="button"
               onClick={() => setShowTemplates(false)}
               className="absolute top-4 right-4 z-10 p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-subtle)] rounded-lg transition-colors"
               aria-label="Close"
