@@ -160,8 +160,16 @@ const Home = () => {
         setCurrentPage(pageToFetch);
         return sanitizedPosts;
       } catch (error) {
+        // Handle 404 specifically - might be backend routing issue
+        if (error.response?.status === 404) {
+          console.error('Posts endpoint returned 404. This might indicate a backend routing issue.');
+          console.error('Request URL:', error.config?.url);
+          console.error('Base URL:', error.config?.baseURL);
+          // Return empty array instead of throwing - allow page to render
+          return [];
+        }
         console.error('Error loading posts:', error);
-        throw error; // Re-throw to be caught by parent
+        throw error; // Re-throw other errors to be caught by parent
       }
     },
     [mergePosts]

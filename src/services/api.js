@@ -3,13 +3,33 @@ import { getAuthToken, clearAuthToken } from '../utils/tokenStorage.js';
 import { getCachedResponse, setCachedResponse, shouldCache, CACHE_CONFIG, clearCache } from '../utils/apiCache.js';
 import { deduplicateRequest } from '../utils/requestDeduplication.js';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/v1';
+// Determine base URL based on environment
+let BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
-  console.error(
-    '⚠️ VITE_API_BASE_URL is not set in production! ' +
-    'Please set it in your hosting platform environment variables.'
-  );
+// If no explicit base URL is set, use intelligent defaults
+if (!BASE_URL) {
+  if (import.meta.env.DEV) {
+    // Development: use proxy (vite.config.js proxies /v1 to backend)
+    BASE_URL = '/v1';
+  } else {
+    // Production: default to the known backend URL
+    BASE_URL = 'https://blog-management-sx5c.onrender.com/v1';
+  }
+}
+
+// Ensure BASE_URL doesn't have trailing slash (but keep /v1 if it's just /v1)
+if (BASE_URL !== '/v1') {
+  BASE_URL = BASE_URL.replace(/\/$/, '');
+}
+
+// Always log in development, and in production if there's an issue
+if (import.meta.env.DEV || !import.meta.env.VITE_API_BASE_URL) {
+  console.log('[API] Base URL configured:', BASE_URL);
+  console.log('[API] Mode:', import.meta.env.MODE);
+  console.log('[API] Is Production:', import.meta.env.PROD);
+  if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
+    console.warn('[API] Using default production backend URL. Set VITE_API_BASE_URL for custom backend.');
+  }
 }
 
 // Log API configuration in development (only in verbose mode)
@@ -225,8 +245,8 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
       
-      // Posts endpoints are public - 404s are legitimate (post doesn't exist, etc.)
-      // Don't treat them as auth issues
+      // Posts endpoints are public - 404s might be legitimate OR might indicate a routing issue
+      // Check if it's the main /posts endpoint (which should always exist)
       const isPostsEndpoint = 
         normalizedUrl === 'posts' ||
         normalizedUrl.startsWith('posts/') ||
@@ -235,11 +255,29 @@ api.interceptors.response.use(
         normalizedUrl.startsWith('authors/') ||
         normalizedUrl.startsWith('search');
       
+      // Special handling for main /posts endpoint - this should NEVER 404
+      // If it does, it's likely a routing/server issue, not a missing resource
+      if (normalizedUrl === 'posts') {
+        // Main posts endpoint 404 = server/routing issue, not auth issue
+        // Log it but don't clear token
+        if (import.meta.env.DEV) {
+          console.error('[API] CRITICAL: /posts endpoint returned 404. This should never happen. Check backend routing.');
+          console.error('[API] Full request details:', {
+            url: error.config?.url,
+            baseURL: error.config?.baseURL,
+            fullUrl: error.config?.baseURL ? `${error.config.baseURL}${error.config.url}` : error.config?.url,
+            method: error.config?.method,
+            hasToken: !!error.config?.headers?.Authorization
+          });
+        }
+        error.silent = true;
+        return Promise.reject(error);
+      }
+      
       if (isPostsEndpoint) {
-        // Legitimate 404 for public content - don't clear token or redirect
+        // Other posts endpoints (specific post, categories, etc.) - legitimate 404s possible
         // Mark as silent to avoid error toasts for missing posts
         error.silent = true;
-        // Just let the error propagate normally so components can handle it
         return Promise.reject(error);
       }
       
@@ -320,7 +358,15 @@ export const authAPI = {
 export const postsAPI = {
   getAll: (params) => {
     const requestKey = `get:/posts:${JSON.stringify(params || {})}`;
-    return deduplicateRequest(requestKey, () => api.get('/posts', { params }));
+    return deduplicateRequest(requestKey, () => {
+      const url = '/posts';
+      if (import.meta.env.DEV) {
+        console.log('[PostsAPI] Fetching posts from:', url, 'with params:', params);
+        console.log('[PostsAPI] Base URL:', BASE_URL);
+        console.log('[PostsAPI] Full URL will be:', `${BASE_URL}${url}`);
+      }
+      return api.get(url, { params });
+    });
   },
   getBySlug: (slug) => {
     const requestKey = `get:/posts/${slug}:`;
