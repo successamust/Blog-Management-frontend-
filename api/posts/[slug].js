@@ -102,6 +102,18 @@ const INDEX_HTML = `<!doctype html>
 
 export default async (req, res) => {
   const userAgent = req.headers['user-agent'] || '';
+  const urlPath = req.url || '';
+  
+  // IMPORTANT: Don't handle asset requests - let them pass through to static files
+  // Assets should be served directly, not through this API function
+  if (urlPath.includes('/assets/') || urlPath.includes('/email-assets/') || 
+      urlPath.endsWith('.js') || urlPath.endsWith('.css') || urlPath.endsWith('.png') || 
+      urlPath.endsWith('.jpg') || urlPath.endsWith('.svg') || urlPath.endsWith('.woff') ||
+      urlPath.endsWith('.woff2') || urlPath.endsWith('.ttf') || urlPath.endsWith('.eot')) {
+    // This shouldn't happen if routing is correct, but just in case, return 404
+    res.status(404).send('Not found');
+    return;
+  }
   
   // Extract slug - in Vercel, [slug].js makes the slug available in different ways
   // Try multiple methods to extract it
@@ -113,8 +125,7 @@ export default async (req, res) => {
   }
   
   // Method 2: Extract from URL path
-  if (!slug && req.url) {
-    const urlPath = req.url;
+  if (!slug && urlPath) {
     // Remove query string and hash
     const cleanPath = urlPath.split('?')[0].split('#')[0];
     
@@ -136,9 +147,9 @@ export default async (req, res) => {
   }
   
   // Method 3: Check if slug is in the pathname (some Vercel setups)
-  if (!slug && req.url) {
+  if (!slug && urlPath) {
     // Sometimes Vercel provides the path differently
-    const pathParts = req.url.split('/').filter(Boolean);
+    const pathParts = urlPath.split('/').filter(Boolean);
     const postsIndex = pathParts.indexOf('posts');
     if (postsIndex >= 0 && pathParts[postsIndex + 1]) {
       slug = decodeURIComponent(pathParts[postsIndex + 1].split('?')[0]);
@@ -147,7 +158,7 @@ export default async (req, res) => {
   
   // Always log for debugging
   console.log('[posts/slug] Request details:', {
-    url: req.url,
+    url: urlPath,
     query: req.query,
     method: req.method,
     headers: {
@@ -166,7 +177,7 @@ export default async (req, res) => {
     } else {
       // Crawler but no slug found - this is a problem
       console.error('[posts/slug] ERROR: Crawler detected but slug extraction failed:', {
-        url: req.url,
+        url: urlPath,
         query: req.query,
         userAgent: userAgent,
       });
