@@ -47,7 +47,6 @@ const CategoryPosts = () => {
       // Fetch category - try by slug first, then by ID if slug looks like an ID
       try {
         const categoryRes = await categoriesAPI.getBySlug(slug);
-        console.log('Category API response (by slug):', categoryRes);
         
         categoryData = categoryRes.data?.category || 
                       categoryRes.data?.data || 
@@ -58,7 +57,6 @@ const CategoryPosts = () => {
         // If slug fetch fails and slug looks like an ID (24 hex chars), try fetching all categories and find by ID
         if (slug && slug.length === 24 && /^[0-9a-fA-F]+$/.test(slug)) {
           try {
-            console.log('Slug looks like an ID, trying to fetch all categories and find by ID');
             const allCategoriesRes = await categoriesAPI.getAll();
             const allCategories = allCategoriesRes.data?.categories || 
                                 allCategoriesRes.data?.data || 
@@ -67,9 +65,6 @@ const CategoryPosts = () => {
             categoryData = allCategories.find(cat => 
               (cat._id === slug) || (cat.id === slug) || (cat.slug === slug)
             );
-            if (categoryData) {
-              console.log('Found category by ID:', categoryData);
-            }
           } catch (allCategoriesError) {
             console.error('Error fetching all categories:', allCategoriesError);
           }
@@ -88,7 +83,6 @@ const CategoryPosts = () => {
         } catch (postsError) {
           // If slug-based fetch fails and slug looks like an ID, try fetching all posts and filtering
           if (slug && slug.length === 24 && /^[0-9a-fA-F]+$/.test(slug)) {
-            console.log('Posts fetch by slug failed, trying to fetch all posts and filter by category ID');
             try {
               const allPostsRes = await postsAPI.getAll({ limit: 1000 });
               const allPosts = allPostsRes.data?.posts || 
@@ -111,7 +105,6 @@ const CategoryPosts = () => {
                   limit: 12,
                 }
               };
-              console.log('Filtered posts by category ID:', filteredPosts);
             } catch (allPostsError) {
               throw postsError; // Re-throw original error
             }
@@ -119,8 +112,6 @@ const CategoryPosts = () => {
             throw postsError; // Re-throw if not an ID
           }
         }
-        
-        console.log('Posts API response:', postsRes);
 
         // Handle different possible response structures for posts
         postsData = postsRes.data?.posts || 
@@ -131,7 +122,6 @@ const CategoryPosts = () => {
         // If we don't have category data but have posts, try to extract category from first post
         if (!categoryData && postsData.length > 0 && postsData[0].category) {
           categoryData = postsData[0].category;
-          console.log('Extracted category from post:', categoryData);
         }
         
         // If still no category, create a minimal one from slug
@@ -141,7 +131,6 @@ const CategoryPosts = () => {
             slug: slug,
             description: null,
           };
-          console.log('Created fallback category from slug:', categoryData);
         }
         
         paginationData = {
