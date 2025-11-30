@@ -140,7 +140,41 @@ class PerformanceMonitor {
    */
   printSummary() {
     const summary = this.getSummary();
-    console.log('Performance Summary:', summary);
+    
+    console.group('Performance Summary');
+    console.log('Generated at:', summary.timestamp);
+    
+    console.group('API Calls');
+    console.log('Total:', summary.apiCalls.total);
+    console.log('Average Duration:', summary.apiCalls.averageDuration + 'ms');
+    console.log('Success Rate:', summary.apiCalls.successRate);
+    console.log('Slow Calls (>1s):', summary.apiCalls.slowCalls);
+    console.log('Failed Calls:', summary.apiCalls.failedCalls);
+    
+    if (summary.apiCalls.slowestCalls.length > 0) {
+      console.group('Slowest Calls');
+      summary.apiCalls.slowestCalls.forEach((call, idx) => {
+        console.log((idx + 1) + '. ' + call.method + ' ' + call.url + ' - ' + call.duration + 'ms (' + call.status + ')');
+      });
+      console.groupEnd();
+    }
+    
+    if (summary.apiCalls.mostFrequentEndpoints.length > 0) {
+      console.group('Most Frequent Endpoints');
+      summary.apiCalls.mostFrequentEndpoints.forEach((ep, idx) => {
+        console.log((idx + 1) + '. ' + ep.endpoint + ' - ' + ep.count + ' calls');
+      });
+      console.groupEnd();
+    }
+    console.groupEnd();
+    
+    console.group('Page Loads');
+    console.log('Total:', summary.pageLoads.total);
+    console.log('Average Load Time:', summary.pageLoads.averageLoadTime + 'ms');
+    console.groupEnd();
+    
+    console.groupEnd();
+    
     return summary;
   }
 
@@ -177,6 +211,14 @@ const performanceMonitor = new PerformanceMonitor();
 // Initialize Web Vitals tracking
 if (typeof window !== 'undefined') {
   performanceMonitor.trackWebVitals();
+  
+  // Log instructions on first load
+  console.log('%cPerformance Monitor Active', 'color: #1a8917; font-size: 14px; font-weight: bold');
+  console.log('%cAccess performance data:', 'color: #666; font-size: 12px');
+  console.log('  • window.performanceMonitor.getSummary() - Get summary');
+  console.log('  • window.performanceMonitor.printSummary() - Print formatted summary');
+  console.log('  • window.performanceMonitor.getAPICallHistory() - Get API call history');
+  console.log('  • window.performanceMonitor.clear() - Clear metrics');
 }
 
 export default performanceMonitor;
