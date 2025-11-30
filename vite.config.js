@@ -36,6 +36,11 @@ export default defineConfig({
     // Ensure proper module resolution
     modulePreload: {
       polyfill: true,
+      // Don't preload vendor chunk to prevent it from loading before React
+      resolveDependencies: (filename, deps) => {
+        // Filter out vendor chunk from preload to ensure React loads first
+        return deps.filter(dep => !dep.includes('vendor-') || dep.includes('ui-vendor') || dep.includes('editor-vendor') || dep.includes('network-vendor'));
+      },
     },
     rollupOptions: {
       output: {
@@ -76,17 +81,21 @@ export default defineConfig({
             ) {
               return undefined;
             }
-            // UI libraries (these don't bundle React, but depend on it)
-            if (id.includes('framer-motion') || id.includes('lucide-react')) {
+            // Chart libraries (recharts depends on React, so keep with React)
+            if (id.includes('recharts')) {
+              return undefined;
+            }
+            // UI libraries - framer-motion depends on React, so keep with React
+            if (id.includes('framer-motion')) {
+              return undefined;
+            }
+            // Lucide-react doesn't bundle React, can be separate
+            if (id.includes('lucide-react')) {
               return 'ui-vendor';
             }
             // Editor libraries (non-React parts)
             if (id.includes('quill') || (id.includes('tiptap') && !id.includes('react'))) {
               return 'editor-vendor';
-            }
-            // Chart libraries
-            if (id.includes('recharts')) {
-              return 'chart-vendor';
             }
             // Other large vendors
             if (id.includes('axios') || id.includes('socket.io')) {
