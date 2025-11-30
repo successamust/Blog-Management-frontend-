@@ -579,6 +579,14 @@ const CreatePost = ({ onSuccess }) => {
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showPollForm, setShowPollForm] = useState(false);
+  const [pollFormData, setPollFormData] = useState({
+    question: '',
+    description: '',
+    options: [{ text: '' }, { text: '' }],
+    isActive: true,
+    expiresAt: '',
+  });
 
   useEffect(() => {
     fetchCategories();
@@ -689,11 +697,44 @@ const CreatePost = ({ onSuccess }) => {
         return;
       }
       
-      toast.success('Post created successfully! Redirecting...');
+      const postId = newPost._id || newPost.id;
       
-      if (postData.isPublished && newPost._id) {
+      // Create poll if poll form is filled out
+      if (showPollForm && pollFormData.question.trim()) {
         try {
-          await adminAPI.notifyNewPost(newPost._id);
+          const validOptions = pollFormData.options.filter(opt => opt.text.trim());
+          if (validOptions.length >= 2) {
+            // Check for duplicate options
+            const optionTexts = validOptions.map(opt => opt.text.trim().toLowerCase());
+            const uniqueOptions = new Set(optionTexts);
+            if (uniqueOptions.size === optionTexts.length) {
+              const pollData = {
+                postId: postId,
+                question: pollFormData.question.trim(),
+                description: pollFormData.description.trim() || undefined,
+                options: validOptions.map(opt => ({ text: opt.text.trim() })),
+                isActive: pollFormData.isActive,
+                expiresAt: pollFormData.expiresAt ? new Date(pollFormData.expiresAt).toISOString() : null,
+              };
+              await pollsAPI.create(pollData);
+              toast.success('Post and poll created successfully!');
+            } else {
+              toast.error('Poll options must be unique. Post created but poll was not created.');
+            }
+          } else {
+            toast.error('Poll requires at least 2 options. Post created but poll was not created.');
+          }
+        } catch (pollError) {
+          console.error('Error creating poll:', pollError);
+          toast.error('Post created successfully, but failed to create poll. You can add it later when editing.');
+        }
+      } else {
+        toast.success('Post created successfully! Redirecting...');
+      }
+      
+      if (postData.isPublished && postId) {
+        try {
+          await adminAPI.notifyNewPost(postId);
         } catch (error) {
           console.error('Failed to notify subscribers:', error);
         }
@@ -703,7 +744,7 @@ const CreatePost = ({ onSuccess }) => {
       onSuccess();
       
       // Navigate to edit page immediately (React Router handles this smoothly, no full page reload)
-      navigate(`/admin/posts/edit/${newPost._id}`, { replace: false });
+      navigate(`/admin/posts/edit/${postId}`, { replace: false });
     } catch (error) {
       console.error('Error creating post:', error);
       toast.error(error.response?.data?.message || 'Failed to create post');
@@ -816,12 +857,24 @@ const CreatePost = ({ onSuccess }) => {
               name="status"
               value={formData.status}
               onChange={handleChange}
-                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+              disabled={!!scheduledAt}
+              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)] disabled:bg-[var(--surface-subtle)] disabled:cursor-not-allowed"
             >
               <option value="published">Published</option>
               <option value="draft">Draft</option>
             </select>
+            {scheduledAt && (
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">Status will be set to draft when scheduled</p>
+            )}
           </div>
+        </div>
+
+        <div>
+          <PostScheduler
+            onSchedule={setScheduledAt}
+            initialDate={scheduledAt ? new Date(scheduledAt).toISOString().split('T')[0] : null}
+            initialTime={scheduledAt ? new Date(scheduledAt).toTimeString().slice(0, 5) : null}
+          />
         </div>
 
         <div>
@@ -887,6 +940,158 @@ const CreatePost = ({ onSuccess }) => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Poll Section */}
+        <div className="border-t border-[var(--border-subtle)] pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-[var(--accent)]" />
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">Poll (Optional)</h3>
+            </div>
+            {!showPollForm && (
+              <button
+                type="button"
+                onClick={() => setShowPollForm(true)}
+                className="text-sm text-[var(--accent)] hover:underline"
+              >
+                Add Poll
+              </button>
+            )}
+            {showPollForm && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPollForm(false);
+                  setPollFormData({
+                    question: '',
+                    description: '',
+                    options: [{ text: '' }, { text: '' }],
+                    isActive: true,
+                    expiresAt: '',
+                  });
+                }}
+                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+
+          {showPollForm && (
+            <div className="space-y-4 bg-[var(--surface-subtle)] p-4 rounded-lg">
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                  Poll Question <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={pollFormData.question}
+                  onChange={(e) => setPollFormData({ ...pollFormData, question: e.target.value })}
+                  placeholder="What would you like to ask?"
+                  className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={pollFormData.description}
+                  onChange={(e) => setPollFormData({ ...pollFormData, description: e.target.value })}
+                  rows="2"
+                  placeholder="Additional context about the poll..."
+                  className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-[var(--text-primary)]">
+                    Poll Options <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPollFormData({
+                        ...pollFormData,
+                        options: [...pollFormData.options, { text: '' }],
+                      });
+                    }}
+                    className="text-sm text-[var(--accent)] hover:underline"
+                  >
+                    + Add Option
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {pollFormData.options.map((option, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={option.text}
+                        onChange={(e) => {
+                          const newOptions = [...pollFormData.options];
+                          newOptions[index] = { text: e.target.value };
+                          setPollFormData({ ...pollFormData, options: newOptions });
+                        }}
+                        placeholder={`Option ${index + 1}`}
+                        className="flex-1 px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+                      />
+                      {pollFormData.options.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (pollFormData.options.length <= 2) {
+                              toast.error('A poll must have at least 2 options');
+                              return;
+                            }
+                            const newOptions = pollFormData.options.filter((_, i) => i !== index);
+                            setPollFormData({ ...pollFormData, options: newOptions });
+                          }}
+                          className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-[var(--text-muted)] mt-2">
+                  Minimum 2 options required
+                </p>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="pollIsActiveCreate"
+                  checked={pollFormData.isActive}
+                  onChange={(e) => setPollFormData({ ...pollFormData, isActive: e.target.checked })}
+                  className="h-4 w-4 text-[var(--accent)] focus:ring-[var(--accent)] border-[var(--border-subtle)] rounded"
+                />
+                <label htmlFor="pollIsActiveCreate" className="ml-2 block text-sm text-[var(--text-secondary)]">
+                  Active (poll will be visible to users)
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                  Expiration Date (Optional)
+                </label>
+                <input
+                  type="datetime-local"
+                  value={pollFormData.expiresAt}
+                  onChange={(e) => setPollFormData({ ...pollFormData, expiresAt: e.target.value })}
+                  min={new Date().toISOString().slice(0, 16)}
+                  className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+                />
+                <p className="text-xs text-[var(--text-muted)] mt-1">
+                  Poll will automatically deactivate after this date. Leave empty for no expiration.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end space-x-4">
