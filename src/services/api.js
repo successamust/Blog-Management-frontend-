@@ -12,6 +12,12 @@ if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
   );
 }
 
+// Log API configuration in development
+if (import.meta.env.DEV) {
+  console.log('[API] Base URL:', BASE_URL);
+  console.log('[API] Environment:', import.meta.env.MODE);
+}
+
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -88,6 +94,29 @@ api.interceptors.response.use(
         headers: {},
         config: error.config,
         __fromCache: true,
+      });
+    }
+    
+    // Enhanced error logging
+    if (!error.silent) {
+      console.error('[API] Request failed:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        baseURL: error.config?.baseURL,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        message: error.message,
+        data: error.response?.data,
+      });
+    }
+    
+    // Network errors (no response from server)
+    if (!error.response) {
+      console.error('[API] Network error - possible causes:', {
+        message: error.message,
+        code: error.code,
+        baseURL: BASE_URL,
+        suggestion: 'Check if API server is running and CORS is configured correctly',
       });
     }
     

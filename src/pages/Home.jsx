@@ -36,6 +36,7 @@ const Home = () => {
   const [consentChecked, setConsentChecked] = useState(false);
   const [showOptInModal, setShowOptInModal] = useState(false);
   const [pendingSubscription, setPendingSubscription] = useState(null);
+  const [error, setError] = useState(null);
   const postsRef = useRef([]);
   
   // Check if user can apply to become an author
@@ -135,55 +136,84 @@ const Home = () => {
 
   const loadPostsPage = useCallback(
     async (pageToFetch = 1, { reset = false } = {}) => {
-      const response = await postsAPI.getAll({ page: pageToFetch, limit: POSTS_PER_PAGE });
-      const postsData =
-        response.data?.posts ||
-        response.data?.data ||
-        (Array.isArray(response.data) ? response.data : []) ||
-        [];
+      try {
+        console.log(`[Home] Loading posts page ${pageToFetch}...`);
+        const response = await postsAPI.getAll({ page: pageToFetch, limit: POSTS_PER_PAGE });
+        console.log('[Home] API response received:', {
+          hasData: !!response?.data,
+          status: response?.status,
+        });
+        
+        const postsData =
+          response.data?.posts ||
+          response.data?.data ||
+          (Array.isArray(response.data) ? response.data : []) ||
+          [];
 
-      const sanitizedPosts = Array.isArray(postsData)
-        ? postsData.filter((post) => post && (post.publishedAt || post.createdAt))
-        : [];
+        const sanitizedPosts = Array.isArray(postsData)
+          ? postsData.filter((post) => post && (post.publishedAt || post.createdAt))
+          : [];
 
-      mergePosts(sanitizedPosts, { reset });
+        console.log(`[Home] Sanitized ${sanitizedPosts.length} posts`);
 
-      const totalFromApi =
-        response.data?.pagination?.total ||
-        response.data?.total ||
-        response.data?.count ||
-        null;
-      setHasMorePosts(sanitizedPosts.length === POSTS_PER_PAGE);
-      setCurrentPage(pageToFetch);
-      return sanitizedPosts;
+        mergePosts(sanitizedPosts, { reset });
+
+        const totalFromApi =
+          response.data?.pagination?.total ||
+          response.data?.total ||
+          response.data?.count ||
+          null;
+        setHasMorePosts(sanitizedPosts.length === POSTS_PER_PAGE);
+        setCurrentPage(pageToFetch);
+        return sanitizedPosts;
+      } catch (error) {
+        console.error('[Home] Error in loadPostsPage:', error);
+        throw error; // Re-throw to be caught by parent
+      }
     },
     [mergePosts]
   );
 
   const fetchCategoriesAndTags = useCallback(
     async (referencePosts = []) => {
-      const [categoriesRes, tagsRes] = await Promise.all([
-        categoriesAPI.getAll().catch(() => ({ data: { categories: [] } })),
-        searchAPI.getPopularTags().catch(() => ({ data: { tags: [] } })),
-      ]);
+      try {
+        console.log('[Home] Fetching categories and tags...');
+        const [categoriesRes, tagsRes] = await Promise.all([
+          categoriesAPI.getAll().catch((err) => {
+            console.warn('[Home] Categories API failed:', err);
+            return { data: { categories: [] } };
+          }),
+          searchAPI.getPopularTags().catch((err) => {
+            console.warn('[Home] Tags API failed:', err);
+            return { data: { tags: [] } };
+          }),
+        ]);
 
-      const categoriesData =
-        categoriesRes.data?.categories ||
-        categoriesRes.data?.data ||
-        (Array.isArray(categoriesRes.data) ? categoriesRes.data : []) ||
-        [];
+        const categoriesData =
+          categoriesRes.data?.categories ||
+          categoriesRes.data?.data ||
+          (Array.isArray(categoriesRes.data) ? categoriesRes.data : []) ||
+          [];
 
-      const tagsData =
-        tagsRes.data?.tags ||
-        tagsRes.data?.data ||
-        (Array.isArray(tagsRes.data) ? tagsRes.data : []) ||
-        [];
+        const tagsData =
+          tagsRes.data?.tags ||
+          tagsRes.data?.data ||
+          (Array.isArray(tagsRes.data) ? tagsRes.data : []) ||
+          [];
 
-      const sourcePosts = referencePosts.length ? referencePosts : postsRef.current;
-      const categoriesWithCounts = buildCategoryCounts(categoriesData, sourcePosts);
+        console.log(`[Home] Loaded ${categoriesData.length} categories and ${tagsData.length} tags`);
 
-      setCategories(Array.isArray(categoriesWithCounts) ? categoriesWithCounts.slice(0, 8) : []);
-      setPopularTags(Array.isArray(tagsData) ? tagsData.slice(0, 12) : []);
+        const sourcePosts = referencePosts.length ? referencePosts : postsRef.current;
+        const categoriesWithCounts = buildCategoryCounts(categoriesData, sourcePosts);
+
+        setCategories(Array.isArray(categoriesWithCounts) ? categoriesWithCounts.slice(0, 8) : []);
+        setPopularTags(Array.isArray(tagsData) ? tagsData.slice(0, 12) : []);
+      } catch (error) {
+        console.error('[Home] Error in fetchCategoriesAndTags:', error);
+        // Don't throw - these are optional, just set empty arrays
+        setCategories([]);
+        setPopularTags([]);
+      }
     },
     [buildCategoryCounts]
   );
@@ -216,24 +246,61 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchHomeData = async () => {
       try {
         setLoading(true);
+        console.log('[Home] Starting data fetch...');
+        console.log('[Home] API Base URL:', import.meta.env.VITE_API_BASE_URL || '/v1');
+        
         const initialPosts = await loadPostsPage(1, { reset: true });
+        console.log('[Home] Posts loaded:', initialPosts?.length || 0);
+        
+        if (!isMounted) return;
+        
         await fetchCategoriesAndTags(initialPosts);
+        console.log('[Home] Categories and tags loaded');
+        
+        if (!isMounted) return;
+        
+        console.log('[Home] Data fetch completed successfully');
       } catch (error) {
-        console.error('Error fetching home data:', error);
+        console.error('[Home] Error fetching home data:', error);
+        console.error('[Home] Error details:', {
+          message: error?.message,
+          response: error?.response?.data,
+          status: error?.response?.status,
+          url: error?.config?.url,
+          baseURL: error?.config?.baseURL,
+        });
+        
+        if (!isMounted) return;
+        
         setPosts([]);
         setHasMorePosts(false);
         setCategories([]);
         setPopularTags([]);
-        toast.error('Failed to load the latest stories.');
+        
+        // Store error for display
+        const errorMessage = error?.response?.data?.message || 
+                           error?.message || 
+                           'Failed to load the latest stories.';
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+          console.log('[Home] Loading state set to false');
+        }
       }
     };
 
     fetchHomeData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [loadPostsPage, fetchCategoriesAndTags]);
 
   const loadMorePosts = async () => {
@@ -317,8 +384,87 @@ const Home = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-page">
-        <Spinner size="2xl" />
+        <div className="text-center">
+          <Spinner size="2xl" />
+          <p className="mt-4 text-[var(--text-secondary)]">Loading stories...</p>
+        </div>
       </div>
+    );
+  }
+
+  // Show error state if there's an error and no posts
+  if (error && posts.length === 0) {
+    return (
+      <>
+        <Seo
+          title="Nexus — Stories Worth Sharing"
+          description={HOME_DESCRIPTION}
+          url="/"
+          image={DEFAULT_OG_IMAGE}
+        />
+        <div className="bg-page min-h-screen">
+          <section className="border-b border-[var(--border-subtle)]">
+            <div className="layout-container section-hero-spacing-y">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="text-center"
+              >
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[var(--text-primary)] mb-6 leading-tight tracking-tight">
+                  Write. Share. Inspire.
+                </h1>
+                <p className="text-base sm:text-lg md:text-xl text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto leading-relaxed">
+                  Discover useful articles, insights, and writing from our community of creators.
+                </p>
+              </motion.div>
+            </div>
+          </section>
+          <div className="bg-content">
+            <div className="layout-container section-spacing-y">
+              <div className="max-w-2xl mx-auto text-center py-16">
+                <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-2xl p-8">
+                  <h2 className="text-2xl font-bold text-rose-900 dark:text-rose-100 mb-4">
+                    Unable to Load Content
+                  </h2>
+                  <p className="text-rose-700 dark:text-rose-300 mb-6">
+                    {error}
+                  </p>
+                  <div className="space-y-2 text-sm text-rose-600 dark:text-rose-400 mb-6">
+                    <p>Possible causes:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>API server is not responding</li>
+                      <li>Network connectivity issues</li>
+                      <li>CORS configuration problems</li>
+                    </ul>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setError(null);
+                      setLoading(true);
+                      const fetchHomeData = async () => {
+                        try {
+                          const initialPosts = await loadPostsPage(1, { reset: true });
+                          await fetchCategoriesAndTags(initialPosts);
+                        } catch (err) {
+                          console.error('Retry failed:', err);
+                          setError(err?.response?.data?.message || err?.message || 'Failed to load content');
+                        } finally {
+                          setLoading(false);
+                        }
+                      };
+                      fetchHomeData();
+                    }}
+                    className="btn btn-primary"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
     );
   }
 
