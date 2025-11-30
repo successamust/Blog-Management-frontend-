@@ -77,6 +77,7 @@ const PostScheduler = ({ onSchedule, initialDate, initialTime }) => {
           {isScheduled ? (
             <>
               <button
+                type="button"
                 onClick={handleSchedule}
                 className="btn btn-primary flex-1"
               >
@@ -84,6 +85,7 @@ const PostScheduler = ({ onSchedule, initialDate, initialTime }) => {
                 Update Schedule
               </button>
               <button
+                type="button"
                 onClick={handleRemoveSchedule}
                 className="btn btn-outline text-[var(--text-secondary)]"
               >
@@ -92,6 +94,7 @@ const PostScheduler = ({ onSchedule, initialDate, initialTime }) => {
             </>
           ) : (
             <button
+              type="button"
               onClick={handleSchedule}
               disabled={!isValid}
               className="btn btn-primary flex-1 disabled:opacity-50"
