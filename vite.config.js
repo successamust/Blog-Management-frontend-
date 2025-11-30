@@ -8,6 +8,9 @@ export default defineConfig({
     // Remove console.log in production (keeps console.error and console.warn)
     ...(process.env.NODE_ENV === 'production' ? [removeConsolePlugin()] : []),
   ],
+  resolve: {
+    dedupe: ['react', 'react-dom'],
+  },
   server: {
     port: 3000,
     proxy: {
@@ -31,8 +34,27 @@ export default defineConfig({
         manualChunks: (id) => {
           // Split node_modules into smaller chunks
           if (id.includes('node_modules')) {
-            // React core
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+            // React core - must be together and precise to avoid multiple instances
+            if (
+              id.includes('/react/') || 
+              id.includes('/react-dom/') ||
+              id === 'react' || 
+              id === 'react-dom' ||
+              id.endsWith('/react') ||
+              id.endsWith('/react-dom')
+            ) {
+              return 'react-vendor';
+            }
+            // React Router - keep with React to avoid issues
+            if (id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            // React Query - keep with React
+            if (id.includes('@tanstack/react-query')) {
+              return 'react-vendor';
+            }
+            // React-related libraries
+            if (id.includes('react-hot-toast') || id.includes('react-markdown')) {
               return 'react-vendor';
             }
             // UI libraries
@@ -40,7 +62,7 @@ export default defineConfig({
               return 'ui-vendor';
             }
             // Editor libraries
-            if (id.includes('quill') || id.includes('react-quill') || id.includes('tiptap')) {
+            if (id.includes('quill') || id.includes('react-quill') || id.includes('tiptap') || id.includes('@tiptap')) {
               return 'editor-vendor';
             }
             // Chart libraries
