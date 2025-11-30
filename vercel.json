@@ -11,8 +11,15 @@
       "destination": "/api/posts/$1"
     },
     {
-      "source": "/((?!assets|api|_next|email-assets|nexus-logo-icon.svg|manifest.json|sw.js).*)",
-      "destination": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html",
+      "has": [
+        {
+          "type": "header",
+          "key": "accept",
+          "value": "text/html"
+        }
+      ]
     }
   ],
   "headers": [

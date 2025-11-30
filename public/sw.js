@@ -1,5 +1,5 @@
-const CACHE_NAME = 'nexus-blog-v3';
-const RUNTIME_CACHE = 'nexus-runtime-v3';
+const CACHE_NAME = 'nexus-blog-v4';
+const RUNTIME_CACHE = 'nexus-runtime-v4';
 
 // Detect if we're in development mode
 const isDevelopment = 
@@ -84,32 +84,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first strategy for JS files to avoid stale React chunks
+  // NEVER cache JS files - always fetch from network
+  // This prevents stale React chunks and HTML being served as JS
   const isJSFile = url.pathname.endsWith('.js') || 
                    url.pathname.includes('/assets/js/') ||
                    (request.headers.get('accept') || '').includes('application/javascript');
   
   if (isJSFile) {
-    // Network-first for JS files - always try network first
+    // Always fetch from network, never use cache for JS files
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-store' })
         .then((response) => {
-          // Only cache if successful and valid
-          if (response && response.status === 200 && response.type === 'basic') {
-            const responseToCache = response.clone();
-            caches.open(RUNTIME_CACHE)
-              .then((cache) => {
-                cache.put(request, responseToCache).catch(() => {});
-              });
-          }
+          // Don't cache JS files at all
           return response;
         })
-        .catch(() => {
-          // Fallback to cache only if network fails
-          return caches.match(request).then((cached) => {
-            if (cached) return cached;
-            throw new Error('Network and cache both failed');
-          });
+        .catch((error) => {
+          console.error('[SW] Failed to fetch JS file:', url.pathname, error);
+          // Don't fallback to cache for JS files - let the error propagate
+          throw error;
         })
     );
     return;
