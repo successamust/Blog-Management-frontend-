@@ -1,6 +1,11 @@
 import handler from '../social-preview.js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const CRAWLER_USER_AGENTS = [
   'facebookexternalhit',
@@ -35,7 +40,30 @@ const isCrawler = (userAgent) => {
   return CRAWLER_USER_AGENTS.some(crawler => ua.includes(crawler.toLowerCase()));
 };
 
-const INDEX_HTML = `<!doctype html>
+// Function to read the actual built index.html to get correct production asset paths
+// Read on each request to handle Vercel's file system correctly
+const getIndexHtml = () => {
+  const possiblePaths = [
+    join(process.cwd(), '.vercel/output/static/index.html'),  // Vercel production
+    join(process.cwd(), 'dist/index.html'),                  // Local/Vercel build
+    join(__dirname, '../../dist/index.html'),                // Alternative
+    join(process.cwd(), 'index.html'),                        // Root fallback
+  ];
+
+  for (const indexPath of possiblePaths) {
+    try {
+      const html = readFileSync(indexPath, 'utf-8');
+      console.log('[posts/slug] Successfully loaded index.html from:', indexPath);
+      return html;
+    } catch (error) {
+      // Try next path
+      continue;
+    }
+  }
+  
+  // Fallback HTML if dist/index.html is not found (shouldn't happen in production)
+  console.warn('[posts/slug] Could not read dist/index.html from any path, using fallback');
+  return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -99,6 +127,7 @@ const INDEX_HTML = `<!doctype html>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>`;
+}
 
 export default async (req, res) => {
   try {
@@ -192,18 +221,20 @@ export default async (req, res) => {
     }
     
     // For regular users (browsers) or if crawler handling failed, serve the React app
+    const indexHtml = getIndexHtml();
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    res.status(200).send(INDEX_HTML);
+    res.status(200).send(indexHtml);
   } catch (error) {
     // Catch any unexpected errors and still serve the React app
     console.error('[posts/slug] Unexpected error:', error);
     try {
+      const indexHtml = getIndexHtml();
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('Cache-Control', 'no-cache');
-      res.status(200).send(INDEX_HTML);
+      res.status(200).send(indexHtml);
     } catch (sendError) {
       // If we can't send response, log it
       console.error('[posts/slug] Failed to send response:', sendError);
