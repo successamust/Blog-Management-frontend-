@@ -188,7 +188,8 @@ const PostDetail = () => {
       return origin;
     }
     const identifier = post.slug || post._id || post.id;
-    return `${origin}/posts/${identifier}`;
+    // Use preview URL for sharing to ensure proper meta tags for social media previews
+    return `${origin}/preview/posts/${identifier}`;
   }, [post]);
 
   useEffect(() => {

@@ -66,17 +66,10 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const verifyUser = async () => {
-      console.error('[AuthContext] Starting user verification...');
       const token = getAuthToken();
       const user = localStorage.getItem('user');
       const lastAuthCheck = localStorage.getItem('lastAuthCheck');
       const now = Date.now();
-      
-      console.error('[AuthContext] Verification state:', {
-        hasToken: !!token,
-        hasUser: !!user,
-        hasLastCheck: !!lastAuthCheck,
-      });
       
       // Throttle auth checks to once per 5 minutes to avoid rate limiting
       // COMMENTED OUT FOR TESTING
@@ -146,20 +139,15 @@ export const AuthProvider = ({ children }) => {
             type: 'LOGIN_SUCCESS',
             payload: { token, user: freshUser },
           });
-          console.error('[AuthContext] User verified successfully');
         } catch (error) {
-          console.error('[AuthContext] Error verifying user:', error);
-          console.error('[AuthContext] Error status:', error.response?.status);
           // If rate limited, use cached user data instead of logging out
           if (error.response?.status === 429) {
-            console.error('[AuthContext] Rate limited, using cached user');
             const storedUser = JSON.parse(user);
             dispatch({
               type: 'LOGIN_SUCCESS',
               payload: { token, user: storedUser },
             });
           } else {
-            console.error('[AuthContext] Verification failed, logging out');
             clearAuthToken();
             localStorage.removeItem('user');
             localStorage.removeItem('lastAuthCheck');
@@ -167,10 +155,8 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } else {
-        console.error('[AuthContext] No token/user, dispatching LOGOUT');
         dispatch({ type: 'LOGOUT' });
       }
-      console.error('[AuthContext] User verification completed');
     };
     
     verifyUser();

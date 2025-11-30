@@ -15,7 +15,8 @@ const InteractivePostCard = memo(({ post, featured = false, delay = 0 }) => {
   }
 
   const postSlugValue = post.slug || post._id || post.id || '';
-  const postHref = postSlugValue ? `/posts/${postSlugValue}` : '#';
+  // Use preview URL so right-click "Copy link" uses preview URL with proper meta tags
+  const postHref = postSlugValue ? `/preview/posts/${postSlugValue}` : '#';
   const postTitle = post.title || 'Untitled Post';
   const postExcerpt = post.excerpt || 'No excerpt available';
   const postDate = post.publishedAt || post.createdAt || new Date();

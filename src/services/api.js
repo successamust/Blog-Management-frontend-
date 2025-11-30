@@ -97,27 +97,19 @@ api.interceptors.response.use(
       });
     }
     
-    // Enhanced error logging
+    // Log errors (but not sensitive data)
     if (!error.silent) {
-      console.error('[API] Request failed:', {
+      console.error('API request failed:', {
         url: error.config?.url,
         method: error.config?.method,
-        baseURL: error.config?.baseURL,
         status: error.response?.status,
-        statusText: error.response?.statusText,
         message: error.message,
-        data: error.response?.data,
       });
     }
     
     // Network errors (no response from server)
     if (!error.response) {
-      console.error('[API] Network error - possible causes:', {
-        message: error.message,
-        code: error.code,
-        baseURL: BASE_URL,
-        suggestion: 'Check if API server is running and CORS is configured correctly',
-      });
+      console.error('Network error:', error.message);
     }
     
     if (error.response?.status === 401) {
