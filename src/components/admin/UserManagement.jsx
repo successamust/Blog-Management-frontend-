@@ -78,6 +78,16 @@ const UserManagement = () => {
     }
   };
 
+  const handleDemoteToAuthor = async (userId) => {
+    try {
+      await adminAPI.demoteToAuthor(userId);
+      toast.success('Admin demoted to author');
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to demote admin to author');
+    }
+  };
+
   const handlePromoteToAuthor = async (userId) => {
     try {
       await authorsAPI.promoteToAuthor(userId);
@@ -85,6 +95,16 @@ const UserManagement = () => {
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to promote user to author');
+    }
+  };
+
+  const handleDemoteFromAuthor = async (userId) => {
+    try {
+      await authorsAPI.demoteFromAuthor(userId);
+      toast.success('User demoted from author');
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to demote user from author');
     }
   };
 
@@ -221,12 +241,35 @@ const UserManagement = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-3">
                           {user.role === 'admin' ? (
-                            <button
-                              onClick={() => handleDemote(user._id)}
-                              className="btn btn-danger !w-auto"
-                            >
-                              Demote
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleDemote(user._id)}
+                                className="btn btn-danger !w-auto"
+                              >
+                                Demote
+                              </button>
+                              <button
+                                onClick={() => handleDemoteToAuthor(user._id)}
+                                className="btn btn-danger !w-auto"
+                              >
+                                Demote to Author
+                              </button>
+                            </>
+                          ) : user.role === 'author' ? (
+                            <>
+                              <button
+                                onClick={() => handlePromote(user._id)}
+                                className="btn btn-primary !w-auto"
+                              >
+                                Promote to Admin
+                              </button>
+                              <button
+                                onClick={() => handleDemoteFromAuthor(user._id)}
+                                className="btn btn-danger !w-auto"
+                              >
+                                Demote from Author
+                              </button>
+                            </>
                           ) : (
                             <>
                               <button
@@ -235,15 +278,13 @@ const UserManagement = () => {
                               >
                                 Promote to Admin
                               </button>
-                              {user.role !== 'author' && (
-                                <button
-                                  onClick={() => handlePromoteToAuthor(user._id)}
-                                  className="btn btn-outline !w-auto flex items-center gap-2"
-                                >
-                                  <UserCheck className="w-4 h-4" />
-                                  <span>Promote to Author</span>
-                                </button>
-                              )}
+                              <button
+                                onClick={() => handlePromoteToAuthor(user._id)}
+                                className="btn btn-outline !w-auto flex items-center gap-2"
+                              >
+                                <UserCheck className="w-4 h-4" />
+                                <span>Promote to Author</span>
+                              </button>
                             </>
                           )}
                         </div>
@@ -280,12 +321,35 @@ const UserManagement = () => {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {user.role === 'admin' ? (
-                    <button
-                      onClick={() => handleDemote(user._id)}
-                      className="btn btn-danger flex-1 min-w-[140px] justify-center"
-                    >
-                      Demote
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleDemote(user._id)}
+                        className="btn btn-danger flex-1 min-w-[140px] justify-center"
+                      >
+                        Demote
+                      </button>
+                      <button
+                        onClick={() => handleDemoteToAuthor(user._id)}
+                        className="btn btn-danger flex-1 min-w-[160px] justify-center"
+                      >
+                        Demote to Author
+                      </button>
+                    </>
+                  ) : user.role === 'author' ? (
+                    <>
+                      <button
+                        onClick={() => handlePromote(user._id)}
+                        className="btn btn-primary flex-1 min-w-[160px] justify-center"
+                      >
+                        Promote to Admin
+                      </button>
+                      <button
+                        onClick={() => handleDemoteFromAuthor(user._id)}
+                        className="btn btn-danger flex-1 min-w-[160px] justify-center"
+                      >
+                        Demote from Author
+                      </button>
+                    </>
                   ) : (
                     <>
                       <button
@@ -294,15 +358,13 @@ const UserManagement = () => {
                       >
                         Promote to Admin
                       </button>
-                      {user.role !== 'author' && (
-                        <button
-                          onClick={() => handlePromoteToAuthor(user._id)}
-                          className="btn btn-outline flex-1 min-w-[160px] justify-center gap-2"
-                        >
-                          <UserCheck className="w-4 h-4" />
-                          Author
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handlePromoteToAuthor(user._id)}
+                        className="btn btn-outline flex-1 min-w-[160px] justify-center gap-2"
+                      >
+                        <UserCheck className="w-4 h-4" />
+                        Author
+                      </button>
                     </>
                   )}
                 </div>

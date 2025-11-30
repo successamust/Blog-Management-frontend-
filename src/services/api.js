@@ -378,6 +378,7 @@ export const adminAPI = {
   getUserStats: () => api.get('/auth/stats'),
   promoteUser: (userId) => api.post(`/admin/promote/${userId}`),
   demoteUser: (userId) => api.post(`/admin/demote/${userId}`),
+  demoteToAuthor: (userId) => api.post(`/admin/demote-to-author/${userId}`),
   getNewsletterStats: () => api.get('/newsletters/stats'),
   getNewsletterSubscribers: () => api.get('/newsletters/subscribers'),
   sendNewsletter: (data) => api.post('/newsletters/send', data),
@@ -397,6 +398,7 @@ export const authorsAPI = {
   getApplications: (params) => api.get('/authors/applications', { params }),
   reviewApplication: (applicationId, data) => api.post(`/authors/applications/${applicationId}/review`, data),
   promoteToAuthor: (userId) => api.post(`/authors/users/${userId}/promote`),
+  demoteFromAuthor: (userId) => api.post(`/authors/users/${userId}/demote`),
 };
 
 export const pollsAPI = {
