@@ -2,7 +2,7 @@ const DEFAULT_SITE_URL =
   process.env.SITE_URL ||
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.VITE_SITE_URL ||
-  'https://thenexusblog.vercel.app';
+  'https://www.nexusblog.xyz';
 
 const DEFAULT_API_BASE =
   process.env.API_BASE_URL ||
@@ -26,9 +26,20 @@ const escapeHtml = (value = '') =>
 const stripHtml = (value = '') => value.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 
 const toAbsoluteUrl = (value) => {
-  if (!value) return FALLBACK_IMAGE;
+  if (!value || value.trim() === '') return FALLBACK_IMAGE;
+  
+  // Already absolute URL
   if (/^https?:\/\//i.test(value)) return value;
+  
+  // Protocol-relative URL
   if (value.startsWith('//')) return `https:${value}`;
+  
+  // Check if it's an API-hosted image
+  if (value.includes(DEFAULT_API_BASE) || value.startsWith('/v1/')) {
+    return value;
+  }
+  
+  // Relative path - make it absolute
   const normalizedPath = value.startsWith('/') ? value : `/${value}`;
   return `${DEFAULT_SITE_URL}${normalizedPath}`;
 };
@@ -78,7 +89,21 @@ const handler = async (req, res) => {
         stripHtml(post.content).slice(0, 180) ||
         FALLBACK_DESCRIPTION
     );
-    const imageUrl = toAbsoluteUrl(post.featuredImage);
+    
+    // Try multiple possible image field names
+    const imageSource = post.featuredImage || post.featured_image || post.image || post.thumbnail || post.coverImage;
+    const imageUrl = toAbsoluteUrl(imageSource);
+    
+    // Log for debugging (remove in production if needed)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[social-preview] Post data:', {
+        slug: slugValue,
+        title: post.title,
+        hasFeaturedImage: !!post.featuredImage,
+        imageSource,
+        imageUrl,
+      });
+    }
 
     const html = `<!doctype html>
 <html lang="en">

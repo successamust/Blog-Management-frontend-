@@ -102,13 +102,41 @@ const INDEX_HTML = `<!doctype html>
 
 export default async (req, res) => {
   const userAgent = req.headers['user-agent'] || '';
-  const slug = req.query?.slug;
   
+  // Extract slug from various possible sources
+  // In Vercel, dynamic route params like [slug] are available in req.query
+  let slug = req.query?.slug;
+  
+  // Also check if slug is passed as a path parameter (for direct API calls)
+  if (!slug) {
+    // Try to extract from the URL path
+    const urlPath = req.url || '';
+    const pathMatch = urlPath.match(/\/posts\/([^/?&#]+)/) || urlPath.match(/\/api\/posts\/([^/?&#]+)/);
+    if (pathMatch) {
+      slug = decodeURIComponent(pathMatch[1]);
+    }
+  }
+  
+  // Log for debugging (helpful for troubleshooting)
+  if (process.env.NODE_ENV !== 'production' || process.env.VERCEL_ENV === 'preview') {
+    console.log('[posts/slug] Request:', {
+      url: req.url,
+      query: req.query,
+      userAgent: userAgent.substring(0, 100), // Truncate for logs
+      isCrawler: isCrawler(userAgent),
+      slug,
+    });
+  }
+  
+  // If it's a crawler and we have a slug, serve the social preview
   if (isCrawler(userAgent) && slug) {
-    req.query = { slug };
+    // Pass slug to social preview handler
+    req.query = { slug: slug };
     return handler(req, res);
   }
   
+  // For regular users (browsers), serve the React app
+  // The React app will handle client-side routing and set OG tags dynamically
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache');
   res.status(200).send(INDEX_HTML);

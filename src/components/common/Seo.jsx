@@ -7,7 +7,7 @@ import StructuredData, {
 } from './StructuredData';
 
 const SITE_NAME = 'Nexus';
-const DEFAULT_BASE_URL = 'https://thenexusblog.vercel.app';
+const DEFAULT_BASE_URL = 'https://www.nexusblog.xyz';
 const DEFAULT_DESCRIPTION = 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.';
 const DEFAULT_IMAGE = '/email-assets/nexus-og-image.png';
 
