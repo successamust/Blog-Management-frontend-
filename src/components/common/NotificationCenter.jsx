@@ -200,13 +200,22 @@ const NotificationCenter = () => {
             </div>
 
             {/* Filter and Settings */}
-            <div className="px-4 py-2 border-b border-[var(--border-subtle)] space-y-2">
+            <div className="px-3 sm:px-4 py-2 border-b border-[var(--border-subtle)] space-y-2">
               <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-muted" />
+                <Filter className="w-4 h-4 text-muted flex-shrink-0" />
                 <select
                   value={filterType || ''}
                   onChange={(e) => setFilterType(e.target.value || null)}
-                  className="flex-1 text-xs bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                  className="flex-1 text-xs sm:text-sm bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded px-2 sm:px-3 py-2 sm:py-1.5 focus:outline-none focus:ring-1 focus:ring-[var(--accent)] min-h-[2.5rem] sm:min-h-0 appearance-none"
+                  style={{
+                    WebkitAppearance: 'none',
+                    MozAppearance: 'none',
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 0.5rem center',
+                    backgroundSize: '12px',
+                    paddingRight: '2rem'
+                  }}
                 >
                   <option value="">All Types</option>
                   <option value="comment">Comments</option>
@@ -229,29 +238,31 @@ const NotificationCenter = () => {
                 >
                   {settings ? (
                     <>
-                      <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center justify-between text-xs sm:text-sm">
                         <span className="text-secondary">Sound Notifications</span>
                         <button
                           onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })}
-                          className="p-1 rounded hover:bg-[var(--surface-subtle)]"
+                          className="p-1.5 sm:p-1 rounded hover:bg-[var(--surface-subtle)] touch-manipulation"
+                          aria-label={settings.soundEnabled ? 'Disable sound' : 'Enable sound'}
                         >
                           {settings.soundEnabled ? (
-                            <Volume2 className="w-4 h-4 text-emerald-500" />
+                            <Volume2 className="w-4 h-4 sm:w-4 sm:h-4 text-emerald-500" />
                           ) : (
-                            <VolumeX className="w-4 h-4 text-muted" />
+                            <VolumeX className="w-4 h-4 sm:w-4 sm:h-4 text-muted" />
                           )}
                         </button>
                       </div>
-                      <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center justify-between text-xs sm:text-sm">
                         <span className="text-secondary">Browser Notifications</span>
                         <button
                           onClick={() => updateSettings({ browserNotificationsEnabled: !settings.browserNotificationsEnabled })}
-                          className="p-1 rounded hover:bg-[var(--surface-subtle)]"
+                          className="p-1.5 sm:p-1 rounded hover:bg-[var(--surface-subtle)] touch-manipulation"
+                          aria-label={settings.browserNotificationsEnabled ? 'Disable browser notifications' : 'Enable browser notifications'}
                         >
                           {settings.browserNotificationsEnabled ? (
-                            <CheckCircle className="w-4 h-4 text-emerald-500" />
+                            <CheckCircle className="w-4 h-4 sm:w-4 sm:h-4 text-emerald-500" />
                           ) : (
-                            <XCircle className="w-4 h-4 text-muted" />
+                            <XCircle className="w-4 h-4 sm:w-4 sm:h-4 text-muted" />
                           )}
                         </button>
                       </div>
@@ -268,14 +279,14 @@ const NotificationCenter = () => {
             {/* Notifications List */}
             <div className="overflow-y-auto flex-1">
               {loading ? (
-                <div className="p-8 text-center">
+                <div className="p-6 sm:p-8 text-center">
                   <Spinner size="md" />
-                  <p className="text-sm text-muted mt-3">Loading notifications...</p>
+                  <p className="text-xs sm:text-sm text-muted mt-3">Loading notifications...</p>
                 </div>
               ) : notifications.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Bell className="w-12 h-12 mx-auto text-muted mb-3 opacity-50" />
-                  <p className="text-sm text-muted">No notifications yet</p>
+                <div className="p-6 sm:p-8 text-center">
+                  <Bell className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-muted mb-3 opacity-50" />
+                  <p className="text-xs sm:text-sm text-muted">No notifications yet</p>
                 </div>
               ) : (
                 <div className="divide-y divide-[var(--border-subtle)]">
@@ -298,7 +309,7 @@ const NotificationCenter = () => {
                         <motion.div
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
-                          className={`p-4 hover:bg-[var(--surface-subtle)] transition-colors cursor-pointer ${
+                          className={`p-3 sm:p-4 hover:bg-[var(--surface-subtle)] transition-colors cursor-pointer ${
                             group.unreadCount > 0 ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
                           }`}
                           onClick={() => {
@@ -323,13 +334,13 @@ const NotificationCenter = () => {
                             }
                           }}
                         >
-                          <div className="flex items-start gap-3">
+                          <div className="flex items-start gap-2 sm:gap-3">
                             <div className="flex-shrink-0 mt-0.5">
                               {getNotificationIcon(mainNotification.type)}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <p className="text-sm font-medium text-primary break-words">
+                                <p className="text-xs sm:text-sm font-medium text-primary break-words">
                                   {isGrouped 
                                     ? `${groupCount} ${mainNotification.type === 'comment' ? 'new comments' : mainNotification.type === 'like' ? 'new likes' : mainNotification.type === 'reply' ? 'new replies' : 'notifications'}`
                                     : mainNotification.title
@@ -369,10 +380,10 @@ const NotificationCenter = () => {
                                   deleteNotification(notif._id || notif.id);
                                 });
                               }}
-                              className="flex-shrink-0 p-1 hover:bg-[var(--surface-subtle)] rounded"
+                              className="flex-shrink-0 p-1.5 sm:p-1 hover:bg-[var(--surface-subtle)] rounded touch-manipulation"
                               aria-label="Delete notification"
                             >
-                              <X className="w-4 h-4 text-muted" />
+                              <X className="w-4 h-4 sm:w-4 sm:h-4 text-muted" />
                             </button>
                           </div>
                         </motion.div>
@@ -382,16 +393,17 @@ const NotificationCenter = () => {
                           <motion.div
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="absolute left-0 right-0 sm:left-auto sm:right-auto top-full mt-1 bg-[var(--surface-bg)] border border-[var(--border-subtle)] rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto w-full sm:w-80"
+                            className="absolute left-0 right-0 sm:left-auto sm:right-auto top-full mt-1 bg-[var(--surface-bg)] border border-[var(--border-subtle)] rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto w-full sm:w-80 mx-0 sm:mx-0"
                             onClick={(e) => e.stopPropagation()}
+                            style={{ maxWidth: 'calc(100vw - 4rem)' }}
                           >
                             {group.notifications.slice(0, 5).map((notif) => (
                               <div
                                 key={notif._id || notif.id}
-                                className="p-3 border-b border-[var(--border-subtle)] last:border-b-0 hover:bg-[var(--surface-subtle)]"
+                                className="p-2.5 sm:p-3 border-b border-[var(--border-subtle)] last:border-b-0 hover:bg-[var(--surface-subtle)]"
                               >
-                                <p className="text-xs font-medium text-primary">{notif.title}</p>
-                                <p className="text-xs text-secondary mt-0.5">{notif.message}</p>
+                                <p className="text-xs sm:text-xs font-medium text-primary break-words">{notif.title}</p>
+                                <p className="text-xs text-secondary mt-0.5 break-words line-clamp-2">{notif.message}</p>
                                 {notif.sender && (
                                   <p className="text-xs text-muted mt-1">by {notif.sender.username}</p>
                                 )}
@@ -413,19 +425,19 @@ const NotificationCenter = () => {
 
             {/* Footer */}
             {notifications.length > 0 && (
-              <div className="p-3 border-t border-[var(--border-subtle)] space-y-2">
+              <div className="p-3 sm:p-4 border-t border-[var(--border-subtle)] space-y-2">
                 {hasMore && (
                   <button
                     onClick={loadMore}
                     disabled={loading}
-                    className="w-full text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] text-center py-2 disabled:opacity-50"
+                    className="w-full text-xs sm:text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] text-center py-2.5 sm:py-2 disabled:opacity-50 touch-manipulation"
                   >
                     {loading ? <Spinner size="sm" /> : 'Load More'}
                   </button>
                 )}
                 <button
                   onClick={clearAll}
-                  className="w-full text-sm text-rose-600 hover:text-rose-700 text-center"
+                  className="w-full text-xs sm:text-sm text-rose-600 hover:text-rose-700 text-center py-2.5 sm:py-2 touch-manipulation"
                 >
                   Clear all notifications
                 </button>
