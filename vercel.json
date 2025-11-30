@@ -7,12 +7,12 @@
       "destination": "/api/social-preview?slug=$1"
     },
     {
-      "source": "/posts/(.*)",
-      "destination": "/api/posts/$1"
-    },
-    {
       "source": "/favicon.ico",
       "destination": "/api/favicon.ico"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
