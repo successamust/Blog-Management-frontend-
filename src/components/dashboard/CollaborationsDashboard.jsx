@@ -396,7 +396,7 @@ const CollaborationsDashboard = () => {
           <Users className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-muted" />
           <h3 className="text-lg sm:text-xl font-bold text-primary mb-2">No Pending Invitations</h3>
           <p className="text-sm sm:text-base text-muted mb-6 px-4">
-            You don't have any pending invitations at the moment.
+            You don&apos;t have any pending invitations at the moment.
           </p>
           <Link
             to="/admin/posts"

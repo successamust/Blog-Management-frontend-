@@ -32,6 +32,8 @@ const CodePlayground = ({ code, language = 'javascript', editable = true }) => {
         };
 
         try {
+          // SECURITY WARNING: Using eval() is dangerous. Only use in trusted/admin contexts.
+          // Consider using a sandboxed environment or disabling in production.
           const result = eval(editedCode);
           if (result !== undefined) {
             consoleLogs.push(String(result));

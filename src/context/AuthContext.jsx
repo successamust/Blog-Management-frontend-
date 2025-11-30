@@ -147,7 +147,14 @@ export const AuthProvider = ({ children }) => {
               type: 'LOGIN_SUCCESS',
               payload: { token, user: storedUser },
             });
+          } else if (error.response?.status === 401) {
+            // If 401 on /auth/me, token is invalid - clear it but don't force logout
+            // This allows users to browse public content even with invalid token
+            clearAuthToken();
+            // Keep user in localStorage for now, just mark as not authenticated
+            dispatch({ type: 'LOGOUT' });
           } else {
+            // For other errors, clear everything
             clearAuthToken();
             localStorage.removeItem('user');
             localStorage.removeItem('lastAuthCheck');

@@ -165,7 +165,7 @@ const Dashboard = () => {
       let response;
       
       switch (activeTab) {
-        case 'posts':
+        case 'posts': {
           response = await dashboardAPI.getPosts({ limit: 1000 });
           const allPosts = response.data.posts || [];
           const userId = user?._id || user?.id;
@@ -213,6 +213,7 @@ const Dashboard = () => {
           
           setTabData(prev => ({ ...prev, posts: userPosts }));
           break;
+        }
         case 'comments':
           response = await dashboardAPI.getComments({ limit: 20 });
           setTabData(prev => ({ ...prev, comments: response.data.comments || [] }));

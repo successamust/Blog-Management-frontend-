@@ -63,9 +63,23 @@ const fetchPostBySlug = async (slug) => {
   return payload?.post || payload?.data || payload;
 };
 
+const isCrawler = (userAgent) => {
+  if (!userAgent) return false;
+  const ua = userAgent.toLowerCase();
+  const crawlers = [
+    'facebookexternalhit', 'Facebot', 'Twitterbot', 'LinkedInBot',
+    'WhatsApp', 'Slackbot', 'Applebot', 'Googlebot', 'Bingbot',
+    'YandexBot', 'Pinterest', 'redditbot', 'SkypeUriPreview',
+    'TelegramBot', 'Discordbot', 'Slurp', 'DuckDuckBot', 'Baiduspider',
+    'ia_archiver', 'Slack', 'Discord', 'Skype', 'MetaInspector', 'facebookcatalog'
+  ];
+  return crawlers.some(crawler => ua.includes(crawler.toLowerCase()));
+};
+
 const handler = async (req, res) => {
   const slugParam = req.query?.slug;
   const slugValue = Array.isArray(slugParam) ? slugParam[0] : slugParam;
+  const userAgent = req.headers['user-agent'] || '';
 
   if (!slugValue) {
     res.status(400).send('Missing slug');
@@ -81,6 +95,14 @@ const handler = async (req, res) => {
 
     const postPath = `/posts/${post.slug || slugValue}`;
     const canonicalUrl = `${DEFAULT_SITE_URL}${postPath}`;
+    
+    // For regular browsers (not crawlers), redirect immediately to the actual post
+    if (!isCrawler(userAgent)) {
+      res.redirect(302, canonicalUrl);
+      return;
+    }
+    
+    // For crawlers, generate the preview HTML with meta tags
     const title = escapeHtml(post.title ? `${post.title} | Nexus` : 'Nexus - Stories Worth Sharing');
     const description = escapeHtml(
       post.excerpt ||

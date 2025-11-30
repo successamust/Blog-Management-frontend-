@@ -348,7 +348,10 @@ const PostDetail = () => {
       
     } catch (error) {
       console.error('Error fetching post:', error);
-      toast.error('Failed to load post');
+      // Don't show error toast if it's a 401 - the API interceptor handles it
+      if (error.response?.status !== 401) {
+        toast.error('Failed to load post');
+      }
       fetchedSlugRef.current = null;
     } finally {
       setLoading(false);
@@ -364,8 +367,7 @@ const PostDetail = () => {
     if (slug) {
       fetchPostData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]);
+  }, [slug, fetchPostData]);
 
   const refreshComments = useCallback(async () => {
     if (!postId) return;
@@ -789,12 +791,8 @@ const PostDetail = () => {
       throw new Error('Post missing');
     }
 
-    try {
-      await commentsAPI.update(commentId, { content: newContent.trim() });
-      await refreshComments();
-    } catch (error) {
-      throw error;
-    }
+    await commentsAPI.update(commentId, { content: newContent.trim() });
+    await refreshComments();
   };
 
   const handleDeleteComment = async (commentId) => {
@@ -808,12 +806,8 @@ const PostDetail = () => {
       throw new Error('Post missing');
     }
 
-    try {
-      await commentsAPI.delete(commentId);
-      await refreshComments();
-    } catch (error) {
-      throw error;
-    }
+    await commentsAPI.delete(commentId);
+    await refreshComments();
   };
 
   const handleReplyToComment = async (parentCommentId, replyContent) => {
@@ -827,15 +821,11 @@ const PostDetail = () => {
       throw new Error('Post missing');
     }
 
-    try {
-      await commentsAPI.create(postId, {
-        content: replyContent.trim(),
-        parentComment: parentCommentId
-      });
-      await refreshComments();
-    } catch (error) {
-      throw error;
-    }
+    await commentsAPI.create(postId, {
+      content: replyContent.trim(),
+      parentComment: parentCommentId
+    });
+    await refreshComments();
   };
 
   if (loading) {

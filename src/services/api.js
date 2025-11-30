@@ -12,8 +12,8 @@ if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
   );
 }
 
-// Log API configuration in development
-if (import.meta.env.DEV) {
+// Log API configuration in development (only in verbose mode)
+if (import.meta.env.DEV && import.meta.env.VITE_VERBOSE_LOGGING === 'true') {
   console.log('[API] Base URL:', BASE_URL);
   console.log('[API] Environment:', import.meta.env.MODE);
 }
@@ -97,8 +97,8 @@ api.interceptors.response.use(
       });
     }
     
-    // Log errors (but not sensitive data)
-    if (!error.silent) {
+    // Log errors (but not sensitive data) - only in development
+    if (!error.silent && import.meta.env.DEV) {
       console.error('API request failed:', {
         url: error.config?.url,
         method: error.config?.method,
@@ -112,10 +112,87 @@ api.interceptors.response.use(
       console.error('Network error:', error.message);
     }
     
+    
     if (error.response?.status === 401) {
-      clearAuthToken();
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Only redirect to login for protected endpoints, not public content
+      // Axios provides the URL in error.config.url (relative to baseURL)
+      const url = error.config?.url || '';
+      const baseURL = error.config?.baseURL || '';
+      
+      // Normalize URL - remove base path to check endpoint pattern
+      // Handle both /v1/posts/slug and /posts/slug formats, and full URLs
+      let normalizedUrl = url.replace(/^\/v1\//, '').replace(/^\//, '');
+      // Also handle full URLs if baseURL is included in url
+      if (normalizedUrl.includes('://')) {
+        normalizedUrl = normalizedUrl.replace(/^https?:\/\/[^/]+/, '').replace(/^\/v1\//, '').replace(/^\//, '');
+      }
+      // Remove baseURL from normalizedUrl if it's there
+      if (baseURL && normalizedUrl.startsWith(baseURL.replace(/^https?:\/\/[^/]+/, ''))) {
+        normalizedUrl = normalizedUrl.replace(baseURL.replace(/^https?:\/\/[^/]+/, ''), '').replace(/^\/v1\//, '').replace(/^\//, '');
+      }
+      
+      
+      // Check if this is a public endpoint that shouldn't require authentication
+      // Match patterns like: posts/slug, categories/slug, authors/username, tags/tag, search
+      const isPublicEndpoint = 
+        // Public post endpoints (GET /posts/:slug, but not create/update/delete/bulk)
+        (normalizedUrl.match(/^posts\/[^/]+$/) && !normalizedUrl.includes('/create') && !normalizedUrl.includes('/update') && !normalizedUrl.includes('/delete') && !normalizedUrl.includes('/bulk')) ||
+        // Public post-related endpoints (related posts)
+        normalizedUrl.match(/^posts\/[^/]+\/related$/) ||
+        // Public comments endpoints (GET comments for a post)
+        normalizedUrl.match(/^comments\/[^/]+\/comments$/) ||
+        // Public category endpoints
+        (normalizedUrl.startsWith('categories') && !normalizedUrl.includes('/create') && !normalizedUrl.includes('/update') && !normalizedUrl.includes('/delete')) ||
+        // Public author profile endpoints
+        normalizedUrl.match(/^authors\/[^/]+$/) ||
+        // Public tag endpoints
+        normalizedUrl.match(/^tags\/[^/]+$/) ||
+        // Search endpoint
+        normalizedUrl.startsWith('search') ||
+        // Public polls endpoint (GET poll by post)
+        normalizedUrl.match(/^polls\/post\/[^/]+$/);
+      
+      // Special case: /auth/me endpoint - NEVER redirect for this endpoint
+      // It's just a verification call, and failing it shouldn't force login
+      // This allows users to browse public content even with invalid/expired token
+      const isAuthMe = normalizedUrl === 'auth/me';
+      
+      // Special case: /collaborations endpoints - these are optional and should fail silently
+      // They're already handled with try-catch in components, so don't redirect
+      const isCollaborationsEndpoint = normalizedUrl.startsWith('collaborations/');
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      const isOnPublicPage = currentPath && (
+        currentPath.startsWith('/posts/') ||
+        currentPath.startsWith('/categories/') ||
+        currentPath.startsWith('/authors/') ||
+        currentPath.startsWith('/tags/') ||
+        currentPath.startsWith('/search') ||
+        currentPath === '/' ||
+        currentPath.startsWith('/preview/')
+      );
+      
+      // For protected endpoints, redirect to login (unless it's /auth/me, collaborations, or a public endpoint)
+      // IMPORTANT: /auth/me and /collaborations should NEVER cause a redirect
+      if (!isPublicEndpoint && !isAuthMe && !isCollaborationsEndpoint) {
+          clearAuthToken();
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+      } else {
+        // For public endpoints with 401, just clear invalid token but don't redirect
+        // This allows users to view public content even if their token is invalid
+        if (import.meta.env.DEV) {
+          console.warn('[API] 401 on public endpoint or auth/me on public page, clearing token but not redirecting:', {
+            normalizedUrl,
+            fullUrl: url,
+            currentPage: currentPath,
+            isPublicEndpoint,
+            isAuthMe,
+            isOnPublicPage
+          });
+        }
+        clearAuthToken();
+        // Don't remove user from localStorage as they might still be viewing public content
+      }
     }
     
     if (error.response?.status === 404) {

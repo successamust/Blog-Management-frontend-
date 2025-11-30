@@ -251,8 +251,8 @@ const PostTemplates = ({ onSelectTemplate }) => {
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 sm:p-4 mb-4">
         <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 text-xs sm:text-sm">How to Use Templates:</h4>
         <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside mb-3">
-          <li>Click "Use Template" to apply a template to your post form</li>
-          <li>Create custom templates with "New Template" button</li>
+          <li>Click &quot;Use Template&quot; to apply a template to your post form</li>
+          <li>Create custom templates with &quot;New Template&quot; button</li>
         </ul>
         {isAdmin() && defaultTemplates.length === 0 && (
           <button
