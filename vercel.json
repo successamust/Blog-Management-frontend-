@@ -11,7 +11,11 @@
       "destination": "/api/posts/$1"
     },
     {
-      "source": "/((?!assets|api|_next|email-assets|nexus-logo-icon\\.svg|manifest\\.json|sw\\.js|favicon\\.ico|.*\\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)).*)",
+      "source": "/(login|register|dashboard|admin|categories|search|authors|tags|newsletter|forgot-password|reset-password|unsubscribe|collaboration)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(login|register|dashboard|admin|categories|search|authors|tags|newsletter|forgot-password|reset-password|unsubscribe|collaboration)/(.*)",
       "destination": "/index.html"
     }
   ],

@@ -1,3 +1,25 @@
-# Netlify redirects for SPA routing
-/*    /index.html   200
+# Netlify/Vercel redirects for SPA routing
+# Static files are served automatically, these redirects only apply to non-file routes
 
+# Exclude static assets and API routes
+/assets/* 200
+/api/* 200
+/email-assets/* 200
+/*.js 200
+/*.css 200
+/*.png 200
+/*.jpg 200
+/*.jpeg 200
+/*.gif 200
+/*.svg 200
+/*.woff 200
+/*.woff2 200
+/*.ttf 200
+/*.eot 200
+/*.ico 200
+/manifest.json 200
+/sw.js 200
+/nexus-logo-icon.svg 200
+
+# SPA fallback - all other routes go to index.html
+/*    /index.html   200
