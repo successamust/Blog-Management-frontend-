@@ -260,9 +260,11 @@ const PostDetail = () => {
       return;
     }
     
+    // Mark that we're fetching this slug
+    fetchedSlugRef.current = slug;
+    
     try {
       setLoading(true);
-      fetchedSlugRef.current = slug;
       const postRes = await postsAPI.getBySlug(slug);
       // Handle different API response structures
       const post = postRes.data?.post || postRes.data?.data || postRes.data;
