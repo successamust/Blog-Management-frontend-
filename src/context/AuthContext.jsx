@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { getAuthToken, setAuthToken, clearAuthToken } from '../utils/tokenStorage.js';
@@ -64,8 +64,7 @@ const AuthContext = createContext(defaultContextValue);
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  useEffect(() => {
-    const verifyUser = async () => {
+  const verifyUser = useCallback(async () => {
       const token = getAuthToken();
       const user = localStorage.getItem('user');
       const lastAuthCheck = localStorage.getItem('lastAuthCheck');
@@ -224,10 +223,72 @@ export const AuthProvider = ({ children }) => {
       } else {
         dispatch({ type: 'LOGOUT' });
       }
+    }, []);
+    
+    // Initial verification on mount
+    verifyUser();
+    
+    // Re-verify user when tab becomes visible again (user comes back to tab)
+    // This ensures token is restored and auth state is refreshed
+    let visibilityTimeout = null;
+    const handleVisibilityChange = () => {
+      if (!document.hidden && typeof document !== 'undefined') {
+        // Clear any pending timeout
+        if (visibilityTimeout) {
+          clearTimeout(visibilityTimeout);
+        }
+        
+        // Tab became visible - immediately restore token from storage
+        // This is critical because inMemoryToken might be cleared
+        const token = getAuthToken(); // This will restore from cookies/localStorage
+        const user = localStorage.getItem('user');
+        
+        if (token && user) {
+          // If we have token and user, ensure auth state is set
+          // Use a small delay to avoid race conditions with other components
+          visibilityTimeout = setTimeout(() => {
+            // Only verify if we're not already authenticated or if it's been a while
+            const lastCheck = localStorage.getItem('lastAuthCheck');
+            const now = Date.now();
+            const timeSinceLastCheck = lastCheck ? (now - parseInt(lastCheck)) : Infinity;
+            
+            // Re-verify if it's been more than 1 minute since last check
+            if (timeSinceLastCheck > 60000 || !state.isAuthenticated) {
+              verifyUser();
+            } else {
+              // Just ensure state is set with cached data
+              try {
+                const storedUser = JSON.parse(user);
+                if (!state.isAuthenticated) {
+                  dispatch({
+                    type: 'LOGIN_SUCCESS',
+                    payload: { token, user: storedUser },
+                  });
+                }
+              } catch (e) {
+                // If parsing fails, verify
+                verifyUser();
+              }
+            }
+          }, 300);
+        }
+      }
     };
     
-    verifyUser();
-  }, []);
+    // Listen for tab visibility changes
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+    
+    return () => {
+      if (visibilityTimeout) {
+        clearTimeout(visibilityTimeout);
+      }
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+    };
+  }, [verifyUser]);
 
   const login = async (credentials) => {
     dispatch({ type: 'LOGIN_START' });
