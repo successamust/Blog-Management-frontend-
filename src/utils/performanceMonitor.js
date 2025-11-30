@@ -83,7 +83,6 @@ class PerformanceMonitor {
             }
           }
         });
-        
         observer.observe({ entryTypes: ['largest-contentful-paint'] });
       } catch (e) {
         // PerformanceObserver not supported
