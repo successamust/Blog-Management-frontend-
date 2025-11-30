@@ -9,6 +9,10 @@
     {
       "source": "/posts/(.*)",
       "destination": "/api/posts/$1"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/api/favicon.ico"
     }
   ],
   "headers": [
