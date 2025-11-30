@@ -1,5 +1,5 @@
-const CACHE_NAME = 'nexus-blog-v2';
-const RUNTIME_CACHE = 'nexus-runtime-v2';
+const CACHE_NAME = 'nexus-blog-v3';
+const RUNTIME_CACHE = 'nexus-runtime-v3';
 
 // Detect if we're in development mode
 const isDevelopment = 
@@ -84,6 +84,38 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Network-first strategy for JS files to avoid stale React chunks
+  const isJSFile = url.pathname.endsWith('.js') || 
+                   url.pathname.includes('/assets/js/') ||
+                   (request.headers.get('accept') || '').includes('application/javascript');
+  
+  if (isJSFile) {
+    // Network-first for JS files - always try network first
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Only cache if successful and valid
+          if (response && response.status === 200 && response.type === 'basic') {
+            const responseToCache = response.clone();
+            caches.open(RUNTIME_CACHE)
+              .then((cache) => {
+                cache.put(request, responseToCache).catch(() => {});
+              });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache only if network fails
+          return caches.match(request).then((cached) => {
+            if (cached) return cached;
+            throw new Error('Network and cache both failed');
+          });
+        })
+    );
+    return;
+  }
+
+  // Cache-first for other assets (images, fonts, CSS)
   event.respondWith(
     caches.match(request)
       .then((cachedResponse) => {
@@ -98,22 +130,19 @@ self.addEventListener('fetch', (event) => {
               return response;
             }
 
-            // Only cache static assets (images, fonts, CSS, JS bundles)
+            // Only cache non-JS static assets
             const contentType = response.headers.get('content-type') || '';
             const isStaticAsset = 
               contentType.startsWith('image/') ||
               contentType.startsWith('font/') ||
               contentType.includes('text/css') ||
-              (contentType.includes('application/javascript') && !url.pathname.includes('/src/')) ||
-              url.pathname.match(/\.(jpg|jpeg|png|gif|svg|webp|woff|woff2|ttf|eot|css|js)$/i);
+              url.pathname.match(/\.(jpg|jpeg|png|gif|svg|webp|woff|woff2|ttf|eot|css)$/i);
 
             if (isStaticAsset) {
               const responseToCache = response.clone();
               caches.open(RUNTIME_CACHE)
                 .then((cache) => {
-                  cache.put(request, responseToCache).catch(() => {
-                    // Ignore cache errors
-                  });
+                  cache.put(request, responseToCache).catch(() => {});
                 });
             }
 
