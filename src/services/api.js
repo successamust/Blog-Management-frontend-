@@ -227,24 +227,31 @@ api.interceptors.response.use(
         currentPath.startsWith('/settings')
       );
       
-      // If 404 on a protected endpoint or protected page, likely expired/invalid token
-      // Clear token and redirect to login (similar to 401 handling)
+      // If 404 on a protected endpoint or protected page, might be expired token or server issue
+      // Be more conservative - only clear token if we're sure it's an auth issue
       if (isProtectedEndpoint || isProtectedPage) {
-        // Don't show 404 error toast - it's likely an auth issue
+        // Don't show 404 error toast - it might be an auth issue
         error.silent = true;
         
-        // For protected endpoints/pages, treat 404 as auth failure
-        // Clear token and redirect to login
-        clearAuthToken();
-        localStorage.removeItem('user');
-        localStorage.removeItem('lastAuthCheck');
+        // Only clear token and redirect if:
+        // 1. We're on a protected page AND
+        // 2. The endpoint is definitely an auth endpoint (not just any protected endpoint)
+        // This prevents clearing valid tokens due to server issues or missing endpoints
+        const isAuthEndpoint = normalizedUrl.startsWith('auth/') && 
+          (normalizedUrl === 'auth/me' || normalizedUrl.startsWith('auth/allusers') || normalizedUrl.startsWith('auth/stats'));
         
-        // Only redirect if we're actually on a protected page
-        // For API calls from protected pages, the component will handle the redirect
-        if (isProtectedPage && typeof window !== 'undefined') {
+        // Only clear token for auth endpoints, not for all protected endpoints
+        // Other 404s might be legitimate (missing resources, etc.)
+        if (isProtectedPage && isAuthEndpoint && typeof window !== 'undefined') {
+          // This is likely an auth issue - clear token and redirect
+          clearAuthToken();
+          localStorage.removeItem('user');
+          localStorage.removeItem('lastAuthCheck');
           const redirectPath = `/login?redirect=${encodeURIComponent(currentPath)}`;
           window.location.href = redirectPath;
         }
+        // For other protected endpoints with 404, don't clear token
+        // It might be a server issue or missing resource, not an auth problem
       }
     }
     

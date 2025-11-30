@@ -147,34 +147,73 @@ export const AuthProvider = ({ children }) => {
               type: 'LOGIN_SUCCESS',
               payload: { token, user: storedUser },
             });
-          } else if (error.response?.status === 401 || error.response?.status === 404) {
-            // If 401 or 404 on /auth/me, token is invalid/expired or endpoint doesn't exist
-            // Clear token and mark as not authenticated
+          } else if (error.response?.status === 401) {
+            // If 401 on /auth/me, token is invalid/expired - clear it
             clearAuthToken();
             localStorage.removeItem('user');
             localStorage.removeItem('lastAuthCheck');
-            // Mark as not authenticated - ProtectedRoute will handle redirect
             dispatch({ type: 'LOGOUT' });
+          } else if (error.response?.status === 404) {
+            // If 404 on /auth/me, endpoint might not exist or server issue
+            // Don't clear token immediately - might be a temporary server issue
+            // Use cached user data and keep token, but log the error
+            console.warn('Auth endpoint returned 404, using cached user data');
+            try {
+              const storedUser = JSON.parse(user);
+              dispatch({
+                type: 'LOGIN_SUCCESS',
+                payload: { token, user: storedUser },
+              });
+            } catch (parseError) {
+              // If we can't parse user data, clear everything
+              clearAuthToken();
+              localStorage.removeItem('user');
+              localStorage.removeItem('lastAuthCheck');
+              dispatch({ type: 'LOGOUT' });
+            }
+          } else if (!error.response) {
+            // Network error - use cached data, don't clear token
+            console.warn('Network error during auth verification, using cached user data');
+            try {
+              const storedUser = JSON.parse(user);
+              dispatch({
+                type: 'LOGIN_SUCCESS',
+                payload: { token, user: storedUser },
+              });
+            } catch (parseError) {
+              // If we can't parse user data, clear everything
+              clearAuthToken();
+              localStorage.removeItem('user');
+              localStorage.removeItem('lastAuthCheck');
+              dispatch({ type: 'LOGOUT' });
+            }
+          } else if (error.response?.status >= 500) {
+            // Server error - use cached data, don't clear token
+            console.warn('Server error during auth verification, using cached user data');
+            try {
+              const storedUser = JSON.parse(user);
+              dispatch({
+                type: 'LOGIN_SUCCESS',
+                payload: { token, user: storedUser },
+              });
+            } catch (parseError) {
+              // If we can't parse user data, clear everything
+              clearAuthToken();
+              localStorage.removeItem('user');
+              localStorage.removeItem('lastAuthCheck');
+              dispatch({ type: 'LOGOUT' });
+            }
           } else {
-            // For other errors (network, 500, etc.), try to use cached data if available
-            // Only clear everything if it's a critical error
-            if (error.response?.status >= 500 || !error.response) {
-              // Network error or server error - try to use cached user data
-              try {
-                const storedUser = JSON.parse(user);
-                dispatch({
-                  type: 'LOGIN_SUCCESS',
-                  payload: { token, user: storedUser },
-                });
-              } catch (parseError) {
-                // If we can't parse user data, clear everything
-                clearAuthToken();
-                localStorage.removeItem('user');
-                localStorage.removeItem('lastAuthCheck');
-                dispatch({ type: 'LOGOUT' });
-              }
-            } else {
-              // For other client errors, clear everything
+            // For other client errors (400, 403, etc.), use cached data
+            // Don't clear token unless it's definitely invalid
+            console.warn('Auth verification error, using cached user data:', error.response?.status);
+            try {
+              const storedUser = JSON.parse(user);
+              dispatch({
+                type: 'LOGIN_SUCCESS',
+                payload: { token, user: storedUser },
+              });
+            } catch (parseError) {
               clearAuthToken();
               localStorage.removeItem('user');
               localStorage.removeItem('lastAuthCheck');
