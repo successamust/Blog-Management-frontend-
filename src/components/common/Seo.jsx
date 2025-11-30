@@ -93,6 +93,7 @@ const Seo = ({
   structuredData,
   post,
   breadcrumbs,
+  canonicalUrl: providedCanonicalUrl,
 }) => {
   useEffect(() => {
     if (typeof document === 'undefined') {
@@ -105,7 +106,8 @@ const Seo = ({
         ? `${window.location.pathname}${window.location.search || ''}`
         : '/';
 
-    const canonicalUrl = ensureAbsoluteUrl(url || pathFallback, baseUrl) || baseUrl;
+    const canonicalUrl = ensureAbsoluteUrl(providedCanonicalUrl || url || pathFallback, baseUrl) || baseUrl;
+    const ogUrl = ensureAbsoluteUrl(url || pathFallback, baseUrl) || baseUrl;
     const documentTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} - Stories Worth Sharing`;
     const ogTitle = title || `${SITE_NAME} - Stories Worth Sharing`;
     const metaDescription = getDefaultedText(description);
@@ -119,7 +121,7 @@ const Seo = ({
 
     upsertMetaTag('property', 'og:type', type);
     upsertMetaTag('property', 'og:site_name', SITE_NAME);
-    upsertMetaTag('property', 'og:url', canonicalUrl);
+    upsertMetaTag('property', 'og:url', ogUrl);
     upsertMetaTag('property', 'og:title', ogTitle);
     upsertMetaTag('property', 'og:description', metaDescription);
     upsertMetaTag('property', 'og:image', imageUrl);
@@ -130,7 +132,7 @@ const Seo = ({
     upsertMetaTag('property', 'og:image:alt', imageAltText);
 
     upsertMetaTag('name', 'twitter:card', 'summary_large_image');
-    upsertMetaTag('name', 'twitter:url', canonicalUrl);
+    upsertMetaTag('name', 'twitter:url', ogUrl);
     upsertMetaTag('name', 'twitter:title', ogTitle);
     upsertMetaTag('name', 'twitter:description', metaDescription);
     upsertMetaTag('name', 'twitter:image', imageUrl);
@@ -171,7 +173,7 @@ const Seo = ({
       script.textContent = JSON.stringify(schema);
       document.head.appendChild(script);
     });
-  }, [title, description, url, image, type, imageAlt, structuredData, post, breadcrumbs]);
+  }, [title, description, url, image, type, imageAlt, structuredData, post, breadcrumbs, providedCanonicalUrl]);
 
   return null;
 };

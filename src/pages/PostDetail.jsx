@@ -177,7 +177,7 @@ const PostDetail = () => {
     if (!post) return undefined;
     const origin = (typeof window !== 'undefined' && window.location?.origin) || 'https://www.nexusblog.xyz';
     const identifier = post.slug || post._id;
-    return `${origin}/posts/${identifier}`;
+    return `${origin}/preview/posts/${identifier}`;
   }, [post]);
 
   const shareUrl = useMemo(() => {
@@ -880,6 +880,7 @@ const PostDetail = () => {
           { name: 'Posts', url: '/posts' },
           { name: post.title, url: seoUrl },
         ] : undefined}
+        canonicalUrl={post ? `${(typeof window !== 'undefined' && window.location?.origin) || 'https://www.nexusblog.xyz'}/posts/${post.slug || post._id}` : undefined}
       />
       <ReadingProgress />
       <div className="bg-page min-h-screen">
