@@ -242,12 +242,12 @@ const UserManagement = () => {
                         <div className="flex items-center space-x-3">
                           {user.role === 'admin' ? (
                             <>
-                              <button
-                                onClick={() => handleDemote(user._id)}
-                                className="btn btn-danger !w-auto"
-                              >
-                                Demote
-                              </button>
+                            <button
+                              onClick={() => handleDemote(user._id)}
+                              className="btn btn-danger !w-auto"
+                            >
+                              Demote
+                            </button>
                               <button
                                 onClick={() => handleDemoteToAuthor(user._id)}
                                 className="btn btn-danger !w-auto"
@@ -278,13 +278,13 @@ const UserManagement = () => {
                               >
                                 Promote to Admin
                               </button>
-                              <button
-                                onClick={() => handlePromoteToAuthor(user._id)}
-                                className="btn btn-outline !w-auto flex items-center gap-2"
-                              >
-                                <UserCheck className="w-4 h-4" />
-                                <span>Promote to Author</span>
-                              </button>
+                                <button
+                                  onClick={() => handlePromoteToAuthor(user._id)}
+                                  className="btn btn-outline !w-auto flex items-center gap-2"
+                                >
+                                  <UserCheck className="w-4 h-4" />
+                                  <span>Promote to Author</span>
+                                </button>
                             </>
                           )}
                         </div>
@@ -322,12 +322,12 @@ const UserManagement = () => {
                 <div className="flex flex-wrap items-center gap-2">
                   {user.role === 'admin' ? (
                     <>
-                      <button
-                        onClick={() => handleDemote(user._id)}
-                        className="btn btn-danger flex-1 min-w-[140px] justify-center"
-                      >
-                        Demote
-                      </button>
+                    <button
+                      onClick={() => handleDemote(user._id)}
+                      className="btn btn-danger flex-1 min-w-[140px] justify-center"
+                    >
+                      Demote
+                    </button>
                       <button
                         onClick={() => handleDemoteToAuthor(user._id)}
                         className="btn btn-danger flex-1 min-w-[160px] justify-center"
@@ -358,13 +358,13 @@ const UserManagement = () => {
                       >
                         Promote to Admin
                       </button>
-                      <button
-                        onClick={() => handlePromoteToAuthor(user._id)}
-                        className="btn btn-outline flex-1 min-w-[160px] justify-center gap-2"
-                      >
-                        <UserCheck className="w-4 h-4" />
-                        Author
-                      </button>
+                        <button
+                          onClick={() => handlePromoteToAuthor(user._id)}
+                          className="btn btn-outline flex-1 min-w-[160px] justify-center gap-2"
+                        >
+                          <UserCheck className="w-4 h-4" />
+                          Author
+                        </button>
                     </>
                   )}
                 </div>

@@ -197,25 +197,54 @@ api.interceptors.response.use(
     
     if (error.response?.status === 404) {
       const url = error.config?.url || '';
+      const normalizedUrl = url.replace(/^\/v1\//, '').replace(/^\//, '');
       const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
       
       // Silent 404s for optional resources
       if (url.includes('/polls/post/')) {
         error.silent = true;
+        return Promise.reject(error);
       }
       
-      // If 404 on a protected endpoint and user is on a protected page, 
-      // it might be due to expired token - let ProtectedRoute handle redirect
+      // Check if this is a protected endpoint (admin, auth, dashboard related)
+      // Exclude /auth/me and /auth/login/register as they're handled separately
+      const isProtectedEndpoint = 
+        (normalizedUrl.startsWith('admin/') ||
+        normalizedUrl.startsWith('auth/allusers') ||
+        normalizedUrl.startsWith('auth/stats') ||
+        normalizedUrl.includes('/dashboard') ||
+        normalizedUrl.includes('/settings') ||
+        normalizedUrl.includes('/collaborations') ||
+        normalizedUrl.includes('/authors/apply') ||
+        normalizedUrl.includes('/authors/applications')) &&
+        !normalizedUrl.includes('/polls/post/') &&
+        normalizedUrl !== 'auth/me';
+      
+      // Check if user is on a protected page
       const isProtectedPage = currentPath && (
         currentPath.startsWith('/admin/') ||
         currentPath.startsWith('/dashboard') ||
         currentPath.startsWith('/settings')
       );
       
-      if (isProtectedPage && !url.includes('/polls/post/')) {
-        // Don't show 404 error toast for protected pages - likely auth issue
-        // The ProtectedRoute will handle redirecting to login
+      // If 404 on a protected endpoint or protected page, likely expired/invalid token
+      // Clear token and redirect to login (similar to 401 handling)
+      if (isProtectedEndpoint || isProtectedPage) {
+        // Don't show 404 error toast - it's likely an auth issue
         error.silent = true;
+        
+        // For protected endpoints/pages, treat 404 as auth failure
+        // Clear token and redirect to login
+        clearAuthToken();
+        localStorage.removeItem('user');
+        localStorage.removeItem('lastAuthCheck');
+        
+        // Only redirect if we're actually on a protected page
+        // For API calls from protected pages, the component will handle the redirect
+        if (isProtectedPage && typeof window !== 'undefined') {
+          const redirectPath = `/login?redirect=${encodeURIComponent(currentPath)}`;
+          window.location.href = redirectPath;
+        }
       }
     }
     

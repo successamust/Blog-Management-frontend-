@@ -147,19 +147,13 @@ export const AuthProvider = ({ children }) => {
               type: 'LOGIN_SUCCESS',
               payload: { token, user: storedUser },
             });
-          } else if (error.response?.status === 401) {
-            // If 401 on /auth/me, token is invalid/expired - clear it
-            clearAuthToken();
-            localStorage.removeItem('user');
-            localStorage.removeItem('lastAuthCheck');
-            // Mark as not authenticated - ProtectedRoute will handle redirect
-            dispatch({ type: 'LOGOUT' });
-          } else if (error.response?.status === 404) {
-            // If 404 on /auth/me, endpoint might not exist or user doesn't exist
+          } else if (error.response?.status === 401 || error.response?.status === 404) {
+            // If 401 or 404 on /auth/me, token is invalid/expired or endpoint doesn't exist
             // Clear token and mark as not authenticated
             clearAuthToken();
             localStorage.removeItem('user');
             localStorage.removeItem('lastAuthCheck');
+            // Mark as not authenticated - ProtectedRoute will handle redirect
             dispatch({ type: 'LOGOUT' });
           } else {
             // For other errors (network, 500, etc.), try to use cached data if available
