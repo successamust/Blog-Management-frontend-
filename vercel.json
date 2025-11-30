@@ -9,14 +9,6 @@
     {
       "source": "/posts/(.*)",
       "destination": "/api/posts/$1"
-    },
-    {
-      "source": "/(login|register|dashboard|admin|categories|search|authors|tags|newsletter|forgot-password|reset-password|unsubscribe|collaboration)",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/(login|register|dashboard|admin|categories|search|authors|tags|newsletter|forgot-password|reset-password|unsubscribe|collaboration)/(.*)",
-      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -26,10 +18,15 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
-        },
+        }
+      ]
+    },
+    {
+      "source": "/assets/:path*.css",
+      "headers": [
         {
           "key": "Content-Type",
-          "value": "application/javascript"
+          "value": "text/css; charset=utf-8"
         }
       ]
     },
