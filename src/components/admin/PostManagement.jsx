@@ -712,10 +712,12 @@ const CreatePost = ({ onSuccess }) => {
       
       // Debug: Log what we received
       if (import.meta.env.DEV) {
+        const receivedPost = response.data?.post || response.data;
+        const receivedContent = receivedPost?.content;
         console.log('[CreatePost] Received response:', {
-          postId: response.data?.post?._id || response.data?._id,
-          hasContent: !!response.data?.post?.content || !!response.data?.content,
-          contentLength: (response.data?.post?.content || response.data?.content)?.length || 0,
+          postId: receivedPost?._id,
+          hasContent: !!receivedContent,
+          contentLength: receivedContent?.length || 0,
         });
       }
       const newPost = response.data.post || response.data;
