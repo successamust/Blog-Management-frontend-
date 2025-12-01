@@ -173,7 +173,7 @@ const FullscreenReader = ({ post, isOpen, onClose }) => {
                       'p', 'br', 'strong', 'em', 'u', 's',
                       'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
                       'ul', 'ol', 'li', 'blockquote', 'code', 'pre',
-                      'a', 'img', 'video', 'div', 'span',
+                      'a', 'img', 'video', 'div', 'span', 'hr',
                       'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
                     ],
                     ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style'],
