@@ -95,11 +95,11 @@ const AuthorApplication = () => {
     
     switch (applicationStatus.status) {
       case 'pending':
-        return <Clock className="w-5 h-5 text-yellow-600" />;
+        return <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />;
       case 'approved':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
+        return <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />;
       case 'rejected':
-        return <XCircle className="w-5 h-5 text-red-600" />;
+        return <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />;
       default:
         return null;
     }
@@ -125,11 +125,11 @@ const AuthorApplication = () => {
     
     switch (applicationStatus.status) {
       case 'pending':
-        return 'bg-yellow-50 border-yellow-200 text-yellow-800';
+        return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-300';
       case 'approved':
-        return 'bg-green-50 border-green-200 text-green-800';
+        return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300';
       case 'rejected':
-        return 'bg-red-50 border-red-200 text-red-800';
+        return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300';
       default:
         return '';
     }
@@ -142,7 +142,7 @@ const AuthorApplication = () => {
         animate={{ opacity: 1, y: 0 }}
         className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6"
       >
-        <div className="flex items-center space-x-3 text-green-600">
+        <div className="flex items-center space-x-3 text-green-600 dark:text-green-400">
           <CheckCircle className="w-6 h-6" />
           <h3 className="text-lg font-semibold">You are already an author!</h3>
         </div>
@@ -163,32 +163,32 @@ const AuthorApplication = () => {
         <div className={`border rounded-lg p-4 ${getStatusColor()}`}>
           <div className="flex items-center space-x-3 mb-3">
             {getStatusIcon()}
-            <h3 className="text-lg font-semibold">{getStatusText()}</h3>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">{getStatusText()}</h3>
           </div>
           
           {applicationStatus.submittedAt && (
-            <p className="text-sm mb-2">
+            <p className="text-sm mb-2 text-[var(--text-secondary)]">
               Submitted: {format(new Date(applicationStatus.submittedAt), 'PPpp')}
             </p>
           )}
           
           {applicationStatus.message && (
             <div className="mt-3">
-              <p className="text-sm font-medium mb-1">Your Application:</p>
-              <p className="text-sm whitespace-pre-wrap">{applicationStatus.message}</p>
+              <p className="text-sm font-medium mb-1 text-[var(--text-primary)]">Your Application:</p>
+              <p className="text-sm whitespace-pre-wrap text-[var(--text-secondary)]">{applicationStatus.message}</p>
             </div>
           )}
           
           {applicationStatus.reviewedAt && (
-            <p className="text-sm mt-3">
+            <p className="text-sm mt-3 text-[var(--text-secondary)]">
               Reviewed: {format(new Date(applicationStatus.reviewedAt), 'PPpp')}
             </p>
           )}
           
           {applicationStatus.adminNotes && (
             <div className="mt-3 p-3 bg-[var(--surface-subtle)] rounded-lg">
-              <p className="text-sm font-medium mb-1">Admin Notes:</p>
-              <p className="text-sm whitespace-pre-wrap">{applicationStatus.adminNotes}</p>
+              <p className="text-sm font-medium mb-1 text-[var(--text-primary)]">Admin Notes:</p>
+              <p className="text-sm whitespace-pre-wrap text-[var(--text-secondary)]">{applicationStatus.adminNotes}</p>
             </div>
           )}
         </div>
@@ -200,7 +200,7 @@ const AuthorApplication = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6"
     >
       <div className="flex items-center space-x-3 mb-6">
         <FileText className="w-6 h-6 text-[var(--accent)]" />
@@ -212,7 +212,7 @@ const AuthorApplication = () => {
           <AlertCircle className="w-5 h-5 text-[var(--accent)] mt-0.5" />
           <div>
             <p className="text-sm font-medium text-[var(--accent)] mb-1">Author Benefits</p>
-            <ul className="text-sm text-secondary space-y-1 list-disc list-inside">
+            <ul className="text-sm text-[var(--text-secondary)] space-y-1 list-disc list-inside">
               <li>Create and publish blog posts</li>
               <li>Manage your own content</li>
               <li>Build your author profile</li>
@@ -266,7 +266,7 @@ const AuthorApplication = () => {
             value={formData.expertise}
             onChange={handleChange}
             placeholder="e.g., Web Development, Design, Marketing"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            className="w-full px-4 py-3 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
           <p className="mt-1 text-xs text-[var(--text-muted)]">Comma-separated list of your expertise areas</p>
         </div>
@@ -282,7 +282,7 @@ const AuthorApplication = () => {
             value={formData.website}
             onChange={handleChange}
             placeholder="https://yourwebsite.com"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            className="w-full px-4 py-3 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           />
         </div>
 

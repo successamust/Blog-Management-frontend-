@@ -220,11 +220,11 @@ const AuthorManagement = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'pending':
-        return <Clock className="w-5 h-5 text-yellow-600" />;
+        return <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />;
       case 'approved':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
+        return <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />;
       case 'rejected':
-        return <XCircle className="w-5 h-5 text-red-600" />;
+        return <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />;
       default:
         return null;
     }
@@ -233,11 +233,11 @@ const AuthorManagement = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
       case 'approved':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
       case 'rejected':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
       default:
         return 'bg-[var(--surface-subtle)] text-[var(--text-primary)]';
     }
@@ -252,14 +252,14 @@ const AuthorManagement = () => {
   if (endpointError) {
     return (
       <div className="space-y-6">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-6">
           <div className="flex items-start space-x-3">
-            <AlertCircle className="w-6 h-6 text-yellow-600 mt-0.5" />
+            <AlertCircle className="w-6 h-6 text-yellow-600 dark:text-yellow-400 mt-0.5" />
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-yellow-900 mb-2">
+              <h3 className="text-lg font-semibold text-yellow-900 dark:text-yellow-300 mb-2">
                 Author Management Endpoint Not Available
               </h3>
-              <p className="text-yellow-800 mb-4">
+              <p className="text-yellow-800 dark:text-yellow-300 mb-4">
                 The author applications endpoint is not available on the backend server. This feature requires the backend to be updated with the author routes.
               </p>
               <div className="bg-[var(--surface-bg)] rounded-lg p-4 mb-4">
@@ -275,7 +275,7 @@ const AuthorManagement = () => {
                   setEndpointError(false);
                   fetchAllApplications();
                 }}
-                className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                className="px-4 py-2 bg-yellow-600 dark:bg-yellow-500 text-white rounded-lg hover:bg-yellow-700 dark:hover:bg-yellow-600 transition-colors"
               >
                 Retry Connection
               </button>
@@ -304,7 +304,7 @@ const AuthorManagement = () => {
                 {pendingCount}
               </p>
             </div>
-            <Clock className="w-8 h-8 text-yellow-600" />
+            <Clock className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
           </div>
         </div>
         <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
@@ -315,7 +315,7 @@ const AuthorManagement = () => {
                 {approvedCount}
               </p>
             </div>
-            <CheckCircle className="w-8 h-8 text-green-600" />
+            <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
         </div>
         <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
@@ -326,7 +326,7 @@ const AuthorManagement = () => {
                 {rejectedCount}
               </p>
             </div>
-            <XCircle className="w-8 h-8 text-red-600" />
+            <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
         </div>
       </div>
@@ -341,13 +341,13 @@ const AuthorManagement = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search applications..."
-              className="w-full pl-10 pr-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)]"
+              className="w-full pl-10 pr-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)]"
+              className="px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
           >
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
@@ -437,9 +437,9 @@ const AuthorManagement = () => {
               )}
 
               {application.authorApplication?.adminNotes && (
-                <div className="mb-4 p-4 bg-yellow-50 rounded-lg">
-                  <p className="text-sm font-medium text-[var(--text-secondary)] mb-2">Admin Notes:</p>
-                  <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">
+                <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                  <p className="text-sm font-medium text-yellow-900 dark:text-yellow-300 mb-2">Admin Notes:</p>
+                  <p className="text-sm text-yellow-800 dark:text-yellow-300 whitespace-pre-wrap">
                     {application.authorApplication.adminNotes}
                   </p>
                 </div>
@@ -456,14 +456,14 @@ const AuthorManagement = () => {
                         <select
                           value={reviewData.action}
                           onChange={(e) => setReviewData(prev => ({ ...prev, action: e.target.value }))}
-                          className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                          className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
                         >
                           <option value="approve">Approve</option>
                           <option value="reject">Reject</option>
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                        <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                           Admin Notes (Optional)
                         </label>
                         <textarea
@@ -471,7 +471,7 @@ const AuthorManagement = () => {
                           onChange={(e) => setReviewData(prev => ({ ...prev, adminNotes: e.target.value }))}
                           rows={3}
                           placeholder="Add notes about this application..."
-                          className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
+                          className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none bg-[var(--surface-bg)] text-[var(--text-primary)]"
                         />
                       </div>
                       <div className="flex space-x-3">
