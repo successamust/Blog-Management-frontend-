@@ -81,10 +81,12 @@ const CategoryPosts = () => {
         try {
           postsRes = await categoriesAPI.getPosts(slug, { page: currentPage, limit: 12 });
         } catch (postsError) {
-          // If slug-based fetch fails and slug looks like an ID, try fetching all posts and filtering
+          // If slug-based fetch fails and slug looks like an ID, try fetching posts by ID as a fallback.
+          // To avoid heavy queries under load, keep this fallback strict and low-volume.
           if (slug && slug.length === 24 && /^[0-9a-fA-F]+$/.test(slug)) {
             try {
-              const allPostsRes = await postsAPI.getAll({ limit: 1000 });
+              // Use a small limit and rely on backend filtering; do not pull thousands of posts into the client.
+              const allPostsRes = await postsAPI.getAll({ limit: 100, _id: slug });
               const allPosts = allPostsRes.data?.posts || 
                              allPostsRes.data?.data || 
                              allPostsRes.data || 

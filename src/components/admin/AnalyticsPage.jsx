@@ -27,7 +27,8 @@ const AnalyticsPage = () => {
         );
       };
 
-      const response = await postsAPI.getAll({ limit: 1000, status: 'all', includeDrafts: true });
+      // Limit the number of posts fetched for analytics to reduce load under heavy traffic
+      const response = await postsAPI.getAll({ limit: 250, status: 'all', includeDrafts: true });
       let postsData = normalizePosts(response);
       
       // Enhance posts with comment counts if missing
@@ -35,13 +36,14 @@ const AnalyticsPage = () => {
       // Note: We fetch up to 100 posts' comments to balance accuracy vs API rate limits
       // Posts themselves are fetched up to 1000, but comment data requires separate API calls
       const postsNeedingComments = postsData.filter(p => {
+      const postsNeedingComments = postsData.filter(p => {
         const hasCommentData = Array.isArray(p.comments) || 
                               typeof p.commentCount === 'number' || 
                               typeof p.comments === 'number';
         const isPublished = p.isPublished !== false && 
                            (p.status === 'published' || !p.status || p.status === 'live');
         return !hasCommentData && isPublished;
-      }).slice(0, 100); // Limit to 100 to balance accuracy vs API rate limits
+      }).slice(0, import.meta.env.PROD ? 30 : 100); // Stricter limit in production for scalability
       
       // Fetch comment counts in parallel (with delay to avoid rate limiting)
       if (postsNeedingComments.length > 0) {
