@@ -19,13 +19,44 @@ const KeyboardShortcuts = () => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       const activeElement = document.activeElement;
+      
+      // Check if user is typing in RichTextEditor (ProseMirror)
+      const isInProseMirror = activeElement && (
+        activeElement.closest('.ProseMirror') !== null ||
+        activeElement.classList.contains('ProseMirror') ||
+        activeElement.closest('[data-rich-text-editor="true"]') !== null ||
+        activeElement.closest('[class*="rich-text-editor"]') !== null ||
+        (activeElement.isContentEditable && activeElement.closest('[data-rich-text-editor="true"]') !== null)
+      );
+      
+      // Check if we're on a post creation or edit page (admin or dashboard)
+      const pathname = window.location.pathname;
+      const isAdminPostPage = pathname.includes('/admin/posts/create') || 
+                             pathname.includes('/admin/posts/edit/');
+      
+      // Check if we're on dashboard with create post form visible
+      const isDashboardCreatePost = pathname === '/dashboard' && 
+                                   (document.querySelector('[data-create-post-form]') || 
+                                    document.querySelector('.rich-text-editor'));
+      
+      // Check if active element is in a form field
       const isFormField =
         activeElement &&
         (activeElement.tagName === 'INPUT' ||
           activeElement.tagName === 'TEXTAREA' ||
           activeElement.isContentEditable);
+      
       const isPlainShortcut = !e.ctrlKey && !e.metaKey && !e.altKey;
-
+      
+      // Disable ALL shortcuts when:
+      // 1. User is typing in ProseMirror editor
+      // 2. User is on post creation/edit page
+      // 3. User is in any form field (unless it's a search field with Ctrl/Cmd)
+      if (isInProseMirror || isAdminPostPage || isDashboardCreatePost) {
+        return; // Completely disable shortcuts
+      }
+      
+      // For other form fields, only disable plain shortcuts (not Ctrl/Cmd combinations)
       if (isFormField && isPlainShortcut) {
         return;
       }

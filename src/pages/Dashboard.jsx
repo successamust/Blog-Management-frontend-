@@ -1553,7 +1553,7 @@ const CreatePostTab = () => {
           <span>Use Template</span>
         </button>
       </div>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6" data-create-post-form>
         <div>
           <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Title</label>
           <input

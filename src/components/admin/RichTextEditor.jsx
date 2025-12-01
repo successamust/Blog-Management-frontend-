@@ -307,14 +307,22 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     immediatelyRender: false,
     onCreate: ({ editor }) => {
       // When editor is created, ensure background is set correctly in fullscreen
-      if (isFullscreen && isDark && editor.view && editor.view.dom) {
-        setTimeout(() => {
-          const editorElement = editor.view.dom.closest('.ProseMirror') || editor.view.dom;
-          if (editorElement) {
-            editorElement.style.setProperty('background-color', '#1E293B', 'important');
-            editorElement.style.setProperty('background', '#1E293B', 'important');
-          }
-        }, 100);
+      try {
+        if (isFullscreen && isDark && editor.view && editor.view.dom) {
+          setTimeout(() => {
+            try {
+              const editorElement = editor.view.dom.closest('.ProseMirror') || editor.view.dom;
+              if (editorElement) {
+                editorElement.style.setProperty('background-color', '#1E293B', 'important');
+                editorElement.style.setProperty('background', '#1E293B', 'important');
+              }
+            } catch (e) {
+              // Editor view not ready yet
+            }
+          }, 100);
+        }
+      } catch (e) {
+        // Editor not ready
       }
     },
     onUpdate: ({ editor }) => {
@@ -367,6 +375,15 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
     const currentContent = editor.getHTML();
     const newContent = value || '';
     
+    // Debug logging in development
+    if (import.meta.env.DEV && newContent) {
+      console.log('[RichTextEditor] Value prop changed:', {
+        newContentLength: newContent.length,
+        currentContentLength: currentContent.length,
+        willUpdate: newContent.trim() !== currentContent.trim(),
+      });
+    }
+    
     // Only update if content actually changed to avoid infinite loops
     // Normalize empty content for comparison
     const normalizedCurrent = currentContent.trim() || '<p></p>';
@@ -379,6 +396,10 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         editor.commands.setContent(newContent, false); // false = don't emit update event
         const md = htmlToMarkdown(newContent);
         setMarkdownContent(md);
+        
+        if (import.meta.env.DEV) {
+          console.log('[RichTextEditor] Content updated in editor');
+        }
       } catch (error) {
         console.error('Error updating editor content:', error);
       } finally {
@@ -432,8 +453,13 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   const applyDarkModeStyles = useCallback(() => {
     if (!editor || isApplyingStylesRef.current) return;
     
-    // Check if editor view is available
-    if (!editor.view || !editor.view.dom) return;
+    // Check if editor view is available - use try-catch to handle cases where view is not ready
+    try {
+      if (!editor.view || !editor.view.dom) return;
+    } catch (error) {
+      // Editor view not available yet, skip styling
+      return;
+    }
     
     isApplyingStylesRef.current = true;
     
@@ -502,20 +528,21 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
 
   // Toggle dark mode - apply to editor and parent container
   useEffect(() => {
-    if (!editor || !editor.view || !editor.view.dom) return;
-    
+    try {
+      if (!editor || !editor.view || !editor.view.dom) return;
+      
       const editorElement = editor.view.dom.closest('.ProseMirror') || editor.view.dom;
-    if (!editorElement) return;
-    
-    // Clear any pending style updates
-    if (styleTimeoutRef.current) {
-      clearTimeout(styleTimeoutRef.current);
-    }
-    
-    // Update editor element classes and styles
+      if (!editorElement) return;
+      
+      // Clear any pending style updates
+      if (styleTimeoutRef.current) {
+        clearTimeout(styleTimeoutRef.current);
+      }
+      
+      // Update editor element classes and styles
       if (isDark) {
         editorElement.classList.add('dark');
-      editorElement.classList.add('prose-invert');
+        editorElement.classList.add('prose-invert');
       if (isFullscreen) {
         editorElement.style.setProperty('background-color', '#1E293B', 'important');
         editorElement.style.setProperty('background', '#1E293B', 'important');
@@ -589,6 +616,9 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         clearTimeout(styleTimeoutRef.current);
       }
     };
+    } catch (e) {
+      // Editor view not ready yet
+    }
   }, [isDark, editor, applyDarkModeStyles, isFullscreen]);
 
   // Update editor attributes when fullscreen changes
@@ -617,23 +647,25 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
 
   // Force update background when entering fullscreen in dark mode
   useEffect(() => {
-    if (!isFullscreen || !isDark || !editor || !editor.view || !editor.view.dom) return;
-    
-    // Use a more aggressive approach - directly find and update all relevant elements
-    const updateFullscreenBackground = () => {
-      // First, try to update via editor view DOM directly
-      if (editor.view && editor.view.dom) {
-        const viewDom = editor.view.dom;
-        // The ProseMirror element is usually the view.dom itself or its parent
-        if (viewDom.classList && viewDom.classList.contains('ProseMirror')) {
-          viewDom.style.setProperty('background-color', '#1E293B', 'important');
-          viewDom.style.setProperty('background', '#1E293B', 'important');
-          viewDom.style.backgroundColor = '#1E293B';
-          viewDom.style.background = '#1E293B';
-        }
-      }
-      // Find ProseMirror element - try multiple methods
-      let editorElement = editor.view.dom.closest('.ProseMirror') || editor.view.dom;
+    try {
+      if (!isFullscreen || !isDark || !editor || !editor.view || !editor.view.dom) return;
+      
+      // Use a more aggressive approach - directly find and update all relevant elements
+      const updateFullscreenBackground = () => {
+        try {
+          // First, try to update via editor view DOM directly
+          if (editor.view && editor.view.dom) {
+            const viewDom = editor.view.dom;
+            // The ProseMirror element is usually the view.dom itself or its parent
+            if (viewDom.classList && viewDom.classList.contains('ProseMirror')) {
+              viewDom.style.setProperty('background-color', '#1E293B', 'important');
+              viewDom.style.setProperty('background', '#1E293B', 'important');
+              viewDom.style.backgroundColor = '#1E293B';
+              viewDom.style.background = '#1E293B';
+            }
+          }
+          // Find ProseMirror element - try multiple methods
+          let editorElement = editor.view.dom.closest('.ProseMirror') || editor.view.dom;
       if (!editorElement || !editorElement.classList.contains('ProseMirror')) {
         // Fallback: find by querySelector
         editorElement = document.querySelector('[data-fullscreen-editor="true"] .ProseMirror');
@@ -791,7 +823,10 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           // Editor might not support setOptions, that's okay
         }
       }
-    };
+        } catch (e) {
+          // Editor view not ready, skip
+        }
+      };
     
     // Apply immediately
     updateFullscreenBackground();
@@ -825,65 +860,84 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       clearTimeout(timeout3);
       clearTimeout(timeout4);
     };
+    } catch (e) {
+      // Editor not ready yet
+    }
   }, [isFullscreen, isDark, editor]);
 
   // Reapply dark mode styles when editor content updates
   useEffect(() => {
-    if (!editor || !editor.view) return;
-    
-    const handleUpdate = () => {
-      if (isApplyingStylesRef.current || !editor.view) return;
+    try {
+      if (!editor || !editor.view) return;
       
-      // Debounce style application
-      if (styleTimeoutRef.current) {
-        clearTimeout(styleTimeoutRef.current);
-      }
-      styleTimeoutRef.current = setTimeout(() => {
-        applyDarkModeStyles();
-      }, 100);
-    };
+      const handleUpdate = () => {
+        try {
+          if (isApplyingStylesRef.current || !editor.view) return;
+          
+          // Debounce style application
+          if (styleTimeoutRef.current) {
+            clearTimeout(styleTimeoutRef.current);
+          }
+          styleTimeoutRef.current = setTimeout(() => {
+            applyDarkModeStyles();
+          }, 100);
+        } catch (e) {
+          // Editor view not ready
+        }
+      };
     
-    const handleSelectionUpdate = () => {
-      if (isApplyingStylesRef.current) return;
-      
-      // Reapply styles on selection change with debounce
-      // This is important for headers that might be selected
-      requestAnimationFrame(() => {
+      const handleSelectionUpdate = () => {
+        try {
+          if (isApplyingStylesRef.current || !editor.view) return;
+          
+          // Reapply styles on selection change with debounce
+          // This is important for headers that might be selected
+          requestAnimationFrame(() => {
+            if (styleTimeoutRef.current) {
+              clearTimeout(styleTimeoutRef.current);
+            }
+            styleTimeoutRef.current = setTimeout(() => {
+              applyDarkModeStyles();
+            }, 30);
+          });
+        } catch (e) {
+          // Editor view not ready
+        }
+      };
+    
+      // Also listen for transaction updates which happen when formatting changes
+      const handleTransaction = () => {
+        try {
+          if (isApplyingStylesRef.current || !editor.view) return;
+          
+          requestAnimationFrame(() => {
+            if (styleTimeoutRef.current) {
+              clearTimeout(styleTimeoutRef.current);
+            }
+            styleTimeoutRef.current = setTimeout(() => {
+              applyDarkModeStyles();
+            }, 50);
+          });
+        } catch (e) {
+          // Editor view not ready
+        }
+      };
+    
+      editor.on('update', handleUpdate);
+      editor.on('selectionUpdate', handleSelectionUpdate);
+      editor.on('transaction', handleTransaction);
+    
+      return () => {
+        editor.off('update', handleUpdate);
+        editor.off('selectionUpdate', handleSelectionUpdate);
+        editor.off('transaction', handleTransaction);
         if (styleTimeoutRef.current) {
           clearTimeout(styleTimeoutRef.current);
         }
-        styleTimeoutRef.current = setTimeout(() => {
-          applyDarkModeStyles();
-        }, 30);
-      });
-    };
-    
-    // Also listen for transaction updates which happen when formatting changes
-    const handleTransaction = () => {
-      if (isApplyingStylesRef.current) return;
-      
-      requestAnimationFrame(() => {
-        if (styleTimeoutRef.current) {
-          clearTimeout(styleTimeoutRef.current);
-        }
-        styleTimeoutRef.current = setTimeout(() => {
-          applyDarkModeStyles();
-        }, 50);
-      });
-    };
-    
-    editor.on('update', handleUpdate);
-    editor.on('selectionUpdate', handleSelectionUpdate);
-    editor.on('transaction', handleTransaction);
-    
-    return () => {
-      editor.off('update', handleUpdate);
-      editor.off('selectionUpdate', handleSelectionUpdate);
-      editor.off('transaction', handleTransaction);
-      if (styleTimeoutRef.current) {
-        clearTimeout(styleTimeoutRef.current);
-      }
-    };
+      };
+    } catch (e) {
+      // Editor not ready yet
+    }
   }, [editor, applyDarkModeStyles]);
 
   // Cleanup autosave timer
@@ -1313,7 +1367,11 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
   );
 
   const editorContent = (
-    <div className={`rich-text-editor border border-[var(--border-subtle)] rounded-lg overflow-hidden bg-[var(--surface-bg)] transition-colors ${isFullscreen ? 'rounded-none h-full flex flex-col' : ''}`} style={isFullscreen && isDark ? { backgroundColor: '#0F172A', borderColor: '#334155' } : isFullscreen ? { backgroundColor: '#ffffff', borderColor: '#E2E8F0' } : {}}>
+    <div 
+      className={`rich-text-editor border border-[var(--border-subtle)] rounded-lg overflow-hidden bg-[var(--surface-bg)] transition-colors ${isFullscreen ? 'rounded-none h-full flex flex-col' : ''}`} 
+      style={isFullscreen && isDark ? { backgroundColor: '#0F172A', borderColor: '#334155' } : isFullscreen ? { backgroundColor: '#ffffff', borderColor: '#E2E8F0' } : {}}
+      data-rich-text-editor="true"
+    >
       {/* Toolbar */}
       <div className={`border-b border-[var(--border-subtle)] ${isDark ? 'bg-[var(--surface-bg)]' : 'bg-[var(--surface-subtle)]'} p-2 flex flex-wrap items-center gap-1 overflow-x-auto flex-shrink-0`} style={isFullscreen && isDark ? { backgroundColor: '#0F172A', borderColor: '#334155' } : {}}>
         {/* Formatting */}

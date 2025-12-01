@@ -274,26 +274,35 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
   const getStatusMeta = (post) => {
     // Determine post status - check multiple fields
     let rawStatus = '';
+    
+    // First check explicit status field
     if (post.status) {
       rawStatus = post.status.toString().trim().toLowerCase();
     } else if (post.state) {
       rawStatus = post.state.toString().trim().toLowerCase();
     } else {
-      // Fallback: check isPublished, publishedAt, or published field
+      // Check isPublished field explicitly
       if (post.isPublished === true || post.published === true) {
-        rawStatus = 'published';
-      } else if (post.publishedAt && new Date(post.publishedAt) <= new Date()) {
-        // If there's a publishedAt date in the past, consider it published
         rawStatus = 'published';
       } else if (post.isPublished === false || post.published === false) {
         rawStatus = 'draft';
+      } else if (post.publishedAt) {
+        // If there's a publishedAt date, check if it's in the past
+        const publishedDate = new Date(post.publishedAt);
+        const now = new Date();
+        if (publishedDate <= now) {
+          rawStatus = 'published';
+        } else {
+          rawStatus = 'scheduled';
+        }
       } else {
-        // Default to published if no explicit draft status
-        rawStatus = 'published';
+        // If no publishedAt and isPublished is not explicitly true, it's a draft
+        // This is the key fix: don't default to published if isPublished is undefined/null
+        rawStatus = 'draft';
       }
     }
     
-    const baseStatus = rawStatus || 'published';
+    const baseStatus = rawStatus || 'draft'; // Default to draft instead of published
     const normalizedStatus = baseStatus.replace(/\s+/g, '-');
 
     const badgeClassMap = {
@@ -687,7 +696,28 @@ const CreatePost = ({ onSuccess }) => {
         scheduledAt: scheduledAt ? scheduledAt.toISOString() : undefined,
       };
       
+      // Debug: Log what we're sending
+      if (import.meta.env.DEV) {
+        console.log('[CreatePost] Sending post data:', {
+          title: postData.title,
+          hasContent: !!postData.content,
+          contentLength: postData.content?.length || 0,
+          contentPreview: postData.content?.substring(0, 100) || 'NO CONTENT',
+          status: postData.status,
+          isPublished: postData.isPublished,
+        });
+      }
+      
       const response = await postsAPI.create(postData);
+      
+      // Debug: Log what we received
+      if (import.meta.env.DEV) {
+        console.log('[CreatePost] Received response:', {
+          postId: response.data?.post?._id || response.data?._id,
+          hasContent: !!response.data?.post?.content || !!response.data?.content,
+          contentLength: (response.data?.post?.content || response.data?.content)?.length || 0,
+        });
+      }
       const newPost = response.data.post || response.data;
       
       if (!newPost || !newPost._id) {
@@ -789,7 +819,7 @@ const CreatePost = ({ onSuccess }) => {
           <span>Use Template</span>
         </button>
       </div>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6" data-create-post-form>
         <div>
           <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Title</label>
           <input
@@ -1182,6 +1212,9 @@ const EditPost = ({ onSuccess }) => {
     try {
       setLoading(true);
       let post;
+      
+      // Try to get the full post with content
+      // Use getAll with includeDrafts to get full post data including content
       const normalizePosts = (response) => {
         if (!response?.data) return [];
         return (
@@ -1191,26 +1224,88 @@ const EditPost = ({ onSuccess }) => {
           []
         );
       };
-
+      
+      // Try dashboard endpoint first (might have better data)
       try {
+        const response = await dashboardAPI.getPosts({ limit: 1000, includeDrafts: true, status: 'all' });
+        const posts = normalizePosts(response);
+        post = posts.find((p) => {
+          const postId = p?._id || p?.id;
+          return postId && (String(postId) === String(id));
+        });
+        
+        if (post && import.meta.env.DEV) {
+          console.log('[EditPost] Found post in dashboard:', {
+            hasContent: !!post.content,
+            contentLength: post.content?.length || 0,
+          });
+        }
+      } catch (error) {
+        console.warn('Dashboard endpoint failed, trying getAll:', error);
+      }
+      
+      // If not found in dashboard, try getAll
+      if (!post) {
         const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
         const posts = normalizePosts(response);
         post = posts.find((p) => {
           const postId = p?._id || p?.id;
           return postId && (String(postId) === String(id));
         });
-      } catch (error) {
-        console.error('Error in first fetch attempt:', error);
-        try {
-          const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
-          const posts = normalizePosts(response);
-          post = posts.find((p) => {
-            const postId = p?._id || p?.id;
-            return postId && (String(postId) === String(id));
+        
+        if (post && import.meta.env.DEV) {
+          console.log('[EditPost] Found post in getAll:', {
+            hasContent: !!post.content,
+            contentLength: post.content?.length || 0,
           });
-        } catch (secondError) {
-          console.error('Error in second fetch attempt:', secondError);
-          throw secondError;
+        }
+      }
+      
+      // If still no content, try multiple fallback methods
+      if (post && (!post.content || post.content.trim() === '' || post.content === '<p></p>')) {
+        // Method 1: Try fetching by slug if we have it
+        if (post.slug) {
+          try {
+            console.warn('[EditPost] Post has no content, trying to fetch by slug:', post.slug);
+            const slugResponse = await postsAPI.getBySlug(post.slug);
+            const fullPost = slugResponse.data?.post || slugResponse.data?.data || slugResponse.data;
+            if (fullPost && fullPost.content && fullPost.content.trim() !== '' && fullPost.content !== '<p></p>') {
+              post.content = fullPost.content;
+              console.log('[EditPost] Retrieved content from slug endpoint:', {
+                contentLength: post.content.length,
+              });
+            }
+          } catch (slugError) {
+            console.warn('[EditPost] Failed to fetch by slug:', slugError);
+          }
+        }
+        
+        // Method 2: If still no content, try making a direct API call with includeContent parameter
+        if (!post.content || post.content.trim() === '' || post.content === '<p></p>') {
+          try {
+            console.warn('[EditPost] Still no content, trying direct API call with includeContent');
+            // Try with a parameter that might include full content
+            const directResponse = await postsAPI.getAll({ 
+              limit: 1, 
+              includeDrafts: true, 
+              status: 'all',
+              includeContent: true, // Some backends support this
+              _id: id // Try to filter by ID
+            });
+            const directPosts = normalizePosts(directResponse);
+            const directPost = directPosts.find((p) => {
+              const postId = p?._id || p?.id;
+              return postId && (String(postId) === String(id));
+            });
+            if (directPost && directPost.content && directPost.content.trim() !== '' && directPost.content !== '<p></p>') {
+              post.content = directPost.content;
+              console.log('[EditPost] Retrieved content from direct API call:', {
+                contentLength: post.content.length,
+              });
+            }
+          } catch (directError) {
+            console.warn('[EditPost] Direct API call failed:', directError);
+          }
         }
       }
       
@@ -1248,14 +1343,57 @@ const EditPost = ({ onSuccess }) => {
         }
       }
 
+      // Debug: Log content to help diagnose missing content issue
+      if (import.meta.env.DEV) {
+        console.log('[EditPost] Loading post data:', {
+          id: post._id || post.id,
+          title: post.title,
+          hasContent: !!post.content,
+          contentLength: post.content?.length || 0,
+          contentPreview: post.content?.substring(0, 100) || 'NO CONTENT',
+          allPostKeys: Object.keys(post),
+          postStatus: post.status,
+          isPublished: post.isPublished,
+        });
+      }
+
+      // Determine post status - check multiple fields
+      let postStatus = 'published';
+      if (post.status) {
+        const statusStr = String(post.status).toLowerCase().trim();
+        if (statusStr === 'draft' || statusStr === 'unpublished') {
+          postStatus = 'draft';
+        } else {
+          postStatus = statusStr;
+        }
+      } else if (post.isPublished === false || post.published === false) {
+        postStatus = 'draft';
+      } else if (post.isPublished === true || post.published === true) {
+        postStatus = 'published';
+      } else if (!post.publishedAt && !post.isPublished) {
+        // If no publishedAt and isPublished is not explicitly true, likely a draft
+        postStatus = 'draft';
+      }
+
+      const contentToSet = post.content || '';
+      
+      // Debug: Log what we're setting in formData
+      if (import.meta.env.DEV) {
+        console.log('[EditPost] Setting formData:', {
+          contentLength: contentToSet.length,
+          hasContent: !!contentToSet,
+          contentPreview: contentToSet.substring(0, 100) || 'EMPTY',
+        });
+      }
+      
       setFormData({
         title: post.title || '',
         excerpt: post.excerpt || '',
-        content: post.content || '',
+        content: contentToSet, // Ensure content is set, even if empty
         category: post.category?._id || post.category || '',
         tags: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || ''),
         featuredImage: post.featuredImage || '',
-        status: post.isPublished ? 'published' : 'draft',
+        status: postStatus,
       });
       if (post.scheduledAt) {
         setScheduledAt(new Date(post.scheduledAt));
@@ -1614,6 +1752,7 @@ const EditPost = ({ onSuccess }) => {
           handleSubmit(e);
         }} 
         className="space-y-4 sm:space-y-6"
+        data-create-post-form
       >
         <div>
           <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Title</label>
@@ -1642,6 +1781,7 @@ const EditPost = ({ onSuccess }) => {
           <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Content</label>
           {typeof window !== 'undefined' && (
             <RichTextEditor
+              key={`editor-${id || 'new'}-${loading ? 'loading' : 'loaded'}`}
               value={formData.content || ''}
               onChange={(value) => {
                 setFormData(prev => ({ ...prev, content: value }));

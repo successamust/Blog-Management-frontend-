@@ -12,18 +12,24 @@ if (typeof window !== 'undefined') {
     const fullMessage = args.map(arg => String(arg)).join(' ');
     
     // Suppress MetaMask ethereum provider errors
-    if (errorMessage.includes('MetaMask') && errorMessage.includes('ethereum')) {
+    if (errorMessage.includes('MetaMask') || 
+        (errorMessage.includes('ethereum') && (errorMessage.includes('provider') || errorMessage.includes('redefine') || errorMessage.includes('getter')))) {
       return; // Silently ignore
     }
     // Suppress evmAsk and Web3 wallet injection errors
     if (errorMessage.includes('evmAsk') || 
         errorMessage.includes('Cannot redefine property: ethereum') ||
+        errorMessage.includes('Cannot set property ethereum') ||
         fullMessage.includes('evmAsk') ||
-        (errorMessage.includes('ethereum') && errorMessage.includes('redefine'))) {
+        (errorMessage.includes('ethereum') && (errorMessage.includes('redefine') || errorMessage.includes('getter')))) {
       return; // Silently ignore
     }
     // Suppress uBlock Origin errors
     if (errorMessage.includes('uBOL') || errorMessage.includes('uBlock')) {
+      return; // Silently ignore
+    }
+    // Suppress Solana wallet errors
+    if (errorMessage.includes('solana') || errorMessage.includes('Solana') || errorMessage.includes('MutationObserver')) {
       return; // Silently ignore
     }
     // Call original console.error for other errors
@@ -37,7 +43,10 @@ if (typeof window !== 'undefined') {
         reason.includes('ethereum') || 
         reason.includes('uBOL') ||
         reason.includes('evmAsk') ||
-        reason.includes('Cannot redefine property')) {
+        reason.includes('solana') ||
+        reason.includes('Solana') ||
+        reason.includes('Cannot redefine property') ||
+        reason.includes('Cannot set property ethereum')) {
       event.preventDefault(); // Suppress the error
       return;
     }
@@ -52,8 +61,14 @@ if (typeof window !== 'undefined') {
         errorMessage.includes('ethereum') || 
         errorMessage.includes('uBOL') ||
         errorMessage.includes('evmAsk') ||
+        errorMessage.includes('solana') ||
+        errorMessage.includes('Solana') ||
+        errorMessage.includes('MutationObserver') ||
         errorMessage.includes('Cannot redefine property: ethereum') ||
-        errorSource.includes('evmAsk')) {
+        errorMessage.includes('Cannot set property ethereum') ||
+        errorSource.includes('evmAsk') ||
+        errorSource.includes('solana') ||
+        errorSource.includes('inpage.js')) {
       event.preventDefault(); // Suppress the error
       return;
     }
