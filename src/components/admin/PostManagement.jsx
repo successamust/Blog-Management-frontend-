@@ -645,7 +645,8 @@ const CreatePost = ({ onSuccess }) => {
       uploadFormData.append('image', file);
       const response = await imagesAPI.upload(uploadFormData);
       const responseData = response.data || {};
-      const imageUrl = responseData.image?.url || responseData.url || responseData.imageUrl;
+      const imageObj = responseData.image || {};
+      const imageUrl = imageObj.url || responseData.url || responseData.imageUrl;
       if (!imageUrl) {
         toast.error('Failed to get image URL from response');
         return;
@@ -656,7 +657,10 @@ const CreatePost = ({ onSuccess }) => {
       }));
       toast.success('Image uploaded successfully');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to upload image');
+      const errorResponse = error.response || {};
+      const errorData = errorResponse.data || {};
+      const errorMessage = errorData.message || 'Failed to upload image';
+      toast.error(errorMessage);
     } finally {
       setUploadingImage(false);
     }
@@ -699,11 +703,14 @@ const CreatePost = ({ onSuccess }) => {
       
       // Debug: Log what we're sending
       if (import.meta.env.DEV) {
+        const content = postData.content || '';
+        const contentLength = content ? content.length : 0;
+        const contentPreview = content ? content.substring(0, 100) : 'NO CONTENT';
         console.log('[CreatePost] Sending post data:', {
           title: postData.title,
-          hasContent: !!postData.content,
-          contentLength: postData.content?.length || 0,
-          contentPreview: postData.content?.substring(0, 100) || 'NO CONTENT',
+          hasContent: !!content,
+          contentLength: contentLength,
+          contentPreview: contentPreview,
           status: postData.status,
           isPublished: postData.isPublished,
         });
@@ -713,12 +720,15 @@ const CreatePost = ({ onSuccess }) => {
       
       // Debug: Log what we received
       if (import.meta.env.DEV) {
-        const receivedPost = response.data?.post || response.data;
-        const receivedContent = receivedPost?.content;
+        const responseData = response.data || {};
+        const receivedPost = responseData.post || responseData;
+        const receivedContent = receivedPost.content || null;
+        const postId = receivedPost._id || receivedPost.id || null;
+        const contentLength = receivedContent ? receivedContent.length : 0;
         console.log('[CreatePost] Received response:', {
-          postId: receivedPost?._id,
+          postId: postId,
           hasContent: !!receivedContent,
-          contentLength: receivedContent?.length || 0,
+          contentLength: contentLength,
         });
       }
       const newPost = response.data.post || response.data;
@@ -780,7 +790,8 @@ const CreatePost = ({ onSuccess }) => {
       navigate(`/admin/posts/edit/${postId}`, { replace: false });
     } catch (error) {
       console.error('Error creating post:', error);
-      toast.error(error.response?.data?.message || 'Failed to create post');
+      const errorMessage = error.response?.data?.message || 'Failed to create post';
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -1205,6 +1216,27 @@ const EditPost = ({ onSuccess }) => {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showVersioning, setShowVersioning] = useState(false);
 
+  // Helper function to normalize posts response
+  const normalizePostsResponse = (response) => {
+    const responseData = response && response.data ? response.data : null;
+    if (!responseData) return [];
+    return (
+      responseData.posts ||
+      responseData.data ||
+      (Array.isArray(responseData) ? responseData : []) ||
+      []
+    );
+  };
+
+  // Helper function to find post by ID
+  const findPostById = (posts, targetId) => {
+    return posts.find((p) => {
+      if (!p) return false;
+      const postId = p._id || p.id;
+      return postId && (String(postId) === String(targetId));
+    });
+  };
+
   useEffect(() => {
     fetchPostData();
     fetchCategories();
@@ -1214,35 +1246,13 @@ const EditPost = ({ onSuccess }) => {
   const fetchPostData = async () => {
     try {
       setLoading(true);
-      let post;
-      
-      // Try to get the full post with content
-      // Use getAll with includeDrafts to get full post data including content
-      const normalizePosts = (response) => {
-        if (!response?.data) return [];
-        return (
-          response.data.posts ||
-          response.data.data ||
-          (Array.isArray(response.data) ? response.data : []) ||
-          []
-        );
-      };
+      let post = null;
       
       // Try dashboard endpoint first (might have better data)
       try {
         const response = await dashboardAPI.getPosts({ limit: 1000, includeDrafts: true, status: 'all' });
-        const posts = normalizePosts(response);
-        post = posts.find((p) => {
-          const postId = p?._id || p?.id;
-          return postId && (String(postId) === String(id));
-        });
-        
-        if (post && import.meta.env.DEV) {
-          console.log('[EditPost] Found post in dashboard:', {
-            hasContent: !!post.content,
-            contentLength: post.content?.length || 0,
-          });
-        }
+        const posts = normalizePostsResponse(response);
+        post = findPostById(posts, id);
       } catch (error) {
         console.warn('Dashboard endpoint failed, trying getAll:', error);
       }
@@ -1250,18 +1260,8 @@ const EditPost = ({ onSuccess }) => {
       // If not found in dashboard, try getAll
       if (!post) {
         const response = await postsAPI.getAll({ limit: 1000, includeDrafts: true, status: 'all' });
-        const posts = normalizePosts(response);
-        post = posts.find((p) => {
-          const postId = p?._id || p?.id;
-          return postId && (String(postId) === String(id));
-        });
-        
-        if (post && import.meta.env.DEV) {
-          console.log('[EditPost] Found post in getAll:', {
-            hasContent: !!post.content,
-            contentLength: post.content?.length || 0,
-          });
-        }
+        const posts = normalizePostsResponse(response);
+        post = findPostById(posts, id);
       }
       
       // If still no content, try multiple fallback methods
@@ -1271,7 +1271,8 @@ const EditPost = ({ onSuccess }) => {
           try {
             console.warn('[EditPost] Post has no content, trying to fetch by slug:', post.slug);
             const slugResponse = await postsAPI.getBySlug(post.slug);
-            const fullPost = slugResponse.data?.post || slugResponse.data?.data || slugResponse.data;
+            const slugData = slugResponse.data || {};
+            const fullPost = slugData.post || slugData.data || slugData;
             if (fullPost && fullPost.content && fullPost.content.trim() !== '' && fullPost.content !== '<p></p>') {
               post.content = fullPost.content;
               console.log('[EditPost] Retrieved content from slug endpoint:', {
@@ -1295,11 +1296,8 @@ const EditPost = ({ onSuccess }) => {
               includeContent: true, // Some backends support this
               _id: id // Try to filter by ID
             });
-            const directPosts = normalizePosts(directResponse);
-            const directPost = directPosts.find((p) => {
-              const postId = p?._id || p?.id;
-              return postId && (String(postId) === String(id));
-            });
+            const directPosts = normalizePostsResponse(directResponse);
+            const directPost = findPostById(directPosts, id);
             if (directPost && directPost.content && directPost.content.trim() !== '' && directPost.content !== '<p></p>') {
               post.content = directPost.content;
               console.log('[EditPost] Retrieved content from direct API call:', {
@@ -1318,8 +1316,10 @@ const EditPost = ({ onSuccess }) => {
         return;
       }
 
-      if (user?.role === 'author' && !isAdmin()) {
-        const postAuthorId = post.author?._id || post.author || post.authorId;
+      const userRole = user && user.role ? user.role : null;
+      if (userRole === 'author' && !isAdmin()) {
+        const postAuthor = post.author || {};
+        const postAuthorId = postAuthor._id || post.author || post.authorId;
         const userId = user._id || user.id;
         const isPostOwner = postAuthorId && userId && String(postAuthorId) === String(userId);
         
@@ -1328,9 +1328,11 @@ const EditPost = ({ onSuccess }) => {
         if (!isPostOwner) {
           try {
             const collaboratorsResponse = await collaborationsAPI.getCollaborators(id);
-            const collaborators = collaboratorsResponse.data?.collaborators || [];
+            const collabData = collaboratorsResponse.data || {};
+            const collaborators = collabData.collaborators || [];
             isCollaborator = collaborators.some(collab => {
-              const collabUserId = collab.user?._id || collab.user || collab.userId;
+              const collabUser = collab.user || {};
+              const collabUserId = collabUser._id || collab.user || collab.userId;
               return collabUserId && userId && String(collabUserId) === String(userId);
             });
           } catch (error) {
@@ -1348,12 +1350,15 @@ const EditPost = ({ onSuccess }) => {
 
       // Debug: Log content to help diagnose missing content issue
       if (import.meta.env.DEV) {
+        const postContent = post.content || '';
+        const contentLength = postContent ? postContent.length : 0;
+        const contentPreview = postContent ? postContent.substring(0, 100) : 'NO CONTENT';
         console.log('[EditPost] Loading post data:', {
           id: post._id || post.id,
           title: post.title,
-          hasContent: !!post.content,
-          contentLength: post.content?.length || 0,
-          contentPreview: post.content?.substring(0, 100) || 'NO CONTENT',
+          hasContent: !!postContent,
+          contentLength: contentLength,
+          contentPreview: contentPreview,
           allPostKeys: Object.keys(post),
           postStatus: post.status,
           isPublished: post.isPublished,
@@ -1382,18 +1387,21 @@ const EditPost = ({ onSuccess }) => {
       
       // Debug: Log what we're setting in formData
       if (import.meta.env.DEV) {
+        const preview = contentToSet ? contentToSet.substring(0, 100) : 'EMPTY';
         console.log('[EditPost] Setting formData:', {
           contentLength: contentToSet.length,
           hasContent: !!contentToSet,
-          contentPreview: contentToSet.substring(0, 100) || 'EMPTY',
+          contentPreview: preview,
         });
       }
       
+      const postCategory = post.category || {};
+      const categoryId = postCategory._id || postCategory || '';
       setFormData({
         title: post.title || '',
         excerpt: post.excerpt || '',
         content: contentToSet, // Ensure content is set, even if empty
-        category: post.category?._id || post.category || '',
+        category: categoryId,
         tags: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || ''),
         featuredImage: post.featuredImage || '',
         status: postStatus,
@@ -1415,15 +1423,17 @@ const EditPost = ({ onSuccess }) => {
     try {
       setLoadingPoll(true);
       const response = await pollsAPI.getByPost(id);
-      if (response.data?.poll) {
-        setPoll(response.data.poll);
+      const responseData = response.data || {};
+      const pollData = responseData.poll || null;
+      if (pollData) {
+        setPoll(pollData);
         setPollFormData({
-          question: response.data.poll.question || '',
-          description: response.data.poll.description || '',
-          options: response.data.poll.options || [{ text: '' }, { text: '' }],
-          isActive: response.data.poll.isActive !== false,
-          expiresAt: response.data.poll.expiresAt 
-            ? new Date(response.data.poll.expiresAt).toISOString().slice(0, 16)
+          question: pollData.question || '',
+          description: pollData.description || '',
+          options: pollData.options || [{ text: '' }, { text: '' }],
+          isActive: pollData.isActive !== false,
+          expiresAt: pollData.expiresAt 
+            ? new Date(pollData.expiresAt).toISOString().slice(0, 16)
             : '',
         });
         setShowPollForm(false);
@@ -1433,7 +1443,8 @@ const EditPost = ({ onSuccess }) => {
       }
     } catch (error) {
       // 404 is expected when post doesn't have a poll - handle silently
-      if (error.response?.status === 404) {
+      const errorResponse = error.response || {};
+      if (errorResponse.status === 404) {
         setPoll(null);
       } else {
         console.error('Error fetching poll:', error);
@@ -1523,7 +1534,8 @@ const EditPost = ({ onSuccess }) => {
         toast.success('Poll created successfully');
         
         // If poll was created, update local state immediately
-        if (response.data?.poll) {
+        const pollResponseData = response.data || {};
+        if (pollResponseData.poll) {
           setPoll({
             id: response.data.poll._id || response.data.poll.id,
             question: response.data.poll.question,
@@ -1538,7 +1550,9 @@ const EditPost = ({ onSuccess }) => {
       await fetchPoll();
       setShowPollForm(false);
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to save poll';
+      const errorResponse = error.response || {};
+      const errorData = errorResponse.data || {};
+      const errorMessage = errorData.message || errorData.error || error.message || 'Failed to save poll';
       
       if (error.response) {
         toast.error(`Error ${error.response.status}: ${errorMessage}`);
@@ -1549,7 +1563,8 @@ const EditPost = ({ onSuccess }) => {
       }
       
       // If it's a permission error, show more details
-      if (error.response?.status === 403) {
+      const errorResponseStatus = errorResponse.status || 0;
+      if (errorResponseStatus === 403) {
         toast.error('You do not have permission to create polls for this post. Only the post author, collaborators, or admins can create polls.');
       }
     } finally {
@@ -1601,7 +1616,8 @@ const EditPost = ({ onSuccess }) => {
       uploadFormData.append('image', file);
       const response = await imagesAPI.upload(uploadFormData);
       const responseData = response.data || {};
-      const imageUrl = responseData.image?.url || responseData.url || responseData.imageUrl;
+      const imageObj = responseData.image || {};
+      const imageUrl = imageObj.url || responseData.url || responseData.imageUrl;
       if (!imageUrl) {
         toast.error('Failed to get image URL from response');
         return;
@@ -1612,7 +1628,10 @@ const EditPost = ({ onSuccess }) => {
       }));
       toast.success('Image uploaded successfully');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to upload image');
+      const errorResponse = error.response || {};
+      const errorData = errorResponse.data || {};
+      const errorMessage = errorData.message || 'Failed to upload image';
+      toast.error(errorMessage);
     } finally {
       setUploadingImage(false);
     }
@@ -1667,7 +1686,10 @@ const EditPost = ({ onSuccess }) => {
       navigate('/admin/posts');
     } catch (error) {
       console.error('Error updating post:', error);
-      toast.error(error.response?.data?.message || error.response?.data?.error || 'Failed to update post');
+      const updateErrorResponse = error.response || {};
+      const updateErrorData = updateErrorResponse.data || {};
+      const updateErrorMessage = updateErrorData.message || updateErrorData.error || 'Failed to update post';
+      toast.error(updateErrorMessage);
     } finally {
       setSubmitting(false);
     }

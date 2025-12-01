@@ -409,7 +409,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
         }, 100);
       }
     }
-  }, [value, editor, htmlToMarkdown]);
+  }, [value, editor]);
 
   // Toggle between Markdown and WYSIWYG mode
   useEffect(() => {

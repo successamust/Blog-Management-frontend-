@@ -18,9 +18,16 @@ export function removeConsolePlugin() {
 
       // Remove console.log, console.info, console.debug
       // Keep console.error and console.warn
-      const transformedCode = code
-        .replace(/console\.(log|info|debug)\s*\([^)]*\)\s*;?/g, '')
-        .replace(/console\.(log|info|debug)\s*\([^)]*\)/g, '');
+      // Use a more careful regex that doesn't break function parsing
+      let transformedCode = code;
+      try {
+        // Match console.log/info/debug with balanced parentheses
+        const regex = /console\.(log|info|debug)\s*\([^()]*(?:\([^()]*\)[^()]*)*\)\s*;?/g;
+        transformedCode = transformedCode.replace(regex, '');
+      } catch (e) {
+        // If regex fails, return original code
+        return null;
+      }
 
       if (transformedCode !== code) {
         return {
