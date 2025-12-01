@@ -644,7 +644,8 @@ const CreatePost = ({ onSuccess }) => {
       const uploadFormData = new FormData();
       uploadFormData.append('image', file);
       const response = await imagesAPI.upload(uploadFormData);
-      const imageUrl = response.data.image?.url || response.data.url || response.data.imageUrl;
+      const responseData = response.data || {};
+      const imageUrl = responseData.image?.url || responseData.url || responseData.imageUrl;
       if (!imageUrl) {
         toast.error('Failed to get image URL from response');
         return;
@@ -1599,7 +1600,8 @@ const EditPost = ({ onSuccess }) => {
       const uploadFormData = new FormData();
       uploadFormData.append('image', file);
       const response = await imagesAPI.upload(uploadFormData);
-      const imageUrl = response.data.image?.url || response.data.url || response.data.imageUrl;
+      const responseData = response.data || {};
+      const imageUrl = responseData.image?.url || responseData.url || responseData.imageUrl;
       if (!imageUrl) {
         toast.error('Failed to get image URL from response');
         return;
