@@ -38,6 +38,7 @@ const AuthorProfile = lazy(() => import('./pages/AuthorProfile'));
 const TagPage = lazy(() => import('./pages/TagPage'));
 const NewsletterArchive = lazy(() => import('./pages/NewsletterArchive'));
 const PreviewRedirect = lazy(() => import('./pages/PreviewRedirect'));
+const Portfolio = lazy(() => import('./pages/Portfolio'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -105,6 +106,7 @@ function AppContent() {
                   <Route path="/tags/:tag" element={<PageTransition><TagPage /></PageTransition>} />
                   <Route path="/newsletter/archive" element={<PageTransition><NewsletterArchive /></PageTransition>} />
                   <Route path="/search" element={<PageTransition><Search /></PageTransition>} />
+                  <Route path="/portfolio" element={<PageTransition><Portfolio /></PageTransition>} />
                   {/* Preview route - handles /preview/posts/:slug in development */}
                   <Route path="/preview/posts/:slug" element={<PreviewRedirect />} />
                   
