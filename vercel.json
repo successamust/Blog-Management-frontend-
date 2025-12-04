@@ -48,11 +48,20 @@
       ]
     },
     {
+      "source": "/email-assets/nexus-og-image.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, stale-while-revalidate=3600"
+        }
+      ]
+    },
+    {
       "source": "/email-assets/:path*",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=3600, stale-while-revalidate=86400"
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
         }
       ]
     },
@@ -66,6 +75,10 @@
         }
       ],
       "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
         {
           "key": "X-Content-Type-Options",
           "value": "nosniff"

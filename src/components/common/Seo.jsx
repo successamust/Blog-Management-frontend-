@@ -11,6 +11,9 @@ const DEFAULT_BASE_URL = 'https://www.nexusblog.xyz';
 const DEFAULT_DESCRIPTION = 'The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers.';
 const DEFAULT_IMAGE = '/email-assets/nexus-og-image.png';
 
+// OG Image version - increment this when the OG image changes to bust caches
+const OG_IMAGE_VERSION = 'v2';
+
 const resolveBaseUrl = () => {
   const envUrl = import.meta.env?.VITE_SITE_URL;
   if (envUrl) {
@@ -111,7 +114,15 @@ const Seo = ({
     const documentTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} - Connect. Create. Discover.`;
     const ogTitle = title || `${SITE_NAME} - Connect. Create. Discover.`;
     const metaDescription = getDefaultedText(description);
-    const imageUrl = ensureAbsoluteUrl(image || DEFAULT_IMAGE, baseUrl);
+    
+    // Add version query param to default OG image for cache busting
+    let imagePath = image || DEFAULT_IMAGE;
+    if (imagePath === DEFAULT_IMAGE || imagePath.includes('nexus-og-image.png')) {
+      const separator = imagePath.includes('?') ? '&' : '?';
+      imagePath = `${imagePath}${separator}v=${OG_IMAGE_VERSION}`;
+    }
+    
+    const imageUrl = ensureAbsoluteUrl(imagePath, baseUrl);
     const imageAltText = imageAlt || ogTitle;
 
     document.title = documentTitle;

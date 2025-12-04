@@ -11,7 +11,7 @@ const DEFAULT_API_BASE =
 
 const FALLBACK_DESCRIPTION =
   'The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers.';
-const FALLBACK_IMAGE = `${DEFAULT_SITE_URL}/email-assets/nexus-og-image.png`;
+const FALLBACK_IMAGE = `${DEFAULT_SITE_URL}/email-assets/nexus-og-image.png?v=v2`;
 const CACHE_TTL = Number(process.env.PREVIEW_CACHE_TTL || 600);
 
 const escapeHtml = (value = '') =>

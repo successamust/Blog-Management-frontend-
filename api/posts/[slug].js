@@ -82,7 +82,7 @@ const getIndexHtml = () => {
     <meta property="og:url" content="https://www.nexusblog.xyz/" />
     <meta property="og:title" content="Nexus - Connect. Create. Discover." />
     <meta property="og:description" content="The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers." />
-    <meta property="og:image" content="https://www.nexusblog.xyz/email-assets/nexus-og-image.png" />
+    <meta property="og:image" content="https://www.nexusblog.xyz/email-assets/nexus-og-image.png?v=v2" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/png" />
@@ -91,7 +91,7 @@ const getIndexHtml = () => {
     <meta name="twitter:url" content="https://www.nexusblog.xyz/" />
     <meta name="twitter:title" content="Nexus - Connect. Create. Discover." />
     <meta name="twitter:description" content="The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers." />
-    <meta name="twitter:image" content="https://www.nexusblog.xyz/email-assets/nexus-og-image.png" />
+    <meta name="twitter:image" content="https://www.nexusblog.xyz/email-assets/nexus-og-image.png?v=v2" />
     <meta name="twitter:image:alt" content="Nexus - Connect. Create. Discover." />
     <meta name="theme-color" content="#1a8917" />
     <link rel="preconnect" href="https://blog-management-sx5c.onrender.com" />

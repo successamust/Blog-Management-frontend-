@@ -89,6 +89,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip OG images - never cache them (they change frequently and need fresh content)
+  if (url.pathname.includes('nexus-og-image.png') || url.pathname.includes('/email-assets/nexus-og-image')) {
+    // Always fetch from network, never cache OG images
+    event.respondWith(
+      fetch(request, { cache: 'no-store' })
+        .then((response) => response)
+        .catch((error) => {
+          console.error('[SW] Failed to fetch OG image:', url.pathname, error);
+          throw error;
+        })
+    );
+    return;
+  }
+
   // Skip requests with special headers (Vite HMR)
   const acceptHeader = request.headers.get('accept') || '';
   if (acceptHeader.includes('text/html') && url.searchParams.has('t')) {
