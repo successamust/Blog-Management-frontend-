@@ -1532,7 +1532,7 @@ const PostDetail = () => {
       </div>
       {post && (
         <div className="mt-12 pb-6">
-          <PostRecommendations currentPost={post} limit={6} />
+          <PostRecommendations currentPost={post} limit={3} />
         </div>
       )}
       </div>
