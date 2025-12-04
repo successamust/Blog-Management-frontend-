@@ -11,7 +11,7 @@ import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
 import TagCloud from '../components/common/TagCloud';
 
-const HOME_DESCRIPTION = 'Discover useful articles, insights, and writing from our community of creators.';
+const HOME_DESCRIPTION = 'The central hub for diverse voices, where every perspective is shared and every idea is explored.';
 const POSTS_PER_PAGE = 10;
 const NEWSLETTER_TOPICS = [
   { value: 'weekly-digest', label: 'Weekly digest' },
@@ -373,7 +373,7 @@ const Home = () => {
     return (
       <>
         <Seo
-          title="Nexus — Stories Worth Sharing"
+          title="Nexus — Connect. Create. Discover."
           description={HOME_DESCRIPTION}
           url="/"
           image={DEFAULT_OG_IMAGE}
@@ -388,10 +388,10 @@ const Home = () => {
                 className="text-center"
               >
                 <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[var(--text-primary)] mb-6 leading-tight tracking-tight">
-                  Write. Share. Inspire.
+                  Connect. Create. Discover.
                 </h1>
                 <p className="text-base sm:text-lg md:text-xl text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto leading-relaxed">
-                  Discover useful articles, insights, and writing from our community of creators.
+                The central hub for diverse voices, where every perspective is shared and every idea is explored.
                 </p>
               </motion.div>
             </div>
@@ -447,7 +447,7 @@ const Home = () => {
   return (
     <>
       <Seo
-        title="Nexus — Stories Worth Sharing"
+        title="Nexus — Connect. Create. Discover."
         description={HOME_DESCRIPTION}
         url="/"
         image={DEFAULT_OG_IMAGE}
@@ -463,10 +463,10 @@ const Home = () => {
             className="text-center"
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[var(--text-primary)] mb-6 leading-tight tracking-tight">
-              Write. Share. Inspire.
+              Connect. Create. Discover.
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto leading-relaxed">
-              Discover useful articles, insights, and writing from our community of creators.
+            The central hub for diverse voices, where every perspective is shared and every idea is explored.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-xl mx-auto">
               <Link

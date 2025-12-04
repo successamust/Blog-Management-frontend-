@@ -108,8 +108,8 @@ const Seo = ({
 
     const canonicalUrl = ensureAbsoluteUrl(providedCanonicalUrl || url || pathFallback, baseUrl) || baseUrl;
     const ogUrl = ensureAbsoluteUrl(url || pathFallback, baseUrl) || baseUrl;
-    const documentTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} - Stories Worth Sharing`;
-    const ogTitle = title || `${SITE_NAME} - Stories Worth Sharing`;
+    const documentTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} - Connect. Create. Discover.`;
+    const ogTitle = title || `${SITE_NAME} - Connect. Create. Discover.`;
     const metaDescription = getDefaultedText(description);
     const imageUrl = ensureAbsoluteUrl(image || DEFAULT_IMAGE, baseUrl);
     const imageAltText = imageAlt || ogTitle;

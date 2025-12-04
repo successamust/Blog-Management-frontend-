@@ -71,8 +71,8 @@ const getIndexHtml = () => {
     <link rel="apple-touch-icon" href="/nexus-logo-icon.svg" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nexus - Stories Worth Sharing</title>
-    <meta name="title" content="Nexus - Stories Worth Sharing" />
+    <title>Nexus - Connect. Create. Discover.</title>
+    <meta name="title" content="Nexus - Connect. Create. Discover." />
     <meta name="description" content="Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers." />
     <meta name="keywords" content="blog, articles, news, insights, stories, content, newsletter" />
     <meta name="author" content="Nexus" />
@@ -80,19 +80,19 @@ const getIndexHtml = () => {
     <meta name="language" content="English" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.nexusblog.xyz/" />
-    <meta property="og:title" content="Nexus - Stories Worth Sharing" />
+    <meta property="og:title" content="Nexus - Connect. Create. Discover." />
     <meta property="og:description" content="Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers." />
     <meta property="og:image" content="https://www.nexusblog.xyz/email-assets/nexus-og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:alt" content="Nexus - Stories Worth Sharing" />
+    <meta property="og:image:alt" content="Nexus - Connect. Create. Discover." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://www.nexusblog.xyz/" />
-    <meta name="twitter:title" content="Nexus - Stories Worth Sharing" />
+    <meta name="twitter:title" content="Nexus - Connect. Create. Discover." />
     <meta name="twitter:description" content="Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers." />
     <meta name="twitter:image" content="https://www.nexusblog.xyz/email-assets/nexus-og-image.png" />
-    <meta name="twitter:image:alt" content="Nexus - Stories Worth Sharing" />
+    <meta name="twitter:image:alt" content="Nexus - Connect. Create. Discover." />
     <meta name="theme-color" content="#1a8917" />
     <link rel="preconnect" href="https://blog-management-sx5c.onrender.com" />
     <link rel="dns-prefetch" href="https://blog-management-sx5c.onrender.com" />

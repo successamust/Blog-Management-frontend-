@@ -124,7 +124,7 @@ const handler = async (req, res) => {
     }
     
     // For crawlers, generate the preview HTML with meta tags
-    const title = escapeHtml(post.title ? `${post.title} | Nexus` : 'Nexus - Stories Worth Sharing');
+    const title = escapeHtml(post.title ? `${post.title} | Nexus` : 'Nexus - Connect. Create. Discover.');
     const description = escapeHtml(
       post.excerpt ||
         post.summary ||

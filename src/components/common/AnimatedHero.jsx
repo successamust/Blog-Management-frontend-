@@ -137,7 +137,7 @@ const AnimatedHero = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 0.8 }}
             >
-              Stories Worth Sharing
+              Connect. Create. Discover.
             </motion.span>
           </motion.h1>
         </motion.div>
