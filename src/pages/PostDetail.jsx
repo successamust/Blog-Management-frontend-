@@ -44,7 +44,7 @@ import Poll from '../components/posts/Poll';
 import { useReadingHistory } from '../hooks/useReadingHistory';
 import CommentThread from '../components/posts/CommentThread';
 
-const DEFAULT_POST_DESCRIPTION = 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.';
+const DEFAULT_POST_DESCRIPTION = 'The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers.';
 const REPORTED_COMMENTS_KEY = 'nexus_reported_comments';
 
 const stripHtmlTags = (value) => {

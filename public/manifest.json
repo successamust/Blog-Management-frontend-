@@ -1,7 +1,7 @@
 {
   "name": "Nexus Blog",
   "short_name": "Nexus",
-  "description": "Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.",
+  "description": "The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

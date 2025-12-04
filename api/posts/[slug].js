@@ -73,7 +73,7 @@ const getIndexHtml = () => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nexus - Connect. Create. Discover.</title>
     <meta name="title" content="Nexus - Connect. Create. Discover." />
-    <meta name="description" content="Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers." />
+    <meta name="description" content="The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers." />
     <meta name="keywords" content="blog, articles, news, insights, stories, content, newsletter" />
     <meta name="author" content="Nexus" />
     <meta name="robots" content="index, follow" />
@@ -81,7 +81,7 @@ const getIndexHtml = () => {
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.nexusblog.xyz/" />
     <meta property="og:title" content="Nexus - Connect. Create. Discover." />
-    <meta property="og:description" content="Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers." />
+    <meta property="og:description" content="The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers." />
     <meta property="og:image" content="https://www.nexusblog.xyz/email-assets/nexus-og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -90,7 +90,7 @@ const getIndexHtml = () => {
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://www.nexusblog.xyz/" />
     <meta name="twitter:title" content="Nexus - Connect. Create. Discover." />
-    <meta name="twitter:description" content="Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers." />
+    <meta name="twitter:description" content="The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers." />
     <meta name="twitter:image" content="https://www.nexusblog.xyz/email-assets/nexus-og-image.png" />
     <meta name="twitter:image:alt" content="Nexus - Connect. Create. Discover." />
     <meta name="theme-color" content="#1a8917" />

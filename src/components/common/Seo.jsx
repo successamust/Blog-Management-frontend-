@@ -8,7 +8,7 @@ import StructuredData, {
 
 const SITE_NAME = 'Nexus';
 const DEFAULT_BASE_URL = 'https://www.nexusblog.xyz';
-const DEFAULT_DESCRIPTION = 'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.';
+const DEFAULT_DESCRIPTION = 'The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers.';
 const DEFAULT_IMAGE = '/email-assets/nexus-og-image.png';
 
 const resolveBaseUrl = () => {

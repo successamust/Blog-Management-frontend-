@@ -10,7 +10,7 @@ const DEFAULT_API_BASE =
   'https://blog-management-sx5c.onrender.com/v1';
 
 const FALLBACK_DESCRIPTION =
-  'Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.';
+  'The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers.';
 const FALLBACK_IMAGE = `${DEFAULT_SITE_URL}/email-assets/nexus-og-image.png`;
 const CACHE_TTL = Number(process.env.PREVIEW_CACHE_TTL || 600);
 

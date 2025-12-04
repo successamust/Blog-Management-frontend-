@@ -43,7 +43,7 @@ export default async function handler(req, res) {
   <channel>
     <title>Nexus Blog</title>
     <link>${baseUrl}</link>
-    <description>Discover engaging articles, insights, and stories on Nexus. Join our community of readers and writers.</description>
+    <description>The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers.</description>
     <language>en-US</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <atom:link href="${baseUrl}/api/rss.xml" rel="self" type="application/rss+xml"/>
