@@ -5,6 +5,8 @@ import { authAPI, imagesAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import ChangePassword from './ChangePassword';
 import Spinner from '../common/Spinner';
+import TwoFactorAuth from '../auth/TwoFactorAuth';
+import AuditLog from '../common/AuditLog';
 
 const ProfileSettings = () => {
   const { user, isAuthenticated, updateUser } = useAuth();
@@ -440,6 +442,16 @@ const ProfileSettings = () => {
 
       {/* Change Password Section */}
       <ChangePassword />
+
+      {/* Two-Factor Authentication Section */}
+      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+        <TwoFactorAuth />
+      </div>
+
+      {/* Security Audit Log Section */}
+      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+        <AuditLog />
+      </div>
     </div>
   );
 };

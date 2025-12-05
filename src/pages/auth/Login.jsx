@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { authAPI } from '../../services/api';
 import Spinner from '../../components/common/Spinner';
 import BrandWordmark from '../../components/common/BrandWordmark';
 import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
+import TwoFactorVerification from '../../components/auth/TwoFactorVerification';
+import toast from 'react-hot-toast';
 
 const LOGIN_DESCRIPTION = 'Sign in to Nexus to manage your publications, subscriptions, and saved reading list.';
 
@@ -15,7 +18,10 @@ const Login = () => {
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
-  const { login, loading, isAuthenticated } = useAuth();
+  const [show2FA, setShow2FA] = useState(false);
+  const [verifying2FA, setVerifying2FA] = useState(false);
+  const [tempToken, setTempToken] = useState(null);
+  const { login, logout, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -39,9 +45,61 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const result = await login(formData);
+    
+    // Check if 2FA is required
+    if (result.requires2FA) {
+      setTempToken(result.tempToken);
+      setShow2FA(true);
+      return;
+    }
+    
     if (result.success) {
       navigate(from, { replace: true });
     }
+  };
+
+  const handle2FAVerify = async (code) => {
+    if (!tempToken) {
+      toast.error('Session expired. Please try logging in again.');
+      setShow2FA(false);
+      return;
+    }
+
+    setVerifying2FA(true);
+    try {
+      const response = await authAPI.verify2FALogin(code, tempToken);
+      const { token, accessToken, user, expiresIn } = response.data;
+      
+      // Use accessToken if available, otherwise fall back to token
+      const finalToken = accessToken || token;
+      
+      // Set tokens using auth context methods
+      const { setAuthToken } = await import('../../utils/tokenStorage.js');
+      const { setAccessTokenExpiry } = await import('../../utils/refreshToken.js');
+      
+      setAuthToken(finalToken);
+      
+      if (expiresIn) {
+        const expiry = Date.now() + (expiresIn * 1000);
+        setAccessTokenExpiry(expiry);
+      }
+      
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('lastAuthCheck', Date.now().toString());
+      
+      toast.success('Login successful!');
+      navigate(from, { replace: true });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Invalid verification code');
+    } finally {
+      setVerifying2FA(false);
+    }
+  };
+
+  const handle2FACancel = () => {
+    setShow2FA(false);
+    setTempToken(null);
+    setFormData({ email: formData.email, password: '' });
   };
 
   return (
@@ -89,7 +147,16 @@ const Login = () => {
             </Link>
           </p>
         </div>
-        <form className="mt-8 space-y-6 surface-card p-8" onSubmit={handleSubmit}>
+        <AnimatePresence mode="wait">
+          {!show2FA ? (
+            <motion.form
+              key="login-form"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="mt-8 space-y-6 surface-card p-8"
+              onSubmit={handleSubmit}
+            >
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-[var(--text-primary)]">
@@ -178,7 +245,23 @@ const Login = () => {
               {loading ? <Spinner size="sm" tone="light" /> : 'Sign in'}
             </button>
           </div>
-        </form>
+        </motion.form>
+          ) : (
+            <motion.div
+              key="2fa-form"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="mt-8 surface-card p-8"
+            >
+              <TwoFactorVerification
+                onVerify={handle2FAVerify}
+                onCancel={handle2FACancel}
+                loading={verifying2FA}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
       </div>
     </>

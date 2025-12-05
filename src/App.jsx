@@ -18,6 +18,7 @@ import { SkipToContent } from './components/common/Accessibility';
 import { useServiceWorker } from './hooks/useServiceWorker';
 import BackToTop from './components/common/BackToTop';
 import OfflineIndicator from './components/common/OfflineIndicator';
+import SecurityHandler from './components/common/SecurityHandler';
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import('./pages/Home'));
@@ -182,6 +183,7 @@ function AppContent() {
       <KeyboardShortcuts />
       <BackToTop />
       <OfflineIndicator />
+      <SecurityHandler />
       </div>
     </ErrorBoundary>
   );

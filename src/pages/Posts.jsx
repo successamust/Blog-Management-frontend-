@@ -74,11 +74,68 @@ const Posts = () => {
       const response = await makeRequestWithRetry();
       */
       const response = await postsAPI.getAll(params);
-      setPosts(response.data.posts || []);
+      const rawPosts = response.data.posts || [];
+      
+      // Client-side filter to ensure all published posts are shown
+      // Since we're requesting status='published' from backend, trust it and only filter out explicitly non-published posts
+      const isPublishedPost = (post) => {
+        if (!post) return false;
+        
+        // Only filter out if explicitly marked as draft or non-published
+        const status = (post?.status || post?.state || '').toString().toLowerCase().trim();
+        
+        // Explicitly non-published statuses - filter these out
+        if (status && ['draft', 'scheduled', 'archived', 'unpublished', 'pending'].includes(status)) {
+          return false;
+        }
+        
+        // Explicitly draft flags - filter these out
+        if (post?.isDraft === true) {
+          return false;
+        }
+        
+        // Explicitly non-published flags - filter these out
+        if (post?.isPublished === false || post?.published === false) {
+          return false;
+        }
+        
+        // If scheduled but not yet published, filter out
+        if (post?.scheduledAt && post?.publishedAt) {
+          const scheduledDate = new Date(post.scheduledAt);
+          const publishedDate = new Date(post.publishedAt);
+          if (!isNaN(scheduledDate.getTime()) && scheduledDate > new Date() && scheduledDate > publishedDate) {
+            return false;
+          }
+        }
+        
+        // Otherwise, trust the backend since we requested status='published'
+        // This ensures we don't filter out valid published posts with status variations
+        return true;
+      };
+      
+      const filteredPosts = rawPosts.filter(isPublishedPost);
+      
+      // Debug logging in development
+      if (import.meta.env.DEV && rawPosts.length !== filteredPosts.length) {
+        console.log(`[Posts] Filtered ${rawPosts.length} posts to ${filteredPosts.length} published posts`);
+        const filteredOut = rawPosts.filter(p => !isPublishedPost(p));
+        if (filteredOut.length > 0) {
+          console.log('[Posts] Filtered out posts:', filteredOut.map(p => ({
+            id: p._id || p.id,
+            title: p.title,
+            status: p.status,
+            isPublished: p.isPublished,
+            published: p.published,
+            isDraft: p.isDraft
+          })));
+        }
+      }
+      
+      setPosts(filteredPosts);
       setPagination({
         currentPage: response.data.currentPage || currentPage,
         totalPages: response.data.totalPages || 1,
-        totalPosts: response.data.totalPosts || 0,
+        totalPosts: response.data.totalPosts || filteredPosts.length,
         limit: response.data.limit || 12,
       });
     } catch (error) {

@@ -7,6 +7,8 @@ import { useNotifications } from '../../context/NotificationContext';
 import Spinner from '../../components/common/Spinner';
 import BrandWordmark from '../../components/common/BrandWordmark';
 import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
+import PasswordStrength from '../../components/common/PasswordStrength';
+import { validatePassword } from '../../utils/securityUtils';
 
 const REGISTER_DESCRIPTION = 'Create a Nexus account to publish stories, join the newsletter, and unlock your personalized reading feed.';
 
@@ -53,8 +55,17 @@ const Register = () => {
       newErrors.email = 'Please enter a valid email address';
     }
 
-    if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    // Use security utils for password validation
+    const passwordValidation = validatePassword(formData.password, {
+      minLength: 8,
+      requireUppercase: true,
+      requireLowercase: true,
+      requireNumbers: true,
+      requireSpecialChars: true,
+    });
+
+    if (!passwordValidation.valid) {
+      newErrors.password = passwordValidation.errors[0] || 'Password does not meet requirements';
     }
 
     if (formData.password !== formData.confirmPassword) {
@@ -215,6 +226,16 @@ const Register = () => {
                   )}
                 </button>
               </div>
+              <PasswordStrength 
+                password={formData.password} 
+                requirements={{
+                  minLength: 8,
+                  requireUppercase: true,
+                  requireLowercase: true,
+                  requireNumbers: true,
+                  requireSpecialChars: true,
+                }}
+              />
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password}</p>
               )}

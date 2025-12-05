@@ -16,6 +16,7 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  Sector,
 } from 'recharts';
 import {
   Users,
@@ -30,14 +31,38 @@ import {
   Eye,
   Heart,
   Calendar,
+  Tag,
+  BookOpen,
+  Mail,
 } from 'lucide-react';
-import { adminAPI, postsAPI, categoriesAPI, newsletterAPI, dashboardAPI } from '../../services/api';
+import { adminAPI, postsAPI, categoriesAPI, newsletterAPI, dashboardAPI, pollsAPI, searchAPI, followsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import AnimatedCard from '../common/AnimatedCard';
 import SkeletonLoader from '../common/SkeletonLoader';
 import Spinner from '../common/Spinner';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+const ACTIVE_STROKE = 'var(--accent, #8b5cf6)';
+
+const renderActiveSector = (props) => {
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+  return (
+    <g>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 4}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+        stroke={ACTIVE_STROKE}
+        strokeWidth={3}
+        opacity={0.9}
+      />
+    </g>
+  );
+};
 
 const formatRoleLabel = (value) => {
   if (!value && value !== 0) return 'Unknown';
@@ -58,6 +83,12 @@ const AdminOverview = () => {
     categories: null,
     newsletter: null,
     engagement: null,
+    categoryStats: null,
+    polls: null,
+    search: null,
+    follows: null,
+    bookmarks: null,
+    readingHistory: null,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -200,7 +231,9 @@ const AdminOverview = () => {
                 if (err.response?.status === 429) {
                   await delay(1000);
                   try {
-                    const res = await postsAPI.getAll({ limit: 1000, ...extraQueries[i] });
+                    // Security: Validate and sanitize limit parameter
+                    const sanitizedLimit = Math.min(Math.max(parseInt(1000) || 1000, 1), 1000);
+                    const res = await postsAPI.getAll({ limit: sanitizedLimit, ...extraQueries[i] });
                     extraResponses.push(normalizePosts(res));
                   } catch (retryErr) {
                     console.warn(`AdminOverview: failed to fetch posts with params ${JSON.stringify(extraQueries[i])} after retry:`, retryErr);
@@ -284,14 +317,16 @@ const AdminOverview = () => {
       };
 
       const userStatsRes = await Promise.resolve(makeRequestWithRetry(() => adminAPI.getUserStats()));
-      // await delay(400); // COMMENTED OUT FOR TESTING
       const usersRes = await Promise.resolve(makeRequestWithRetry(() => adminAPI.getUsers({ limit: 1000 })));
-      // await delay(400); // COMMENTED OUT FOR TESTING
       const categoriesRes = await Promise.resolve(makeRequestWithRetry(() => categoriesAPI.getAll()));
-      // await delay(400); // COMMENTED OUT FOR TESTING
+      const categoryStatsRes = await Promise.resolve(makeRequestWithRetry(() => categoriesAPI.getStats()));
       const newsletterStatsRes = await Promise.resolve(makeRequestWithRetry(() => adminAPI.getNewsletterStats()));
-      // await delay(400); // COMMENTED OUT FOR TESTING
       const dashboardRes = await Promise.resolve(makeRequestWithRetry(() => dashboardAPI.getOverview()));
+      const pollsRes = await Promise.resolve(makeRequestWithRetry(() => pollsAPI.getAll({ limit: 100 })));
+      const popularTagsRes = await Promise.resolve(makeRequestWithRetry(() => searchAPI.getPopularTags()));
+      // Security: Validate and sanitize limit parameter
+      const sanitizedBookmarksLimit = Math.min(Math.max(parseInt(1000) || 1000, 1), 1000); // Between 1 and 1000
+      const bookmarksRes = await Promise.resolve(makeRequestWithRetry(() => dashboardAPI.getBookmarks({ limit: sanitizedBookmarksLimit }).catch(() => ({ error: new Error('Bookmarks fetch failed') }))));
 
       const getData = (res) => {
         if (res?.error) return null;
@@ -629,11 +664,40 @@ const AdminOverview = () => {
       // Always set posts stats, even if empty
       const normalizeStatus = (post) => {
         if (!post) return 'draft';
-        const status = (post?.status || post?.state || '').toString().toLowerCase();
-        if (status) return status;
+        
+        // First check explicit status field - this is the source of truth
+        const status = (post?.status || post?.state || '').toString().trim().toLowerCase();
+        if (status && status !== 'undefined' && status !== 'null' && status !== '') {
+          // Normalize common status variations
+          if (status === 'draft' || status === 'unpublished') return 'draft';
+          if (status === 'published' || status === 'publish' || status === 'live' || status === 'active' || status === 'public') return 'published';
+          if (status === 'scheduled' || status === 'pending') return 'scheduled';
+          if (status === 'archived' || status === 'archive') return 'archived';
+          return status;
+        }
+        
+        // Fallback to boolean flags - but only if status field is not set
         if (post?.isDraft === true) return 'draft';
-        if (post?.published || post?.isPublished) return 'published';
-        if (post?.scheduled) return 'scheduled';
+        if (post?.isPublished === false || post?.published === false) return 'draft';
+        if (post?.published === true || post?.isPublished === true) return 'published';
+        if (post?.scheduled === true) return 'scheduled';
+        if (post?.archived === true) return 'archived';
+        
+        // Only check publishedAt/scheduledAt as last resort if status and boolean flags are not set
+        // But don't use publishedAt if status is explicitly draft
+        if (post?.scheduledAt) {
+          const scheduledDate = new Date(post.scheduledAt);
+          if (!Number.isNaN(scheduledDate.getTime()) && scheduledDate > new Date()) {
+            return 'scheduled';
+          }
+        }
+        if (post?.publishedAt && !post?.scheduledAt) {
+          // Only consider published if isPublished is true or not explicitly false
+          if (post?.isPublished !== false) {
+            return 'published';
+          }
+        }
+        
         return 'draft';
       };
 
@@ -646,10 +710,16 @@ const AdminOverview = () => {
         {}
       );
 
-      const published = counts.published || counts.live || counts.active || 0;
-      const drafts = counts.draft || counts.drafts || 0;
-      const scheduled = counts.scheduled || counts.pending || 0;
-      const archived = counts.archived || counts.archive || 0;
+      // Sum all published variations
+      const published = 
+        (counts.published || 0) + 
+        (counts.live || 0) + 
+        (counts.active || 0) + 
+        (counts.publish || 0) +
+        (counts.public || 0);
+      const drafts = (counts.draft || 0) + (counts.drafts || 0) + (counts.unpublished || 0);
+      const scheduled = (counts.scheduled || 0) + (counts.pending || 0);
+      const archived = (counts.archived || 0) + (counts.archive || 0);
       
       // Calculate total as sum of all status counts to ensure accuracy
       const totalFromCounts = Object.values(counts).reduce((sum, count) => sum + (Number(count) || 0), 0);
@@ -657,24 +727,33 @@ const AdminOverview = () => {
       // Use the larger value to ensure we don't miss any posts
       const totalPosts = Math.max(totalFromCounts, totalFromArray);
       
-      const totalViews = normalizedPostsData.reduce((sum, p) => sum + (Number(p?.viewCount) || Number(p?.views) || 0), 0);
-      const totalLikes = normalizedPostsData.reduce((sum, p) => {
-        if (Array.isArray(p?.likes)) return sum + p.likes.length;
-        if (Number(p?.likeCount) || Number(p?.likes)) return sum + (Number(p?.likeCount) || Number(p?.likes) || 0);
-        return sum;
+      const totalViews = (Array.isArray(normalizedPostsData) ? normalizedPostsData : []).reduce((sum, p) => {
+        if (!p) return sum;
+        const views = Number(p?.viewCount) || Number(p?.views) || 0;
+        return sum + (Number.isFinite(views) ? views : 0);
       }, 0);
-      const totalComments = normalizedPostsData.reduce((sum, p) => {
+      const totalLikes = (Array.isArray(normalizedPostsData) ? normalizedPostsData : []).reduce((sum, p) => {
+        if (!p) return sum;
+        if (Array.isArray(p?.likes)) return sum + (p.likes.length || 0);
+        const likes = Number(p?.likeCount) || Number(p?.likes) || 0;
+        return sum + (Number.isFinite(likes) ? likes : 0);
+      }, 0);
+      const totalComments = (Array.isArray(normalizedPostsData) ? normalizedPostsData : []).reduce((sum, p) => {
+        if (!p) return sum;
         // Count all comments including replies (consistent with Analytics)
-        if (Array.isArray(p?.comments)) {
+        if (Array.isArray(p?.comments) && p.comments.length > 0) {
           const countAllComments = (comments) => {
+            if (!Array.isArray(comments) || comments.length === 0) return 0;
             return comments.reduce((total, comment) => {
-              return total + 1 + (comment.replies ? countAllComments(comment.replies) : 0);
+              if (!comment) return total;
+              const replies = Array.isArray(comment.replies) ? comment.replies : [];
+              return total + 1 + countAllComments(replies);
             }, 0);
           };
           return sum + countAllComments(p.comments);
         }
-        if (Number(p?.commentCount) || Number(p?.comments)) return sum + (Number(p?.commentCount) || Number(p?.comments) || 0);
-        return sum;
+        const comments = Number(p?.commentCount) || Number(p?.comments) || 0;
+        return sum + (Number.isFinite(comments) ? comments : 0);
       }, 0);
 
       // Always update posts stats - the total should match the sum of all status counts
@@ -711,6 +790,240 @@ const AdminOverview = () => {
       if (newsletterStatsRes && !newsletterStatsRes.error) {
         const newsletterData = getData(newsletterStatsRes);
         setStats((prev) => ({ ...prev, newsletter: newsletterData || null }));
+      }
+
+      // Process category statistics
+      if (categoryStatsRes && !categoryStatsRes.error) {
+        const categoryStatsData = getData(categoryStatsRes);
+        setStats((prev) => ({
+          ...prev,
+          categoryStats: categoryStatsData || null,
+        }));
+      }
+
+      // Process polls data
+      if (pollsRes && !pollsRes.error) {
+        const pollsData = getData(pollsRes);
+        const pollsArray = pollsData?.polls || pollsData?.data || (Array.isArray(pollsData) ? pollsData : []) || [];
+        const normalizedPolls = Array.isArray(pollsArray) ? pollsArray.filter(Boolean) : [];
+        
+        // Calculate poll statistics
+        const totalPolls = normalizedPolls.length;
+        const activePolls = normalizedPolls.filter(p => {
+          if (!p) return false;
+          if (p.isActive === false) return false;
+          if (p.endDate) {
+            const endDate = new Date(p.endDate);
+            if (!Number.isNaN(endDate.getTime()) && endDate <= new Date()) return false;
+          }
+          return true;
+        }).length;
+        const totalVotes = normalizedPolls.reduce((sum, poll) => {
+          if (!poll) return sum;
+          
+          // Method 1: Direct totalVotes field
+          if (poll.totalVotes !== undefined && poll.totalVotes !== null) {
+            const votes = Number(poll.totalVotes);
+            if (Number.isFinite(votes) && votes > 0) return sum + votes;
+          }
+          
+          // Method 2: From statistics object
+          if (poll.statistics?.totalVotes !== undefined && poll.statistics?.totalVotes !== null) {
+            const votes = Number(poll.statistics.totalVotes);
+            if (Number.isFinite(votes) && votes > 0) return sum + votes;
+          }
+          
+          // Method 3: Sum votes from options array (most reliable)
+          if (poll.options && Array.isArray(poll.options) && poll.options.length > 0) {
+            const votesFromOptions = poll.options.reduce((optionSum, option) => {
+              if (!option) return optionSum;
+              // Try multiple vote count field names
+              const voteCount = Number(option.votes) || Number(option.voteCount) || Number(option.count) || 0;
+              return optionSum + (Number.isFinite(voteCount) ? voteCount : 0);
+            }, 0);
+            if (votesFromOptions > 0) return sum + votesFromOptions;
+          }
+          
+          // Method 4: From results object (if votes are stored as { optionId: count })
+          if (poll.results && typeof poll.results === 'object' && !Array.isArray(poll.results)) {
+            const votesFromResults = Object.values(poll.results).reduce((resultSum, count) => {
+              const voteCount = Number(count) || 0;
+              return resultSum + (Number.isFinite(voteCount) ? voteCount : 0);
+            }, 0);
+            if (votesFromResults > 0) return sum + votesFromResults;
+          }
+          
+          // Method 5: From votes array (array of vote objects)
+          if (poll.votes && Array.isArray(poll.votes)) {
+            return sum + (poll.votes.length || 0);
+          }
+          
+          return sum;
+        }, 0);
+        
+        setStats((prev) => ({
+          ...prev,
+          polls: {
+            total: totalPolls,
+            active: activePolls,
+            totalVotes,
+            polls: normalizedPolls,
+          },
+        }));
+      }
+
+      // Process search/popular tags data
+      if (popularTagsRes && !popularTagsRes.error) {
+        const tagsData = getData(popularTagsRes);
+        const tagsArray = tagsData?.tags || tagsData?.data || tagsData?.popularTags || (Array.isArray(tagsData) ? tagsData : []) || [];
+        const normalizedTags = Array.isArray(tagsArray) ? tagsArray.filter(Boolean) : [];
+        
+        setStats((prev) => ({
+          ...prev,
+          search: {
+            popularTags: normalizedTags,
+            totalTags: normalizedTags.length,
+          },
+        }));
+      }
+
+      // Process bookmarks - try multiple sources
+      let bookmarksArray = [];
+      
+      // Method 1: From dedicated bookmarks API response
+      if (bookmarksRes && !bookmarksRes.error) {
+        const bookmarksData = getData(bookmarksRes);
+        const bookmarksFromAPI = bookmarksData?.bookmarks || bookmarksData?.posts || bookmarksData?.data || (Array.isArray(bookmarksData) ? bookmarksData : []);
+        // Security: Ensure it's an array and limit size to prevent DoS
+        if (Array.isArray(bookmarksFromAPI) && bookmarksFromAPI.length > 0) {
+          bookmarksArray = bookmarksFromAPI.filter(b => b != null).slice(0, 1000); // Limit to 1000 items
+        }
+      }
+      
+      // Method 2: From dashboard overview (fallback)
+      if (bookmarksArray.length === 0 && dashboardRes && !dashboardRes.error) {
+        const dashboardData = getData(dashboardRes);
+        const bookmarksFromDashboard = dashboardData?.overview?.bookmarks || dashboardData?.bookmarks || null;
+        if (bookmarksFromDashboard) {
+          const dashboardArray = Array.isArray(bookmarksFromDashboard) ? bookmarksFromDashboard.filter(b => b != null) : [];
+          // Security: Limit array size
+          bookmarksArray = dashboardArray.slice(0, 1000);
+        }
+      }
+      
+      // Security: Validate and sanitize bookmark data
+      const sanitizedBookmarks = bookmarksArray.filter(b => {
+        if (!b || typeof b !== 'object') return false;
+        // Ensure bookmark has valid structure
+        return true;
+      });
+      
+      // Calculate unique posts bookmarked
+      const uniqueBookmarkedPosts = new Set(sanitizedBookmarks.map(b => {
+        if (!b) return null;
+        const postId = b.postId || b.post?._id || b.post?.id || b._id || b.id || null;
+        // Security: Validate postId format (MongoDB ObjectId)
+        if (postId && typeof postId === 'string' && /^[0-9a-fA-F]{24}$/.test(postId)) {
+          return postId;
+        }
+        return null;
+      }).filter(Boolean)).size;
+      
+      // Always set bookmarks stats (even if 0)
+      setStats((prev) => ({
+        ...prev,
+        bookmarks: {
+          totalBookmarks: sanitizedBookmarks.length,
+          uniquePostsBookmarked: Number.isFinite(uniqueBookmarkedPosts) ? uniqueBookmarkedPosts : 0,
+          bookmarks: sanitizedBookmarks,
+        },
+      }));
+      
+      // Process reading history from dashboard
+      if (dashboardRes && !dashboardRes.error) {
+        const dashboardData = getData(dashboardRes);
+        const readingHistory = dashboardData?.overview?.history || dashboardData?.history || null;
+        
+        if (readingHistory) {
+          const historyArray = Array.isArray(readingHistory) ? readingHistory.filter(h => h != null) : [];
+          const uniquePostsRead = new Set(historyArray.map(h => {
+            if (!h) return null;
+            return h.postId || h.post?._id || h.post?.id || null;
+          }).filter(Boolean)).size;
+          
+          setStats((prev) => ({
+            ...prev,
+            readingHistory: {
+              totalReads: historyArray.length,
+              uniquePostsRead: Number.isFinite(uniquePostsRead) ? uniquePostsRead : 0,
+              history: historyArray,
+            },
+          }));
+        }
+      }
+
+      // Process follow statistics (aggregate from users)
+      if (usersRes && !usersRes.error) {
+        const usersPayload = getData(usersRes);
+        const extractedUsers = usersPayload?.users || usersPayload?.data || (Array.isArray(usersPayload) ? usersPayload : []) || [];
+        const usersList = Array.isArray(extractedUsers) ? extractedUsers.filter(Boolean) : [];
+        
+        if (usersList.length > 0) {
+          // Fetch follow stats for authors (limit to avoid too many requests)
+          const authors = usersList.filter(u => u.role === 'author' || u.isVerifiedAuthor).slice(0, 20);
+          
+          if (authors.length > 0) {
+            const followStatsPromises = authors.map(async (author) => {
+              try {
+                const authorId = author._id || author.id;
+                if (!authorId) return null;
+                const followStats = await followsAPI.getStats(authorId).catch(() => null);
+                if (followStats?.data) {
+                  return {
+                    authorId,
+                    authorName: author.username || author.email,
+                    ...followStats.data,
+                  };
+                }
+                return null;
+              } catch (error) {
+                return null;
+              }
+            });
+            
+            const followStatsResults = await Promise.all(followStatsPromises);
+            const validFollowStats = followStatsResults.filter(Boolean);
+            
+            const totalFollowers = validFollowStats.reduce((sum, stat) => {
+              if (!stat) return sum;
+              const followers = Number(stat.followers) || 0;
+              return sum + (Number.isFinite(followers) ? followers : 0);
+            }, 0);
+            const totalFollowing = validFollowStats.reduce((sum, stat) => {
+              if (!stat) return sum;
+              const following = Number(stat.following) || 0;
+              return sum + (Number.isFinite(following) ? following : 0);
+            }, 0);
+            const topAuthors = [...validFollowStats]
+              .filter(stat => stat != null)
+              .sort((a, b) => {
+                const aFollowers = Number(a?.followers) || 0;
+                const bFollowers = Number(b?.followers) || 0;
+                return (Number.isFinite(bFollowers) ? bFollowers : 0) - (Number.isFinite(aFollowers) ? aFollowers : 0);
+              })
+              .slice(0, 5);
+            
+            setStats((prev) => ({
+              ...prev,
+              follows: {
+                totalFollowers,
+                totalFollowing,
+                topAuthors,
+                authorStats: validFollowStats,
+              },
+            }));
+          }
+        }
       }
 
       if (dashboardRes && !dashboardRes.error) {
@@ -771,24 +1084,33 @@ const AdminOverview = () => {
               ? Math.max(Number(dashboardTotalPosts), totalFromCounts, totalFromArray)
               : Math.max(totalFromCounts, totalFromArray);
             
-            const totalViews = dashboardPosts.reduce((sum, p) => sum + (Number(p?.viewCount) || Number(p?.views) || 0), 0);
-            const totalLikes = dashboardPosts.reduce((sum, p) => {
-              if (Array.isArray(p?.likes)) return sum + p.likes.length;
-              if (Number(p?.likeCount) || Number(p?.likes)) return sum + (Number(p?.likeCount) || Number(p?.likes) || 0);
-              return sum;
+            const totalViews = (Array.isArray(dashboardPosts) ? dashboardPosts : []).reduce((sum, p) => {
+              if (!p) return sum;
+              const views = Number(p?.viewCount) || Number(p?.views) || 0;
+              return sum + (Number.isFinite(views) ? views : 0);
             }, 0);
-            const totalComments = dashboardPosts.reduce((sum, p) => {
+            const totalLikes = (Array.isArray(dashboardPosts) ? dashboardPosts : []).reduce((sum, p) => {
+              if (!p) return sum;
+              if (Array.isArray(p?.likes)) return sum + (p.likes.length || 0);
+              const likes = Number(p?.likeCount) || Number(p?.likes) || 0;
+              return sum + (Number.isFinite(likes) ? likes : 0);
+            }, 0);
+            const totalComments = (Array.isArray(dashboardPosts) ? dashboardPosts : []).reduce((sum, p) => {
+              if (!p) return sum;
               // Count all comments including replies (consistent with Analytics)
-              if (Array.isArray(p?.comments)) {
+              if (Array.isArray(p?.comments) && p.comments.length > 0) {
                 const countAllComments = (comments) => {
+                  if (!Array.isArray(comments) || comments.length === 0) return 0;
                   return comments.reduce((total, comment) => {
-                    return total + 1 + (comment.replies ? countAllComments(comment.replies) : 0);
+                    if (!comment) return total;
+                    const replies = Array.isArray(comment.replies) ? comment.replies : [];
+                    return total + 1 + countAllComments(replies);
                   }, 0);
                 };
                 return sum + countAllComments(p.comments);
               }
-              if (Number(p?.commentCount) || Number(p?.comments)) return sum + (Number(p?.commentCount) || Number(p?.comments) || 0);
-              return sum;
+              const comments = Number(p?.commentCount) || Number(p?.comments) || 0;
+              return sum + (Number.isFinite(comments) ? comments : 0);
             }, 0);
 
             setStats((prev) => ({
@@ -894,83 +1216,109 @@ const AdminOverview = () => {
   }, [stats.posts, posts.length]);
 
   const getPostsByCategoryData = () => {
-    if (!categories.length || !posts.length) return [];
-    return categories.map((cat) => {
-      const categoryId = cat?._id || cat?.id || cat?.categoryId;
-      const categorySlug = cat?.slug;
+    if (!Array.isArray(categories) || !categories.length || !Array.isArray(posts) || !posts.length) return [];
+    return categories
+      .filter(cat => cat != null)
+      .map((cat) => {
+        const categoryId = cat?._id || cat?.id || cat?.categoryId;
+        const categorySlug = cat?.slug;
 
-      const postCount = posts.filter((p) => {
-        if (!p) return false;
+        const postCount = posts.filter((p) => {
+          if (!p) return false;
 
-        const postCategory = p.category;
-        const postCategories = Array.isArray(p.categories) ? p.categories : [];
+          const postCategory = p.category;
+          const postCategories = Array.isArray(p.categories) ? p.categories : [];
 
-        const matchesSingle = () => {
-          if (!postCategory) return false;
-          const postCategoryId = postCategory?._id || postCategory?.id || postCategory;
-          const postCategorySlug = postCategory?.slug;
-          return (
-            (categoryId && String(postCategoryId) === String(categoryId)) ||
-            (categorySlug && postCategorySlug && postCategorySlug === categorySlug)
-          );
-        };
-
-        const matchesMultiple = () => {
-          if (!postCategories.length) return false;
-          return postCategories.some((pcat) => {
-            const catId = pcat?._id || pcat?.id || pcat;
-            const catSlug = pcat?.slug;
+          const matchesSingle = () => {
+            if (!postCategory) return false;
+            const postCategoryId = postCategory?._id || postCategory?.id || postCategory;
+            const postCategorySlug = postCategory?.slug;
             return (
-              (categoryId && String(catId) === String(categoryId)) ||
-              (categorySlug && catSlug && catSlug === categorySlug)
+              (categoryId && String(postCategoryId) === String(categoryId)) ||
+              (categorySlug && postCategorySlug && postCategorySlug === categorySlug)
             );
-          });
+          };
+
+          const matchesMultiple = () => {
+            if (!postCategories.length) return false;
+            return postCategories.some((pcat) => {
+              if (!pcat) return false;
+              const catId = pcat?._id || pcat?.id || pcat;
+              const catSlug = pcat?.slug;
+              return (
+                (categoryId && String(catId) === String(categoryId)) ||
+                (categorySlug && catSlug && catSlug === categorySlug)
+              );
+            });
+          };
+
+          return matchesSingle() || matchesMultiple();
+        }).length;
+
+        return {
+          name: cat?.name || 'Unnamed',
+          posts: Number.isFinite(postCount) ? postCount : 0,
         };
-
-        return matchesSingle() || matchesMultiple();
-      }).length;
-
-      return {
-        name: cat?.name || 'Unnamed',
-        posts: postCount,
-      };
-    });
+      })
+      .filter(item => item.posts > 0);
   };
 
   const getPostsByMonthData = () => {
-    if (!posts.length) return [];
+    if (!Array.isArray(posts) || !posts.length) return [];
     const monthMap = new Map();
 
     posts.forEach((post) => {
+      if (!post) return;
       const dateValue = post?.publishedAt || post?.createdAt || post?.updatedAt;
-      const date = dateValue ? new Date(dateValue) : null;
-      if (!date || Number.isNaN(date.getTime())) return;
+      if (!dateValue) return;
+      
+      const date = new Date(dateValue);
+      if (!date || Number.isNaN(date.getTime()) || !Number.isFinite(date.getTime())) return;
 
-      const key = `${date.getFullYear()}-${date.getMonth()}`;
-      const label = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      if (!Number.isFinite(year) || !Number.isFinite(month)) return;
+
+      const key = `${year}-${month}`;
+      const label = `${date.toLocaleString('default', { month: 'short' })} ${year}`;
       const currentCount = monthMap.get(key)?.posts || 0;
       monthMap.set(key, { month: label, posts: currentCount + 1, date });
     });
 
     const sorted = Array.from(monthMap.values())
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .filter(item => item && item.date && Number.isFinite(item.date.getTime()))
+      .sort((a, b) => {
+        if (!a.date || !b.date) return 0;
+        return a.date.getTime() - b.date.getTime();
+      })
       .slice(-6)
-      .map(({ month, posts }) => ({ month, posts }));
+      .map(({ month, posts }) => ({ month, posts: Number.isFinite(posts) ? posts : 0 }))
+      .filter(item => item.posts > 0);
 
     return sorted;
   };
 
   const getTopPostsData = () => {
-    if (!posts.length) return [];
+    if (!Array.isArray(posts) || !posts.length) return [];
     return [...posts]
-      .filter((post) => post?.title)
-      .sort((a, b) => (b?.viewCount || 0) - (a?.viewCount || 0))
+      .filter((post) => post && post?.title && typeof post.title === 'string')
+      .sort((a, b) => {
+        const aViews = Number(a?.viewCount) || 0;
+        const bViews = Number(b?.viewCount) || 0;
+        return (Number.isFinite(bViews) ? bViews : 0) - (Number.isFinite(aViews) ? aViews : 0);
+      })
       .slice(0, 5)
-      .map((post) => ({
-        name: post.title.length > 20 ? post.title.substring(0, 20) + '...' : post.title,
-        views: post.viewCount || 0,
-        likes: post.likes?.length || 0,
-      }));
+      .map((post) => {
+        const title = post?.title || 'Untitled';
+        const views = Number(post?.viewCount) || 0;
+        const likes = Array.isArray(post?.likes) ? post.likes.length : (Number(post?.likeCount) || 0);
+        return {
+          name: title.length > 20 ? title.substring(0, 20) + '...' : title,
+          views: Number.isFinite(views) ? views : 0,
+          likes: Number.isFinite(likes) ? likes : 0,
+        };
+      })
+      .filter(item => item.views > 0 || item.likes > 0);
   };
 
   const getUserRoleData = () => {
@@ -1023,19 +1371,52 @@ const AdminOverview = () => {
       value?.toString().trim().replace(/[_\s]+/g, ' ').toLowerCase() || '';
 
     const normalizeStatus = (post) => {
-      const status = (post?.status || post?.state || '').toString().trim();
-      if (status) return normalizeKey(status);
-      if (post?.published || post?.isPublished) return 'published';
-      if (post?.scheduled) return 'scheduled';
+      if (!post) return 'draft';
+      
+      // First check explicit status field - this is the source of truth
+      const status = (post?.status || post?.state || '').toString().trim().toLowerCase();
+      if (status && status !== 'undefined' && status !== 'null' && status !== '') {
+        // Normalize common status variations
+        if (status === 'draft' || status === 'unpublished') return 'draft';
+        if (status === 'published' || status === 'publish' || status === 'live' || status === 'active' || status === 'public') return 'published';
+        if (status === 'scheduled' || status === 'pending') return 'scheduled';
+        if (status === 'archived' || status === 'archive') return 'archived';
+        return normalizeKey(status);
+      }
+      
+      // Fallback to boolean flags - but only if status field is not set
+      if (post?.isDraft === true) return 'draft';
+      if (post?.isPublished === false || post?.published === false) return 'draft';
+      if (post?.published === true || post?.isPublished === true) return 'published';
+      if (post?.scheduled === true) return 'scheduled';
+      if (post?.archived === true) return 'archived';
+      
+      // Only check publishedAt/scheduledAt as last resort if status and boolean flags are not set
+      // But don't use publishedAt if status is explicitly draft or isPublished is false
+      if (post?.scheduledAt) {
+        const scheduledDate = new Date(post.scheduledAt);
+        if (!Number.isNaN(scheduledDate.getTime()) && scheduledDate > new Date()) {
+          return 'scheduled';
+        }
+      }
+      if (post?.publishedAt && !post?.scheduledAt) {
+        // Only consider published if isPublished is true or not explicitly false
+        if (post?.isPublished !== false) {
+          return 'published';
+        }
+      }
+      
       return 'draft';
     };
 
     const mergedCounts = new Map();
 
-    posts.forEach((post) => {
+    (Array.isArray(posts) ? posts : []).forEach((post) => {
+      if (!post) return;
       const status = normalizeStatus(post);
-      if (!status) return;
-      mergedCounts.set(status, (mergedCounts.get(status) || 0) + 1);
+      if (!status || status === 'undefined' || status === 'null') return;
+      const currentCount = mergedCounts.get(status) || 0;
+      mergedCounts.set(status, currentCount + 1);
     });
 
     const statStatusCounts = stats.posts?.statusCounts;
@@ -1051,11 +1432,12 @@ const AdminOverview = () => {
     }
 
     const entries = Array.from(mergedCounts.entries())
+      .filter(([key, value]) => key && typeof key === 'string' && Number.isFinite(Number(value)) && Number(value) > 0)
       .map(([key, value]) => ({
         name: toTitleCase(key),
-        value,
+        value: Number(value) || 0,
       }))
-      .filter((item) => Number(item.value) > 0);
+      .filter((item) => item.value > 0);
 
     if (!entries.length && stats.posts?.statusCounts) {
       return Object.entries(stats.posts.statusCounts)
@@ -1100,12 +1482,91 @@ const AdminOverview = () => {
   const totalViews = Math.max(viewsFromEngagement, viewsFromPosts);
   const totalLikes = Math.max(likesFromEngagement, likesFromPosts);
   const totalComments = Math.max(commentsFromEngagement, commentsFromPosts);
-  const publishedEntry = statusData.find((item) => item?.name?.toLowerCase?.() === 'published');
-  const publishedPostsCount =
-    stats.posts?.published ??
-    stats.posts?.statusCounts?.published ??
-    publishedEntry?.value ??
-    0;
+  const derivePublishedPosts = () => {
+    // Method 1: From statusData (chart data) - most reliable
+    const publishedEntry = statusData.find((item) => {
+      const name = item?.name?.toLowerCase() || '';
+      return name === 'published' || name === 'publish' || name.includes('published');
+    });
+    const fromStatusData = Number(publishedEntry?.value) || 0;
+
+    // Method 2: From stats.posts.published (direct count)
+    const fromStatsDirect = Number(stats.posts?.published) || 0;
+
+    // Method 3: From statusCounts object
+    const statusCounts = stats.posts?.statusCounts || {};
+    const statusSynonyms = ['published', 'publish', 'live', 'active', 'public'];
+    const fromStatusCounts = Object.entries(statusCounts).reduce((sum, [key, value]) => {
+      const k = key?.toString().toLowerCase() || '';
+      if (statusSynonyms.some((syn) => k === syn || k.includes('publish'))) {
+        return sum + (Number(value) || 0);
+      }
+      return sum;
+    }, 0);
+
+    // Method 4: Count from posts array directly
+    const fromPostsArray = (Array.isArray(posts) ? posts : []).reduce((count, post) => {
+      if (!post) return count;
+      const status = (post?.status || post?.state || '').toString().toLowerCase().trim();
+      
+      // First priority: explicit status field
+      if (status && status !== 'undefined' && status !== 'null' && status !== '') {
+        // If status is explicitly draft, don't count as published
+        if (status === 'draft' || status === 'unpublished') return count;
+        // If status is published, count it
+        if (statusSynonyms.includes(status) || status.includes('publish')) return count + 1;
+      }
+      
+      // Second priority: boolean flags (only if status is not set)
+      if (!status || status === 'undefined' || status === 'null' || status === '') {
+        // If explicitly draft, don't count
+        if (post?.isDraft === true || post?.isPublished === false || post?.published === false) return count;
+        // If explicitly published, count it
+        if (post?.published === true || post?.isPublished === true) return count + 1;
+      }
+      
+      // Last resort: publishedAt (but only if status is not explicitly draft and isPublished is not false)
+      if (post?.publishedAt && !post?.scheduledAt) {
+        // Don't use publishedAt if status is draft or isPublished is false
+        if (status === 'draft' || post?.isPublished === false || post?.published === false) return count;
+        const publishedDate = new Date(post.publishedAt);
+        if (!Number.isNaN(publishedDate.getTime()) && post?.isPublished !== false) return count + 1;
+      }
+      
+      return count;
+    }, 0);
+
+    // Method 5: From engagement/overview stats
+    const fromEngagement =
+      Number(stats.engagement?.publishedPosts) ||
+      Number(stats.engagement?.stats?.publishedPosts) ||
+      Number(stats.engagement?.overview?.publishedPosts) ||
+      0;
+
+    // Method 6: Fallback calculation (total - non-published)
+    const drafts = Number(stats.posts?.drafts) || 0;
+    const scheduled = Number(stats.posts?.scheduled) || 0;
+    const archived = Number(stats.posts?.archived) || 0;
+    const totalPostsFallback =
+      Number(stats.posts?.total) ||
+      posts.length ||
+      0;
+    const fromTotals = Math.max(totalPostsFallback - drafts - scheduled - archived, 0);
+
+    // Return the maximum of all methods to ensure accuracy
+    const calculated = Math.max(
+      fromStatusData,
+      fromStatsDirect,
+      fromStatusCounts,
+      fromPostsArray,
+      fromEngagement,
+      fromTotals
+    );
+
+    return calculated;
+  };
+
+  const publishedPostsCount = derivePublishedPosts();
 
   // Calculate total posts directly from multiple sources to ensure accuracy
   const calculateTotalPosts = () => {
@@ -1279,13 +1740,26 @@ const AdminOverview = () => {
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
+                    activeShape={renderActiveSector}
                   >
                     {roleData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'var(--surface-bg)', 
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                    }}
+                    labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                    itemStyle={{ color: 'var(--text-primary)' }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ color: 'var(--text-primary)' }}
+                    iconType="circle"
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -1310,13 +1784,26 @@ const AdminOverview = () => {
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
+                    activeShape={renderActiveSector}
                   >
                     {statusData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'var(--surface-bg)', 
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                    }}
+                    labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                    itemStyle={{ color: 'var(--text-primary)' }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ color: 'var(--text-primary)' }}
+                    iconType="circle"
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -1371,6 +1858,8 @@ const AdminOverview = () => {
                         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
                       }}
                       labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                      itemStyle={{ color: 'var(--text-primary)' }}
+                      cursor={{ fill: 'rgba(59, 130, 246, 0.1)', stroke: '#3b82f6', strokeWidth: 1 }}
                     />
                     <Bar 
                       dataKey="posts" 
@@ -1378,6 +1867,7 @@ const AdminOverview = () => {
                       radius={[8, 8, 0, 0]}
                       stroke="#2563eb"
                       strokeWidth={1}
+                      activeBar={{ fill: '#60a5fa', stroke: '#2563eb', strokeWidth: 2 }}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -1432,6 +1922,8 @@ const AdminOverview = () => {
                         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
                       }}
                       labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                      itemStyle={{ color: 'var(--text-primary)' }}
+                      cursor={{ stroke: '#8b5cf6', strokeWidth: 2, strokeDasharray: '5 5' }}
                     />
                     <Area 
                       type="monotone" 
@@ -1440,7 +1932,7 @@ const AdminOverview = () => {
                       strokeWidth={3}
                       fill="url(#timeGradient)"
                       dot={{ fill: '#a855f7', strokeWidth: 2, r: 5 }}
-                      activeDot={{ r: 7, stroke: '#8b5cf6', strokeWidth: 2 }}
+                      activeDot={{ r: 8, stroke: '#8b5cf6', strokeWidth: 3, fill: '#a855f7' }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -1502,9 +1994,11 @@ const AdminOverview = () => {
                       boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
                     }}
                     labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                    itemStyle={{ color: 'var(--text-primary)' }}
+                    cursor={{ fill: 'rgba(16, 185, 129, 0.1)', stroke: '#10b981', strokeWidth: 1 }}
                   />
                   <Legend 
-                    wrapperStyle={{ paddingTop: '20px' }}
+                    wrapperStyle={{ paddingTop: '20px', color: 'var(--text-primary)' }}
                     iconType="circle"
                   />
                   <Bar 
@@ -1514,6 +2008,7 @@ const AdminOverview = () => {
                     radius={[0, 8, 8, 0]}
                     stroke="#059669"
                     strokeWidth={1}
+                    activeBar={{ fill: '#34d399', stroke: '#059669', strokeWidth: 2 }}
                   />
                   <Bar 
                     dataKey="likes" 
@@ -1522,6 +2017,7 @@ const AdminOverview = () => {
                     radius={[0, 8, 8, 0]}
                     stroke="#dc2626"
                     strokeWidth={1}
+                    activeBar={{ fill: '#f87171', stroke: '#dc2626', strokeWidth: 2 }}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -1529,6 +2025,203 @@ const AdminOverview = () => {
           </div>
         </AnimatedCard>
       )}
+
+      {/* Additional Analytics Sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Polls Statistics */}
+        {stats.polls && stats.polls.total > 0 && (
+          <AnimatedCard delay={1.0}>
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Polls Analytics</h3>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.polls.total}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Total Polls</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.polls.active}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Active</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.polls.totalVotes}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Total Votes</p>
+                </div>
+              </div>
+            </div>
+          </AnimatedCard>
+        )}
+
+        {/* Category Statistics */}
+        {stats.categoryStats && (
+          <AnimatedCard delay={1.1}>
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                  <Boxes className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Category Statistics</h3>
+              </div>
+              {stats.categoryStats.totalCategories !== undefined && (
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-[var(--text-primary)]">{stats.categoryStats.totalCategories}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Total Categories</p>
+                </div>
+              )}
+              {stats.categoryStats.mostUsedCategory && (
+                <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">
+                  <p className="text-sm text-[var(--text-muted)] mb-1">Most Used</p>
+                  <p className="text-lg font-semibold text-[var(--text-primary)]">{stats.categoryStats.mostUsedCategory}</p>
+                </div>
+              )}
+            </div>
+          </AnimatedCard>
+        )}
+
+        {/* Search Analytics */}
+        {stats.search && stats.search.popularTags && stats.search.popularTags.length > 0 && (
+          <AnimatedCard delay={1.2}>
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                  <Tag className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Popular Tags</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {stats.search.popularTags.slice(0, 10).map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-[var(--accent)]/10 text-[var(--accent)] rounded-full text-sm font-medium"
+                  >
+                    {typeof tag === 'string' ? tag : tag.name || tag.tag || 'Unknown'}
+                  </span>
+                ))}
+              </div>
+              {stats.search.totalTags > 10 && (
+                <p className="text-sm text-[var(--text-muted)] mt-3">
+                  +{stats.search.totalTags - 10} more tags
+                </p>
+              )}
+            </div>
+          </AnimatedCard>
+        )}
+
+        {/* Follow Statistics */}
+        {stats.follows && (
+          <AnimatedCard delay={1.3}>
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-pink-100 dark:bg-pink-900/20 rounded-lg">
+                  <UsersRound className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Follow Statistics</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.follows.totalFollowers}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Total Followers</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.follows.totalFollowing}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Total Following</p>
+                </div>
+              </div>
+              {stats.follows.topAuthors && stats.follows.topAuthors.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">
+                  <p className="text-sm font-semibold text-[var(--text-primary)] mb-2">Top Authors</p>
+                  <div className="space-y-2">
+                    {stats.follows.topAuthors.slice(0, 3).map((author, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <span className="text-sm text-[var(--text-secondary)]">{author.authorName}</span>
+                        <span className="text-sm font-medium text-[var(--text-primary)]">{author.followers || 0} followers</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </AnimatedCard>
+        )}
+
+        {/* Reading History */}
+        {stats.readingHistory && stats.readingHistory.totalReads > 0 && (
+          <AnimatedCard delay={1.4}>
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/20 rounded-lg">
+                  <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Reading History</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.readingHistory.totalReads}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Total Reads</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.readingHistory.uniquePostsRead}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Unique Posts</p>
+                </div>
+              </div>
+            </div>
+          </AnimatedCard>
+        )}
+
+        {/* Bookmarks Statistics */}
+        {stats.bookmarks && (
+          <AnimatedCard delay={1.5}>
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
+                  <BookOpen className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Bookmarks</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.bookmarks.totalBookmarks || 0}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Total Bookmarks</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.bookmarks.uniquePostsBookmarked || 0}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Unique Posts</p>
+                </div>
+              </div>
+            </div>
+          </AnimatedCard>
+        )}
+
+        {/* Newsletter Detailed Analytics */}
+        {stats.newsletter && (stats.newsletter.openRate !== undefined || stats.newsletter.clickRate !== undefined) && (
+          <AnimatedCard delay={1.6}>
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-teal-100 dark:bg-teal-900/20 rounded-lg">
+                  <Mail className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Newsletter Performance</h3>
+              </div>
+              {stats.newsletter.openRate !== undefined && (
+                <div className="mb-4">
+                  <p className="text-3xl font-bold text-[var(--text-primary)]">{stats.newsletter.openRate}%</p>
+                  <p className="text-sm text-[var(--text-muted)]">Open Rate</p>
+                </div>
+              )}
+              {stats.newsletter.clickRate !== undefined && (
+                <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">
+                  <p className="text-xl font-bold text-[var(--text-primary)]">{stats.newsletter.clickRate}%</p>
+                  <p className="text-sm text-[var(--text-muted)]">Click Rate</p>
+                </div>
+              )}
+            </div>
+          </AnimatedCard>
+        )}
+      </div>
     </div>
   );
 };

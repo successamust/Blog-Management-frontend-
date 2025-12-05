@@ -6,6 +6,8 @@ import { authAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import Spinner from '../../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
+import PasswordStrength from '../../components/common/PasswordStrength';
+import { validatePassword } from '../../utils/securityUtils';
 
 const RESET_PASSWORD_DESCRIPTION = 'Choose a new Nexus password so you can continue reading, writing, and curating your publication.';
 
@@ -46,8 +48,17 @@ const ResetPassword = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    // Use security utils for password validation
+    const passwordValidation = validatePassword(formData.password, {
+      minLength: 8,
+      requireUppercase: true,
+      requireLowercase: true,
+      requireNumbers: true,
+      requireSpecialChars: true,
+    });
+
+    if (!passwordValidation.valid) {
+      toast.error(passwordValidation.errors[0] || 'Password does not meet requirements');
       return;
     }
 
@@ -162,6 +173,16 @@ const ResetPassword = () => {
                   )}
                 </button>
               </div>
+              <PasswordStrength 
+                password={formData.password} 
+                requirements={{
+                  minLength: 8,
+                  requireUppercase: true,
+                  requireLowercase: true,
+                  requireNumbers: true,
+                  requireSpecialChars: true,
+                }}
+              />
             </div>
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-secondary">

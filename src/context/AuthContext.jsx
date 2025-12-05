@@ -2,6 +2,8 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback } 
 import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { getAuthToken, setAuthToken, clearAuthToken } from '../utils/tokenStorage.js';
+import { setAccessTokenExpiry, clearAllTokens } from '../utils/refreshToken.js';
+import { fetchCsrfToken } from '../utils/securityUtils.js';
 
 
 const authReducer = (state, action) => {
@@ -325,20 +327,57 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const response = await authAPI.login(credentials);
-      const { token, user } = response.data;
+      
+      // Check if 2FA is required
+      if (response.data?.requires2FA) {
+        return {
+          success: false,
+          requires2FA: true,
+          tempToken: response.data.tempToken,
+        };
+      }
+      
+      const { token, user, expiresIn } = response.data;
       
       setAuthToken(token);
+      
+      // Store access token expiry
+      if (expiresIn) {
+        const expiry = Date.now() + (expiresIn * 1000);
+        setAccessTokenExpiry(expiry);
+      }
+      
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('lastAuthCheck', Date.now().toString());
+      
+      // Fetch CSRF token
+      try {
+        await fetchCsrfToken(authAPI);
+      } catch (csrfError) {
+        console.warn('[Auth] Failed to fetch CSRF token:', csrfError);
+      }
       
       dispatch({ type: 'LOGIN_SUCCESS', payload: { token, user } });
       toast.success('Welcome back!');
       return { success: true };
     } catch (error) {
       let message = error.response?.data?.message || 'Login failed';
-      // if (error.response?.status === 429) { // COMMENTED OUT FOR TESTING
-      //   message = 'Too many login attempts. Please wait a moment and try again.';
-      // }
+      
+      // Handle rate limiting
+      if (error.response?.status === 429) {
+        const retryAfter = error.rateLimitInfo?.retryAfter;
+        message = `Too many login attempts. ${retryAfter ? `Please try again in ${Math.ceil(retryAfter)} seconds.` : 'Please wait a moment and try again.'}`;
+      }
+      
+      // Handle account lockout
+      if (error.response?.status === 423) {
+        const lockoutInfo = error.lockoutInfo || {};
+        message = lockoutInfo.reason || 'Account temporarily locked due to too many failed login attempts.';
+        if (lockoutInfo.duration) {
+          message += ` Please try again in ${Math.ceil(lockoutInfo.duration / 60)} minute(s).`;
+        }
+      }
+      
       dispatch({ type: 'LOGIN_FAILURE', payload: message });
       toast.error(message);
       return { success: false, error: message };
@@ -349,25 +388,62 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'LOGIN_START' });
     try {
       const response = await authAPI.register(userData);
-      const { token, user } = response.data;
+      const { token, user, expiresIn } = response.data;
       
       setAuthToken(token);
+      
+      // Store access token expiry
+      if (expiresIn) {
+        const expiry = Date.now() + (expiresIn * 1000);
+        setAccessTokenExpiry(expiry);
+      }
+      
       localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('lastAuthCheck', Date.now().toString());
+      
+      // Fetch CSRF token
+      try {
+        await fetchCsrfToken(authAPI);
+      } catch (csrfError) {
+        console.warn('[Auth] Failed to fetch CSRF token:', csrfError);
+      }
       
       dispatch({ type: 'LOGIN_SUCCESS', payload: { token, user } });
       toast.success('Account created successfully!');
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Registration failed';
+      let message = error.response?.data?.message || 'Registration failed';
+      
+      // Handle rate limiting
+      if (error.response?.status === 429) {
+        const retryAfter = error.rateLimitInfo?.retryAfter;
+        message = `Too many registration attempts. ${retryAfter ? `Please try again in ${Math.ceil(retryAfter)} seconds.` : 'Please wait a moment and try again.'}`;
+      }
+      
       dispatch({ type: 'LOGIN_FAILURE', payload: message });
       toast.error(message);
       return { success: false, error: message };
     }
   };
 
-  const logout = () => {
-    clearAuthToken();
+  const logout = async () => {
+    // Call logout endpoint to invalidate session on server
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      // Continue with logout even if API call fails
+      console.warn('[Auth] Logout API call failed:', error);
+    }
+    
+    // Clear all tokens and session data
+    clearAllTokens();
     localStorage.removeItem('user');
+    localStorage.removeItem('lastAuthCheck');
+    
+    // Clear session manager
+    const { clearSession } = await import('../utils/sessionManager.js');
+    clearSession();
+    
     dispatch({ type: 'LOGOUT' });
     toast.success('Logged out successfully');
   };

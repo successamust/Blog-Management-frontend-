@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import PasswordStrength from '../common/PasswordStrength';
+import { validatePassword } from '../../utils/securityUtils';
 
 const ChangePassword = () => {
   const { changePassword } = useAuth();
@@ -30,8 +32,17 @@ const ChangePassword = () => {
       return;
     }
 
-    if (formData.newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    // Use security utils for password validation
+    const passwordValidation = validatePassword(formData.newPassword, {
+      minLength: 8,
+      requireUppercase: true,
+      requireLowercase: true,
+      requireNumbers: true,
+      requireSpecialChars: true,
+    });
+
+    if (!passwordValidation.valid) {
+      toast.error(passwordValidation.errors[0] || 'Password does not meet requirements');
       return;
     }
 
@@ -121,6 +132,16 @@ const ChangePassword = () => {
               )}
             </button>
           </div>
+          <PasswordStrength 
+            password={formData.newPassword} 
+            requirements={{
+              minLength: 8,
+              requireUppercase: true,
+              requireLowercase: true,
+              requireNumbers: true,
+              requireSpecialChars: true,
+            }}
+          />
         </div>
 
         <div>

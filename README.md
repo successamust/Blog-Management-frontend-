@@ -1,11 +1,12 @@
 # Nexus - Frontend
 
-A modern, responsive blog management platform with newsletter functionality built with React and Vite.
+A modern, responsive blog management platform with newsletter functionality built with React and Vite. Features comprehensive security, real-time updates, and a beautiful user interface.
 
 ## 📋 Table of Contents
 
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
+- [Security Features](#-security-features)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
 - [Development](#-development)
@@ -17,41 +18,80 @@ A modern, responsive blog management platform with newsletter functionality buil
 
 ## ✨ Features
 
-- 🔐 **Authentication & Authorization**
+### 🔐 Authentication & Authorization
   - User registration and login
   - Password reset functionality
+- Two-Factor Authentication (2FA) with TOTP
+- Refresh token system with automatic rotation
   - Role-based access control (Admin, Author, User)
   - Protected routes
+- Session management
+- Account lockout protection
 
-- 📝 **Blog Management**
+### 📝 Blog Management
   - Create, edit, and delete posts
-  - Rich text editor with Quill
+- Rich text editor with TipTap (formerly Quill)
   - Markdown support
   - Post categories and tags
   - Post search and filtering
+- Post scheduling
+- Post templates
+- Post versioning
+- Post collaboration
+- Polls integration
+- Reading time calculation
+- Fullscreen reader mode
 
-- 👥 **User Management**
+### 👥 User Management
   - User profiles and settings
   - Author applications
+- Follow/unfollow authors
   - Admin dashboard
   - User statistics
+- Reading history
+- Bookmarks
+- Reading lists
 
-- 📧 **Newsletter System**
+### 📧 Newsletter System
   - Subscribe/unsubscribe functionality
   - Newsletter management (Admin)
   - Email notifications for new posts
+- Newsletter archive
+- Double opt-in subscription
 
-- 📊 **Analytics & Dashboard**
+### 📊 Analytics & Dashboard
   - User dashboard with statistics
   - Admin overview
   - Post analytics
+- Poll analytics
+- Advanced analytics with charts
   - Interaction tracking (likes, shares, comments)
+- Reading progress tracking
+- Performance monitoring
 
-- 🎨 **UI/UX**
+### 🎨 UI/UX
   - Modern, responsive design
   - Smooth animations with Framer Motion
   - Dark/light theme support
   - Mobile-first approach
+- PWA support
+- Offline functionality
+- Keyboard shortcuts
+- Accessibility features
+- Multi-language support (i18n)
+- Font controls
+- Reading progress indicator
+
+### 🔒 Security Features
+- CSRF token protection
+- XSS prevention (DOMPurify)
+- Input sanitization
+- Password strength validation
+- Account lockout handling
+- Session timeout management
+- Security audit logs
+- Rate limiting handling
+- Secure token storage
 
 ## 🛠 Tech Stack
 
@@ -61,12 +101,41 @@ A modern, responsive blog management platform with newsletter functionality buil
 - **Styling:** Tailwind CSS 3.3.6
 - **Animations:** Framer Motion 12.23.24
 - **HTTP Client:** Axios 1.6.2
-- **Rich Text Editor:** React Quill 0.0.2, Quill 2.0.3
+- **Rich Text Editor:** TipTap 3.10.4
 - **Charts:** Recharts 3.3.0
 - **Icons:** Lucide React 0.294.0
 - **Notifications:** React Hot Toast 2.4.0
 - **Date Handling:** date-fns 2.29.0
-- **Markdown:** react-markdown 8.0.0
+- **Markdown:** react-markdown 8.0.7
+- **State Management:** React Query (TanStack Query) 5.90.11
+- **Real-time:** Socket.io Client 4.8.1
+- **Security:** DOMPurify 3.3.0
+- **Code Highlighting:** Prism.js, Highlight.js, Lowlight
+
+## 🔒 Security Features
+
+### Authentication Security
+- JWT access tokens (1-hour expiry)
+- Refresh tokens (7-day expiry, auto-rotation)
+- Two-Factor Authentication (TOTP)
+- Password strength validation
+- Account lockout after failed attempts
+- Session management and timeout
+
+### Request Security
+- CSRF token protection
+- Automatic token refresh
+- Request sanitization
+- XSS prevention
+- Security headers
+- Rate limiting handling
+
+### Data Security
+- Secure token storage (cookies, localStorage, sessionStorage)
+- Input sanitization
+- HTML content sanitization (DOMPurify)
+- No sensitive data in logs
+- Secure error handling
 
 ## 📦 Prerequisites
 
@@ -95,7 +164,7 @@ Before you begin, ensure you have the following installed:
    
    For production, create a `.env.production` file:
    ```bash
-   VITE_API_BASE_URL=https://blog-management-sx5c.onrender.com/v1
+   VITE_API_BASE_URL=https://your-backend-url.com/v1
    ```
 
 ## 🚀 Development
@@ -122,7 +191,9 @@ src/
 │   ├── layout/         # Layout components (Header, Footer)
 │   └── posts/          # Post-related components
 ├── context/            # React Context providers
-│   └── AuthContext.jsx # Authentication context
+│   ├── AuthContext.jsx # Authentication context
+│   ├── NotificationContext.jsx # Notifications context
+│   └── ThemeContext.jsx # Theme context
 ├── hooks/              # Custom React hooks
 ├── pages/              # Page components
 │   ├── auth/          # Authentication pages
@@ -130,17 +201,24 @@ src/
 │   ├── Dashboard.jsx  # User dashboard
 │   ├── Home.jsx       # Homepage
 │   └── ...
+├── providers/          # React providers
+│   └── QueryProvider.jsx # React Query provider
 ├── services/          # API services
 │   └── api.js         # Axios configuration and API endpoints
 ├── styles/            # Global styles
 │   ├── globals.css    # Global CSS
 │   └── index.css      # Main CSS file
 └── utils/             # Utility functions
+    ├── securityUtils.js # Security utilities
+    ├── refreshToken.js # Token refresh logic
+    ├── tokenStorage.js # Token storage
+    ├── sessionManager.js # Session management
+    └── ...
 ```
 
 ## 🔌 API Configuration
 
-The frontend connects to a backend API deployed at **https://blog-management-sx5c.onrender.com**
+The frontend connects to a backend API. Configure the base URL via environment variables.
 
 ### How It Works
 
@@ -151,23 +229,23 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/v1';
 ```
 
 **Development (Local):**
-- Uses the proxy in `vite.config.js` which forwards `/v1` requests to `https://blog-management-sx5c.onrender.com`
+- Uses the proxy in `vite.config.js` which forwards `/v1` requests to your backend
 - No environment variable needed for local development
 
 **Production:**
 - Requires `VITE_API_BASE_URL` environment variable
-- Set to: `https://blog-management-sx5c.onrender.com/v1`
+- Set to your backend API URL (e.g., `https://your-backend.com/v1`)
 - Can be set in `.env.production` file or in your hosting platform's environment variables
 
 ### Example API Endpoints
 
 All API endpoints are constructed as: `BASE_URL + endpoint`
 
-- Login: `https://blog-management-sx5c.onrender.com/v1/auth/login`
-- Get Posts: `https://blog-management-sx5c.onrender.com/v1/posts`
-- Get Post by Slug: `https://blog-management-sx5c.onrender.com/v1/posts/:slug`
-- Create Post: `https://blog-management-sx5c.onrender.com/v1/posts/create`
-- Categories: `https://blog-management-sx5c.onrender.com/v1/categories`
+- Login: `/auth/login`
+- Get Posts: `/posts`
+- Get Post by Slug: `/posts/:slug`
+- Create Post: `/posts/create`
+- Categories: `/categories`
 
 ## 🚢 Production Deployment
 
@@ -177,13 +255,13 @@ All API endpoints are constructed as: `BASE_URL + endpoint`
 
    **Option A: Create `.env.production` file** (for local builds)
    ```bash
-   VITE_API_BASE_URL=https://blog-management-sx5c.onrender.com/v1
+   VITE_API_BASE_URL=https://your-backend-url.com/v1
    ```
 
    **Option B: Set in hosting platform** (recommended for CI/CD)
    - Vercel: Project Settings → Environment Variables
    - Netlify: Site Settings → Environment Variables
-   - Add: `VITE_API_BASE_URL` = `https://blog-management-sx5c.onrender.com/v1`
+   - Add: `VITE_API_BASE_URL` = `https://your-backend-url.com/v1`
 
 2. **Build for Production:**
    ```bash
@@ -219,12 +297,12 @@ All API endpoints are constructed as: `BASE_URL + endpoint`
 ### Build Information
 
 **Current Build Status:** ✅ Success
-- **Build Size:** 1.1 MB (uncompressed) / ~309 KB (gzipped)
+- **Build Size:** ~1.1 MB (uncompressed) / ~309 KB (gzipped)
 - **Build Time:** ~5.2 seconds
 - **Location:** `dist/` directory
 
 **Optimizations Applied:**
-- ✅ Code splitting (4 vendor chunks)
+- ✅ Code splitting (vendor chunks)
 - ✅ Minification (esbuild)
 - ✅ Tree shaking
 - ✅ CSS code splitting
@@ -232,6 +310,7 @@ All API endpoints are constructed as: `BASE_URL + endpoint`
 - ✅ SEO meta tags (Open Graph, Twitter Cards)
 - ✅ SPA routing support (`vercel.json`, `public/_redirects`)
 - ✅ `robots.txt` for search engines
+- ✅ Console log removal (production)
 
 ### Post-Deployment Checklist
 
@@ -247,6 +326,9 @@ All API endpoints are constructed as: `BASE_URL + endpoint`
    - [ ] Verify API connection works
    - [ ] Test on mobile devices
    - [ ] Check browser console for errors
+   - [ ] Test authentication flow
+   - [ ] Test 2FA (if enabled)
+   - [ ] Verify security features
 
 3. **Performance Check:**
    - [ ] Run Lighthouse audit
@@ -262,12 +344,18 @@ All API endpoints are constructed as: `BASE_URL + endpoint`
 **API Connection Issues:**
 - Verify `VITE_API_BASE_URL` is set correctly
 - Check backend CORS settings
-- Test API endpoint directly: `https://blog-management-sx5c.onrender.com/v1/posts`
+- Test API endpoint directly
 
 **Routing Issues (404 on refresh):**
 - Vercel: `vercel.json` already configured ✅
 - Netlify: `public/_redirects` already configured ✅
 - Other platforms: Configure to serve `index.html` for all routes
+
+**Authentication Issues:**
+- Verify backend is running
+- Check token storage in browser DevTools
+- Verify CSRF token is being fetched
+- Check network tab for API errors
 
 ## 📜 Available Scripts
 
@@ -280,6 +368,19 @@ All API endpoints are constructed as: `BASE_URL + endpoint`
 | `npm run preview:prod` | Preview production build (explicit mode) |
 | `npm run lint` | Run ESLint |
 | `npm run lint:fix` | Run ESLint and fix issues |
+| `npm run export:logos` | Export logo assets |
+
+## 🔒 Security Best Practices
+
+- ✅ All sensitive data stored securely
+- ✅ No hardcoded secrets
+- ✅ Environment variables for configuration
+- ✅ CSRF protection enabled
+- ✅ XSS prevention (DOMPurify)
+- ✅ Input sanitization
+- ✅ Secure token storage
+- ✅ No sensitive data in logs
+- ✅ Production console log removal
 
 ## 🤝 Contributing
 
@@ -300,8 +401,8 @@ This project is private and proprietary.
 For issues or questions:
 - Review the backend repository for API documentation
 - Check the troubleshooting section above for common issues
+- See `SECURITY_ARCHITECTURE.md` for security details
 
 ---
 
 **Happy Coding 🫡**
-

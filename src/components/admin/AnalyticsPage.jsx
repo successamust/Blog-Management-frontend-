@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart } from 'lucide-react';
 import AdvancedAnalytics from './AdvancedAnalytics';
-import { postsAPI, commentsAPI } from '../../services/api';
+import { postsAPI, commentsAPI, pollsAPI, searchAPI, dashboardAPI, categoriesAPI } from '../../services/api';
 import SkeletonLoader from '../common/SkeletonLoader';
 import toast from 'react-hot-toast';
 
@@ -9,10 +9,167 @@ const AnalyticsPage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30d');
+  const [additionalStats, setAdditionalStats] = useState({
+    polls: null,
+    search: null,
+    bookmarks: null,
+    readingHistory: null,
+    categoryStats: null,
+  });
+
+  // Security: Validate timeRange input
+  const validTimeRanges = ['7d', '30d', '90d', '1y', 'all'];
+  const validateTimeRange = (range) => {
+    if (!range || typeof range !== 'string') return '30d';
+    const trimmedRange = range.trim().toLowerCase();
+    return validTimeRanges.includes(trimmedRange) ? trimmedRange : '30d';
+  };
 
   useEffect(() => {
     fetchPosts();
+    fetchAdditionalStats();
   }, []);
+
+  const fetchAdditionalStats = async () => {
+    try {
+      // Fetch additional analytics in parallel
+      const [pollsRes, tagsRes, dashboardRes, categoryStatsRes, bookmarksRes] = await Promise.allSettled([
+        pollsAPI.getAll({ limit: 50 }).catch(() => null),
+        searchAPI.getPopularTags().catch(() => null),
+        dashboardAPI.getOverview().catch(() => null),
+        categoriesAPI.getStats().catch(() => null),
+        dashboardAPI.getBookmarks({ limit: 1000 }).catch(() => null), // Fetch bookmarks separately
+      ]);
+
+      const pollsData = pollsRes.status === 'fulfilled' && pollsRes.value?.data ? pollsRes.value.data : null;
+      const tagsData = tagsRes.status === 'fulfilled' && tagsRes.value?.data ? tagsRes.value.data : null;
+      const dashboardData = dashboardRes.status === 'fulfilled' && dashboardRes.value?.data ? dashboardRes.value.data : null;
+      const categoryStatsData = categoryStatsRes.status === 'fulfilled' && categoryStatsRes.value?.data ? categoryStatsRes.value.data : null;
+      const bookmarksResponseData = bookmarksRes.status === 'fulfilled' && bookmarksRes.value?.data ? bookmarksRes.value.data : null;
+
+      // Process polls
+      if (pollsData) {
+        const pollsArray = pollsData?.polls || pollsData?.data || (Array.isArray(pollsData) ? pollsData : []) || [];
+        const totalPolls = pollsArray.length;
+        const totalVotes = pollsArray.reduce((sum, poll) => {
+          if (!poll) return sum;
+          
+          // Method 1: Direct totalVotes field
+          if (poll.totalVotes !== undefined && poll.totalVotes !== null) {
+            const votes = Number(poll.totalVotes);
+            if (Number.isFinite(votes) && votes > 0) return sum + votes;
+          }
+          
+          // Method 2: From statistics object
+          if (poll.statistics?.totalVotes !== undefined && poll.statistics?.totalVotes !== null) {
+            const votes = Number(poll.statistics.totalVotes);
+            if (Number.isFinite(votes) && votes > 0) return sum + votes;
+          }
+          
+          // Method 3: Sum votes from options array (most reliable)
+          if (poll.options && Array.isArray(poll.options) && poll.options.length > 0) {
+            const votesFromOptions = poll.options.reduce((optionSum, option) => {
+              if (!option) return optionSum;
+              const voteCount = Number(option.votes) || Number(option.voteCount) || Number(option.count) || 0;
+              return optionSum + (Number.isFinite(voteCount) ? voteCount : 0);
+            }, 0);
+            if (votesFromOptions > 0) return sum + votesFromOptions;
+          }
+          
+          // Method 4: From results object
+          if (poll.results && typeof poll.results === 'object' && !Array.isArray(poll.results)) {
+            const votesFromResults = Object.values(poll.results).reduce((resultSum, count) => {
+              const voteCount = Number(count) || 0;
+              return resultSum + (Number.isFinite(voteCount) ? voteCount : 0);
+            }, 0);
+            if (votesFromResults > 0) return sum + votesFromResults;
+          }
+          
+          // Method 5: From votes array
+          if (poll.votes && Array.isArray(poll.votes)) {
+            return sum + (poll.votes.length || 0);
+          }
+          
+          return sum;
+        }, 0);
+        setAdditionalStats(prev => ({ ...prev, polls: { total: totalPolls, totalVotes } }));
+      }
+
+      // Process search tags
+      if (tagsData) {
+        const tagsArray = tagsData?.tags || tagsData?.data || tagsData?.popularTags || (Array.isArray(tagsData) ? tagsData : []) || [];
+        setAdditionalStats(prev => ({ ...prev, search: { popularTags: tagsArray } }));
+      }
+
+      // Process bookmarks - try multiple sources
+      let bookmarksArray = [];
+      
+      // Method 1: From dedicated bookmarks API response
+      if (bookmarksResponseData) {
+        const bookmarksFromAPI = bookmarksResponseData?.bookmarks || bookmarksResponseData?.posts || bookmarksResponseData?.data || (Array.isArray(bookmarksResponseData) ? bookmarksResponseData : []);
+        // Security: Ensure it's an array and limit size to prevent DoS
+        if (Array.isArray(bookmarksFromAPI) && bookmarksFromAPI.length > 0) {
+          bookmarksArray = bookmarksFromAPI.slice(0, 1000); // Limit to 1000 items
+        }
+      }
+      
+      // Method 2: From dashboard overview (fallback)
+      if (bookmarksArray.length === 0 && dashboardData) {
+        const bookmarksFromDashboard = dashboardData?.overview?.bookmarks || dashboardData?.bookmarks || null;
+        if (bookmarksFromDashboard) {
+          const dashboardArray = Array.isArray(bookmarksFromDashboard) ? bookmarksFromDashboard : [];
+          // Security: Limit array size
+          bookmarksArray = dashboardArray.slice(0, 1000);
+        }
+      }
+      
+      // Security: Validate and sanitize bookmark data
+      const sanitizedBookmarks = bookmarksArray.filter(b => {
+        if (!b || typeof b !== 'object') return false;
+        // Ensure bookmark has valid structure
+        return true;
+      });
+      
+      // Calculate unique posts bookmarked
+      const uniquePostsBookmarked = new Set(sanitizedBookmarks.map(b => {
+        if (!b) return null;
+        const postId = b.postId || b.post?._id || b.post?.id || b._id || b.id || null;
+        // Security: Validate postId format (MongoDB ObjectId)
+        if (postId && typeof postId === 'string' && /^[0-9a-fA-F]{24}$/.test(postId)) {
+          return postId;
+        }
+        return null;
+      }).filter(Boolean)).size;
+      
+      // Always set bookmarks stats (even if 0)
+      setAdditionalStats(prev => ({ 
+        ...prev, 
+        bookmarks: { 
+          total: sanitizedBookmarks.length,
+          uniquePosts: uniquePostsBookmarked,
+          bookmarks: sanitizedBookmarks,
+        } 
+      }));
+      
+      // Process reading history
+      if (dashboardData) {
+        const readingHistory = dashboardData?.overview?.history || dashboardData?.history || null;
+        
+        if (readingHistory) {
+          const historyArray = Array.isArray(readingHistory) ? readingHistory : [];
+          setAdditionalStats(prev => ({ ...prev, readingHistory: { total: historyArray.length } }));
+        }
+      }
+
+      // Process category stats
+      if (categoryStatsData) {
+        setAdditionalStats(prev => ({ ...prev, categoryStats: categoryStatsData }));
+      }
+    } catch (error) {
+      console.error('Error fetching additional stats:', error);
+      // Silently fail - these are supplementary stats
+    }
+  };
 
   const fetchPosts = async () => {
     try {
@@ -128,18 +285,30 @@ const AnalyticsPage = () => {
         </div>
         <select
           value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value)}
+          onChange={(e) => {
+            const newRange = e.target.value;
+            // Security: Validate timeRange input
+            const validatedRange = validateTimeRange(newRange);
+            setTimeRange(validatedRange);
+            if (validatedRange !== newRange) {
+              toast.error('Invalid time range selected');
+            }
+          }}
           className="px-3 sm:px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)] text-sm sm:text-base w-full sm:w-auto focus:outline-none"
         >
           <option value="7d">Last 7 days</option>
           <option value="30d">Last 30 days</option>
           <option value="90d">Last 90 days</option>
           <option value="1y">Last year</option>
-          <option value="alltime">All Time</option>
+          <option value="all">All Time</option>
         </select>
       </div>
 
-      <AdvancedAnalytics posts={posts} timeRange={timeRange} />
+      <AdvancedAnalytics 
+        posts={posts} 
+        timeRange={timeRange}
+        additionalStats={additionalStats}
+      />
     </div>
   );
 };

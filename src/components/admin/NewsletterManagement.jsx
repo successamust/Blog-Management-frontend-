@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Mail, Send, Users, TrendingUp, FileText, Eye, Pencil } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { adminAPI, newsletterAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import RichTextEditor from './RichTextEditor';
@@ -221,7 +222,10 @@ const NewsletterManagement = () => {
               <div className="border border-[var(--border-subtle)] rounded-xl overflow-hidden">
                 {previewMode ? (
                   <div className="prose max-w-none p-6 bg-[var(--surface-bg)]" dangerouslySetInnerHTML={{
-                    __html: sendFormData.content || '<p class="text-[var(--text-muted)]">No content yet.</p>',
+                    __html: DOMPurify.sanitize(sendFormData.content || '<p class="text-[var(--text-muted)]">No content yet.</p>', {
+                      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'video', 'div', 'span', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'],
+                      ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel'],
+                    }),
                   }} />
                 ) : (
                   <RichTextEditor

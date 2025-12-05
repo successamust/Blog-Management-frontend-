@@ -22,6 +22,13 @@ const CodePlayground = ({ code, language = 'javascript', editable = true }) => {
 
     try {
       if (language === 'javascript' || language === 'js') {
+        // SECURITY: Disable code execution in production
+        if (import.meta.env.PROD) {
+          setOutput('Code execution is disabled in production for security reasons.\nPlease use a local development environment to test code execution.');
+          setIsRunning(false);
+          return;
+        }
+        
         // Create a safe execution environment
         const consoleLogs = [];
         const originalLog = console.log;
@@ -32,8 +39,8 @@ const CodePlayground = ({ code, language = 'javascript', editable = true }) => {
         };
 
         try {
-          // SECURITY WARNING: Using eval() is dangerous. Only use in trusted/admin contexts.
-          // Consider using a sandboxed environment or disabling in production.
+          // SECURITY WARNING: Using eval() is dangerous. Only enabled in development.
+          // In production, code execution is disabled for security.
           const result = eval(editedCode);
           if (result !== undefined) {
             consoleLogs.push(String(result));

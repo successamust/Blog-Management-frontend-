@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { History, RotateCcw, Eye, Calendar, X } from 'lucide-react';
 import { format } from 'date-fns';
+import DOMPurify from 'dompurify';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -153,7 +154,12 @@ const PostVersioning = ({ postId, currentContent, onRestore }) => {
               </button>
             </div>
             <div className="prose dark:prose-invert max-w-none prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-strong:text-[var(--text-primary)] prose-li:text-[var(--text-secondary)]">
-              <div dangerouslySetInnerHTML={{ __html: selectedVersion.content }} />
+              <div dangerouslySetInnerHTML={{ 
+                __html: DOMPurify.sanitize(selectedVersion.content, {
+                  ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'video', 'div', 'span', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'],
+                  ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel'],
+                })
+              }} />
             </div>
           </motion.div>
         </div>

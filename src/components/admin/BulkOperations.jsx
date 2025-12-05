@@ -29,9 +29,18 @@ const BulkOperations = ({ selectedPosts, onBulkDelete, onBulkUpdate, categories 
   };
 
   const handleBulkStatus = () => {
-    const updates = { isPublished: selectedStatus === 'published' };
+    // Explicitly handle status to ensure draft status is properly saved
+    const status = selectedStatus || 'draft';
+    const updates = { 
+      status: status,
+      isPublished: status === 'published'
+    };
     if (selectedStatus === 'scheduled') {
       // For scheduled, we'd need a date picker - for now just set as draft
+      updates.status = 'scheduled';
+      updates.isPublished = false;
+    } else if (selectedStatus === 'draft') {
+      updates.status = 'draft';
       updates.isPublished = false;
     }
     onBulkUpdate(selectedPosts, updates);

@@ -31,9 +31,37 @@ const TagPage = () => {
         status: 'published',
       });
 
-      setPosts(response.data?.posts || []);
+      const rawPosts = response.data?.posts || [];
+      
+      // Client-side filter to ensure all published posts are shown
+      const isPublishedPost = (post) => {
+        if (!post) return false;
+        
+        const status = (post?.status || post?.state || '').toString().toLowerCase().trim();
+        if (status) {
+          if (['published', 'publish', 'live', 'active', 'public'].includes(status)) return true;
+          if (['draft', 'scheduled', 'archived', 'unpublished', 'pending'].includes(status)) return false;
+        }
+        
+        if (post?.isDraft === true) return false;
+        if (post?.isPublished === true || post?.published === true) return true;
+        if (post?.isPublished === false || post?.published === false) return false;
+        
+        if (post?.publishedAt && !post?.scheduledAt) {
+          const publishedDate = new Date(post.publishedAt);
+          if (!isNaN(publishedDate.getTime()) && publishedDate <= new Date()) {
+            return true;
+          }
+        }
+        
+        return true;
+      };
+      
+      const filteredPosts = rawPosts.filter(isPublishedPost);
+      
+      setPosts(filteredPosts);
       setTotalPages(response.data?.totalPages || 1);
-      setTotalPosts(response.data?.totalPosts || 0);
+      setTotalPosts(response.data?.totalPosts || filteredPosts.length);
     } catch (error) {
       console.error('Error fetching tag posts:', error);
       toast.error('Failed to load posts');

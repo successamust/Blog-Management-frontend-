@@ -6,10 +6,16 @@ import React from 'react';
 const StructuredData = ({ data }) => {
   if (!data) return null;
 
+  // Security: JSON.stringify automatically escapes special characters, but we'll add extra validation
+  // Ensure data is a plain object/array to prevent prototype pollution
+  const sanitizedData = typeof data === 'object' && data !== null && !(data instanceof Date) && !(data instanceof RegExp)
+    ? JSON.parse(JSON.stringify(data)) // Deep clone to remove any non-serializable properties
+    : data;
+
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(sanitizedData) }}
     />
   );
 };

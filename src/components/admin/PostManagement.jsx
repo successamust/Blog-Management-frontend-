@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
-import { FileText, Plus, Edit, Trash2, Eye, Search, Upload, X, BarChart3, History } from 'lucide-react';
+import { FileText, Plus, Edit, Trash2, Eye, Search, Upload, X, BarChart3, History, Star } from 'lucide-react';
 import { postsAPI, categoriesAPI, adminAPI, imagesAPI, dashboardAPI, collaborationsAPI, pollsAPI } from '../../services/api';
+import { clearCache } from '../../utils/apiCache';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import toast from 'react-hot-toast';
@@ -39,7 +40,10 @@ const PostManagement = () => {
                             [];
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      // Security: Only log errors in development to prevent information leakage
+      if (import.meta.env.DEV) {
+        console.error('Error fetching categories:', error);
+      }
       setCategories([]);
     }
   };
@@ -158,7 +162,10 @@ const PostManagement = () => {
         setPosts(allPosts);
       }
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      // Security: Only log errors in development to prevent information leakage
+      if (import.meta.env.DEV) {
+        console.error('Error fetching posts:', error);
+      }
       toast.error('Failed to load posts');
     } finally {
       setLoading(false);
@@ -173,7 +180,10 @@ const PostManagement = () => {
       fetchPosts();
     } catch (error) {
       toast.error('Failed to delete posts');
-      console.error('Bulk delete error:', error);
+      // Security: Only log errors in development to prevent information leakage
+      if (import.meta.env.DEV) {
+        console.error('Bulk delete error:', error);
+      }
     }
   };
 
@@ -185,7 +195,10 @@ const PostManagement = () => {
       fetchPosts();
     } catch (error) {
       toast.error('Failed to update posts');
-      console.error('Bulk update error:', error);
+      // Security: Only log errors in development to prevent information leakage
+      if (import.meta.env.DEV) {
+        console.error('Bulk update error:', error);
+      }
     }
   };
 
@@ -203,29 +216,113 @@ const PostManagement = () => {
     }
   };
 
+  const handleToggleFeatured = async (postId, currentFeaturedStatus) => {
+    // Security: Authorization check
+    if (!isAdmin()) {
+      toast.error('Only admins can toggle featured status');
+      return;
+    }
+
+    // Security: Input validation - validate postId
+    if (!postId || typeof postId !== 'string') {
+      toast.error('Invalid post ID');
+      return;
+    }
+
+    // Security: Sanitize postId - ensure it's a valid MongoDB ObjectId format
+    const postIdPattern = /^[0-9a-fA-F]{24}$/;
+    if (!postIdPattern.test(postId.trim())) {
+      toast.error('Invalid post ID format');
+      return;
+    }
+
+    // Security: Validate currentFeaturedStatus is boolean
+    if (typeof currentFeaturedStatus !== 'boolean') {
+      toast.error('Invalid featured status');
+      return;
+    }
+
+    try {
+      const sanitizedPostId = postId.trim();
+      const newFeaturedStatus = !currentFeaturedStatus;
+      
+      // Security: Only send isFeatured field to prevent mass assignment
+      await postsAPI.update(sanitizedPostId, { isFeatured: newFeaturedStatus });
+      
+      toast.success(newFeaturedStatus ? 'Post marked as featured' : 'Post unmarked as featured');
+      clearCache('/posts');
+      fetchPosts();
+    } catch (error) {
+      // Security: Don't expose internal error details in production
+      const errorResponse = error.response || {};
+      const errorData = errorResponse.data || {};
+      let errorMessage = 'Failed to toggle featured status';
+      
+      if (errorResponse.status === 403) {
+        errorMessage = 'You do not have permission to change featured status';
+      } else if (errorResponse.status === 404) {
+        errorMessage = 'Post not found';
+      } else if (errorResponse.status === 400) {
+        errorMessage = errorData.message || 'Invalid request';
+      } else if (errorData.message) {
+        // Only show backend message in development
+        if (import.meta.env.DEV) {
+          errorMessage = errorData.message;
+        }
+      }
+      
+      toast.error(errorMessage);
+      
+      // Log error details only in development
+      if (import.meta.env.DEV) {
+        console.error('[handleToggleFeatured] Error:', {
+          postId,
+          error: error.message,
+          status: errorResponse.status,
+          data: errorData,
+        });
+      }
+    }
+  };
+
   const filteredPosts = posts.filter((post) => {
     const matchesSearch =
       post.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.excerpt?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Determine post status - check multiple fields
-    let status = '';
-    if (post.status) {
-      status = post.status.toString().trim().toLowerCase();
-    } else if (post.state) {
-      status = post.state.toString().trim().toLowerCase();
-    } else {
-      // Fallback: check isPublished, publishedAt, or published field
-      if (post.isPublished === true || post.published === true) {
-        status = 'published';
-      } else if (post.publishedAt && new Date(post.publishedAt) <= new Date()) {
-        // If there's a publishedAt date in the past, consider it published
-        status = 'published';
-      } else if (post.isPublished === false || post.published === false) {
+    // Use the same status determination logic as getStatusMeta
+    // We need to determine status the same way getStatusMeta does
+    let status = 'draft';
+    if (post.status !== undefined && post.status !== null && post.status !== '') {
+      const statusStr = String(post.status).trim().toLowerCase();
+      if (statusStr === 'draft' || statusStr === 'unpublished') {
         status = 'draft';
-      } else {
-        // Default to published if no explicit draft status
+      } else if (statusStr === 'published' || statusStr === 'publish' || statusStr === 'live' || statusStr === 'active' || statusStr === 'public') {
         status = 'published';
+      } else if (statusStr === 'scheduled' || statusStr === 'pending') {
+        status = 'scheduled';
+      } else if (statusStr === 'archived' || statusStr === 'archive') {
+        status = 'archived';
+      } else {
+        status = statusStr;
+      }
+    } else if (post.state !== undefined && post.state !== null && post.state !== '') {
+      status = String(post.state).trim().toLowerCase();
+    } else if (post.isPublished === false || post.published === false) {
+      status = 'draft';
+    } else if (post.isPublished === true || post.published === true) {
+      status = 'published';
+    } else if (post.publishedAt) {
+      const publishedDate = new Date(post.publishedAt);
+      const now = new Date();
+      if (!isNaN(publishedDate.getTime())) {
+        if (post.scheduledAt) {
+          status = 'scheduled';
+        } else if (publishedDate <= now) {
+          status = 'published';
+        } else {
+          status = 'scheduled';
+        }
       }
     }
     
@@ -256,6 +353,7 @@ const PostManagement = () => {
               setSelectedPosts={setSelectedPosts}
               onBulkDelete={handleBulkDelete}
               onBulkUpdate={handleBulkUpdate}
+              onToggleFeatured={handleToggleFeatured}
               categories={categories}
             />
           }
@@ -267,42 +365,85 @@ const PostManagement = () => {
   );
 };
 
-const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusFilter, onDelete, selectedPosts, setSelectedPosts, onBulkDelete, onBulkUpdate, categories = [] }) => {
+const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusFilter, onDelete, selectedPosts, setSelectedPosts, onBulkDelete, onBulkUpdate, onToggleFeatured, categories = [] }) => {
   const { user, isAdmin } = useAuth();
   const isAuthor = user?.role === 'author' || isAdmin();
 
   const getStatusMeta = (post) => {
-    // Determine post status - check multiple fields
+    // Determine post status - prioritize isPublished flag (which backend always returns)
     let rawStatus = '';
     
-    // First check explicit status field
-    if (post.status) {
-      rawStatus = post.status.toString().trim().toLowerCase();
-    } else if (post.state) {
-      rawStatus = post.state.toString().trim().toLowerCase();
-    } else {
-      // Check isPublished field explicitly
-      if (post.isPublished === true || post.published === true) {
-        rawStatus = 'published';
-      } else if (post.isPublished === false || post.published === false) {
-        rawStatus = 'draft';
-      } else if (post.publishedAt) {
-        // If there's a publishedAt date, check if it's in the past
-        const publishedDate = new Date(post.publishedAt);
+    // First priority: check isPublished flag (backend always returns this)
+    if (post.isPublished === false || post.published === false) {
+      rawStatus = 'draft';
+    } else if (post.isPublished === true || post.published === true) {
+      // Check if scheduled
+      if (post.scheduledAt) {
+        const scheduledDate = new Date(post.scheduledAt);
         const now = new Date();
-        if (publishedDate <= now) {
+        if (!isNaN(scheduledDate.getTime()) && scheduledDate > now) {
+          rawStatus = 'scheduled';
+        } else {
+          rawStatus = 'published';
+        }
+      } else {
+        rawStatus = 'published';
+      }
+    } 
+    // Second priority: check status field (if backend starts returning it)
+    else if (post.status !== undefined && post.status !== null && post.status !== '') {
+      const statusStr = String(post.status).trim().toLowerCase();
+      if (statusStr === 'draft' || statusStr === 'unpublished') {
+        rawStatus = 'draft';
+      } else if (statusStr === 'published' || statusStr === 'publish' || statusStr === 'live' || statusStr === 'active' || statusStr === 'public') {
+        rawStatus = 'published';
+      } else if (statusStr === 'scheduled' || statusStr === 'pending') {
+        rawStatus = 'scheduled';
+      } else if (statusStr === 'archived' || statusStr === 'archive') {
+        rawStatus = 'archived';
+      } else {
+        rawStatus = statusStr;
+      }
+    }
+    // Third priority: check state field
+    else if (post.state !== undefined && post.state !== null && post.state !== '') {
+      const stateStr = String(post.state).trim().toLowerCase();
+      rawStatus = stateStr;
+    } 
+    // Fourth priority: check publishedAt timestamp
+    else if (post.publishedAt) {
+      const publishedDate = new Date(post.publishedAt);
+      const now = new Date();
+      if (!isNaN(publishedDate.getTime())) {
+        if (post.scheduledAt) {
+          const scheduledDate = new Date(post.scheduledAt);
+          if (!isNaN(scheduledDate.getTime()) && scheduledDate > now) {
+            rawStatus = 'scheduled';
+          } else {
+            rawStatus = 'published';
+          }
+        } else if (publishedDate <= now) {
           rawStatus = 'published';
         } else {
           rawStatus = 'scheduled';
         }
-      } else {
-        // If no publishedAt and isPublished is not explicitly true, it's a draft
-        // This is the key fix: don't default to published if isPublished is undefined/null
-        rawStatus = 'draft';
       }
+    }
+    // Default: draft if nothing indicates published status
+    if (!rawStatus) {
+      rawStatus = 'draft';
     }
     
     const baseStatus = rawStatus || 'draft'; // Default to draft instead of published
+    
+    // Debug logging in development
+    if (import.meta.env.DEV && post) {
+      console.log('[PostList] Determined status for:', post.title || 'Untitled');
+      console.log('  - rawStatus:', rawStatus);
+      console.log('  - baseStatus:', baseStatus);
+      console.log('  - Final label will be:', baseStatus.split(/[\s-]+/).map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' '));
+    }
+    
     const normalizedStatus = baseStatus.replace(/\s+/g, '-');
 
     const badgeClassMap = {
@@ -465,13 +606,26 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
                             <Edit className="w-4 h-4 inline" />
                           </Link>
                           {isAdmin() && (
-                            <button
-                              onClick={() => onDelete(post._id)}
-                              className="text-red-600 hover:text-red-900 transition-colors"
-                              title="Delete Post"
-                            >
-                              <Trash2 className="w-4 h-4 inline" />
-                            </button>
+                            <>
+                              <button
+                                onClick={() => onToggleFeatured(post._id || post.id, post.isFeatured === true || post.isFeatured === 'true')}
+                                className={`transition-colors ${
+                                  post.isFeatured === true || post.isFeatured === 'true'
+                                    ? 'text-yellow-500 hover:text-yellow-600'
+                                    : 'text-[var(--text-muted)] hover:text-yellow-500'
+                                }`}
+                                title={post.isFeatured === true || post.isFeatured === 'true' ? 'Unmark as Featured' : 'Mark as Featured'}
+                              >
+                                <Star className={`w-4 h-4 inline ${post.isFeatured === true || post.isFeatured === 'true' ? 'fill-current' : ''}`} />
+                              </button>
+                              <button
+                                onClick={() => onDelete(post._id)}
+                                className="text-red-600 hover:text-red-900 transition-colors"
+                                title="Delete Post"
+                              >
+                                <Trash2 className="w-4 h-4 inline" />
+                              </button>
+                            </>
                           )}
                         </td>
                       </tr>
@@ -534,13 +688,27 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
                       Edit
                     </Link>
                     {isAdmin() && (
-                      <button
-                        onClick={() => onDelete(post._id)}
-                        className="btn-icon-square border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-                        aria-label="Delete post"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => onToggleFeatured(post._id || post.id, post.isFeatured === true || post.isFeatured === 'true')}
+                          className={`btn-icon-square border transition-colors ${
+                            post.isFeatured === true || post.isFeatured === 'true'
+                              ? 'border-yellow-300 text-yellow-600 bg-yellow-50 hover:bg-yellow-100'
+                              : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-yellow-500 hover:border-yellow-300'
+                          }`}
+                          aria-label={post.isFeatured === true || post.isFeatured === 'true' ? 'Unmark as Featured' : 'Mark as Featured'}
+                          title={post.isFeatured === true || post.isFeatured === 'true' ? 'Unmark as Featured' : 'Mark as Featured'}
+                        >
+                          <Star className={`w-4 h-4 ${post.isFeatured === true || post.isFeatured === 'true' ? 'fill-current' : ''}`} />
+                        </button>
+                        <button
+                          onClick={() => onDelete(post._id)}
+                          className="btn-icon-square border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                          aria-label="Delete post"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -689,6 +857,10 @@ const CreatePost = ({ onSuccess }) => {
     setSubmitting(true);
 
     try {
+      // Explicitly handle status to ensure draft status is properly saved
+      const status = formData.status || 'draft';
+      const isPublished = status === 'published' && !scheduledAt;
+      
       const postData = {
         title: formData.title,
         excerpt: formData.excerpt,
@@ -696,8 +868,8 @@ const CreatePost = ({ onSuccess }) => {
         category: formData.category || undefined,
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
         featuredImage: formData.featuredImage || undefined,
-        status: formData.status,
-        isPublished: scheduledAt ? false : formData.status === 'published',
+        status: status,
+        isPublished: isPublished,
         scheduledAt: scheduledAt ? scheduledAt.toISOString() : undefined,
       };
       
@@ -768,7 +940,10 @@ const CreatePost = ({ onSuccess }) => {
             toast.error('Poll requires at least 2 options. Post created but poll was not created.');
           }
         } catch (pollError) {
-          console.error('Error creating poll:', pollError);
+          // Security: Only log errors in development
+          if (import.meta.env.DEV) {
+            console.error('Error creating poll:', pollError);
+          }
           toast.error('Post created successfully, but failed to create poll. You can add it later when editing.');
         }
       } else {
@@ -779,7 +954,10 @@ const CreatePost = ({ onSuccess }) => {
         try {
           await adminAPI.notifyNewPost(postId);
         } catch (error) {
-          console.error('Failed to notify subscribers:', error);
+          // Security: Only log errors in development
+          if (import.meta.env.DEV) {
+            console.error('Failed to notify subscribers:', error);
+          }
         }
       }
       
@@ -789,7 +967,10 @@ const CreatePost = ({ onSuccess }) => {
       // Navigate to edit page immediately (React Router handles this smoothly, no full page reload)
       navigate(`/admin/posts/edit/${postId}`, { replace: false });
     } catch (error) {
-      console.error('Error creating post:', error);
+      // Security: Only log errors in development to prevent information leakage
+      if (import.meta.env.DEV) {
+        console.error('Error creating post:', error);
+      }
       const errorMessage = error.response?.data?.message || 'Failed to create post';
       toast.error(errorMessage);
     } finally {
@@ -901,21 +1082,26 @@ const CreatePost = ({ onSuccess }) => {
               name="status"
               value={formData.status}
               onChange={handleChange}
-              disabled={!!scheduledAt}
-              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)] disabled:bg-[var(--surface-subtle)] disabled:cursor-not-allowed"
+              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
             >
               <option value="published">Published</option>
               <option value="draft">Draft</option>
             </select>
-            {scheduledAt && (
-              <p className="mt-1 text-xs text-[var(--text-secondary)]">Status will be set to draft when scheduled</p>
+            {scheduledAt && formData.status !== 'draft' && (
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">Note: Changing status will clear the scheduled date</p>
             )}
           </div>
         </div>
 
         <div>
           <PostScheduler
-            onSchedule={setScheduledAt}
+            onSchedule={(date) => {
+              setScheduledAt(date);
+              // When scheduling, automatically set status to draft if it's currently published
+              if (date && formData.status === 'published') {
+                setFormData(prev => ({ ...prev, status: 'draft' }));
+              }
+            }}
             initialDate={scheduledAt ? new Date(scheduledAt).toISOString().split('T')[0] : null}
             initialTime={scheduledAt ? new Date(scheduledAt).toTimeString().slice(0, 5) : null}
           />
@@ -1254,7 +1440,10 @@ const EditPost = ({ onSuccess }) => {
         const posts = normalizePostsResponse(response);
         post = findPostById(posts, id);
       } catch (error) {
-        console.warn('Dashboard endpoint failed, trying getAll:', error);
+        // Security: Only log warnings in development
+        if (import.meta.env.DEV) {
+          console.warn('Dashboard endpoint failed, trying getAll:', error);
+        }
       }
       
       // If not found in dashboard, try getAll
@@ -1269,7 +1458,10 @@ const EditPost = ({ onSuccess }) => {
         // Method 1: Try fetching by slug if we have it
         if (post.slug) {
           try {
-            console.warn('[EditPost] Post has no content, trying to fetch by slug:', post.slug);
+            // Security: Only log warnings in development
+            if (import.meta.env.DEV) {
+              console.warn('[EditPost] Post has no content, trying to fetch by slug:', post.slug);
+            }
             const slugResponse = await postsAPI.getBySlug(post.slug);
             const slugData = slugResponse.data || {};
             const fullPost = slugData.post || slugData.data || slugData;
@@ -1280,7 +1472,10 @@ const EditPost = ({ onSuccess }) => {
               });
             }
           } catch (slugError) {
-            console.warn('[EditPost] Failed to fetch by slug:', slugError);
+            // Security: Only log warnings in development
+            if (import.meta.env.DEV) {
+              console.warn('[EditPost] Failed to fetch by slug:', slugError);
+            }
           }
         }
         
@@ -1300,12 +1495,18 @@ const EditPost = ({ onSuccess }) => {
             const directPost = findPostById(directPosts, id);
             if (directPost && directPost.content && directPost.content.trim() !== '' && directPost.content !== '<p></p>') {
               post.content = directPost.content;
-              console.log('[EditPost] Retrieved content from direct API call:', {
-                contentLength: post.content.length,
-              });
+              // Security: Only log in development
+              if (import.meta.env.DEV) {
+                console.log('[EditPost] Retrieved content from direct API call:', {
+                  contentLength: post.content.length,
+                });
+              }
             }
           } catch (directError) {
-            console.warn('[EditPost] Direct API call failed:', directError);
+            // Security: Only log warnings in development
+            if (import.meta.env.DEV) {
+              console.warn('[EditPost] Direct API call failed:', directError);
+            }
           }
         }
       }
@@ -1365,23 +1566,47 @@ const EditPost = ({ onSuccess }) => {
         });
       }
 
-      // Determine post status - check multiple fields
-      let postStatus = 'published';
+      // Determine post status - prioritize status field over isPublished flag
+      let postStatus = 'draft'; // Default to draft instead of published
+      
+      // First priority: explicit status field
       if (post.status) {
         const statusStr = String(post.status).toLowerCase().trim();
+        // Normalize common status variations
         if (statusStr === 'draft' || statusStr === 'unpublished') {
           postStatus = 'draft';
+        } else if (statusStr === 'published' || statusStr === 'publish' || statusStr === 'live' || statusStr === 'active' || statusStr === 'public') {
+          postStatus = 'published';
+        } else if (statusStr === 'scheduled' || statusStr === 'pending') {
+          postStatus = 'scheduled';
+        } else if (statusStr === 'archived' || statusStr === 'archive') {
+          postStatus = 'archived';
         } else {
+          // Use the status as-is if it's a valid status
           postStatus = statusStr;
         }
-      } else if (post.isPublished === false || post.published === false) {
+      } 
+      // Second priority: check isPublished flag (but only if status field is not set)
+      else if (post.isPublished === false || post.published === false) {
         postStatus = 'draft';
       } else if (post.isPublished === true || post.published === true) {
         postStatus = 'published';
-      } else if (!post.publishedAt && !post.isPublished) {
-        // If no publishedAt and isPublished is not explicitly true, likely a draft
-        postStatus = 'draft';
+      } 
+      // Third priority: check publishedAt timestamp
+      else if (post.publishedAt) {
+        const publishedDate = new Date(post.publishedAt);
+        const now = new Date();
+        if (!isNaN(publishedDate.getTime())) {
+          if (post.scheduledAt) {
+            postStatus = 'scheduled';
+          } else if (publishedDate <= now) {
+            postStatus = 'published';
+          } else {
+            postStatus = 'scheduled';
+          }
+        }
       }
+      // Default: draft if nothing else indicates published status
 
       const contentToSet = post.content || '';
       
@@ -1406,11 +1631,19 @@ const EditPost = ({ onSuccess }) => {
         featuredImage: post.featuredImage || '',
         status: postStatus,
       });
-      if (post.scheduledAt) {
+      
+      // Only set scheduledAt if status is actually scheduled
+      // Clear it for draft or published posts
+      if (postStatus === 'scheduled' && post.scheduledAt) {
         setScheduledAt(new Date(post.scheduledAt));
+      } else {
+        setScheduledAt(null);
       }
     } catch (error) {
-      console.error('Error fetching post:', error);
+      // Security: Only log errors in development to prevent information leakage
+      if (import.meta.env.DEV) {
+        console.error('Error fetching post:', error);
+      }
       toast.error('Failed to load post');
       navigate('/admin/posts');
     } finally {
@@ -1447,7 +1680,10 @@ const EditPost = ({ onSuccess }) => {
       if (errorResponse.status === 404) {
         setPoll(null);
       } else {
-        console.error('Error fetching poll:', error);
+        // Security: Only log errors in development
+        if (import.meta.env.DEV) {
+          console.error('Error fetching poll:', error);
+        }
         setPoll(null);
       }
     } finally {
@@ -1590,9 +1826,19 @@ const EditPost = ({ onSuccess }) => {
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Handle status changes - clear scheduledAt when changing to draft or published
+    if (name === 'status') {
+      if (value === 'draft' || value === 'published') {
+        // Clear scheduledAt when changing to draft or published
+        setScheduledAt(null);
+      }
+    }
+    
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
 
@@ -1660,35 +1906,98 @@ const EditPost = ({ onSuccess }) => {
     setSubmitting(true);
 
     try {
-      const isPublished = formData.status === 'published';
+      // Explicitly handle status to ensure draft status is properly saved
+      const status = formData.status || 'draft';
+      
+      // Determine isPublished based on status
+      // If status is 'draft', isPublished must be false
+      // If status is 'published' and not scheduled, isPublished should be true
+      // If status is 'scheduled', isPublished should be false
+      let isPublished = false;
+      if (status === 'published' && !scheduledAt) {
+        isPublished = true;
+      } else if (status === 'draft' || status === 'scheduled') {
+        isPublished = false;
+      }
       
       const postData = {
-        title: formData.title,
-        excerpt: formData.excerpt,
-        content: formData.content,
+        title: formData.title || '',
+        excerpt: formData.excerpt || '',
+        content: formData.content || '',
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
-        status: formData.status,
-        isPublished: scheduledAt ? false : isPublished,
-        scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
+        status: status,
+        isPublished: isPublished,
       };
       
-      if (formData.category) {
+      // Only include scheduledAt if status is 'scheduled' and scheduledAt exists
+      // Otherwise, explicitly set to null to clear it
+      if (status === 'scheduled' && scheduledAt) {
+        postData.scheduledAt = scheduledAt.toISOString();
+      } else {
+        // Clear scheduledAt when changing to draft or published
+        postData.scheduledAt = null;
+      }
+      
+      // Only include category if it exists
+      if (formData.category && formData.category.trim() !== '') {
         postData.category = formData.category;
       }
-      if (formData.featuredImage) {
+      
+      // Only include featuredImage if it exists
+      if (formData.featuredImage && formData.featuredImage.trim() !== '') {
         postData.featuredImage = formData.featuredImage;
+      }
+      
+      // Debug logging in development
+      if (import.meta.env.DEV) {
+        console.log('[EditPost] Updating post with data:', {
+          id,
+          status,
+          isPublished,
+          scheduledAt: postData.scheduledAt,
+          hasContent: !!postData.content,
+          contentLength: postData.content?.length || 0,
+        });
       }
       
       const response = await postsAPI.update(id, postData);
       
+      // Clear cache to ensure fresh data
+      clearCache('/posts');
+      clearCache(`/posts/${id}`);
+      
       toast.success('Post updated successfully');
-      onSuccess();
+      
+      // Call onSuccess callback if provided (this should trigger a refetch in parent)
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      // Navigate back to posts list
       navigate('/admin/posts');
     } catch (error) {
-      console.error('Error updating post:', error);
+      // Security: Only log errors in development to prevent information leakage
+      if (import.meta.env.DEV) {
+        console.error('Error updating post:', error);
+      }
+      
       const updateErrorResponse = error.response || {};
       const updateErrorData = updateErrorResponse.data || {};
       const updateErrorMessage = updateErrorData.message || updateErrorData.error || 'Failed to update post';
+      
+      // More detailed error logging in development
+      if (import.meta.env.DEV) {
+        console.error('[EditPost] Update error details:', {
+          status: updateErrorResponse.status,
+          statusText: updateErrorResponse.statusText,
+          data: updateErrorData,
+          requestData: {
+            status: formData.status,
+            scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
+          }
+        });
+      }
+      
       toast.error(updateErrorMessage);
     } finally {
       setSubmitting(false);
@@ -1873,14 +2182,13 @@ const EditPost = ({ onSuccess }) => {
               name="status"
               value={formData.status}
               onChange={handleChange}
-              disabled={!!scheduledAt}
-              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)] disabled:bg-[var(--surface-subtle)] disabled:cursor-not-allowed"
+              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
             >
               <option value="published">Published</option>
               <option value="draft">Draft</option>
             </select>
-            {scheduledAt && (
-              <p className="mt-1 text-xs text-[var(--text-secondary)]">Status will be set to draft when scheduled</p>
+            {scheduledAt && formData.status !== 'draft' && (
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">Note: Changing status will clear the scheduled date</p>
             )}
           </div>
         </div>

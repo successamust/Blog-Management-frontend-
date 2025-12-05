@@ -145,8 +145,33 @@ const Home = () => {
           (Array.isArray(response.data) ? response.data : []) ||
           [];
 
+        // Filter to ensure only published posts are shown
+        const isPublishedPost = (post) => {
+          if (!post) return false;
+          
+          const status = (post?.status || post?.state || '').toString().toLowerCase().trim();
+          if (status) {
+            if (['published', 'publish', 'live', 'active', 'public'].includes(status)) return true;
+            if (['draft', 'scheduled', 'archived', 'unpublished', 'pending'].includes(status)) return false;
+          }
+          
+          if (post?.isDraft === true) return false;
+          if (post?.isPublished === true || post?.published === true) return true;
+          if (post?.isPublished === false || post?.published === false) return false;
+          
+          if (post?.publishedAt && !post?.scheduledAt) {
+            const publishedDate = new Date(post.publishedAt);
+            if (!isNaN(publishedDate.getTime()) && publishedDate <= new Date()) {
+              return true;
+            }
+          }
+          
+          // Must have publishedAt or createdAt to be shown
+          return !!(post.publishedAt || post.createdAt);
+        };
+        
         const sanitizedPosts = Array.isArray(postsData)
-          ? postsData.filter((post) => post && (post.publishedAt || post.createdAt))
+          ? postsData.filter((post) => post && isPublishedPost(post) && (post.publishedAt || post.createdAt))
           : [];
 
         mergePosts(sanitizedPosts, { reset });
@@ -209,7 +234,47 @@ const Home = () => {
     [buildCategoryCounts]
   );
 
-  const featuredPosts = useMemo(() => posts.slice(0, 2), [posts]);
+  // Featured posts: prioritize manually featured posts, fallback to recent if not enough
+  const featuredPosts = useMemo(() => {
+    if (!posts.length) return [];
+    
+    // First, get manually featured posts
+    const manuallyFeatured = posts.filter(post => post.isFeatured === true || post.isFeatured === 'true');
+    
+    // If we have 2+ featured posts, return them (sorted by publishedAt)
+    if (manuallyFeatured.length >= 2) {
+      return manuallyFeatured
+        .sort((a, b) => {
+          const dateA = getPostDate(a);
+          const dateB = getPostDate(b);
+          return dateB - dateA;
+        })
+        .slice(0, 2);
+    }
+    
+    // If we have 1 featured post, add the most recent non-featured post
+    if (manuallyFeatured.length === 1) {
+      const nonFeatured = posts.filter(post => !(post.isFeatured === true || post.isFeatured === 'true'));
+      const mostRecent = nonFeatured
+        .sort((a, b) => {
+          const dateA = getPostDate(a);
+          const dateB = getPostDate(b);
+          return dateB - dateA;
+        })[0];
+      
+      return mostRecent ? [manuallyFeatured[0], mostRecent] : [manuallyFeatured[0]];
+    }
+    
+    // Fallback: return 2 most recent posts (original behavior)
+    return posts
+      .sort((a, b) => {
+        const dateA = getPostDate(a);
+        const dateB = getPostDate(b);
+        return dateB - dateA;
+      })
+      .slice(0, 2);
+  }, [posts, getPostDate]);
+  
   const recentPosts = useMemo(() => posts, [posts]);
   const trendingPosts = useMemo(() => {
     if (!posts.length) return [];

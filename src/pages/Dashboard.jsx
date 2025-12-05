@@ -1445,6 +1445,10 @@ const CreatePostTab = () => {
     setSubmitting(true);
 
     try {
+      // Explicitly handle status to ensure draft status is properly saved
+      const status = formData.status || 'draft';
+      const isPublished = status === 'published' && !scheduledAt;
+      
       const postData = {
         title: formData.title,
         excerpt: formData.excerpt,
@@ -1452,8 +1456,8 @@ const CreatePostTab = () => {
         category: formData.category || undefined,
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
         featuredImage: formData.featuredImage || undefined,
-        status: formData.status,
-        isPublished: scheduledAt ? false : formData.status === 'published',
+        status: status,
+        isPublished: isPublished,
         scheduledAt: scheduledAt ? scheduledAt.toISOString() : undefined,
       };
       

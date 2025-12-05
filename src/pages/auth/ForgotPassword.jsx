@@ -28,7 +28,9 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      await authAPI.forgotPassword(email);
+      // Get the frontend base URL to send to backend
+      const frontendUrl = window.location.origin;
+      await authAPI.forgotPassword(email, frontendUrl);
       setSubmitted(true);
       toast.success('Password reset link sent to your email');
     } catch (error) {

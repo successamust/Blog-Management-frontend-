@@ -116,10 +116,36 @@ const CategoryPosts = () => {
         }
 
         // Handle different possible response structures for posts
-        postsData = postsRes.data?.posts || 
-                   postsRes.data?.data || 
-                   (Array.isArray(postsRes.data) ? postsRes.data : []) || 
-                   [];
+        const rawPostsData = postsRes.data?.posts || 
+                            postsRes.data?.data || 
+                            (Array.isArray(postsRes.data) ? postsRes.data : []) || 
+                            [];
+        
+        // Client-side filter to ensure only published posts are shown
+        const isPublishedPost = (post) => {
+          if (!post) return false;
+          
+          const status = (post?.status || post?.state || '').toString().toLowerCase().trim();
+          if (status) {
+            if (['published', 'publish', 'live', 'active', 'public'].includes(status)) return true;
+            if (['draft', 'scheduled', 'archived', 'unpublished', 'pending'].includes(status)) return false;
+          }
+          
+          if (post?.isDraft === true) return false;
+          if (post?.isPublished === true || post?.published === true) return true;
+          if (post?.isPublished === false || post?.published === false) return false;
+          
+          if (post?.publishedAt && !post?.scheduledAt) {
+            const publishedDate = new Date(post.publishedAt);
+            if (!isNaN(publishedDate.getTime()) && publishedDate <= new Date()) {
+              return true;
+            }
+          }
+          
+          return true;
+        };
+        
+        postsData = rawPostsData.filter(isPublishedPost);
         
         // If we don't have category data but have posts, try to extract category from first post
         if (!categoryData && postsData.length > 0 && postsData[0].category) {
