@@ -1850,7 +1850,7 @@ const AdminOverview = () => {
               </div>
               <div className="text-center p-4 bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg">
                 <TrendingUp className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-[var(--text-primary)]">{publishedPostsCount}</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.posts?.published || publishedPostsCount || 0}</p>
                 <p className="text-sm text-[var(--text-secondary)]">Published Posts</p>
               </div>
             </div>
@@ -2167,11 +2167,11 @@ const AdminOverview = () => {
       )}
 
       {/* Additional Analytics Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Polls Statistics */}
         {stats.polls && stats.polls.total > 0 && (
           <AnimatedCard delay={1.0}>
-            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 h-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
                   <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -2199,7 +2199,7 @@ const AdminOverview = () => {
         {/* Category Statistics */}
         {stats.categoryStats && (
           <AnimatedCard delay={1.1}>
-            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 h-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-[var(--accent-soft)] dark:bg-[var(--accent)]/20 rounded-lg">
                   <Boxes className="w-5 h-5 text-[var(--accent)] dark:text-[var(--accent)]" />
@@ -2222,10 +2222,34 @@ const AdminOverview = () => {
           </AnimatedCard>
         )}
 
+        {/* Bookmarks Statistics */}
+        {stats.bookmarks && (
+          <AnimatedCard delay={1.2}>
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 h-full">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
+                  <BookOpen className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Bookmarks</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.bookmarks.totalBookmarks || 0}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Total Bookmarks</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.bookmarks.uniquePostsBookmarked || 0}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Unique Posts</p>
+                </div>
+              </div>
+            </div>
+          </AnimatedCard>
+        )}
+
         {/* Search Analytics */}
         {stats.search && stats.search.popularTags && stats.search.popularTags.length > 0 && (
-          <AnimatedCard delay={1.2}>
-            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
+          <AnimatedCard delay={1.3}>
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 h-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
                   <Tag className="w-5 h-5 text-green-600 dark:text-green-400" />
@@ -2253,8 +2277,8 @@ const AdminOverview = () => {
 
         {/* Follow Statistics */}
         {stats.follows && (
-          <AnimatedCard delay={1.3}>
-            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
+          <AnimatedCard delay={1.4}>
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 h-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-pink-100 dark:bg-pink-900/20 rounded-lg">
                   <UsersRound className="w-5 h-5 text-pink-600 dark:text-pink-400" />
@@ -2290,8 +2314,8 @@ const AdminOverview = () => {
 
         {/* Reading History */}
         {stats.readingHistory && stats.readingHistory.totalReads > 0 && (
-          <AnimatedCard delay={1.4}>
-            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
+          <AnimatedCard delay={1.5}>
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 h-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-indigo-100 dark:bg-indigo-900/20 rounded-lg">
                   <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -2312,34 +2336,10 @@ const AdminOverview = () => {
           </AnimatedCard>
         )}
 
-        {/* Bookmarks Statistics */}
-        {stats.bookmarks && (
-          <AnimatedCard delay={1.5}>
-            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
-                  <BookOpen className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Bookmarks</h3>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.bookmarks.totalBookmarks || 0}</p>
-                  <p className="text-sm text-[var(--text-muted)]">Total Bookmarks</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.bookmarks.uniquePostsBookmarked || 0}</p>
-                  <p className="text-sm text-[var(--text-muted)]">Unique Posts</p>
-                </div>
-              </div>
-            </div>
-          </AnimatedCard>
-        )}
-
         {/* Newsletter Detailed Analytics */}
         {stats.newsletter && (stats.newsletter.openRate !== undefined || stats.newsletter.clickRate !== undefined) && (
           <AnimatedCard delay={1.6}>
-            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
+            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 h-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-teal-100 dark:bg-teal-900/20 rounded-lg">
                   <Mail className="w-5 h-5 text-teal-600 dark:text-teal-400" />
