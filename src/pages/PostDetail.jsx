@@ -1541,7 +1541,7 @@ const PostDetail = () => {
     {/* Share Modal */}
     {showShareModal && (
       <div 
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm"
         onClick={() => setShowShareModal(false)}
       >
         <motion.div
@@ -1549,18 +1549,18 @@ const PostDetail = () => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           onClick={(e) => e.stopPropagation()}
-          className="surface-card max-w-md w-full p-6 relative shadow-xl"
+          className="surface-card max-w-sm sm:max-w-md w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 relative shadow-xl rounded-xl"
         >
           <button
             onClick={() => setShowShareModal(false)}
-            className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors z-10"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Share Post</h2>
-            <p className="text-[var(--text-secondary)]">Share this post with others</p>
+          <div className="mb-4 sm:mb-6 pr-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-1 sm:mb-2">Share Post</h2>
+            <p className="text-sm sm:text-base text-[var(--text-secondary)]">Share this post with others</p>
           </div>
 
           <SocialShare 

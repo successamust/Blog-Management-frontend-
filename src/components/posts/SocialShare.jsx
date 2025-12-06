@@ -98,11 +98,11 @@ const SocialShare = ({ post, shareUrl, onShare }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Share Preview Card */}
       <div className="border border-[var(--border-subtle)] rounded-xl overflow-hidden bg-[var(--surface-bg)]">
         {post.featuredImage && (
-          <div className="w-full h-48 overflow-hidden">
+          <div className="w-full h-32 sm:h-48 overflow-hidden">
             <img
               src={post.featuredImage}
               alt={post.title}
@@ -110,9 +110,9 @@ const SocialShare = ({ post, shareUrl, onShare }) => {
             />
           </div>
         )}
-        <div className="p-4">
-          <h3 className="font-semibold text-primary mb-2 line-clamp-2">{post.title}</h3>
-          <p className="text-sm text-secondary line-clamp-2 mb-3">
+        <div className="p-3 sm:p-4">
+          <h3 className="font-semibold text-sm sm:text-base text-primary mb-1 sm:mb-2 line-clamp-2">{post.title}</h3>
+          <p className="text-xs sm:text-sm text-secondary line-clamp-2 mb-2 sm:mb-3">
             {post.excerpt || post.summary || 'Check out this story on Nexus'}
           </p>
           <div className="flex items-center gap-2 text-xs text-muted">
@@ -124,8 +124,8 @@ const SocialShare = ({ post, shareUrl, onShare }) => {
 
       {/* Social Media Buttons */}
       <div>
-        <h4 className="text-sm font-medium text-secondary mb-3">Share on</h4>
-        <div className="grid grid-cols-3 gap-3">
+        <h4 className="text-xs sm:text-sm font-medium text-secondary mb-2 sm:mb-3">Share on</h4>
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           {socialPlatforms.map((platform) => {
             const Icon = platform.icon;
             return (
@@ -134,11 +134,11 @@ const SocialShare = ({ post, shareUrl, onShare }) => {
                 onClick={() => handleSocialShare(platform)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`flex flex-col items-center gap-2 p-4 rounded-xl text-white ${platform.color} transition-colors`}
+                className={`flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-4 rounded-xl text-white ${platform.color} transition-colors`}
                 aria-label={`Share on ${platform.name}`}
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-xs font-medium">{platform.name}</span>
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-[10px] sm:text-xs font-medium">{platform.name}</span>
               </motion.button>
             );
           })}
@@ -147,7 +147,7 @@ const SocialShare = ({ post, shareUrl, onShare }) => {
 
       {/* Link Copy Section */}
       <div>
-        <label className="block text-sm font-medium text-secondary mb-2">
+        <label className="block text-xs sm:text-sm font-medium text-secondary mb-1 sm:mb-2">
           Or copy link
         </label>
         <div className="flex items-center gap-2">
@@ -155,14 +155,14 @@ const SocialShare = ({ post, shareUrl, onShare }) => {
             type="text"
             readOnly
             value={shareUrl}
-            className="flex-1 px-4 py-2 bg-surface-subtle border border-[var(--border-subtle)] rounded-lg text-sm text-secondary focus:ring-2 focus:ring-[var(--accent)]"
+            className="flex-1 px-2 sm:px-4 py-1.5 sm:py-2 bg-surface-subtle border border-[var(--border-subtle)] rounded-lg text-xs sm:text-sm text-secondary focus:ring-2 focus:ring-[var(--accent)]"
             onClick={(e) => e.target.select()}
           />
           <motion.button
             onClick={copyToClipboard}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
               linkCopied
                 ? 'bg-emerald-500 text-white'
                 : 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]'
@@ -170,15 +170,15 @@ const SocialShare = ({ post, shareUrl, onShare }) => {
             aria-label="Copy link"
           >
             {linkCopied ? (
-              <CheckCircle className="w-5 h-5" />
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
             ) : (
-              <Copy className="w-5 h-5" />
+              <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
             )}
           </motion.button>
         </div>
         {linkCopied && (
-          <p className="mt-2 text-sm text-emerald-600 flex items-center gap-1">
-            <CheckCircle className="w-4 h-4" />
+          <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-emerald-600 flex items-center gap-1">
+            <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
             Link copied to clipboard!
           </p>
         )}
@@ -190,9 +190,9 @@ const SocialShare = ({ post, shareUrl, onShare }) => {
           onClick={handleNativeShare}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full btn btn-primary flex items-center justify-center gap-2"
+          className="w-full btn btn-primary flex items-center justify-center gap-2 text-sm sm:text-base py-2 sm:py-2.5"
         >
-          <Share2 className="w-5 h-5" />
+          <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
           Share via Device
         </motion.button>
       )}
