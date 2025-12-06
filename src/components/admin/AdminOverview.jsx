@@ -665,7 +665,24 @@ const AdminOverview = () => {
       const normalizeStatus = (post) => {
         if (!post) return 'draft';
         
-        // First check explicit status field - this is the source of truth
+        // Priority 1: If post has publishedAt in the past, it's published - trust it over status field
+        if (post?.publishedAt) {
+          const publishedDate = new Date(post.publishedAt);
+          if (!Number.isNaN(publishedDate.getTime()) && publishedDate <= new Date()) {
+            // Only override if explicitly marked as draft
+            if (post?.isDraft === true || post?.isPublished === false || post?.published === false) {
+              return 'draft';
+            }
+            return 'published'; // Already published, trust publishedAt over status field
+          }
+        }
+        
+        // Priority 2: If isPublished is explicitly true, trust it over status field
+        if (post?.isPublished === true || post?.published === true) {
+          return 'published'; // Explicitly marked as published
+        }
+        
+        // Priority 3: Check explicit status field
         const status = (post?.status || post?.state || '').toString().trim().toLowerCase();
         if (status && status !== 'undefined' && status !== 'null' && status !== '') {
           // Normalize common status variations
@@ -676,28 +693,21 @@ const AdminOverview = () => {
           return status;
         }
         
-        // Fallback to boolean flags - but only if status field is not set
+        // Priority 4: Check boolean flags
         if (post?.isDraft === true) return 'draft';
         if (post?.isPublished === false || post?.published === false) return 'draft';
-        if (post?.published === true || post?.isPublished === true) return 'published';
         if (post?.scheduled === true) return 'scheduled';
         if (post?.archived === true) return 'archived';
         
-        // Only check publishedAt/scheduledAt as last resort if status and boolean flags are not set
-        // But don't use publishedAt if status is explicitly draft
+        // Priority 5: Check scheduledAt
         if (post?.scheduledAt) {
           const scheduledDate = new Date(post.scheduledAt);
           if (!Number.isNaN(scheduledDate.getTime()) && scheduledDate > new Date()) {
             return 'scheduled';
           }
         }
-        if (post?.publishedAt && !post?.scheduledAt) {
-          // Only consider published if isPublished is true or not explicitly false
-          if (post?.isPublished !== false) {
-            return 'published';
-          }
-        }
         
+        // Default to draft if no indicators
         return 'draft';
       };
 
@@ -1059,11 +1069,48 @@ const AdminOverview = () => {
             // Recalculate stats with dashboard posts
             const normalizeStatus = (post) => {
               if (!post) return 'draft';
+              
+              // Priority 1: If post has publishedAt in the past, it's published - trust it over status field
+              if (post?.publishedAt) {
+                const publishedDate = new Date(post.publishedAt);
+                if (!Number.isNaN(publishedDate.getTime()) && publishedDate <= new Date()) {
+                  // Only override if explicitly marked as draft
+                  if (post?.isDraft === true || post?.isPublished === false || post?.published === false) {
+                    return 'draft';
+                  }
+                  return 'published'; // Already published, trust publishedAt over status field
+                }
+              }
+              
+              // Priority 2: If isPublished is explicitly true, trust it over status field
+              if (post?.isPublished === true || post?.published === true) {
+                return 'published'; // Explicitly marked as published
+              }
+              
+              // Priority 3: Check explicit status field
               const status = (post?.status || post?.state || '').toString().toLowerCase();
-              if (status) return status;
+              if (status) {
+                if (status === 'draft' || status === 'unpublished') return 'draft';
+                if (status === 'published' || status === 'publish' || status === 'live' || status === 'active' || status === 'public') return 'published';
+                if (status === 'scheduled' || status === 'pending') return 'scheduled';
+                if (status === 'archived' || status === 'archive') return 'archived';
+                return status;
+              }
+              
+              // Priority 4: Check boolean flags
               if (post?.isDraft === true) return 'draft';
-              if (post?.published || post?.isPublished) return 'published';
-              if (post?.scheduled) return 'scheduled';
+              if (post?.isPublished === false || post?.published === false) return 'draft';
+              if (post?.scheduled === true) return 'scheduled';
+              if (post?.archived === true) return 'archived';
+              
+              // Priority 5: Check scheduledAt
+              if (post?.scheduledAt) {
+                const scheduledDate = new Date(post.scheduledAt);
+                if (!Number.isNaN(scheduledDate.getTime()) && scheduledDate > new Date()) {
+                  return 'scheduled';
+                }
+              }
+              
               return 'draft';
             };
 
@@ -1401,7 +1448,24 @@ const AdminOverview = () => {
     const normalizeStatus = (post) => {
       if (!post) return 'draft';
       
-      // First check explicit status field - this is the source of truth
+      // Priority 1: If post has publishedAt in the past, it's published - trust it over status field
+      if (post?.publishedAt) {
+        const publishedDate = new Date(post.publishedAt);
+        if (!Number.isNaN(publishedDate.getTime()) && publishedDate <= new Date()) {
+          // Only override if explicitly marked as draft
+          if (post?.isDraft === true || post?.isPublished === false || post?.published === false) {
+            return 'draft';
+          }
+          return 'published'; // Already published, trust publishedAt over status field
+        }
+      }
+      
+      // Priority 2: If isPublished is explicitly true, trust it over status field
+      if (post?.isPublished === true || post?.published === true) {
+        return 'published'; // Explicitly marked as published
+      }
+      
+      // Priority 3: Check explicit status field
       const status = (post?.status || post?.state || '').toString().trim().toLowerCase();
       if (status && status !== 'undefined' && status !== 'null' && status !== '') {
         // Normalize common status variations
@@ -1412,25 +1476,17 @@ const AdminOverview = () => {
         return normalizeKey(status);
       }
       
-      // Fallback to boolean flags - but only if status field is not set
+      // Priority 4: Check boolean flags
       if (post?.isDraft === true) return 'draft';
       if (post?.isPublished === false || post?.published === false) return 'draft';
-      if (post?.published === true || post?.isPublished === true) return 'published';
       if (post?.scheduled === true) return 'scheduled';
       if (post?.archived === true) return 'archived';
       
-      // Only check publishedAt/scheduledAt as last resort if status and boolean flags are not set
-      // But don't use publishedAt if status is explicitly draft or isPublished is false
+      // Priority 5: Check scheduledAt
       if (post?.scheduledAt) {
         const scheduledDate = new Date(post.scheduledAt);
         if (!Number.isNaN(scheduledDate.getTime()) && scheduledDate > new Date()) {
           return 'scheduled';
-        }
-      }
-      if (post?.publishedAt && !post?.scheduledAt) {
-        // Only consider published if isPublished is true or not explicitly false
-        if (post?.isPublished !== false) {
-          return 'published';
         }
       }
       
@@ -1532,36 +1588,57 @@ const AdminOverview = () => {
       return sum;
     }, 0);
 
-    // Method 4: Count from posts array directly
+    // Method 4: Count from posts array directly (matching Posts.jsx logic)
     const fromPostsArray = (Array.isArray(posts) ? posts : []).reduce((count, post) => {
       if (!post) return count;
+      
+      // Priority 1: If post has publishedAt in the past, it's published - trust it over status field
+      if (post?.publishedAt) {
+        const publishedDate = new Date(post.publishedAt);
+        if (!Number.isNaN(publishedDate.getTime()) && publishedDate <= new Date()) {
+          return count + 1; // Already published, count it regardless of status field
+        }
+      }
+      
+      // Priority 2: If isPublished is explicitly true, trust it over status field
+      if (post?.isPublished === true || post?.published === true) {
+        return count + 1; // Explicitly marked as published
+      }
+      
+      // Priority 3: Only filter out if explicitly marked as draft or non-published
       const status = (post?.status || post?.state || '').toString().toLowerCase().trim();
       
-      // First priority: explicit status field
-      if (status && status !== 'undefined' && status !== 'null' && status !== '') {
-        // If status is explicitly draft, don't count as published
-        if (status === 'draft' || status === 'unpublished') return count;
-        // If status is published, count it
-        if (statusSynonyms.includes(status) || status.includes('publish')) return count + 1;
+      // Explicitly non-published statuses - don't count (only if not overridden by isPublished/publishedAt)
+      if (status && ['draft', 'scheduled', 'archived', 'unpublished', 'pending'].includes(status)) {
+        return count;
       }
       
-      // Second priority: boolean flags (only if status is not set)
-      if (!status || status === 'undefined' || status === 'null' || status === '') {
-        // If explicitly draft, don't count
-        if (post?.isDraft === true || post?.isPublished === false || post?.published === false) return count;
-        // If explicitly published, count it
-        if (post?.published === true || post?.isPublished === true) return count + 1;
+      // Explicitly draft flags - don't count
+      if (post?.isDraft === true) {
+        return count;
       }
       
-      // Last resort: publishedAt (but only if status is not explicitly draft and isPublished is not false)
-      if (post?.publishedAt && !post?.scheduledAt) {
-        // Don't use publishedAt if status is draft or isPublished is false
-        if (status === 'draft' || post?.isPublished === false || post?.published === false) return count;
-        const publishedDate = new Date(post.publishedAt);
-        if (!Number.isNaN(publishedDate.getTime()) && post?.isPublished !== false) return count + 1;
+      // Explicitly non-published flags - don't count
+      if (post?.isPublished === false || post?.published === false) {
+        return count;
       }
       
-      return count;
+      // If only scheduledAt exists and it's in the future, don't count (not yet published)
+      if (post?.scheduledAt && !post?.publishedAt) {
+        const scheduledDate = new Date(post.scheduledAt);
+        if (!Number.isNaN(scheduledDate.getTime()) && scheduledDate > new Date()) {
+          return count; // Scheduled for future, not yet published
+        }
+      }
+      
+      // If status indicates published, count it
+      if (status && statusSynonyms.some((syn) => status === syn || status.includes('publish'))) {
+        return count + 1;
+      }
+      
+      // Otherwise, if we have no explicit negative indicators, count as published
+      // (trust that posts in the array are meant to be counted)
+      return count + 1;
     }, 0);
 
     // Method 5: From engagement/overview stats
