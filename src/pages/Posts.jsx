@@ -81,10 +81,23 @@ const Posts = () => {
       const isPublishedPost = (post) => {
         if (!post) return false;
         
+        // If post has publishedAt in the past, it's published - show it (trust publishedAt over status field)
+        if (post?.publishedAt) {
+          const publishedDate = new Date(post.publishedAt);
+          if (!isNaN(publishedDate.getTime()) && publishedDate <= new Date()) {
+            return true; // Already published, show it regardless of status field
+          }
+        }
+        
+        // If isPublished is explicitly true, trust it over status field
+        if (post?.isPublished === true || post?.published === true) {
+          return true; // Explicitly marked as published
+        }
+        
         // Only filter out if explicitly marked as draft or non-published
         const status = (post?.status || post?.state || '').toString().toLowerCase().trim();
         
-        // Explicitly non-published statuses - filter these out
+        // Explicitly non-published statuses - filter these out (only if not overridden by isPublished/publishedAt)
         if (status && ['draft', 'scheduled', 'archived', 'unpublished', 'pending'].includes(status)) {
           return false;
         }
@@ -99,12 +112,11 @@ const Posts = () => {
           return false;
         }
         
-        // If scheduled but not yet published, filter out
-        if (post?.scheduledAt && post?.publishedAt) {
+        // If only scheduledAt exists and it's in the future, filter out (not yet published)
+        if (post?.scheduledAt && !post?.publishedAt) {
           const scheduledDate = new Date(post.scheduledAt);
-          const publishedDate = new Date(post.publishedAt);
-          if (!isNaN(scheduledDate.getTime()) && scheduledDate > new Date() && scheduledDate > publishedDate) {
-            return false;
+          if (!isNaN(scheduledDate.getTime()) && scheduledDate > new Date()) {
+            return false; // Scheduled for future, not yet published
           }
         }
         
@@ -117,16 +129,15 @@ const Posts = () => {
       
       // Debug logging in development
       if (import.meta.env.DEV && rawPosts.length !== filteredPosts.length) {
-        console.log(`[Posts] Filtered ${rawPosts.length} posts to ${filteredPosts.length} published posts`);
+        console.warn(`[Posts] Filtered ${rawPosts.length} posts to ${filteredPosts.length} published posts`);
         const filteredOut = rawPosts.filter(p => !isPublishedPost(p));
         if (filteredOut.length > 0) {
-          console.log('[Posts] Filtered out posts:', filteredOut.map(p => ({
+          console.warn('[Posts] Filtered out posts:', filteredOut.map(p => ({
             id: p._id || p.id,
             title: p.title,
             status: p.status,
             isPublished: p.isPublished,
-            published: p.published,
-            isDraft: p.isDraft
+            publishedAt: p.publishedAt
           })));
         }
       }
