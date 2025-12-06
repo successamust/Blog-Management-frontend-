@@ -1357,9 +1357,19 @@ const CreatePostTab = () => {
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Handle status changes - clear scheduledAt when changing to draft or published
+    if (name === 'status') {
+      if (value === 'draft' || value === 'published') {
+        // Clear scheduledAt when changing to draft or published
+        setScheduledAt(null);
+      }
+    }
+    
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
 
@@ -1458,8 +1468,17 @@ const CreatePostTab = () => {
         featuredImage: formData.featuredImage || undefined,
         status: status,
         isPublished: isPublished,
-        scheduledAt: scheduledAt ? scheduledAt.toISOString() : undefined,
       };
+      
+      // Clear scheduledAt when status is 'published' or 'draft'
+      // Only keep scheduledAt if we had a 'scheduled' status (which we don't have in this form)
+      if (status === 'published' || status === 'draft') {
+        postData.scheduledAt = null;
+      } else if (scheduledAt) {
+        postData.scheduledAt = scheduledAt.toISOString();
+      } else {
+        postData.scheduledAt = null;
+      }
       
       const response = await postsAPI.create(postData);
       const newPost = response.data.post || response.data;
@@ -1625,14 +1644,13 @@ const CreatePostTab = () => {
               name="status"
               value={formData.status}
               onChange={handleChange}
-              disabled={!!scheduledAt}
-              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)] disabled:bg-[var(--surface-subtle)] disabled:cursor-not-allowed"
+              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
             >
               <option value="published">Published</option>
               <option value="draft">Draft</option>
             </select>
-            {scheduledAt && (
-              <p className="mt-1 text-xs text-[var(--text-secondary)]">Status will be set to draft when scheduled</p>
+            {scheduledAt && formData.status !== 'draft' && (
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">Note: Changing status will clear the scheduled date</p>
             )}
           </div>
         </div>

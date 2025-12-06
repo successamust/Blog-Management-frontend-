@@ -1,14 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import BrandWordmark from '../common/BrandWordmark';
 
 const Footer = () => {
   return (
     <footer className="border-t border-[var(--border-subtle)] bg-surface">
       <div className="w-full px-4 sm:px-6 py-8 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div className="space-y-1">
-          <Link to="/" className="inline-flex text-primary hover:text-secondary transition-colors">
-            <BrandWordmark variant="footer" />
+          <Link to="/" className="inline-flex items-center hover:opacity-80 transition-opacity">
+            <img
+              src="/nexus-logo.svg"
+              alt="Nexus"
+              className="logo-theme-aware h-10 md:h-16 w-auto"
+            />
           </Link>
           <p className="text-sm text-muted">Connect. Create. Discover.</p>
         </div>

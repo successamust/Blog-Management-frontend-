@@ -41,7 +41,13 @@ const Header = () => {
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center group">
-            <BrandWordmark variant="navigation" className="text-[var(--text-primary)]" />
+            <motion.img
+              src="/nexus-logo-icon.svg"
+              alt="Nexus"
+              className="logo-theme-aware h-10 w-10 md:h-12 md:w-12 transition-transform group-hover:scale-110"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            />
           </Link>
 
           <form onSubmit={handleSearch} className="hidden md:block flex-1 max-w-md mx-6">

@@ -427,7 +427,7 @@ const Home = () => {
       <div className="min-h-screen flex items-center justify-center bg-page">
         <div className="text-center">
           <Spinner size="2xl" />
-          <p className="mt-4 text-[var(--text-secondary)]">Loading stories...</p>
+          {/* <p className="mt-4 text-[var(--text-secondary)]">Loading stories...</p> */}
         </div>
       </div>
     );
@@ -635,7 +635,7 @@ const Home = () => {
                 <h3 className="text-lg font-bold text-[var(--text-primary)]">Subscribe to our newsletter</h3>
               </div>
               <p className="text-sm text-[var(--text-secondary)] mb-4">
-                Get the latest stories delivered to your inbox
+                Get the latest articles delivered to your inbox
               </p>
               <form onSubmit={handleNewsletterSubscribe} className="space-y-3">
                 <input
@@ -741,7 +741,7 @@ const Home = () => {
                     >
                       <div className="pt-4 mt-4 border-t border-[var(--border-subtle)]">
                         <p className="text-sm text-[var(--text-secondary)] mb-4">
-                          Join our community of writers and share your stories with readers around the world.
+                          Join our community of writers and share your thoughts with readers around the world.
                         </p>
                         {isAuthenticated ? (
                           <Link

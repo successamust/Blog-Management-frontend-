@@ -11,8 +11,8 @@ const isDevelopment =
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
-  '/logo.svg',
   '/nexus-logo.svg',
+  '/nexus-logo-icon.svg',
 ];
 
 // Install event - cache assets

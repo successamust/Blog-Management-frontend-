@@ -8,7 +8,7 @@ import ModernPostCard from '../components/posts/ModernPostCard';
 import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
 
-const DEFAULT_POSTS_DESCRIPTION = 'Browse the latest stories and reporting from the Nexus community.';
+const DEFAULT_POSTS_DESCRIPTION = 'Browse the latest articles and reporting from the Nexus community.';
 
 const Posts = () => {
   const [searchParams, setSearchParams] = useSearchParams();

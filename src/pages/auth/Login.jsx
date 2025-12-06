@@ -127,7 +127,7 @@ const Login = () => {
               <img 
                 src="/nexus-logo-icon.svg" 
                 alt="Nexus Logo" 
-                className="w-12 h-12"
+                className="logo-theme-aware w-12 h-12"
               />
             </motion.div>
           </div>

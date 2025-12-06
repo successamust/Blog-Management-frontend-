@@ -793,6 +793,63 @@ html {
     background-color: var(--surface-subtle) !important;
   }
 
+  /* Logo theme adaptation - add black stroke in light mode for visibility */
+  .logo-theme-aware {
+    transition: filter 0.3s ease;
+    position: relative;
+  }
+
+  [data-theme="light"] .logo-theme-aware {
+    /* Add thin black outline - testing with 0.5px */
+    filter: drop-shadow(-0.5px 0 0 black)
+            drop-shadow(0.5px 0 0 black)
+            drop-shadow(0 -0.5px 0 black)
+            drop-shadow(0 0.5px 0 black)
+            drop-shadow(-0.5px -0.5px 0 black)
+            drop-shadow(0.5px -0.5px 0 black)
+            drop-shadow(-0.5px 0.5px 0 black)
+            drop-shadow(0.5px 0.5px 0 black) !important;
+  }
+  
+  :root:not([data-theme="dark"]) .logo-theme-aware {
+    filter: drop-shadow(-0.5px 0 0 black)
+            drop-shadow(0.5px 0 0 black)
+            drop-shadow(0 -0.5px 0 black)
+            drop-shadow(0 0.5px 0 black)
+            drop-shadow(-0.5px -0.5px 0 black)
+            drop-shadow(0.5px -0.5px 0 black)
+            drop-shadow(-0.5px 0.5px 0 black)
+            drop-shadow(0.5px 0.5px 0 black) !important;
+  }
+
+  [data-theme="dark"] .logo-theme-aware,
+  .dark .logo-theme-aware {
+    filter: none;
+  }
+
+  /* Fallback for images without class */
+  [data-theme="light"] img[src="/nexus-logo.svg"],
+  [data-theme="light"] img[src="/nexus-logo-icon.svg"],
+  [data-theme="light"] img[src*="nexus-logo"] {
+    filter: drop-shadow(-0.5px 0 0 black)
+            drop-shadow(0.5px 0 0 black)
+            drop-shadow(0 -0.5px 0 black)
+            drop-shadow(0 0.5px 0 black)
+            drop-shadow(-0.5px -0.5px 0 black)
+            drop-shadow(0.5px -0.5px 0 black)
+            drop-shadow(-0.5px 0.5px 0 black)
+            drop-shadow(0.5px 0.5px 0 black) !important;
+  }
+
+  [data-theme="dark"] img[src="/nexus-logo.svg"],
+  [data-theme="dark"] img[src="/nexus-logo-icon.svg"],
+  [data-theme="dark"] img[src*="nexus-logo"],
+  .dark img[src="/nexus-logo.svg"],
+  .dark img[src="/nexus-logo-icon.svg"],
+  .dark img[src*="nexus-logo"] {
+    filter: none;
+  }
+
   /* Screen reader only - accessible but visually hidden */
   .sr-only {
     position: absolute;

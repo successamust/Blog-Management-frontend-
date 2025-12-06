@@ -10,11 +10,26 @@ const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
  * Generate cache key from request config
  */
 const getCacheKey = (url, params = {}) => {
-  const sortedParams = Object.keys(params)
+  if (!url) return '';
+  
+  // Normalize URL - remove trailing slashes (except root)
+  const normalizedUrl = url.endsWith('/') && url !== '/' ? url.slice(0, -1) : url;
+  
+  // Handle params - filter out undefined/null and sort for consistency
+  const validParams = {};
+  Object.keys(params || {}).forEach(key => {
+    const value = params[key];
+    if (value !== undefined && value !== null && value !== '') {
+      validParams[key] = String(value);
+    }
+  });
+  
+  const sortedParams = Object.keys(validParams)
     .sort()
-    .map(key => `${key}=${params[key]}`)
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(validParams[key])}`)
     .join('&');
-  return `${url}${sortedParams ? `?${sortedParams}` : ''}`;
+    
+  return `${normalizedUrl}${sortedParams ? `?${sortedParams}` : ''}`;
 };
 
 /**
@@ -41,6 +56,12 @@ export const getCachedResponse = (url, params = {}) => {
     cache.delete(key);
   }
   
+  // Periodically clean up expired entries (every 100 cache checks)
+  // This is more efficient than checking on every call
+  if (cache.size > 0 && Math.random() < 0.01) {
+    clearExpiredCache();
+  }
+  
   return null;
 };
 
@@ -53,6 +74,30 @@ export const setCachedResponse = (url, params = {}, data, ttl = DEFAULT_TTL) => 
     data,
     expiresAt: Date.now() + ttl,
   });
+};
+
+/**
+ * Get cache statistics (for debugging)
+ */
+export const getCacheStats = () => {
+  const now = Date.now();
+  const stats = {
+    total: cache.size,
+    valid: 0,
+    expired: 0,
+    keys: [],
+  };
+  
+  for (const [key, value] of cache.entries()) {
+    if (now < value.expiresAt) {
+      stats.valid++;
+    } else {
+      stats.expired++;
+    }
+    stats.keys.push(key);
+  }
+  
+  return stats;
 };
 
 /**

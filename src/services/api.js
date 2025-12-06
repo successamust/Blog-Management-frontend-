@@ -157,8 +157,34 @@ api.interceptors.request.use(
     }
     
     if (shouldCache(config.method, config.url)) {
-      const cached = getCachedResponse(config.url, config.params);
+      // Extract base URL and params properly
+      // Axios keeps params separate in config.params, but we need to handle both cases
+      let baseUrl = config.url || '';
+      let params = config.params || {};
+      
+      // If URL already contains query params (e.g., from manual URL construction), extract them
+      const queryIndex = baseUrl.indexOf('?');
+      if (queryIndex !== -1) {
+        const queryString = baseUrl.substring(queryIndex + 1);
+        baseUrl = baseUrl.substring(0, queryIndex);
+        
+        // Parse query string and merge with config.params (config.params takes precedence)
+        const urlParams = {};
+        queryString.split('&').forEach(param => {
+          const [key, value] = param.split('=');
+          if (key) {
+            urlParams[decodeURIComponent(key)] = value ? decodeURIComponent(value) : '';
+          }
+        });
+        params = { ...urlParams, ...params };
+      }
+      
+      const cached = getCachedResponse(baseUrl, params);
       if (cached) {
+        // Mark this as a cached response for performance tracking
+        if (typeof window !== 'undefined') {
+          config._fromCache = true;
+        }
         return Promise.reject({
           __cached: true,
           data: cached,
@@ -216,31 +242,69 @@ api.interceptors.response.use(
 
     const config = response.config;
     if (shouldCache(config.method, config.url)) {
+      // Extract base URL and params properly (same logic as request interceptor)
+      let baseUrl = config.url || '';
+      let params = config.params || {};
+      
+      // If URL already contains query params, extract them
+      const queryIndex = baseUrl.indexOf('?');
+      if (queryIndex !== -1) {
+        const queryString = baseUrl.substring(queryIndex + 1);
+        baseUrl = baseUrl.substring(0, queryIndex);
+        
+        const urlParams = {};
+        queryString.split('&').forEach(param => {
+          const [key, value] = param.split('=');
+          if (key) {
+            urlParams[decodeURIComponent(key)] = value ? decodeURIComponent(value) : '';
+          }
+        });
+        params = { ...urlParams, ...params };
+      }
+      
       let ttl = CACHE_CONFIG.posts.ttl;
       
-      if (config.url.includes('/categories') || config.url.includes('/tags')) {
+      if (baseUrl.includes('/categories') || baseUrl.includes('/tags')) {
         ttl = CACHE_CONFIG.categories.ttl;
-      } else if (config.url.includes('/notifications')) {
+      } else if (baseUrl.includes('/notifications')) {
         ttl = CACHE_CONFIG.notifications.ttl;
-      } else if (config.url.includes('/auth/profile') || config.url.includes('/authors/')) {
+      } else if (baseUrl.includes('/auth/profile') || baseUrl.includes('/authors/')) {
         ttl = CACHE_CONFIG.authorProfile.ttl;
       }
       
-      setCachedResponse(config.url, config.params, response.data, ttl);
+      setCachedResponse(baseUrl, params, response.data, ttl);
     }
     
     return response;
   },
   async (error) => {
     if (error.__cached) {
-      return Promise.resolve({
+      // Return cached response as a proper axios response
+      const cachedResponse = {
         data: error.data,
         status: 200,
         statusText: 'OK',
         headers: {},
         config: error.config,
         __fromCache: true,
-      });
+      };
+      
+      // Track performance for cached responses
+      if (typeof window !== 'undefined' && error.config._startTime) {
+        const duration = Date.now() - error.config._startTime;
+        import('../utils/performanceMonitor.js').then(({ default: perfMonitor }) => {
+          perfMonitor.trackAPICall(
+            error.config.url,
+            error.config.method,
+            duration,
+            200
+          );
+        }).catch(() => {
+          // Silently fail if module doesn't exist
+        });
+      }
+      
+      return Promise.resolve(cachedResponse);
     }
     
     // Log errors (but not sensitive data) - only in development

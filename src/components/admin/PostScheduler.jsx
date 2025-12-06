@@ -40,28 +40,64 @@ const PostScheduler = ({ onSchedule, initialDate, initialTime }) => {
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+          <label 
+            htmlFor="scheduled-date"
+            className="block text-sm font-medium text-[var(--text-secondary)] mb-2 cursor-pointer"
+          >
             Date
           </label>
-          <input
-            type="date"
-            value={scheduledDate}
-            onChange={(e) => setScheduledDate(e.target.value)}
-            min={format(new Date(), 'yyyy-MM-dd')}
-            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] bg-[var(--surface-bg)] text-[var(--text-primary)]"
-          />
+          <div 
+            className="relative cursor-pointer"
+            onClick={(e) => {
+              const input = document.getElementById('scheduled-date');
+              if (input && e.target !== input) {
+                input.focus();
+                input.showPicker?.();
+              }
+            }}
+          >
+            <input
+              id="scheduled-date"
+              type="date"
+              value={scheduledDate}
+              onChange={(e) => setScheduledDate(e.target.value)}
+              onClick={(e) => {
+                e.target.showPicker?.();
+              }}
+              min={format(new Date(), 'yyyy-MM-dd')}
+              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] bg-[var(--surface-bg)] text-[var(--text-primary)] cursor-pointer"
+            />
+          </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+          <label 
+            htmlFor="scheduled-time"
+            className="block text-sm font-medium text-[var(--text-secondary)] mb-2 cursor-pointer"
+          >
             Time
           </label>
-          <input
-            type="time"
-            value={scheduledTime}
-            onChange={(e) => setScheduledTime(e.target.value)}
-            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] bg-[var(--surface-bg)] text-[var(--text-primary)]"
-          />
+          <div 
+            className="relative cursor-pointer"
+            onClick={(e) => {
+              const input = document.getElementById('scheduled-time');
+              if (input && e.target !== input) {
+                input.focus();
+                input.showPicker?.();
+              }
+            }}
+          >
+            <input
+              id="scheduled-time"
+              type="time"
+              value={scheduledTime}
+              onChange={(e) => setScheduledTime(e.target.value)}
+              onClick={(e) => {
+                e.target.showPicker?.();
+              }}
+              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] bg-[var(--surface-bg)] text-[var(--text-primary)] cursor-pointer"
+            />
+          </div>
         </div>
 
         {isValid && (
