@@ -23,6 +23,7 @@ const PostManagement = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedPosts, setSelectedPosts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [togglingFeatured, setTogglingFeatured] = useState(new Set()); // Track which posts are being toggled
   const { user, isAdmin } = useAuth();
   const { addNotification } = useNotifications();
 
@@ -216,7 +217,14 @@ const PostManagement = () => {
     }
   };
 
-  const handleToggleFeatured = async (postId, currentFeaturedStatus) => {
+  // Helper function to normalize isFeatured value to boolean
+  const normalizeIsFeatured = (value) => {
+    if (value === true || value === 'true') return true;
+    if (value === false || value === 'false') return false;
+    return false; // Default to false for null, undefined, etc.
+  };
+
+  const handleToggleFeatured = async (postId, currentFeaturedValue) => {
     // Security: Authorization check
     if (!isAdmin()) {
       toast.error('Only admins can toggle featured status');
@@ -231,23 +239,111 @@ const PostManagement = () => {
 
     // Security: Sanitize postId - ensure it's a valid MongoDB ObjectId format
     const postIdPattern = /^[0-9a-fA-F]{24}$/;
-    if (!postIdPattern.test(postId.trim())) {
+    const sanitizedPostId = postId.trim();
+    if (!postIdPattern.test(sanitizedPostId)) {
       toast.error('Invalid post ID format');
       return;
     }
 
-    // Security: Validate currentFeaturedStatus is boolean
-    if (typeof currentFeaturedStatus !== 'boolean') {
-      toast.error('Invalid featured status');
+    // Normalize the current featured status to a boolean
+    const currentFeaturedStatus = normalizeIsFeatured(currentFeaturedValue);
+
+    // Prevent duplicate requests
+    if (togglingFeatured.has(sanitizedPostId)) {
+      if (import.meta.env.DEV) {
+        console.warn('[handleToggleFeatured] Request already in progress for post:', sanitizedPostId);
+      }
       return;
     }
 
     try {
-      const sanitizedPostId = postId.trim();
+      // Mark this post as being toggled
+      setTogglingFeatured(prev => new Set(prev).add(sanitizedPostId));
+      
       const newFeaturedStatus = !currentFeaturedStatus;
       
-      // Security: Only send isFeatured field to prevent mass assignment
-      await postsAPI.update(sanitizedPostId, { isFeatured: newFeaturedStatus });
+      // Find the post in the current posts array to get basic info
+      const postFromList = posts.find(p => (p._id || p.id) === sanitizedPostId);
+      
+      if (!postFromList) {
+        throw new Error('Post not found in current list');
+      }
+      
+      // Fetch the full post data to get content and all required fields
+      // The list endpoint doesn't include full content for performance reasons
+      let fullPost = postFromList;
+      if (!postFromList.content || postFromList.content.trim() === '') {
+        // Try to fetch full post data by slug if available
+        if (postFromList.slug) {
+          try {
+            const fullPostResponse = await postsAPI.getBySlug(postFromList.slug);
+            fullPost = fullPostResponse.data?.post || fullPostResponse.data?.data || fullPostResponse.data || postFromList;
+          } catch (fetchError) {
+            // If fetching by slug fails, log but continue with post from list
+            if (import.meta.env.DEV) {
+              console.warn('[handleToggleFeatured] Failed to fetch full post by slug, using list data:', fetchError);
+            }
+            // If content is required and we don't have it, we can't proceed
+            throw new Error('Unable to fetch full post data. Content is required for update.');
+          }
+        } else {
+          // No slug available, can't fetch full post
+          throw new Error('Post slug not available. Cannot fetch full post data.');
+        }
+      }
+      
+      // Prepare update data matching the exact format used in EditPost
+      // Determine isPublished based on status (matching EditPost logic)
+      const status = fullPost.status || 'draft';
+      let isPublished = false;
+      if (status === 'published' && !fullPost.scheduledAt) {
+        isPublished = true;
+      } else if (status === 'draft' || status === 'scheduled') {
+        isPublished = false;
+      }
+      
+      const updateData = {
+        title: fullPost.title || '',
+        excerpt: fullPost.excerpt || '',
+        content: fullPost.content || '',
+        tags: fullPost.tags && Array.isArray(fullPost.tags) 
+          ? fullPost.tags 
+          : (fullPost.tags && typeof fullPost.tags === 'string' 
+              ? fullPost.tags.split(',').map(t => t.trim()).filter(Boolean) 
+              : []),
+        status: status,
+        isPublished: isPublished,
+        isFeatured: Boolean(newFeaturedStatus),
+      };
+      
+      // Handle scheduledAt exactly like EditPost does
+      if (status === 'scheduled' && fullPost.scheduledAt) {
+        // Convert to ISO string if it's a Date object
+        updateData.scheduledAt = fullPost.scheduledAt instanceof Date 
+          ? fullPost.scheduledAt.toISOString() 
+          : fullPost.scheduledAt;
+      } else {
+        // Always set to null when not scheduled (matching EditPost behavior)
+        updateData.scheduledAt = null;
+      }
+      
+      // Only include category if it exists and is not empty (matching EditPost)
+      if (fullPost.category && fullPost.category.trim && fullPost.category.trim() !== '') {
+        updateData.category = fullPost.category;
+      } else if (fullPost.category && typeof fullPost.category === 'string' && fullPost.category.trim() !== '') {
+        updateData.category = fullPost.category;
+      }
+      
+      // Only include featuredImage if it exists and is not empty (matching EditPost)
+      if (fullPost.featuredImage && fullPost.featuredImage.trim && fullPost.featuredImage.trim() !== '') {
+        updateData.featuredImage = fullPost.featuredImage;
+      } else if (fullPost.featuredImage && typeof fullPost.featuredImage === 'string' && fullPost.featuredImage.trim() !== '') {
+        updateData.featuredImage = fullPost.featuredImage;
+      }
+      
+      
+      // Send the complete update data to satisfy backend validation
+      await postsAPI.update(sanitizedPostId, updateData);
       
       toast.success(newFeaturedStatus ? 'Post marked as featured' : 'Post unmarked as featured');
       clearCache('/posts');
@@ -258,30 +354,87 @@ const PostManagement = () => {
       const errorData = errorResponse.data || {};
       let errorMessage = 'Failed to toggle featured status';
       
+      // Extract error message from various possible locations in the response
+      const extractErrorMessage = (data) => {
+        if (typeof data === 'string') return data;
+        if (data?.message) return data.message;
+        if (data?.error) return data.error;
+        if (data?.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+          // Handle validation errors with field names
+          const firstError = data.errors[0];
+          if (firstError.msg) return firstError.msg;
+          if (firstError.message) return firstError.message;
+          if (typeof firstError === 'string') return firstError;
+          // Format field-specific errors
+          if (firstError.param && firstError.msg) {
+            return `${firstError.param}: ${firstError.msg}`;
+          }
+        }
+        if (data?.errors && typeof data.errors === 'object') {
+          const firstError = Object.values(data.errors)[0];
+          if (Array.isArray(firstError) && firstError.length > 0) {
+            return firstError[0];
+          }
+          return firstError;
+        }
+        return null;
+      };
+      
+      const extractedMessage = extractErrorMessage(errorData);
+      
       if (errorResponse.status === 403) {
         errorMessage = 'You do not have permission to change featured status';
       } else if (errorResponse.status === 404) {
         errorMessage = 'Post not found';
       } else if (errorResponse.status === 400) {
-        errorMessage = errorData.message || 'Invalid request';
+        // Show the actual validation error message
+        errorMessage = extractedMessage || errorData.message || errorData.error || 'Invalid request. Please check the post data and try again.';
+      } else if (errorResponse.status === 401) {
+        errorMessage = 'Authentication required. Please log in again.';
+      } else if (errorResponse.status === 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (extractedMessage) {
+        errorMessage = extractedMessage;
       } else if (errorData.message) {
-        // Only show backend message in development
-        if (import.meta.env.DEV) {
-          errorMessage = errorData.message;
-        }
+        // Show backend message in development, or if it's a clear error message
+        errorMessage = errorData.message;
       }
       
       toast.error(errorMessage);
       
       // Log error details only in development
       if (import.meta.env.DEV) {
-        console.error('[handleToggleFeatured] Error:', {
-          postId,
-          error: error.message,
-          status: errorResponse.status,
-          data: errorData,
-        });
+        const post = posts.find(p => (p._id || p.id) === sanitizedPostId);
+        
+        // Log the error message prominently
+        console.error('═══════════════════════════════════════════════════════════');
+        console.error('🚨 [handleToggleFeatured] ERROR DETAILS');
+        console.error('═══════════════════════════════════════════════════════════');
+        console.error('Error Message:', error.message);
+        console.error('Response Status:', errorResponse.status, errorResponse.statusText);
+        console.error('Error Data:', errorData);
+        console.error('Error Data (JSON):', JSON.stringify(errorData, null, 2));
+        console.error('Extracted Message:', extractedMessage);
+        console.error('Post ID:', sanitizedPostId);
+        console.error('Post Found:', !!post);
+        if (post) {
+          console.error('Post Title:', post.title);
+          console.error('Post Status:', post.status);
+          console.error('Post isPublished:', post.isPublished);
+          console.error('Post hasContent:', !!post.content, 'Length:', post.content?.length || 0);
+        }
+        console.error('═══════════════════════════════════════════════════════════');
+        
+        // Also log the full error response
+        console.error('[handleToggleFeatured] Full Error Response Object:', error.response);
       }
+    } finally {
+      // Remove from toggling set regardless of success or failure
+      setTogglingFeatured(prev => {
+        const next = new Set(prev);
+        next.delete(sanitizedPostId);
+        return next;
+      });
     }
   };
 
@@ -354,6 +507,7 @@ const PostManagement = () => {
               onBulkDelete={handleBulkDelete}
               onBulkUpdate={handleBulkUpdate}
               onToggleFeatured={handleToggleFeatured}
+              togglingFeatured={togglingFeatured}
               categories={categories}
             />
           }
@@ -365,7 +519,7 @@ const PostManagement = () => {
   );
 };
 
-const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusFilter, onDelete, selectedPosts, setSelectedPosts, onBulkDelete, onBulkUpdate, onToggleFeatured, categories = [] }) => {
+const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusFilter, onDelete, selectedPosts, setSelectedPosts, onBulkDelete, onBulkUpdate, onToggleFeatured, togglingFeatured = new Set(), categories = [] }) => {
   const { user, isAdmin } = useAuth();
   const isAuthor = user?.role === 'author' || isAdmin();
 
@@ -435,14 +589,6 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
     }
     
     const baseStatus = rawStatus || 'draft'; // Default to draft instead of published
-    
-    // Debug logging in development
-    if (import.meta.env.DEV && post) {
-      console.log('[PostList] Determined status for:', post.title || 'Untitled');
-      console.log('  - rawStatus:', rawStatus);
-      console.log('  - baseStatus:', baseStatus);
-      console.log('  - Final label will be:', baseStatus.split(/[\s-]+/).map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' '));
-    }
     
     const normalizedStatus = baseStatus.replace(/\s+/g, '-');
 
@@ -608,15 +754,20 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
                           {isAdmin() && (
                             <>
                               <button
-                                onClick={() => onToggleFeatured(post._id || post.id, post.isFeatured === true || post.isFeatured === 'true')}
+                                onClick={() => onToggleFeatured(post._id || post.id, post.isFeatured)}
+                                disabled={togglingFeatured.has(post._id || post.id)}
                                 className={`transition-colors ${
                                   post.isFeatured === true || post.isFeatured === 'true'
                                     ? 'text-yellow-500 hover:text-yellow-600'
                                     : 'text-[var(--text-muted)] hover:text-yellow-500'
-                                }`}
+                                } ${togglingFeatured.has(post._id || post.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 title={post.isFeatured === true || post.isFeatured === 'true' ? 'Unmark as Featured' : 'Mark as Featured'}
                               >
-                                <Star className={`w-4 h-4 inline ${post.isFeatured === true || post.isFeatured === 'true' ? 'fill-current' : ''}`} />
+                                {togglingFeatured.has(post._id || post.id) ? (
+                                  <Spinner className="w-4 h-4 inline" />
+                                ) : (
+                                  <Star className={`w-4 h-4 inline ${post.isFeatured === true || post.isFeatured === 'true' ? 'fill-current' : ''}`} />
+                                )}
                               </button>
                               <button
                                 onClick={() => onDelete(post._id)}
@@ -690,16 +841,21 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
                     {isAdmin() && (
                       <>
                         <button
-                          onClick={() => onToggleFeatured(post._id || post.id, post.isFeatured === true || post.isFeatured === 'true')}
+                          onClick={() => onToggleFeatured(post._id || post.id, post.isFeatured)}
+                          disabled={togglingFeatured.has(post._id || post.id)}
                           className={`btn-icon-square border transition-colors ${
                             post.isFeatured === true || post.isFeatured === 'true'
                               ? 'border-yellow-300 text-yellow-600 bg-yellow-50 hover:bg-yellow-100'
                               : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-yellow-500 hover:border-yellow-300'
-                          }`}
+                          } ${togglingFeatured.has(post._id || post.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
                           aria-label={post.isFeatured === true || post.isFeatured === 'true' ? 'Unmark as Featured' : 'Mark as Featured'}
                           title={post.isFeatured === true || post.isFeatured === 'true' ? 'Unmark as Featured' : 'Mark as Featured'}
                         >
-                          <Star className={`w-4 h-4 ${post.isFeatured === true || post.isFeatured === 'true' ? 'fill-current' : ''}`} />
+                          {togglingFeatured.has(post._id || post.id) ? (
+                            <Spinner className="w-4 h-4" />
+                          ) : (
+                            <Star className={`w-4 h-4 ${post.isFeatured === true || post.isFeatured === 'true' ? 'fill-current' : ''}`} />
+                          )}
                         </button>
                         <button
                           onClick={() => onDelete(post._id)}
@@ -787,10 +943,19 @@ const CreatePost = ({ onSuccess }) => {
   };
 
   const handleChange = (e) => {
-    setFormData({
+    const newValue = e.target.value;
+    const newFormData = {
       ...formData,
-      [e.target.name]: e.target.value,
-    });
+      [e.target.name]: newValue,
+    };
+    
+    // Clear scheduledAt when status changes to published or draft
+    // (scheduled posts should have status 'scheduled', not 'published' or 'draft')
+    if (e.target.name === 'status' && (newValue === 'published' || newValue === 'draft')) {
+      setScheduledAt(null);
+    }
+    
+    setFormData(newFormData);
   };
 
   const handleImageUpload = async (e) => {
@@ -870,8 +1035,14 @@ const CreatePost = ({ onSuccess }) => {
         featuredImage: formData.featuredImage || undefined,
         status: status,
         isPublished: isPublished,
-        scheduledAt: scheduledAt ? scheduledAt.toISOString() : undefined,
       };
+      
+      // Only include scheduledAt if it's explicitly set (user clicked "Schedule Post")
+      // Don't include it at all if it's null/undefined to avoid backend validation issues
+      // Note: When scheduled, status should be 'draft' (handled by PostScheduler onSchedule callback)
+      if (scheduledAt) {
+        postData.scheduledAt = scheduledAt.toISOString();
+      }
       
       // Debug: Log what we're sending
       if (import.meta.env.DEV) {

@@ -146,32 +146,56 @@ const Home = () => {
           [];
 
         // Filter to ensure only published posts are shown
+        // Since we're requesting posts from backend, trust it and only filter out explicitly non-published posts
         const isPublishedPost = (post) => {
           if (!post) return false;
           
-          const status = (post?.status || post?.state || '').toString().toLowerCase().trim();
-          if (status) {
-            if (['published', 'publish', 'live', 'active', 'public'].includes(status)) return true;
-            if (['draft', 'scheduled', 'archived', 'unpublished', 'pending'].includes(status)) return false;
-          }
-          
-          if (post?.isDraft === true) return false;
-          if (post?.isPublished === true || post?.published === true) return true;
-          if (post?.isPublished === false || post?.published === false) return false;
-          
-          if (post?.publishedAt && !post?.scheduledAt) {
+          // If post has publishedAt in the past, it's published - show it (trust publishedAt over status field)
+          if (post?.publishedAt) {
             const publishedDate = new Date(post.publishedAt);
             if (!isNaN(publishedDate.getTime()) && publishedDate <= new Date()) {
-              return true;
+              return true; // Already published, show it regardless of status field
             }
           }
           
-          // Must have publishedAt or createdAt to be shown
-          return !!(post.publishedAt || post.createdAt);
+          // If isPublished is explicitly true, trust it over status field
+          if (post?.isPublished === true || post?.published === true) {
+            return true; // Explicitly marked as published
+          }
+          
+          // Only filter out if explicitly marked as draft or non-published
+          const status = (post?.status || post?.state || '').toString().toLowerCase().trim();
+          
+          // Explicitly non-published statuses - filter these out (only if not overridden by isPublished/publishedAt)
+          if (status && ['draft', 'scheduled', 'archived', 'unpublished', 'pending'].includes(status)) {
+            return false;
+          }
+          
+          // Explicitly draft flags - filter these out
+          if (post?.isDraft === true) {
+            return false;
+          }
+          
+          // Explicitly non-published flags - filter these out
+          if (post?.isPublished === false || post?.published === false) {
+            return false;
+          }
+          
+          // If only scheduledAt exists and it's in the future, filter out (not yet published)
+          if (post?.scheduledAt && !post?.publishedAt) {
+            const scheduledDate = new Date(post.scheduledAt);
+            if (!isNaN(scheduledDate.getTime()) && scheduledDate > new Date()) {
+              return false; // Scheduled for future, not yet published
+            }
+          }
+          
+          // Otherwise, trust the backend response
+          // This ensures we don't filter out valid published posts with status variations
+          return true;
         };
         
         const sanitizedPosts = Array.isArray(postsData)
-          ? postsData.filter((post) => post && isPublishedPost(post) && (post.publishedAt || post.createdAt))
+          ? postsData.filter((post) => post && isPublishedPost(post))
           : [];
 
         mergePosts(sanitizedPosts, { reset });
