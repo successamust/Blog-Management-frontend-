@@ -710,22 +710,27 @@ const AdminOverview = () => {
         {}
       );
 
-      // Sum all published variations
-      const published = 
-        (counts.published || 0) + 
-        (counts.live || 0) + 
-        (counts.active || 0) + 
-        (counts.publish || 0) +
-        (counts.public || 0);
-      const drafts = (counts.draft || 0) + (counts.drafts || 0) + (counts.unpublished || 0);
-      const scheduled = (counts.scheduled || 0) + (counts.pending || 0);
-      const archived = (counts.archived || 0) + (counts.archive || 0);
+      // Since normalizeStatus already normalizes all variations, use the normalized counts directly
+      const published = counts.published || 0;
+      const drafts = counts.draft || 0;
+      const scheduled = counts.scheduled || 0;
+      const archived = counts.archived || 0;
       
-      // Calculate total as sum of all status counts to ensure accuracy
-      const totalFromCounts = Object.values(counts).reduce((sum, count) => sum + (Number(count) || 0), 0);
+      // Calculate total from array length (source of truth) and verify it matches status counts
       const totalFromArray = normalizedPostsData.length;
-      // Use the larger value to ensure we don't miss any posts
-      const totalPosts = Math.max(totalFromCounts, totalFromArray);
+      const totalFromCounts = Object.values(counts).reduce((sum, count) => sum + (Number(count) || 0), 0);
+      
+      // Use array length as source of truth, but log warning if counts don't match
+      if (totalFromCounts !== totalFromArray) {
+        console.warn('AdminOverview: Status counts mismatch', {
+          totalFromCounts,
+          totalFromArray,
+          counts
+        });
+      }
+      
+      // Total should always equal the array length (one post = one count)
+      const totalPosts = totalFromArray;
       
       const totalViews = (Array.isArray(normalizedPostsData) ? normalizedPostsData : []).reduce((sum, p) => {
         if (!p) return sum;
@@ -1071,18 +1076,31 @@ const AdminOverview = () => {
               {}
             );
 
-            const published = counts.published || counts.live || counts.active || 0;
-            const drafts = counts.draft || counts.drafts || 0;
-            const scheduled = counts.scheduled || counts.pending || 0;
-            const archived = counts.archived || counts.archive || 0;
+            // Since normalizeStatus already normalizes all variations, use the normalized counts directly
+            const published = counts.published || 0;
+            const drafts = counts.draft || 0;
+            const scheduled = counts.scheduled || 0;
+            const archived = counts.archived || 0;
             
-            // Calculate total as sum of all status counts to ensure accuracy
-            const totalFromCounts = Object.values(counts).reduce((sum, count) => sum + (Number(count) || 0), 0);
+            // Calculate total from array length (source of truth)
             const totalFromArray = dashboardPosts.length;
-            // Use dashboard total if available, otherwise use calculated value
-            const totalPosts = dashboardTotalPosts 
-              ? Math.max(Number(dashboardTotalPosts), totalFromCounts, totalFromArray)
-              : Math.max(totalFromCounts, totalFromArray);
+            const totalFromCounts = Object.values(counts).reduce((sum, count) => sum + (Number(count) || 0), 0);
+            
+            // Use array length as source of truth, but prefer dashboard total if it's valid and larger
+            // (in case dashboard has more accurate count from backend)
+            const totalPosts = dashboardTotalPosts && Number(dashboardTotalPosts) > totalFromArray
+              ? Number(dashboardTotalPosts)
+              : totalFromArray;
+            
+            // Log warning if there's a significant discrepancy
+            if (Math.abs(totalFromCounts - totalFromArray) > 0) {
+              console.warn('AdminOverview: Dashboard posts status counts mismatch', {
+                totalFromCounts,
+                totalFromArray,
+                dashboardTotalPosts,
+                counts
+              });
+            }
             
             const totalViews = (Array.isArray(dashboardPosts) ? dashboardPosts : []).reduce((sum, p) => {
               if (!p) return sum;
@@ -1139,12 +1157,22 @@ const AdminOverview = () => {
             }));
           }
         } else if (hasValidPosts) {
-          // If we have posts but total might be wrong, recalculate from counts
+          // If we have posts but total might be wrong, recalculate from array length (source of truth)
           setStats((prev) => {
             if (prev.posts && prev.posts.statusCounts) {
               const totalFromCounts = Object.values(prev.posts.statusCounts).reduce((sum, count) => sum + (Number(count) || 0), 0);
               const totalFromArray = normalizedPostsData.length;
-              const recalculatedTotal = Math.max(totalFromCounts, totalFromArray);
+              // Use array length as source of truth
+              const recalculatedTotal = totalFromArray;
+              
+              // Log warning if counts don't match
+              if (totalFromCounts !== totalFromArray) {
+                console.warn('AdminOverview: Posts recalculation - counts mismatch', {
+                  totalFromCounts,
+                  totalFromArray,
+                  currentTotal: prev.posts.total
+                });
+              }
               
               // Only update if the total is different and we have a valid count
               if (recalculatedTotal > 0 && prev.posts.total !== recalculatedTotal) {
@@ -1192,12 +1220,12 @@ const AdminOverview = () => {
       const archived = stats.posts.archived || 0;
       const totalFromIndividualCounts = published + drafts + scheduled + archived;
       
-      // Use the maximum of all calculations to ensure accuracy
-      const recalculatedTotal = Math.max(
-        totalFromCounts,
-        totalFromArray,
-        totalFromIndividualCounts
-      );
+      // Use array length as source of truth (one post = one count)
+      // If individual counts sum to a different value, there might be other statuses
+      // In that case, use the statusCounts sum or array length, whichever is more accurate
+      const recalculatedTotal = totalFromArray > 0 
+        ? totalFromArray  // Array length is always the source of truth
+        : Math.max(totalFromCounts, totalFromIndividualCounts); // Fallback if no posts array
       
       // Only update if the total is wrong (either 0 when it should be > 0, or different value)
       if (
@@ -1570,7 +1598,10 @@ const AdminOverview = () => {
 
   // Calculate total posts directly from multiple sources to ensure accuracy
   const calculateTotalPosts = () => {
-    // Method 1: From status counts
+    // Method 1: From posts array (source of truth - one post = one count)
+    const totalFromArray = posts.length;
+
+    // Method 2: From status counts (should match array length)
     const totalFromStatusCounts = stats.posts?.statusCounts
       ? Object.values(stats.posts.statusCounts).reduce(
           (sum, count) => sum + (Number(count) || 0),
@@ -1578,28 +1609,32 @@ const AdminOverview = () => {
         )
       : 0;
 
-    // Method 2: From individual counts
+    // Method 3: From individual counts (may not include all statuses)
     const published = stats.posts?.published || 0;
     const drafts = stats.posts?.drafts || 0;
     const scheduled = stats.posts?.scheduled || 0;
     const archived = stats.posts?.archived || 0;
     const totalFromIndividualCounts = published + drafts + scheduled + archived;
 
-    // Method 3: From posts array
-    const totalFromArray = posts.length;
-
     // Method 4: From stored total (if valid)
     const totalFromStored = stats.posts?.total || 0;
 
-    // Use the maximum of all methods to ensure accuracy
-    const calculatedTotal = Math.max(
-      totalFromStatusCounts,
-      totalFromIndividualCounts,
-      totalFromArray,
-      totalFromStored
-    );
+    // Use array length as primary source of truth
+    // If array is empty but we have counts, use the status counts sum
+    // This handles cases where posts haven't loaded yet but stats are available
+    const calculatedTotal = totalFromArray > 0
+      ? totalFromArray
+      : Math.max(totalFromStatusCounts, totalFromIndividualCounts, totalFromStored);
 
-    // Note: Discrepancies are handled silently
+    // Log warning if there's a significant discrepancy (helps with debugging)
+    if (totalFromArray > 0 && totalFromStatusCounts > 0 && Math.abs(totalFromArray - totalFromStatusCounts) > 0) {
+      console.warn('AdminOverview: Posts count discrepancy', {
+        totalFromArray,
+        totalFromStatusCounts,
+        totalFromIndividualCounts,
+        totalFromStored
+      });
+    }
 
     return calculatedTotal;
   };
