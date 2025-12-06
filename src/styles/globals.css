@@ -77,6 +77,102 @@ select:focus {
   max-height: 2.5rem !important;
 }
 
+/* Override default browser focus styles for all input types with green */
+input:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="datetime-local"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+textarea:focus {
+  outline: none !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(26, 137, 23, 0.2) !important;
+}
+
+/* Override native browser date/time input internal selection colors */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(27%) sepia(51%) saturate(2878%) hue-rotate(88deg) brightness(104%) contrast(97%);
+}
+
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: var(--text-primary);
+}
+
+input[type="date"]::-webkit-datetime-edit-text:focus,
+input[type="date"]::-webkit-datetime-edit-month-field:focus,
+input[type="date"]::-webkit-datetime-edit-day-field:focus,
+input[type="date"]::-webkit-datetime-edit-year-field:focus {
+  background-color: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  border-radius: 2px;
+}
+
+/* Override native browser time input internal selection colors */
+input[type="time"]::-webkit-datetime-edit-text,
+input[type="time"]::-webkit-datetime-edit-hour-field,
+input[type="time"]::-webkit-datetime-edit-minute-field,
+input[type="time"]::-webkit-datetime-edit-second-field,
+input[type="time"]::-webkit-datetime-edit-ampm-field {
+  color: var(--text-primary);
+}
+
+input[type="time"]::-webkit-datetime-edit-text:focus,
+input[type="time"]::-webkit-datetime-edit-hour-field:focus,
+input[type="time"]::-webkit-datetime-edit-minute-field:focus,
+input[type="time"]::-webkit-datetime-edit-second-field:focus,
+input[type="time"]::-webkit-datetime-edit-ampm-field:focus {
+  background-color: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  border-radius: 2px;
+  outline: none !important;
+}
+
+/* Dark mode specific focus styles */
+[data-theme="dark"] input:focus,
+[data-theme="dark"] input[type="text"]:focus,
+[data-theme="dark"] input[type="email"]:focus,
+[data-theme="dark"] input[type="password"]:focus,
+[data-theme="dark"] input[type="date"]:focus,
+[data-theme="dark"] input[type="time"]:focus,
+[data-theme="dark"] input[type="datetime-local"]:focus,
+[data-theme="dark"] input[type="number"]:focus,
+[data-theme="dark"] input[type="search"]:focus,
+[data-theme="dark"] input[type="tel"]:focus,
+[data-theme="dark"] input[type="url"]:focus,
+[data-theme="dark"] textarea:focus {
+  outline: none !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.3) !important;
+}
+
+[data-theme="dark"] input[type="date"]::-webkit-datetime-edit-text:focus,
+[data-theme="dark"] input[type="date"]::-webkit-datetime-edit-month-field:focus,
+[data-theme="dark"] input[type="date"]::-webkit-datetime-edit-day-field:focus,
+[data-theme="dark"] input[type="date"]::-webkit-datetime-edit-year-field:focus {
+  background-color: rgba(74, 222, 128, 0.2) !important;
+  color: var(--accent) !important;
+}
+
+[data-theme="dark"] input[type="time"]::-webkit-datetime-edit-text:focus,
+[data-theme="dark"] input[type="time"]::-webkit-datetime-edit-hour-field:focus,
+[data-theme="dark"] input[type="time"]::-webkit-datetime-edit-minute-field:focus,
+[data-theme="dark"] input[type="time"]::-webkit-datetime-edit-second-field:focus,
+[data-theme="dark"] input[type="time"]::-webkit-datetime-edit-ampm-field:focus {
+  background-color: rgba(74, 222, 128, 0.2) !important;
+  color: var(--accent) !important;
+  outline: none !important;
+}
+
 /* Prevent select dropdown from expanding container when open */
 select:not([size]) {
   height: 2.5rem !important;
@@ -716,7 +812,7 @@ html {
     background-color: var(--page-bg);
     background-image:
       radial-gradient(circle at 10% 20%, rgba(74, 222, 128, 0.16), transparent 45%),
-      radial-gradient(circle at 90% 80%, rgba(14, 165, 233, 0.12), transparent 40%);
+      radial-gradient(circle at 90% 80%, rgba(26, 137, 23, 0.12), transparent 40%);
   }
 
   .text-primary {

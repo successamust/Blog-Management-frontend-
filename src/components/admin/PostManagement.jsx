@@ -449,7 +449,7 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
     const badgeClassMap = {
       published: 'bg-green-100 text-green-800',
       draft: 'bg-yellow-100 text-yellow-800',
-      scheduled: 'bg-blue-100 text-blue-800',
+      scheduled: 'bg-[var(--accent-soft)] text-[var(--accent-hover)]',
       pending: 'bg-amber-100 text-amber-800',
       archived: 'bg-[var(--surface-subtle)] text-[var(--text-primary)]',
     };
@@ -2488,7 +2488,7 @@ const EditPost = ({ onSuccess }) => {
                       </span>
                     )}
                     {poll.expiresAt && (
-                      <span className="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 rounded text-xs font-medium">
+                      <span className="inline-block px-2 py-1 bg-[var(--accent-soft)] dark:bg-[var(--accent)]/20 text-[var(--accent-hover)] dark:text-[var(--accent)] rounded text-xs font-medium">
                         Expires: {new Date(poll.expiresAt).toLocaleDateString()}
                       </span>
                     )}

@@ -250,7 +250,7 @@ const CommentThread = ({
                 </span>
               )}
               {isCollaborator && !isPostAuthorComment && (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--accent-soft)] dark:bg-[var(--accent)]/20 text-[var(--accent)] dark:text-[var(--accent)] border border-[var(--accent)]/30 dark:border-[var(--accent)]/40">
                   <Users className="w-3 h-3" />
                   Collaborator
                 </span>

@@ -2055,24 +2055,24 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           font-size: 1.25rem;
         }
         .ProseMirror a {
-          color: #3b82f6;
+          color: #1A8917;
           text-decoration: underline;
         }
         .ProseMirror a:hover {
-          color: #2563eb;
+          color: #166E14;
         }
         .dark .ProseMirror code {
           background-color: rgba(255, 255, 255, 0.1);
           color: #e5e7eb;
         }
         .dark .ProseMirror blockquote {
-          border-left-color: #60a5fa;
+          border-left-color: #4ADE80;
         }
         .dark .ProseMirror a {
-          color: #60a5fa;
+          color: #4ADE80;
         }
         .dark .ProseMirror a:hover {
-          color: #93c5fd;
+          color: #22C55E;
         }
         .dark .ProseMirror th,
         .dark .ProseMirror td {

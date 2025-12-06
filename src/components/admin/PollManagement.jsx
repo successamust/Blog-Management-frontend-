@@ -168,7 +168,7 @@ const PollList = ({ polls, searchQuery, setSearchQuery, onDelete }) => {
 
                   <div className="ml-8 flex items-center gap-3 flex-wrap">
                     {poll.expiresAt && (
-                      <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 rounded text-xs font-medium">
+                      <span className="px-2 py-1 bg-[var(--accent-soft)] dark:bg-[var(--accent)]/20 text-[var(--accent-hover)] dark:text-[var(--accent)] rounded text-xs font-medium">
                         Expires: {new Date(poll.expiresAt).toLocaleDateString()}
                       </span>
                     )}

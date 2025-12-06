@@ -248,16 +248,16 @@ const PostTemplates = ({ onSelectTemplate }) => {
       </div>
 
       {/* Help Section */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 sm:p-4 mb-4">
-        <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 text-xs sm:text-sm">How to Use Templates:</h4>
-        <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside mb-3">
+      <div className="bg-[var(--accent-soft)] dark:bg-[var(--accent)]/20 border border-[var(--accent)]/30 dark:border-[var(--accent)]/40 rounded-lg p-3 sm:p-4 mb-4">
+        <h4 className="font-semibold text-[var(--accent)] dark:text-[var(--accent)] mb-2 text-xs sm:text-sm">How to Use Templates:</h4>
+        <ul className="text-xs text-[var(--accent-hover)] dark:text-[var(--accent)] space-y-1 list-disc list-inside mb-3">
           <li>Click &quot;Use Template&quot; to apply a template to your post form</li>
           <li>Create custom templates with &quot;New Template&quot; button</li>
         </ul>
         {isAdmin() && defaultTemplates.length === 0 && (
           <button
             onClick={handleInitializeDefaults}
-            className="text-xs text-blue-700 dark:text-blue-300 hover:underline flex items-center gap-1"
+            className="text-xs text-[var(--accent)] dark:text-[var(--accent)] hover:underline flex items-center gap-1"
           >
             <Sparkles className="w-3 h-3" />
             Initialize Default Templates
@@ -315,7 +315,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
                             Default
                           </span>
                           {isAdmin() && (
-                            <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full whitespace-nowrap">
+                            <span className="text-xs px-2 py-0.5 bg-[var(--accent-soft)] dark:bg-[var(--accent)]/20 text-[var(--accent)] dark:text-[var(--accent)] rounded-full whitespace-nowrap">
                               Admin Only
                             </span>
                           )}
@@ -537,7 +537,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
 
               {/* Admin-only: Make this a default template */}
               {isAdmin() && (
-                <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center gap-2 p-3 bg-[var(--accent-soft)] dark:bg-[var(--accent)]/20 border border-[var(--accent)]/30 dark:border-[var(--accent)]/40 rounded-lg">
                   <input
                     type="checkbox"
                     id="isDefault"
@@ -546,10 +546,10 @@ const PostTemplates = ({ onSelectTemplate }) => {
                     className="w-4 h-4 text-[var(--accent)] border-gray-300 dark:border-gray-600 rounded focus:ring-[var(--accent)] bg-[var(--surface-bg)]"
                     disabled={editingId && !templates.find(t => (t._id || t.id) === editingId)?.isDefault}
                   />
-                  <label htmlFor="isDefault" className="text-xs sm:text-sm text-blue-900 dark:text-blue-100 cursor-pointer">
+                  <label htmlFor="isDefault" className="text-xs sm:text-sm text-[var(--accent)] dark:text-[var(--accent)] cursor-pointer">
                     <strong>Make this a default template</strong> (available to all users)
                     {editingId && !templates.find(t => (t._id || t.id) === editingId)?.isDefault && (
-                      <span className="block text-xs text-blue-700 dark:text-blue-300 mt-1">
+                      <span className="block text-xs text-[var(--accent)] dark:text-[var(--accent)] mt-1">
                         Note: You cannot convert a custom template to default. Create a new template instead.
                       </span>
                     )}

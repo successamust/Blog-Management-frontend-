@@ -65,7 +65,7 @@ const PostScheduler = ({ onSchedule, initialDate, initialTime }) => {
                 e.target.showPicker?.();
               }}
               min={format(new Date(), 'yyyy-MM-dd')}
-              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] bg-[var(--surface-bg)] text-[var(--text-primary)] cursor-pointer"
+              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:outline-none bg-[var(--surface-bg)] text-[var(--text-primary)] cursor-pointer"
             />
           </div>
         </div>
@@ -95,7 +95,7 @@ const PostScheduler = ({ onSchedule, initialDate, initialTime }) => {
               onClick={(e) => {
                 e.target.showPicker?.();
               }}
-              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] bg-[var(--surface-bg)] text-[var(--text-primary)] cursor-pointer"
+              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] focus:outline-none bg-[var(--surface-bg)] text-[var(--text-primary)] cursor-pointer"
             />
           </div>
         </div>

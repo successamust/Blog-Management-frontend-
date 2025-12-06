@@ -41,7 +41,7 @@ import AnimatedCard from '../common/AnimatedCard';
 import SkeletonLoader from '../common/SkeletonLoader';
 import Spinner from '../common/Spinner';
 
-const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+const COLORS = ['#1A8917', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
 const ACTIVE_STROKE = 'var(--accent, #8b5cf6)';
 
 const renderActiveSector = (props) => {
@@ -1826,16 +1826,16 @@ const AdminOverview = () => {
                     <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">Posts by Category</h3>
                     <p className="text-sm text-[var(--text-muted)]">Distribution across categories</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30">
-                    <Boxes className="w-6 h-6 text-blue-500" />
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-[var(--accent)]/20 to-[var(--accent-hover)]/20 border border-[var(--accent)]/30">
+                    <Boxes className="w-6 h-6 text-[var(--accent)]" />
                   </div>
                 </div>
                 <ResponsiveContainer width="100%" height={320}>
                   <BarChart data={postsByCategoryData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="categoryGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#1d4ed8" stopOpacity={0.7} />
+                        <stop offset="0%" stopColor="#1A8917" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#166E14" stopOpacity={0.7} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" opacity={0.3} />
@@ -1859,15 +1859,15 @@ const AdminOverview = () => {
                       }}
                       labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
                       itemStyle={{ color: 'var(--text-primary)' }}
-                      cursor={{ fill: 'rgba(59, 130, 246, 0.1)', stroke: '#3b82f6', strokeWidth: 1 }}
+                      cursor={{ fill: 'rgba(26, 137, 23, 0.1)', stroke: '#1A8917', strokeWidth: 1 }}
                     />
                     <Bar 
                       dataKey="posts" 
                       fill="url(#categoryGradient)"
                       radius={[8, 8, 0, 0]}
-                      stroke="#2563eb"
+                      stroke="#1A8917"
                       strokeWidth={1}
-                      activeBar={{ fill: '#60a5fa', stroke: '#2563eb', strokeWidth: 2 }}
+                      activeBar={{ fill: '#4ADE80', stroke: '#1A8917', strokeWidth: 2 }}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -2061,8 +2061,8 @@ const AdminOverview = () => {
           <AnimatedCard delay={1.1}>
             <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                  <Boxes className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <div className="p-2 bg-[var(--accent-soft)] dark:bg-[var(--accent)]/20 rounded-lg">
+                  <Boxes className="w-5 h-5 text-[var(--accent)] dark:text-[var(--accent)]" />
                 </div>
                 <h3 className="text-lg font-semibold text-[var(--text-primary)]">Category Statistics</h3>
               </div>

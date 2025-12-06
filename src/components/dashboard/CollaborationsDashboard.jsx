@@ -317,7 +317,7 @@ const CollaborationsDashboard = () => {
               <Send className="w-4 h-4 sm:w-5 sm:h-5" />
               Sent Invitations
             </h2>
-            <span className="px-2 sm:px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 rounded-full text-xs sm:text-sm font-medium">
+            <span className="px-2 sm:px-3 py-1 bg-[var(--accent-soft)] dark:bg-[var(--accent)]/20 text-[var(--accent-hover)] dark:text-[var(--accent)] rounded-full text-xs sm:text-sm font-medium">
               {pendingSent.length} {allSent.length > pendingSent.length ? `(${allSent.length} total)` : ''}
             </span>
           </div>
@@ -332,10 +332,10 @@ const CollaborationsDashboard = () => {
               return (
                 <motion.div
                   key={invitationId}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 bg-[var(--accent-soft)] dark:bg-[var(--accent)]/20 rounded-lg border border-[var(--accent)]/30 dark:border-[var(--accent)]/40"
                 >
                   <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--accent)] flex-shrink-0 mt-0.5 sm:mt-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-primary break-words">
                         {postTitle}

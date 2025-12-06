@@ -1223,7 +1223,7 @@ const PostItem = ({ post, onShowPollAnalytics }) => {
           </h3>
           <div className="flex items-center space-x-4 text-xs text-muted flex-wrap gap-2">
             {isCollaborator && !isPostOwner && (
-              <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 rounded text-xs font-medium">
+              <span className="px-2 py-0.5 bg-[var(--accent-soft)] dark:bg-[var(--accent)]/20 text-[var(--accent-hover)] dark:text-[var(--accent)] rounded text-xs font-medium">
                 Collaborator
               </span>
             )}
