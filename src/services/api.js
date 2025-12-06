@@ -69,6 +69,14 @@ const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
+    // Handle FormData - remove Content-Type header to let browser set it with boundary
+    if (config.data instanceof FormData) {
+      // Remove the default application/json Content-Type for FormData
+      if (config.headers) {
+        delete config.headers['Content-Type'];
+      }
+    }
+    
     // Skip security features if explicitly requested (e.g., for refresh token endpoint)
     const skipSecurity = config.skipAuthRefresh || config.skipCsrf || false;
     
@@ -81,14 +89,17 @@ api.interceptors.request.use(
       try {
         token = await refreshAccessToken(api);
       } catch (error) {
-        // If refresh fails, clear tokens but continue with request
-        // The response interceptor will handle 401
+        // Only log refresh failures - don't clear tokens here
+        // Network errors shouldn't cause logout - let the actual API call handle 401s
+        // Only clear tokens on actual 401/403 responses from the API
         if (import.meta.env.DEV) {
           // Security: Only log token refresh failures in development
           if (import.meta.env.DEV) {
             console.warn('[API] Token refresh failed:', error);
           }
         }
+        // Continue with original token - if it's actually expired, the API will return 401
+        // and the response interceptor will handle it properly
       }
     }
     
@@ -129,8 +140,8 @@ api.interceptors.request.use(
       Object.assign(config.headers, securityHeaders);
     }
     
-    // Sanitize request data
-    if (config.data && typeof config.data === 'object') {
+    // Sanitize request data (skip FormData - it needs to be sent as-is for file uploads)
+    if (config.data && typeof config.data === 'object' && !(config.data instanceof FormData)) {
       if (Array.isArray(config.data)) {
         config.data = config.data.map(item => 
           typeof item === 'string' ? sanitizeInput(item) : item
@@ -832,9 +843,11 @@ export const adminAPI = {
 };
 
 export const imagesAPI = {
-  upload: (formData) => api.post('/images/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+  upload: (formData) => {
+    // Don't set Content-Type header manually - browser needs to set it with boundary
+    // The interceptor will handle removing the default Content-Type for FormData
+    return api.post('/images/upload', formData);
+  },
   getInfo: () => api.get('/images'),
   delete: (imageUrl) => api.delete('/images/delete', { data: { imageUrl } }),
 };

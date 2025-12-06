@@ -13,15 +13,17 @@ if (typeof window !== 'undefined') {
     
     // Suppress MetaMask ethereum provider errors
     if (errorMessage.includes('MetaMask') || 
-        (errorMessage.includes('ethereum') && (errorMessage.includes('provider') || errorMessage.includes('redefine') || errorMessage.includes('getter')))) {
+        (errorMessage.includes('ethereum') && (errorMessage.includes('provider') || errorMessage.includes('redefine') || errorMessage.includes('getter') || errorMessage.includes('only a getter')))) {
       return; // Silently ignore
     }
     // Suppress evmAsk and Web3 wallet injection errors
     if (errorMessage.includes('evmAsk') || 
         errorMessage.includes('Cannot redefine property: ethereum') ||
         errorMessage.includes('Cannot set property ethereum') ||
+        errorMessage.includes('which has only a getter') ||
         fullMessage.includes('evmAsk') ||
-        (errorMessage.includes('ethereum') && (errorMessage.includes('redefine') || errorMessage.includes('getter')))) {
+        fullMessage.includes('which has only a getter') ||
+        (errorMessage.includes('ethereum') && (errorMessage.includes('redefine') || errorMessage.includes('getter') || errorMessage.includes('only a getter')))) {
       return; // Silently ignore
     }
     // Suppress uBlock Origin errors
@@ -46,7 +48,9 @@ if (typeof window !== 'undefined') {
         reason.includes('solana') ||
         reason.includes('Solana') ||
         reason.includes('Cannot redefine property') ||
-        reason.includes('Cannot set property ethereum')) {
+        reason.includes('Cannot set property ethereum') ||
+        reason.includes('which has only a getter') ||
+        reason.includes('Receiving end does not exist')) {
       event.preventDefault(); // Suppress the error
       return;
     }
@@ -66,13 +70,27 @@ if (typeof window !== 'undefined') {
         errorMessage.includes('MutationObserver') ||
         errorMessage.includes('Cannot redefine property: ethereum') ||
         errorMessage.includes('Cannot set property ethereum') ||
+        errorMessage.includes('which has only a getter') ||
         errorSource.includes('evmAsk') ||
         errorSource.includes('solana') ||
-        errorSource.includes('inpage.js')) {
+        errorSource.includes('inpage.js') ||
+        errorSource.includes('extension://')) {
       event.preventDefault(); // Suppress the error
       return;
     }
   }, true);
+  
+  // Suppress Chrome extension runtime.lastError warnings
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    const message = args.map(arg => String(arg)).join(' ');
+    if (message.includes('Unchecked runtime.lastError') || 
+        message.includes('Receiving end does not exist') ||
+        message.includes('Could not establish connection')) {
+      return; // Suppress harmless extension errors
+    }
+    originalWarn.apply(console, args);
+  };
 }
 
 try {

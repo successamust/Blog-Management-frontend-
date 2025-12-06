@@ -105,7 +105,10 @@ export const getAccessTokenExpiry = () => {
 export const isAccessTokenExpired = (bufferMinutes = 5) => {
   const expiry = getAccessTokenExpiry();
   if (!expiry) {
-    return true; // No expiry info means we should refresh
+    // If no expiry info, don't assume expired - this prevents constant refresh attempts
+    // Instead, return false and let the token be used until we get expiry info from API
+    // The API will return 401 if token is actually expired, which will trigger refresh
+    return false;
   }
   
   const bufferMs = bufferMinutes * 60 * 1000;
@@ -151,16 +154,21 @@ export const refreshAccessToken = async (apiInstance) => {
         const { setAuthToken } = await import('./tokenStorage.js');
         setAuthToken(accessToken);
         
-        // Calculate expiry
-        if (expiresIn) {
-          const expiry = Date.now() + (expiresIn * 1000);
-          setAccessTokenExpiry(expiry);
-        }
+      // Calculate expiry - use default 1 hour if not provided
+      if (expiresIn) {
+        const expiry = Date.now() + (expiresIn * 1000);
+        setAccessTokenExpiry(expiry);
+      } else {
+        // Default to 1 hour if expiresIn is not provided
+        const defaultExpiry = Date.now() + (60 * 60 * 1000); // 1 hour
+        setAccessTokenExpiry(defaultExpiry);
+      }
       }
       
       return accessToken;
     } catch (error) {
-      // If refresh fails, clear tokens
+      // Only clear tokens on authentication errors (401/403)
+      // Don't clear on network errors or other failures - those might be temporary
       if (error.response?.status === 401 || error.response?.status === 403) {
         clearRefreshToken();
         const { clearAuthToken } = await import('./tokenStorage.js');
@@ -168,6 +176,8 @@ export const refreshAccessToken = async (apiInstance) => {
         const { clearCsrfToken } = await import('./securityUtils.js');
         clearCsrfToken();
       }
+      // For network errors or other failures, don't clear tokens - let the request fail
+      // The response interceptor will handle 401s from actual API calls
       throw error;
     } finally {
       refreshPromise = null;

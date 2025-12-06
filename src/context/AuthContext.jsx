@@ -149,7 +149,34 @@ export const AuthProvider = ({ children }) => {
               payload: { token, user: storedUser },
             });
           } else if (error.response?.status === 401) {
-            // If 401 on /auth/me, token is invalid/expired - clear it
+            // If 401 on /auth/me, token might be invalid/expired
+            // But don't immediately logout - try to refresh first
+            // Only logout if refresh also fails
+            try {
+              const { refreshAccessToken } = await import('../utils/refreshToken.js');
+              const newToken = await refreshAccessToken(authAPI);
+              if (newToken) {
+                // Refresh succeeded - update token and retry verification
+                const { setAuthToken } = await import('../utils/tokenStorage.js');
+                setAuthToken(newToken);
+                // Retry verification with new token
+                const retryResponse = await authAPI.getMe();
+                const freshUser = retryResponse.data.user;
+                localStorage.setItem('user', JSON.stringify(freshUser));
+                localStorage.setItem('lastAuthCheck', Date.now().toString());
+                dispatch({
+                  type: 'LOGIN_SUCCESS',
+                  payload: { token: newToken, user: freshUser },
+                });
+                return; // Successfully refreshed, don't logout
+              }
+            } catch (refreshError) {
+              // Refresh also failed - token is definitely invalid
+              if (import.meta.env.DEV) {
+                console.warn('[Auth] Token refresh failed during verifyUser:', refreshError);
+              }
+            }
+            // Only logout if refresh failed or wasn't attempted
             clearAuthToken();
             localStorage.removeItem('user');
             localStorage.removeItem('lastAuthCheck');
@@ -341,10 +368,14 @@ export const AuthProvider = ({ children }) => {
       
       setAuthToken(token);
       
-      // Store access token expiry
+      // Store access token expiry - use default 1 hour if not provided
       if (expiresIn) {
         const expiry = Date.now() + (expiresIn * 1000);
         setAccessTokenExpiry(expiry);
+      } else {
+        // Default to 1 hour if expiresIn is not provided (prevents constant refresh attempts)
+        const defaultExpiry = Date.now() + (60 * 60 * 1000); // 1 hour
+        setAccessTokenExpiry(defaultExpiry);
       }
       
       localStorage.setItem('user', JSON.stringify(user));
@@ -392,10 +423,14 @@ export const AuthProvider = ({ children }) => {
       
       setAuthToken(token);
       
-      // Store access token expiry
+      // Store access token expiry - use default 1 hour if not provided
       if (expiresIn) {
         const expiry = Date.now() + (expiresIn * 1000);
         setAccessTokenExpiry(expiry);
+      } else {
+        // Default to 1 hour if expiresIn is not provided (prevents constant refresh attempts)
+        const defaultExpiry = Date.now() + (60 * 60 * 1000); // 1 hour
+        setAccessTokenExpiry(defaultExpiry);
       }
       
       localStorage.setItem('user', JSON.stringify(user));
