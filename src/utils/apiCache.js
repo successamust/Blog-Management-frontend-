@@ -6,6 +6,16 @@
 const cache = new Map();
 const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
 
+// Cache statistics for monitoring (production-safe)
+const cacheStats = {
+  hits: 0,
+  misses: 0,
+  sets: 0,
+  clears: 0,
+  lastHitTime: null,
+  lastMissTime: null,
+};
+
 /**
  * Generate cache key from request config
  */
@@ -48,8 +58,25 @@ export const getCachedResponse = (url, params = {}) => {
   const cached = cache.get(key);
   
   if (cached && isCacheValid(cached)) {
+    // Cache hit
+    cacheStats.hits++;
+    cacheStats.lastHitTime = Date.now();
+    
+    // Production-safe monitoring: use Performance API
+    if (typeof window !== 'undefined' && window.performance && window.performance.mark) {
+      try {
+        window.performance.mark('cache-hit');
+      } catch (e) {
+        // Silently fail if performance API is not available
+      }
+    }
+    
     return cached.data;
   }
+  
+  // Cache miss
+  cacheStats.misses++;
+  cacheStats.lastMissTime = Date.now();
   
   // Remove expired cache
   if (cached) {
@@ -74,10 +101,11 @@ export const setCachedResponse = (url, params = {}, data, ttl = DEFAULT_TTL) => 
     data,
     expiresAt: Date.now() + ttl,
   });
+  cacheStats.sets++;
 };
 
 /**
- * Get cache statistics (for debugging)
+ * Get cache statistics (for debugging and monitoring)
  */
 export const getCacheStats = () => {
   const now = Date.now();
@@ -86,6 +114,16 @@ export const getCacheStats = () => {
     valid: 0,
     expired: 0,
     keys: [],
+    // Performance metrics
+    hits: cacheStats.hits,
+    misses: cacheStats.misses,
+    sets: cacheStats.sets,
+    clears: cacheStats.clears,
+    hitRate: cacheStats.hits + cacheStats.misses > 0 
+      ? ((cacheStats.hits / (cacheStats.hits + cacheStats.misses)) * 100).toFixed(2) + '%'
+      : '0%',
+    lastHitTime: cacheStats.lastHitTime,
+    lastMissTime: cacheStats.lastMissTime,
   };
   
   for (const [key, value] of cache.entries()) {
@@ -105,15 +143,20 @@ export const getCacheStats = () => {
  */
 export const clearCache = (urlPattern) => {
   if (!urlPattern) {
+    const clearedCount = cache.size;
     cache.clear();
+    cacheStats.clears += clearedCount;
     return;
   }
   
+  let clearedCount = 0;
   for (const key of cache.keys()) {
     if (key.includes(urlPattern)) {
       cache.delete(key);
+      clearedCount++;
     }
   }
+  cacheStats.clears += clearedCount;
 };
 
 /**
@@ -131,6 +174,13 @@ export const clearExpiredCache = () => {
 // Clean up expired cache every 10 minutes
 if (typeof window !== 'undefined') {
   setInterval(clearExpiredCache, 10 * 60 * 1000);
+  
+  // Expose cache stats to window for production debugging (optional)
+  // Access via: window.__cacheStats() in browser console
+  if (import.meta.env.DEV || import.meta.env.VITE_ENABLE_CACHE_DEBUG === 'true') {
+    window.__cacheStats = getCacheStats;
+    window.__cacheClear = clearCache;
+  }
 }
 
 /**
