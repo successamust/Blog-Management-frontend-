@@ -240,6 +240,16 @@ api.interceptors.response.use(
       const expiry = Date.now() + (response.data.expiresIn * 1000);
       setAccessTokenExpiry(expiry);
     }
+    
+    // Handle refresh token expiry info from response (for login/refresh endpoints)
+    if (response.data?.refreshTokenExpiresIn) {
+      import('../utils/refreshToken.js').then(({ setRefreshToken }) => {
+        const refreshExpiry = Date.now() + (response.data.refreshTokenExpiresIn * 1000);
+        setRefreshToken(null, refreshExpiry); // Token is in httpOnly cookie, but store expiry
+      }).catch(() => {
+        // Silently fail if module doesn't exist
+      });
+    }
 
     // Store rate limit info
     const rateLimitInfo = getRateLimitInfo(response);

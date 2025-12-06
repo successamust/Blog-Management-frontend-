@@ -68,20 +68,26 @@ const Login = () => {
     setVerifying2FA(true);
     try {
       const response = await authAPI.verify2FALogin(code, tempToken);
-      const { token, accessToken, user, expiresIn } = response.data;
+      const { token, accessToken, user, expiresIn, refreshTokenExpiresIn } = response.data;
       
       // Use accessToken if available, otherwise fall back to token
       const finalToken = accessToken || token;
       
       // Set tokens using auth context methods
       const { setAuthToken } = await import('../../utils/tokenStorage.js');
-      const { setAccessTokenExpiry } = await import('../../utils/refreshToken.js');
+      const { setAccessTokenExpiry, setRefreshToken } = await import('../../utils/refreshToken.js');
       
       setAuthToken(finalToken);
       
       if (expiresIn) {
         const expiry = Date.now() + (expiresIn * 1000);
         setAccessTokenExpiry(expiry);
+      }
+      
+      // Store refresh token expiry if provided
+      if (refreshTokenExpiresIn) {
+        const refreshExpiry = Date.now() + (refreshTokenExpiresIn * 1000);
+        setRefreshToken(null, refreshExpiry); // Token is in cookie, but store expiry
       }
       
       localStorage.setItem('user', JSON.stringify(user));

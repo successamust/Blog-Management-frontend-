@@ -124,10 +124,13 @@ export const isRefreshTokenExpired = () => {
     if (stored) {
       refreshTokenExpiry = parseInt(stored);
     } else {
-      return false; // No expiry info, assume valid
+      // No expiry info - don't assume expired, let the backend decide
+      // This prevents premature logouts when expiry info hasn't been set yet
+      return false;
     }
   }
   
+  // Check if refresh token has expired
   return Date.now() >= refreshTokenExpiry;
 };
 
@@ -147,7 +150,7 @@ export const refreshAccessToken = async (apiInstance) => {
         withCredentials: true,
       });
       
-      const { accessToken, expiresIn } = response.data;
+      const { accessToken, expiresIn, refreshTokenExpiresIn } = response.data;
       
       // Update tokens
       if (accessToken) {
@@ -162,6 +165,12 @@ export const refreshAccessToken = async (apiInstance) => {
         // Default to 1 hour if expiresIn is not provided
         const defaultExpiry = Date.now() + (60 * 60 * 1000); // 1 hour
         setAccessTokenExpiry(defaultExpiry);
+      }
+      
+      // Store refresh token expiry if provided (refresh token is in httpOnly cookie, but we need expiry for checking)
+      if (refreshTokenExpiresIn) {
+        const refreshExpiry = Date.now() + (refreshTokenExpiresIn * 1000);
+        setRefreshToken(null, refreshExpiry); // Token is in cookie, but store expiry
       }
       }
       

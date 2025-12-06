@@ -364,7 +364,7 @@ export const AuthProvider = ({ children }) => {
         };
       }
       
-      const { token, user, expiresIn } = response.data;
+      const { token, user, expiresIn, refreshTokenExpiresIn } = response.data;
       
       setAuthToken(token);
       
@@ -376,6 +376,13 @@ export const AuthProvider = ({ children }) => {
         // Default to 1 hour if expiresIn is not provided (prevents constant refresh attempts)
         const defaultExpiry = Date.now() + (60 * 60 * 1000); // 1 hour
         setAccessTokenExpiry(defaultExpiry);
+      }
+      
+      // Store refresh token expiry if provided (refresh token is in httpOnly cookie, but we need expiry for checking)
+      if (refreshTokenExpiresIn) {
+        const { setRefreshToken } = await import('../utils/refreshToken.js');
+        const refreshExpiry = Date.now() + (refreshTokenExpiresIn * 1000);
+        setRefreshToken(null, refreshExpiry); // Token is in cookie, but store expiry
       }
       
       localStorage.setItem('user', JSON.stringify(user));
@@ -419,7 +426,7 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'LOGIN_START' });
     try {
       const response = await authAPI.register(userData);
-      const { token, user, expiresIn } = response.data;
+      const { token, user, expiresIn, refreshTokenExpiresIn } = response.data;
       
       setAuthToken(token);
       
@@ -431,6 +438,13 @@ export const AuthProvider = ({ children }) => {
         // Default to 1 hour if expiresIn is not provided (prevents constant refresh attempts)
         const defaultExpiry = Date.now() + (60 * 60 * 1000); // 1 hour
         setAccessTokenExpiry(defaultExpiry);
+      }
+      
+      // Store refresh token expiry if provided (refresh token is in httpOnly cookie, but we need expiry for checking)
+      if (refreshTokenExpiresIn) {
+        const { setRefreshToken } = await import('../utils/refreshToken.js');
+        const refreshExpiry = Date.now() + (refreshTokenExpiresIn * 1000);
+        setRefreshToken(null, refreshExpiry); // Token is in cookie, but store expiry
       }
       
       localStorage.setItem('user', JSON.stringify(user));
