@@ -12,7 +12,7 @@ const DEFAULT_DESCRIPTION = 'The central hub for diverse voices, where every per
 const DEFAULT_IMAGE = '/email-assets/nexus-og-image.png';
 
 // OG Image version - increment this when the OG image changes to bust caches
-const OG_IMAGE_VERSION = 'v2';
+const OG_IMAGE_VERSION = 'v3';
 
 const resolveBaseUrl = () => {
   const envUrl = import.meta.env?.VITE_SITE_URL;
