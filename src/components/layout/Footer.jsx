@@ -5,15 +5,15 @@ const Footer = () => {
   return (
     <footer className="border-t border-[var(--border-subtle)] bg-surface">
       <div className="w-full px-4 sm:px-6 py-8 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <Link to="/" className="inline-flex items-center hover:opacity-80 transition-opacity">
             <img
-              src="/nexus-logo.svg"
+              src="/nexus-logo-footer.svg"
               alt="Nexus"
-              className="logo-theme-aware h-10 md:h-16 w-auto"
+              className="h-8 sm:h-10 md:h-12 w-auto"
             />
           </Link>
-          <p className="text-sm text-muted">Connect. Create. Discover.</p>
+          <p className="text-xs sm:text-sm text-muted">Connect. Create. Discover.</p>
         </div>
         <div className="flex items-center gap-4 text-sm text-muted">
           <a href="mailto:hello@nexus.blog" className="hover:text-primary transition-colors">
