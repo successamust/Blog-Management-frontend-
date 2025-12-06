@@ -1636,9 +1636,9 @@ const AdminOverview = () => {
         return count + 1;
       }
       
-      // Otherwise, if we have no explicit negative indicators, count as published
-      // (trust that posts in the array are meant to be counted)
-      return count + 1;
+      // Don't count if we don't have explicit published indicators
+      // Since we're fetching ALL posts (including drafts), we need explicit indicators
+      return count;
     }, 0);
 
     // Method 5: From engagement/overview stats
@@ -1658,10 +1658,38 @@ const AdminOverview = () => {
       0;
     const fromTotals = Math.max(totalPostsFallback - drafts - scheduled - archived, 0);
 
-    // Return the maximum of all methods to ensure accuracy
+    // Primary source: stats.posts.published (calculated from normalizeStatus) - most reliable
+    // Use it if available, otherwise fall back to other methods
+    if (fromStatsDirect > 0) {
+      // If we have a direct count from stats, use it as primary source
+      // But verify it's reasonable compared to other methods
+      const maxOtherMethods = Math.max(
+        fromStatusData,
+        fromStatusCounts,
+        fromPostsArray,
+        fromEngagement,
+        fromTotals
+      );
+      
+      // If stats count is significantly different, log a warning but trust stats
+      if (Math.abs(fromStatsDirect - maxOtherMethods) > 2) {
+        console.warn('AdminOverview: Published posts count discrepancy', {
+          fromStatsDirect,
+          maxOtherMethods,
+          fromStatusData,
+          fromStatusCounts,
+          fromPostsArray,
+          fromEngagement,
+          fromTotals
+        });
+      }
+      
+      return fromStatsDirect;
+    }
+    
+    // Fallback: Use the maximum of other methods if stats.posts.published is not available
     const calculated = Math.max(
       fromStatusData,
-      fromStatsDirect,
       fromStatusCounts,
       fromPostsArray,
       fromEngagement,
