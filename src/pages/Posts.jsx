@@ -184,7 +184,7 @@ const Posts = () => {
         url={seoUrl}
         image={DEFAULT_OG_IMAGE}
       />
-      <div className="bg-page min-h-screen">
+      <div className="bg-page">
       <div className="bg-content">
         <div className="layout-container max-w-6xl mx-auto section-spacing-y">
         {/* Header */}

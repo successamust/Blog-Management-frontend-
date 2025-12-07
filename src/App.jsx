@@ -40,6 +40,7 @@ const TagPage = lazy(() => import('./pages/TagPage'));
 const NewsletterArchive = lazy(() => import('./pages/NewsletterArchive'));
 const PreviewRedirect = lazy(() => import('./pages/PreviewRedirect'));
 const Portfolio = lazy(() => import('./pages/Portfolio'));
+const WriteButtonDemo = lazy(() => import('./pages/WriteButtonDemo'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -84,10 +85,10 @@ function AppContent() {
   return (
     <ErrorBoundary>
       <SkipToContent />
-      <div className="min-h-screen bg-page flex flex-col">
+      <div className="bg-page flex flex-col" style={{ minHeight: '100vh', height: 'auto' }}>
         <ReadingProgress />
         <Header />
-        <main id="main-content" className="flex-1" tabIndex={-1}>
+        <main id="main-content" className="flex-1" style={{ minHeight: 0 }} tabIndex={-1}>
           <ErrorBoundary>
             <Suspense fallback={<PageLoader />}>
               <AnimatePresence mode="wait">
@@ -108,6 +109,7 @@ function AppContent() {
                   <Route path="/newsletter/archive" element={<PageTransition><NewsletterArchive /></PageTransition>} />
                   <Route path="/search" element={<PageTransition><Search /></PageTransition>} />
                   <Route path="/portfolio" element={<PageTransition><Portfolio /></PageTransition>} />
+                  <Route path="/write-button-demo" element={<PageTransition><WriteButtonDemo /></PageTransition>} />
                   {/* Preview route - handles /preview/posts/:slug in development */}
                   <Route path="/preview/posts/:slug" element={<PreviewRedirect />} />
                   

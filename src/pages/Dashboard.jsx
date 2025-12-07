@@ -505,7 +505,7 @@ const Dashboard = () => {
   return (
     <>
       {seoNode}
-      <div className="bg-page min-h-screen">
+      <div className="bg-page">
     <div className="layout-container-wide py-8">
       {/* Header */}
       <motion.div

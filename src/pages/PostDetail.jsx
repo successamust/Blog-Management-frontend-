@@ -1126,7 +1126,7 @@ const PostDetail = () => {
         canonicalUrl={post ? `${(typeof window !== 'undefined' && window.location?.origin) || 'https://www.nexusblog.xyz'}/posts/${post.slug || post._id}` : undefined}
       />
       <ReadingProgress />
-      <div className="bg-page min-h-screen">
+      <div className="bg-page">
       <div className="layout-container-wide py-6 sm:py-8">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
         {/* Main Content */}

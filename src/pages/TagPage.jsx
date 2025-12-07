@@ -79,7 +79,7 @@ const TagPage = () => {
         description={`Browse all posts tagged with ${decodedTag} on Nexus`}
         url={`/tags/${tag}`}
       />
-      <div className="bg-page min-h-screen">
+      <div className="bg-page">
         <div className="layout-container-wide py-6 sm:py-8">
           {/* Header */}
           <motion.div

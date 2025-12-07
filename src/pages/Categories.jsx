@@ -88,7 +88,7 @@ const Categories = () => {
         url="/categories"
         image={DEFAULT_OG_IMAGE}
       />
-      <div className="bg-page min-h-screen">
+      <div className="bg-page">
       <div className="bg-content">
         <div className="layout-container-wide py-8">
       {/* Header */}

@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
-  LogOut, 
   Menu, 
   X,
-  LayoutDashboard,
   UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -14,20 +12,43 @@ import BrandWordmark from '../common/BrandWordmark';
 import NotificationCenter from '../common/NotificationCenter';
 import ThemeToggle from '../common/ThemeToggle';
 import LanguageSwitcher from '../common/LanguageSwitcher';
+import WriteButton from '../common/WriteButton';
+import ProfileDropdown from '../common/ProfileDropdown';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { user, isAuthenticated, logout, isAdmin } = useAuth();
+  const [showSearch, setShowSearch] = useState(false);
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const searchRef = useRef(null);
   
   const canApplyForAuthor = isAuthenticated && user?.role !== 'author' && user?.role !== 'admin';
+  const isAuthorOrAdmin = isAuthenticated && (user?.role === 'author' || user?.role === 'admin');
+
+  // Close search when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSearch(false);
+      }
+    };
+
+    if (showSearch) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSearch]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
       setSearchQuery('');
+      setShowSearch(false);
     }
   };
 
@@ -36,9 +57,10 @@ const Header = () => {
     navigate('/');
   };
 
+
   return (
     <header className="bg-[var(--surface-bg)] sticky top-0 z-50 border-b border-[var(--border-subtle)]" style={{ boxShadow: '0 2px 10px var(--shadow-default)' }}>
-      <div className="w-full px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 relative" style={{ position: 'relative' }}>
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center group">
             <motion.img
@@ -50,116 +72,68 @@ const Header = () => {
             />
           </Link>
 
-          <form onSubmit={handleSearch} className="hidden md:block flex-1 max-w-md mx-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search articles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-sm bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--text-primary)] focus:border-transparent transition-all placeholder:text-[var(--text-muted)]"
-              />
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-4 lg:gap-6">
+            {/* Navigation Links */}
+            <div className="flex items-center gap-3 lg:gap-4">
+              <Link
+                to="/posts"
+                className="text-sm font-medium text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
+              >
+                Posts
+              </Link>
+              <Link
+                to="/categories"
+                className="text-sm font-medium text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
+              >
+                Categories
+              </Link>
             </div>
-          </form>
 
-          <nav className="hidden md:flex items-center space-x-2">
-            <Link
-              to="/"
-              className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !w-auto transition-all duration-200 hover:scale-105"
-            >
-              Home
-            </Link>
-            <Link
-              to="/posts"
-              className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !w-auto transition-all duration-200 hover:scale-105"
-            >
-              Posts
-            </Link>
-            <Link
-              to="/categories"
-              className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !w-auto transition-all duration-200 hover:scale-105"
-            >
-              Categories
-            </Link>
+            {/* Vertical Separator */}
+            {isAuthenticated && (
+              <div className="h-6 w-px bg-[var(--border-subtle)]" />
+            )}
 
             {isAuthenticated ? (
-              <div className="flex items-center space-x-2 ml-2 pl-2 border-l border-[var(--border-subtle)]">
-                <LanguageSwitcher />
-                <ThemeToggle />
-                <NotificationCenter />
-                {isAdmin() && (
+              <>
+                {/* Primary Action - Write Button */}
+                {isAuthorOrAdmin && (
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Link
-                      to="/admin"
-                      className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !w-auto transition-all duration-200"
-                      title="Admin Dashboard"
+                    <WriteButton
+                      as={Link}
+                      to="/admin/posts/create"
                     >
-                      <LayoutDashboard className="w-4 h-4" />
-                    </Link>
+                      Write.
+                    </WriteButton>
                   </motion.div>
                 )}
-                {canApplyForAuthor && (
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Link
-                      to="/dashboard?tab=author"
-                      className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !w-auto transition-all duration-200"
-                      title="Become Author"
-                    >
-                      <UserCheck className="w-4 h-4" />
-                      <span>Become Author</span>
-                    </Link>
-                  </motion.div>
-                )}
-                <Link to="/dashboard?tab=settings">
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
+
+                {/* Utilities Group */}
+                <div className="flex items-center gap-2">
+                  <motion.button
+                    onClick={() => setShowSearch(!showSearch)}
+                    whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="relative"
+                    className="p-2 rounded-lg hover:bg-[var(--surface-subtle)] transition-colors"
+                    title="Search"
+                    aria-label="Search"
                   >
-                    {user?.profilePicture || user?.avatar ? (
-                      <>
-                        <img
-                          src={user.profilePicture || user.avatar}
-                          alt={user?.username || 'User'}
-                          className="w-8 h-8 rounded-full object-cover border-2 border-[var(--border-subtle)] cursor-pointer hover:ring-2 hover:ring-[var(--border-subtle)] transition-all"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            if (e.target.nextSibling) {
-                              e.target.nextSibling.style.display = 'flex';
-                            }
-                          }}
-                        />
-                        <div 
-                          className="w-8 h-8 rounded-full bg-[var(--text-primary)] flex items-center justify-center text-white text-xs font-semibold cursor-pointer hover:ring-2 hover:ring-[var(--border-subtle)] transition-all hidden"
-                        >
-                          {user?.username?.charAt(0).toUpperCase() || 'U'}
-                        </div>
-                      </>
-                    ) : (
-                      <div 
-                        className="w-8 h-8 rounded-full bg-[var(--text-primary)] flex items-center justify-center text-white text-xs font-semibold cursor-pointer hover:ring-2 hover:ring-[var(--border-subtle)] transition-all"
-                      >
-                        {user?.username?.charAt(0).toUpperCase() || 'U'}
-                      </div>
-                    )}
-                  </motion.div>
-                </Link>
-                <motion.button
-                  onClick={handleLogout}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="btn btn-ghost text-[var(--text-primary)] hover:text-red-600 hover:bg-red-50 !w-auto transition-all duration-200"
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
-                </motion.button>
-              </div>
+                    <Search className="w-5 h-5 text-[var(--text-secondary)]" />
+                  </motion.button>
+                  <NotificationCenter />
+                </div>
+
+                {/* Profile Dropdown */}
+                <div className="pl-2 border-l border-[var(--border-subtle)]">
+                  <ProfileDropdown />
+                </div>
+              </>
             ) : (
-              <div className="flex items-center space-x-2 ml-2">
+              <div className="flex items-center gap-3">
                 <Link
                   to="/login"
-                  className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !w-auto transition-all duration-200 hover:scale-105"
+                  className="text-sm font-medium text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
                 >
                   Login
                 </Link>
@@ -174,6 +148,43 @@ const Header = () => {
               </div>
             )}
           </nav>
+
+          {/* Search Overlay */}
+          <AnimatePresence>
+            {showSearch && (
+              <motion.div
+                ref={searchRef}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="hidden md:block absolute top-full left-0 right-0 bg-[var(--surface-bg)] border-b border-[var(--border-subtle)] p-4 z-40 shadow-lg"
+                style={{ position: 'absolute' }}
+              >
+                <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-5 h-5" />
+                    <input
+                      type="text"
+                      placeholder="Search articles..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      autoFocus
+                      className="w-full pl-10 pr-12 py-3 text-sm bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all placeholder:text-[var(--text-muted)]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSearch(false)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                      aria-label="Close search"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <motion.button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -221,24 +232,17 @@ const Header = () => {
               <ThemeToggle className="p-2 rounded-lg bg-[var(--surface-subtle)]" />
             </div>
             
-            <div className="flex flex-col space-y-1">
-              <Link
-                to="/"
-                className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !justify-start text-left transition-all duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Home
-              </Link>
+            <div className="flex flex-col space-y-1 px-2">
               <Link
                 to="/posts"
-                className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !justify-start text-left transition-all duration-200"
+                className="px-3 py-2.5 text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-lg transition-all duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Posts
               </Link>
               <Link
                 to="/categories"
-                className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !justify-start text-left transition-all duration-200"
+                className="px-3 py-2.5 text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-lg transition-all duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Categories
@@ -246,10 +250,22 @@ const Header = () => {
               
               {isAuthenticated ? (
                 <>
+                  {isAuthorOrAdmin && (
+                    <div className="my-2">
+                      <WriteButton
+                        as={Link}
+                        to="/admin/posts/create"
+                        className="!w-auto !px-4 !py-2.5"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Write.
+                      </WriteButton>
+                    </div>
+                  )}
                   {isAdmin() && (
                     <Link
                       to="/admin"
-                      className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !justify-start text-left transition-all duration-200"
+                      className="px-3 py-2.5 text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-lg transition-all duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Admin Dashboard
@@ -257,7 +273,7 @@ const Header = () => {
                   )}
                   <Link
                     to="/dashboard"
-                    className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !justify-start text-left transition-all duration-200"
+                    className="px-3 py-2.5 text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-lg transition-all duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     My Dashboard
@@ -265,7 +281,7 @@ const Header = () => {
                   {canApplyForAuthor && (
                     <Link
                       to="/dashboard?tab=author"
-                      className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !justify-start text-left transition-all duration-200"
+                      className="px-3 py-2.5 text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-lg transition-all duration-200 flex items-center gap-2"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <UserCheck className="w-4 h-4" />
@@ -277,7 +293,7 @@ const Header = () => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
-                    className="btn btn-ghost text-left text-[var(--text-primary)] hover:text-red-600 hover:bg-red-50 !justify-start transition-all duration-200"
+                    className="px-3 py-2.5 text-left text-[var(--text-primary)] hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
                   >
                     Logout
                   </button>
@@ -286,14 +302,14 @@ const Header = () => {
                 <>
                   <Link
                     to="/login"
-                    className="btn btn-ghost text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] !justify-start text-left transition-all duration-200"
+                    className="px-3 py-2.5 text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-lg transition-all duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Login
                   </Link>
                   <Link
                     to="/register"
-                    className="btn btn-primary !justify-start text-left"
+                    className="px-3 py-2.5 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-all duration-200 text-center"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Sign Up

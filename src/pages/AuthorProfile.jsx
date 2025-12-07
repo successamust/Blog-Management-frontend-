@@ -286,7 +286,7 @@ const AuthorProfile = () => {
         description={authorBio || `Read articles by ${authorName} on Nexus`}
         url={`/authors/${username}`}
       />
-      <div className="bg-page min-h-screen">
+      <div className="bg-page">
         <div className="layout-container-wide py-6 sm:py-8">
           {/* Back Button */}
           <Link

@@ -64,7 +64,7 @@ const Admin = () => {
         url={seoUrl}
         image={DEFAULT_OG_IMAGE}
       />
-      <div className="bg-page min-h-screen">
+      <div className="bg-page">
     <div className="layout-container-wide py-8">
       {/* Header */}
       <div className="mb-8">

@@ -467,7 +467,7 @@ const Home = () => {
           url="/"
           image={DEFAULT_OG_IMAGE}
         />
-        <div className="bg-page min-h-screen">
+        <div className="bg-page">
           <section className="border-b border-[var(--border-subtle)]">
             <div className="layout-container section-hero-spacing-y">
               <motion.div
@@ -541,7 +541,7 @@ const Home = () => {
         url="/"
         image={DEFAULT_OG_IMAGE}
       />
-      <div className="bg-page min-h-screen">
+      <div className="bg-page">
       {/* Minimal Hero Section - Medium/Substack Style */}
       <section className="border-b border-[var(--border-subtle)]">
         <div className="layout-container section-hero-spacing-y">

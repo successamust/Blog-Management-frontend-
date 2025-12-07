@@ -260,7 +260,7 @@ const CategoryPosts = () => {
         image={seoImage}
         type="website"
       />
-      <div className="bg-page min-h-screen">
+      <div className="bg-page">
       <div className="bg-content">
         <div className="layout-container section-spacing-y">
         {/* Category Header */}

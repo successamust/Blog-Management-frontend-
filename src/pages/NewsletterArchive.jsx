@@ -45,7 +45,7 @@ const NewsletterArchive = () => {
         description="Browse past newsletters from Nexus"
         url="/newsletter/archive"
       />
-      <div className="bg-page min-h-screen">
+      <div className="bg-page">
         <div className="layout-container-wide py-6 sm:py-8">
           <Link
             to="/"
