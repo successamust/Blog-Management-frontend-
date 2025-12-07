@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, Edit, Tag, Folder, Archive, CheckSquare, Square } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -9,6 +9,16 @@ const BulkOperations = ({ selectedPosts, onBulkDelete, onBulkUpdate, categories 
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('published');
+
+  // Reset status to default when no posts are selected
+  useEffect(() => {
+    if (selectedPosts.length === 0) {
+      setSelectedStatus('published');
+      setShowStatusModal(false);
+      setShowCategoryModal(false);
+      setShowMenu(false);
+    }
+  }, [selectedPosts.length]);
 
   const handleBulkDelete = () => {
     if (window.confirm(`Are you sure you want to delete ${selectedPosts.length} post(s)?`)) {
@@ -29,24 +39,27 @@ const BulkOperations = ({ selectedPosts, onBulkDelete, onBulkUpdate, categories 
   };
 
   const handleBulkStatus = () => {
-    // Explicitly handle status to ensure draft status is properly saved
-    const status = selectedStatus || 'draft';
+    // Use selectedStatus, defaulting to 'published' if not set (matching initial state)
+    const status = selectedStatus || 'published';
     const updates = { 
       status: status,
       isPublished: status === 'published'
     };
     if (selectedStatus === 'scheduled') {
-      // For scheduled, we'd need a date picker - for now just set as draft
       updates.status = 'scheduled';
       updates.isPublished = false;
     } else if (selectedStatus === 'draft') {
       updates.status = 'draft';
       updates.isPublished = false;
+    } else if (selectedStatus === 'published') {
+      updates.status = 'published';
+      updates.isPublished = true;
     }
     onBulkUpdate(selectedPosts, updates);
     setShowStatusModal(false);
     setShowMenu(false);
-    toast.success(`Updated ${selectedPosts.length} post(s)`);
+    setSelectedStatus('published'); // Reset to default after update
+    toast.success(`Updated ${selectedPosts.length} post(s) to ${status}`);
   };
 
   if (selectedPosts.length === 0) return null;
@@ -158,7 +171,13 @@ const BulkOperations = ({ selectedPosts, onBulkDelete, onBulkUpdate, categories 
               <button onClick={handleBulkStatus} className="btn btn-primary flex-1">
                 Update
               </button>
-              <button onClick={() => setShowStatusModal(false)} className="btn btn-outline">
+              <button 
+                onClick={() => {
+                  setShowStatusModal(false);
+                  setSelectedStatus('published'); // Reset to default on cancel
+                }} 
+                className="btn btn-outline"
+              >
                 Cancel
               </button>
             </div>

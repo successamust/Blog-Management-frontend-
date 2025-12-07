@@ -19,6 +19,32 @@ const NewsletterManagement = () => {
     content: '',
   });
 
+  // Get the site URL for absolute image paths in emails
+  const getSiteUrl = () => {
+    if (typeof window !== 'undefined') {
+      return import.meta.env?.VITE_SITE_URL || window.location.origin;
+    }
+    return import.meta.env?.VITE_SITE_URL || 'https://www.nexusblog.xyz';
+  };
+
+  // Wrap newsletter content with OG image header
+  const wrapEmailContent = (content) => {
+    const siteUrl = getSiteUrl();
+    const ogImageUrl = `${siteUrl}/email-assets/nexus-og-image.png`;
+    
+    const imageHeader = `
+      <div style="text-align: center; margin-bottom: 24px;">
+        <img 
+          src="${ogImageUrl}" 
+          alt="Nexus Blog" 
+          style="max-width: 100%; height: auto; display: block; margin: 0 auto;"
+        />
+      </div>
+    `;
+    
+    return imageHeader + content;
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -101,9 +127,12 @@ const NewsletterManagement = () => {
     setSending(true);
 
     try {
+      // Wrap content with OG image header for emails
+      const emailContent = wrapEmailContent(sendFormData.content);
+      
       await adminAPI.sendNewsletter({
         subject: sendFormData.subject.trim(),
-        content: sendFormData.content,
+        content: emailContent,
       });
       toast.success('Newsletter sent successfully');
       setSendFormData({ subject: '', content: '' });
@@ -222,7 +251,7 @@ const NewsletterManagement = () => {
               <div className="border border-[var(--border-subtle)] rounded-xl overflow-hidden">
                 {previewMode ? (
                   <div className="prose max-w-none p-6 bg-[var(--surface-bg)]" dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(sendFormData.content || '<p class="text-[var(--text-muted)]">No content yet.</p>', {
+                    __html: DOMPurify.sanitize(wrapEmailContent(sendFormData.content || '<p class="text-[var(--text-muted)]">No content yet.</p>'), {
                       ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'video', 'div', 'span', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'],
                       ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel'],
                     }),

@@ -262,6 +262,28 @@ const PostManagement = () => {
       
       const newFeaturedStatus = !currentFeaturedStatus;
       
+      // Validation: Limit featured posts to 2 (matching home page display)
+      if (newFeaturedStatus) {
+        // Count currently featured posts (excluding the current post being toggled)
+        const currentlyFeaturedCount = posts.filter(post => {
+          const postId = post._id || post.id;
+          const isFeatured = normalizeIsFeatured(post.isFeatured);
+          // Don't count the current post if it's already featured (we're about to unmark it)
+          return isFeatured && postId !== sanitizedPostId;
+        }).length;
+        
+        if (currentlyFeaturedCount >= 2) {
+          toast.error('You can only have 2 featured posts at a time. Please unmark another featured post first.');
+          // Remove from toggling set since we're returning early
+          setTogglingFeatured(prev => {
+            const next = new Set(prev);
+            next.delete(sanitizedPostId);
+            return next;
+          });
+          return;
+        }
+      }
+      
       // Find the post in the current posts array to get basic info
       const postFromList = posts.find(p => (p._id || p.id) === sanitizedPostId);
       
@@ -342,12 +364,24 @@ const PostManagement = () => {
       }
       
       
+      // Optimistically update local state first for instant UI feedback
+      setPosts(prevPosts => prevPosts.map(post => {
+        const postId = post._id || post.id;
+        if (postId === sanitizedPostId) {
+          return { ...post, isFeatured: newFeaturedStatus };
+        }
+        return post;
+      }));
+      
       // Send the complete update data to satisfy backend validation
       await postsAPI.update(sanitizedPostId, updateData);
       
       toast.success(newFeaturedStatus ? 'Post marked as featured' : 'Post unmarked as featured');
+      
+      // Clear all post-related cache to ensure home page and other pages get fresh data
+      // But don't reload the entire posts list - we've already updated the state
       clearCache('/posts');
-      fetchPosts();
+      clearCache(''); // Clear all cache to ensure featured posts update everywhere
     } catch (error) {
       // Security: Don't expose internal error details in production
       const errorResponse = error.response || {};
@@ -402,31 +436,23 @@ const PostManagement = () => {
       
       toast.error(errorMessage);
       
+      // Revert optimistic update on error
+      setPosts(prevPosts => prevPosts.map(post => {
+        const postId = post._id || post.id;
+        if (postId === sanitizedPostId) {
+          return { ...post, isFeatured: currentFeaturedStatus }; // Revert to original state
+        }
+        return post;
+      }));
+      
       // Log error details only in development
       if (import.meta.env.DEV) {
-        const post = posts.find(p => (p._id || p.id) === sanitizedPostId);
-        
-        // Log the error message prominently
-        console.error('═══════════════════════════════════════════════════════════');
-        console.error('🚨 [handleToggleFeatured] ERROR DETAILS');
-        console.error('═══════════════════════════════════════════════════════════');
-        console.error('Error Message:', error.message);
-        console.error('Response Status:', errorResponse.status, errorResponse.statusText);
-        console.error('Error Data:', errorData);
-        console.error('Error Data (JSON):', JSON.stringify(errorData, null, 2));
-        console.error('Extracted Message:', extractedMessage);
-        console.error('Post ID:', sanitizedPostId);
-        console.error('Post Found:', !!post);
-        if (post) {
-          console.error('Post Title:', post.title);
-          console.error('Post Status:', post.status);
-          console.error('Post isPublished:', post.isPublished);
-          console.error('Post hasContent:', !!post.content, 'Length:', post.content?.length || 0);
-        }
-        console.error('═══════════════════════════════════════════════════════════');
-        
-        // Also log the full error response
-        console.error('[handleToggleFeatured] Full Error Response Object:', error.response);
+        console.error('[handleToggleFeatured] Error:', {
+          postId: sanitizedPostId,
+          status: errorResponse.status,
+          message: extractedMessage || error.message,
+          errorData,
+        });
       }
     } finally {
       // Remove from toggling set regardless of success or failure
@@ -668,12 +694,14 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
                         type="checkbox"
                         checked={selectedPosts.length === posts.length && posts.length > 0}
                         onChange={(e) => {
+                          e.stopPropagation(); // Prevent event bubbling
                           if (e.target.checked) {
                             setSelectedPosts(posts.map(p => p._id || p.id));
                           } else {
                             setSelectedPosts([]);
                           }
                         }}
+                        onClick={(e) => e.stopPropagation()} // Also prevent on click
                         className="rounded border-[var(--border-subtle)] text-[var(--accent)] focus:ring-[var(--accent)]"
                       />
                     </th>
@@ -704,6 +732,7 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
                             type="checkbox"
                             checked={selectedPosts.includes(post._id || post.id)}
                             onChange={(e) => {
+                              e.stopPropagation(); // Prevent event bubbling
                               const postId = post._id || post.id;
                               if (e.target.checked) {
                                 setSelectedPosts([...selectedPosts, postId]);
@@ -711,6 +740,7 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
                                 setSelectedPosts(selectedPosts.filter(id => id !== postId));
                               }
                             }}
+                            onClick={(e) => e.stopPropagation()} // Also prevent on click
                             className="rounded border-[var(--border-subtle)] text-[var(--accent)] focus:ring-[var(--accent)]"
                           />
                         </td>
