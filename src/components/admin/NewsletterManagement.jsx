@@ -27,22 +27,81 @@ const NewsletterManagement = () => {
     return import.meta.env?.VITE_SITE_URL || 'https://www.nexusblog.xyz';
   };
 
-  // Wrap newsletter content with OG image header
-  const wrapEmailContent = (content) => {
+  // Wrap newsletter content with full email template
+  const wrapEmailContent = (content, subject = '') => {
     const siteUrl = getSiteUrl();
+    const logoUrl = `${siteUrl}/email-assets/nexus-logo-email.png`;
     const ogImageUrl = `${siteUrl}/email-assets/nexus-og-image.png`;
     
-    const imageHeader = `
-      <div style="text-align: center; margin-bottom: 24px;">
-        <img 
-          src="${ogImageUrl}" 
-          alt="Nexus Blog" 
-          style="max-width: 100%; height: auto; display: block; margin: 0 auto;"
-        />
-      </div>
+    // Extract title from content if not provided separately
+    const titleMatch = content.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/i);
+    const emailTitle = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '') : subject || 'Latest from Nexus';
+    
+    const emailTemplate = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${emailTitle}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff;">
+    <tr>
+      <td align="center" style="padding: 0;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <!-- Header Section with Dark Green Background -->
+          <tr>
+            <td style="background-color: #1A8917; padding: 40px 20px; text-align: center;">
+              <!-- Logo -->
+              <div style="margin-bottom: 20px;">
+                <img 
+                  src="${logoUrl}" 
+                  alt="NEXOS" 
+                  width="200"
+                  height="auto"
+                  style="max-width: 200px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;"
+                />
+              </div>
+              <!-- Tagline -->
+              <p style="margin: 0 0 20px 0; color: #ffffff; font-size: 14px; font-weight: 400; letter-spacing: 0.5px;">
+                Connect. Create. Discover.
+              </p>
+              <!-- Main Title -->
+              <h1 style="margin: 0 0 10px 0; color: #ffffff; font-size: 28px; font-weight: bold; line-height: 1.3; text-align: center;">
+                ${emailTitle}
+              </h1>
+              <!-- Subtitle -->
+              <p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 300; opacity: 0.9;">
+                Fresh from the Nexus community
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Body Section -->
+          <tr>
+            <td style="background-color: #ffffff; padding: 40px 30px;">
+              ${content}
+            </td>
+          </tr>
+          
+          <!-- Footer Section -->
+          <tr>
+            <td style="background-color: #ffffff; padding: 30px 30px 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0; color: #475569; font-size: 12px; line-height: 1.5;">
+                © 2025 Nexus · Stories Worth Sharing
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
     `;
     
-    return imageHeader + content;
+    return emailTemplate.trim();
   };
 
   useEffect(() => {
@@ -127,12 +186,10 @@ const NewsletterManagement = () => {
     setSending(true);
 
     try {
-      // Wrap content with OG image header for emails
-      const emailContent = wrapEmailContent(sendFormData.content);
-      
+      // Send only the content body - backend will wrap it in email template
       await adminAPI.sendNewsletter({
         subject: sendFormData.subject.trim(),
-        content: emailContent,
+        content: sendFormData.content,
       });
       toast.success('Newsletter sent successfully');
       setSendFormData({ subject: '', content: '' });
@@ -251,9 +308,9 @@ const NewsletterManagement = () => {
               <div className="border border-[var(--border-subtle)] rounded-xl overflow-hidden">
                 {previewMode ? (
                   <div className="prose max-w-none p-6 bg-[var(--surface-bg)]" dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(wrapEmailContent(sendFormData.content || '<p class="text-[var(--text-muted)]">No content yet.</p>'), {
-                      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'video', 'div', 'span', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'],
-                      ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel'],
+                    __html: DOMPurify.sanitize(wrapEmailContent(sendFormData.content || '<p class="text-[var(--text-muted)]">No content yet.</p>', sendFormData.subject), {
+                      ALLOWED_TAGS: ['html', 'head', 'body', 'meta', 'title', 'p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'video', 'div', 'span', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'style'],
+                      ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel', 'charset', 'name', 'content', 'width', 'cellspacing', 'cellpadding', 'border', 'role', 'onerror'],
                     }),
                   }} />
                 ) : (
