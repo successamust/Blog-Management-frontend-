@@ -42,9 +42,11 @@ import {
   SiWhatsapp
 } from 'react-icons/si';
 import Seo from '../components/common/Seo';
+import { useTheme } from '../context/ThemeContext';
 
 const Portfolio = () => {
   const { scrollYProgress } = useScroll();
+  const { theme, setTheme } = useTheme();
   const heroRef = useRef(null);
   const skillsRef = useRef(null);
   const projectsRef = useRef(null);
@@ -59,6 +61,15 @@ const Portfolio = () => {
   const [orbSize, setOrbSize] = useState(400);
   const [orbOffset, setOrbOffset] = useState(200);
   
+  // Default to dark mode for this page when no user preference is stored
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = localStorage.getItem('theme');
+    if (!saved && theme !== 'dark') {
+      setTheme('dark');
+    }
+  }, [theme, setTheme]);
+
   useEffect(() => {
     // Initialize mouse position to center of screen
     const initPosition = () => {

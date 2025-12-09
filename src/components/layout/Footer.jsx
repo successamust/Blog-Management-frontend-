@@ -10,7 +10,7 @@ const Footer = () => {
             <img
               src="/nexus-logo-footer.svg"
               alt="Nexus"
-              className="h-8 sm:h-10 md:h-12 w-auto"
+              className="logo-theme-aware h-8 sm:h-10 md:h-12 w-auto"
             />
           </Link>
           <p className="text-xs sm:text-sm text-muted">Connect. Create. Discover.</p>
