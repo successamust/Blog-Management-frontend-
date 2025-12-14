@@ -102,18 +102,30 @@ const isCrawler = (userAgent, headers = {}) => {
   if (!userAgent) return false;
   const ua = userAgent.toLowerCase();
 
-  // Check for common crawler user agents
+  // Check for common crawler user agents (more comprehensive)
   const crawlers = [
     'facebookexternalhit', 'facebot', 'twitterbot', 'linkedinbot',
     'whatsapp', 'slackbot', 'applebot', 'googlebot', 'bingbot',
     'yandexbot', 'pinterest', 'redditbot', 'skypeuripreview',
     'telegrambot', 'discordbot', 'slurp', 'duckduckbot', 'baiduspider',
     'ia_archiver', 'slack', 'discord', 'skype', 'metainspector', 'facebookcatalog',
-    'opengraph', 'linkpreview', 'bot', 'crawler', 'spider'
+    'opengraph', 'linkpreview', 'bot', 'crawler', 'spider', 'fetch',
+    'preview', 'social', 'embed', 'share'
   ];
 
-  // Check user agent
+  // Check user agent for crawler keywords
   if (crawlers.some(crawler => ua.includes(crawler.toLowerCase()))) {
+    return true;
+  }
+
+  // Check for specific social media patterns
+  const socialPatterns = [
+    /facebook/i, /twitter/i, /linkedin/i, /whatsapp/i, /telegram/i,
+    /discord/i, /slack/i, /pinterest/i, /instagram/i, /tiktok/i,
+    /snapchat/i, /reddit/i, /tumblr/i, /weibo/i, /vk/i
+  ];
+
+  if (socialPatterns.some(pattern => pattern.test(ua))) {
     return true;
   }
 
@@ -121,8 +133,9 @@ const isCrawler = (userAgent, headers = {}) => {
   const crawlerHeaders = [
     headers['x-purpose'] === 'preview',
     headers['x-requested-with'] === 'XMLHttpRequest' && ua.includes('bot'),
-    headers['accept'] && headers['accept'].includes('text/html') && ua.includes('bot'),
-    headers['user-agent'] && headers['user-agent'].includes('bot')
+    headers['accept'] && headers['accept'].includes('text/html') && (ua.includes('bot') || ua.includes('crawler')),
+    headers['user-agent'] && (headers['user-agent'].includes('bot') || headers['user-agent'].includes('crawler')),
+    headers['referer'] && (headers['referer'].includes('facebook.com') || headers['referer'].includes('twitter.com') || headers['referer'].includes('linkedin.com'))
   ];
 
   return crawlerHeaders.some(Boolean);
@@ -135,10 +148,31 @@ const handler = async (req, res) => {
     const userAgent = req.headers['user-agent'] || '';
     const headers = req.headers || {};
 
+    console.log('[social-preview] Request details:', {
+      slug: slugValue,
+      userAgent: userAgent.substring(0, 200), // Truncate for readability
+      isCrawler: isCrawler(userAgent, headers),
+      headers: {
+        'x-purpose': headers['x-purpose'],
+        'x-requested-with': headers['x-requested-with'],
+        'accept': headers['accept']?.substring(0, 100),
+        'referer': headers['referer']?.substring(0, 100)
+      }
+    });
+
     if (!slugValue) {
+      console.log('[social-preview] Missing slug parameter');
       res.status(400).send('Missing slug');
       return;
     }
+
+    // URL decode the slug in case it contains encoded characters
+    const decodedSlug = decodeURIComponent(slugValue);
+    console.log('[social-preview] Slug processing:', {
+      original: slugValue,
+      decoded: decodedSlug,
+      changed: slugValue !== decodedSlug
+    });
 
     // Set timeout for post fetching (10 seconds)
     const fetchTimeout = new Promise((_, reject) =>
@@ -147,12 +181,12 @@ const handler = async (req, res) => {
 
     let post;
     try {
-      post = await Promise.race([fetchPostBySlug(slugValue), fetchTimeout]);
+      post = await Promise.race([fetchPostBySlug(decodedSlug), fetchTimeout]);
     } catch (fetchError) {
       console.error('[social-preview] Error fetching post:', fetchError);
       // If fetch fails or times out, redirect to post page for browsers
       if (!isCrawler(userAgent, headers)) {
-        const postPath = `/posts/${slugValue}`;
+        const postPath = `/posts/${decodedSlug}`;
         const canonicalUrl = `${DEFAULT_SITE_URL}${postPath}`;
         res.redirect(302, canonicalUrl);
         return;
@@ -179,7 +213,7 @@ const handler = async (req, res) => {
       return;
     }
 
-    const postPath = `/posts/${post.slug || slugValue}`;
+    const postPath = `/posts/${post.slug || decodedSlug}`;
     const canonicalUrl = `${DEFAULT_SITE_URL}${postPath}`;
 
     // For regular browsers (not crawlers), redirect immediately to the actual post
@@ -242,9 +276,13 @@ const handler = async (req, res) => {
     const imageUrl = toAbsoluteUrl(imageSource);
     const validatedImageUrl = imageUrl && imageUrl.startsWith('http') ? imageUrl : FALLBACK_IMAGE;
 
-    console.log('[social-preview] Image processing:', {
+    console.log('[social-preview] Processing post:', {
+      requestedSlug: slugValue,
+      decodedSlug: decodedSlug,
+      actualSlug: post.slug,
+      title: post.title,
+      hasContent: !!post.content,
       imageSource,
-      rawImageUrl: imageUrl,
       validatedImageUrl,
       usingFallbackImage: validatedImageUrl === FALLBACK_IMAGE
     });
@@ -331,7 +369,7 @@ const handler = async (req, res) => {
       // For browsers, redirect to the post page even on error
       if (!isCrawler(userAgent, headers)) {
         try {
-          const postPath = `/posts/${slugValue}`;
+          const postPath = `/posts/${decodedSlug}`;
           const canonicalUrl = `${DEFAULT_SITE_URL}${postPath}`;
           res.redirect(302, canonicalUrl);
           return;
