@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/preview/posts/(.*)",
-      "destination": "/api/social-preview?slug=$1"
+      "destination": "/api/social-preview/$1"
     },
     {
       "source": "/favicon.ico",
