@@ -59,13 +59,38 @@ const fetchPostBySlug = async (slug) => {
     },
   });
 
+  console.log('[social-preview] Fetch response status:', response.status, response.statusText);
+
   if (!response.ok) {
     const body = await response.text();
+    console.error('[social-preview] API error response:', { status: response.status, body });
     throw new Error(`Post fetch failed (${response.status}) -> ${body}`);
   }
 
   const payload = await response.json();
-  return payload?.post || payload?.data || payload;
+  console.log('[social-preview] Raw API response:', {
+    url,
+    payloadKeys: Object.keys(payload),
+    hasPost: !!payload?.post,
+    hasData: !!payload?.data,
+    payloadType: typeof payload,
+    isArray: Array.isArray(payload),
+    fullPayload: JSON.stringify(payload).slice(0, 500) + '...'
+  });
+
+  const post = payload?.post || payload?.data || payload;
+  console.log('[social-preview] Extracted post:', {
+    postType: typeof post,
+    isNull: post === null,
+    isUndefined: post === undefined,
+    postKeys: post && typeof post === 'object' ? Object.keys(post) : [],
+    title: post?.title,
+    hasContent: !!post?.content,
+    contentType: typeof post?.content,
+    fullPost: post ? JSON.stringify(post).slice(0, 300) + '...' : 'null/undefined'
+  });
+
+  return post;
 };
 
 const isCrawler = (userAgent, headers = {}) => {
@@ -132,8 +157,20 @@ const handler = async (req, res) => {
       return;
     }
 
-    if (!post) {
+    if (!post || typeof post !== 'object') {
+      console.error('[social-preview] Invalid post data:', { post, type: typeof post });
       res.status(404).send('Post not found');
+      return;
+    }
+
+    // Additional validation - check if post has basic required properties
+    if (!post._id && !post.id && !post.slug) {
+      console.error('[social-preview] Post missing required identifiers:', {
+        hasId: !!post._id || !!post.id,
+        hasSlug: !!post.slug,
+        postKeys: Object.keys(post)
+      });
+      res.status(404).send('Post data incomplete');
       return;
     }
 
@@ -147,14 +184,37 @@ const handler = async (req, res) => {
     }
     
     // For crawlers, generate the preview HTML with meta tags
-    const title = escapeHtml(post.title ? `${post.title} | Nexus` : 'Nexus - Connect. Create. Discover.');
+    console.log('[social-preview] Starting HTML generation for crawler');
+    const rawTitle = post.title;
+    const rawExcerpt = post.excerpt;
+    const rawSummary = post.summary;
+    const rawMetaDescription = post.metaDescription;
+    const rawContent = post.content;
+    const contentPreview = rawContent ? stripHtml(rawContent).slice(0, 180) : null;
+
+    console.log('[social-preview] Content extraction:', {
+      rawTitle,
+      rawExcerpt,
+      rawSummary,
+      rawMetaDescription,
+      contentLength: rawContent?.length,
+      contentPreview
+    });
+
+    const title = escapeHtml(rawTitle ? `${rawTitle} | Nexus` : 'Nexus - Connect. Create. Discover.');
     const description = escapeHtml(
-      post.excerpt ||
-        post.summary ||
-        post.metaDescription ||
-        stripHtml(post.content).slice(0, 180) ||
+      rawExcerpt ||
+        rawSummary ||
+        rawMetaDescription ||
+        contentPreview ||
         FALLBACK_DESCRIPTION
     );
+
+    console.log('[social-preview] Final values:', {
+      title,
+      description,
+      usingFallback: description === FALLBACK_DESCRIPTION
+    });
     
     // Try multiple possible image field names (most common first)
     const imageSource = post.featuredImage ||
@@ -177,15 +237,41 @@ const handler = async (req, res) => {
     const imageUrl = toAbsoluteUrl(imageSource);
     
     // Log for debugging (remove in production if needed)
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[social-preview] Post data:', {
-        slug: slugValue,
-        title: post.title,
-        hasFeaturedImage: !!post.featuredImage,
-        imageSource,
-        imageUrl,
-      });
-    }
+    console.log('[social-preview] Post data:', {
+      slug: slugValue,
+      title: post.title,
+      excerpt: post.excerpt,
+      summary: post.summary,
+      metaDescription: post.metaDescription,
+      contentLength: post.content?.length,
+      hasFeaturedImage: !!post.featuredImage,
+      allImageFields: {
+        featuredImage: post.featuredImage,
+        featured_image: post.featured_image,
+        coverImage: post.coverImage,
+        cover_image: post.cover_image,
+        image: post.image,
+        thumbnail: post.thumbnail,
+        banner: post.banner,
+        bannerImage: post.bannerImage,
+        banner_image: post.banner_image,
+        heroImage: post.heroImage,
+        hero_image: post.hero_image,
+        headerImage: post.headerImage,
+        header_image: post.header_image,
+        mainImage: post.mainImage,
+        main_image: post.main_image,
+        images: post.images,
+        media: post.media
+      },
+      imageSource,
+      imageUrl,
+      author: post.author,
+      tags: post.tags,
+      publishedAt: post.publishedAt,
+      updatedAt: post.updatedAt,
+      rawKeys: Object.keys(post)
+    });
 
     const html = `<!doctype html>
 <html lang="en">
