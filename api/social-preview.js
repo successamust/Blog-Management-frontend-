@@ -14,14 +14,19 @@ const FALLBACK_DESCRIPTION =
 const FALLBACK_IMAGE = `${DEFAULT_SITE_URL}/email-assets/nexus-og-image.png?v=v2`;
 const CACHE_TTL = Number(process.env.PREVIEW_CACHE_TTL || 600);
 
-const escapeHtml = (value = '') =>
-  value
+const escapeHtml = (value = '') => {
+  if (!value) return '';
+  return value
     .toString()
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/'/g, '&#39;')
+    .replace(/\n/g, ' ')
+    .replace(/\r/g, ' ')
+    .trim();
+};
 
 const stripHtml = (value = '') => value.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 
@@ -235,42 +240,13 @@ const handler = async (req, res) => {
                        (post.images && post.images[0]) ||
                        (post.media && post.media[0] && post.media[0].url);
     const imageUrl = toAbsoluteUrl(imageSource);
-    
-    // Log for debugging (remove in production if needed)
-    console.log('[social-preview] Post data:', {
-      slug: slugValue,
-      title: post.title,
-      excerpt: post.excerpt,
-      summary: post.summary,
-      metaDescription: post.metaDescription,
-      contentLength: post.content?.length,
-      hasFeaturedImage: !!post.featuredImage,
-      allImageFields: {
-        featuredImage: post.featuredImage,
-        featured_image: post.featured_image,
-        coverImage: post.coverImage,
-        cover_image: post.cover_image,
-        image: post.image,
-        thumbnail: post.thumbnail,
-        banner: post.banner,
-        bannerImage: post.bannerImage,
-        banner_image: post.banner_image,
-        heroImage: post.heroImage,
-        hero_image: post.hero_image,
-        headerImage: post.headerImage,
-        header_image: post.header_image,
-        mainImage: post.mainImage,
-        main_image: post.main_image,
-        images: post.images,
-        media: post.media
-      },
+    const validatedImageUrl = imageUrl && imageUrl.startsWith('http') ? imageUrl : FALLBACK_IMAGE;
+
+    console.log('[social-preview] Image processing:', {
       imageSource,
-      imageUrl,
-      author: post.author,
-      tags: post.tags,
-      publishedAt: post.publishedAt,
-      updatedAt: post.updatedAt,
-      rawKeys: Object.keys(post)
+      rawImageUrl: imageUrl,
+      validatedImageUrl,
+      usingFallbackImage: validatedImageUrl === FALLBACK_IMAGE
     });
 
     const html = `<!doctype html>
@@ -288,8 +264,8 @@ const handler = async (req, res) => {
     <meta property="og:url" content="${canonicalUrl}" />
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
-    <meta property="og:image" content="${imageUrl}" />
-    <meta property="og:image:secure_url" content="${imageUrl}" />
+    <meta property="og:image" content="${validatedImageUrl}" />
+    <meta property="og:image:secure_url" content="${validatedImageUrl}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/png" />
@@ -305,7 +281,7 @@ const handler = async (req, res) => {
     <meta name="twitter:url" content="${canonicalUrl}" />
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${description}" />
-    <meta name="twitter:image" content="${imageUrl}" />
+    <meta name="twitter:image" content="${validatedImageUrl}" />
     <meta name="twitter:image:alt" content="${title}" />
 
     <!-- Additional meta tags -->
