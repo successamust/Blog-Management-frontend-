@@ -1,11 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
-import { 
-  Github, 
-  Linkedin, 
-  Mail, 
-  Phone, 
-  MapPin, 
+import {
+  Github,
+  Linkedin,
+  Mail,
+  Phone,
+  MapPin,
   ExternalLink,
   Calendar,
   GraduationCap,
@@ -25,14 +25,15 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  X
+  X,
+  Globe
 } from 'lucide-react';
-import { 
-  SiNodedotjs, 
-  SiExpress, 
-  SiMongodb, 
-  SiPostgresql, 
-  SiMysql, 
+import {
+  SiNodedotjs,
+  SiExpress,
+  SiMongodb,
+  SiPostgresql,
+  SiMysql,
   SiRedis,
   SiJavascript,
   SiJest,
@@ -52,15 +53,15 @@ const Portfolio = () => {
   const projectsRef = useRef(null);
   const experienceRef = useRef(null);
   const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
-  const [mousePosition, setMousePosition] = useState({ 
-    x: typeof window !== 'undefined' ? window.innerWidth / 2 : 0, 
-    y: typeof window !== 'undefined' ? window.innerHeight / 2 : 0 
+  const [mousePosition, setMousePosition] = useState({
+    x: typeof window !== 'undefined' ? window.innerWidth / 2 : 0,
+    y: typeof window !== 'undefined' ? window.innerHeight / 2 : 0
   });
   const [imageError, setImageError] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [orbSize, setOrbSize] = useState(400);
   const [orbOffset, setOrbOffset] = useState(200);
-  
+
   // Default to dark mode for this page when no user preference is stored
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -73,13 +74,13 @@ const Portfolio = () => {
   useEffect(() => {
     // Initialize mouse position to center of screen
     const initPosition = () => {
-      setMousePosition({ 
-        x: window.innerWidth / 2, 
-        y: window.innerHeight / 2 
+      setMousePosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2
       });
     };
     initPosition();
-    
+
     // Handle window resize and update orb size
     const handleResize = () => {
       const width = window.innerWidth;
@@ -93,18 +94,18 @@ const Portfolio = () => {
         setOrbSize(800);
         setOrbOffset(400);
       }
-      
+
       setMousePosition(prev => ({
         x: Math.min(prev.x, window.innerWidth),
         y: Math.min(prev.y, window.innerHeight)
       }));
     };
-    
+
     handleResize(); // Initial calculation
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  
+
   const heroInView = useInView(heroRef, { once: true, amount: 0.3 });
   const skillsInView = useInView(skillsRef, { once: true, amount: 0.2 });
   const projectsInView = useInView(projectsRef, { once: true, amount: 0.2 });
@@ -127,11 +128,22 @@ const Portfolio = () => {
 
   const projects = [
     {
+      name: 'ReForge',
+      description: 'Rebuild Your Muscle. Regain Your Control. A 30-Day coding challenge platform designed to help developers rebuild their engineering intuition through pure, rigorous practice. No shortcuts. No prompts. Just you and the code.',
+      tech: ['Node.js', 'Express.js', 'MongoDB', 'Redis', 'Docker', 'BullMQ', 'React', 'Vite'],
+      github: 'https://github.com/successamust/ReForge',
+      live: 'https://reforge-xi.vercel.app/',
+      image: '/reforge-preview.png',
+      featured: true,
+      highlights: ['30-Day Algorithm Challenge', 'Isolated Execution Environments', 'Anti-Cheat Mechanics', 'Real-time Progress Tracking']
+    },
+    {
       name: 'Nexus Blog',
       description: 'A modern blog and newsletter PWA with full backend API, authentication, newsletter management, and real-time features. Complete full-stack solution with optimized performance.',
       tech: ['Node.js', 'Express.js', 'MongoDB', 'JWT', 'React', 'Vite'],
       github: 'https://github.com/successamust/Blog-Management',
       live: 'https://nexusblog.xyz',
+      image: '/nexus-og-image.svg', // Using existing asset as placeholder
       featured: true,
       highlights: ['RESTful API', 'Authentication', 'Newsletter System', 'Real-time Updates']
     },
@@ -141,6 +153,7 @@ const Portfolio = () => {
       tech: ['React', 'Vite', 'Tailwind CSS', 'Framer Motion', 'React Query'],
       github: 'https://github.com/successamust/Blog-Management-frontend-',
       live: 'https://nexusblog.xyz',
+      image: '/nexus-og-image.svg', // Using existing asset as placeholder
       featured: true,
       highlights: ['PWA', 'Dark Mode', 'Responsive Design', 'Performance Optimized']
     },
@@ -149,6 +162,7 @@ const Portfolio = () => {
       description: 'Transportation booking API with integrated payment services, real-time tracking, and event scheduling. Scalable backend solution for transportation management.',
       tech: ['Node.js', 'Express.js', 'MongoDB', 'Paystack', 'WebSockets'],
       github: 'https://github.com/successamust/RideSync',
+      image: null, // No image for this one yet
       featured: true,
       highlights: ['Payment Integration', 'Real-time Tracking', 'Booking System', 'Event Scheduling']
     }
@@ -205,11 +219,11 @@ const Portfolio = () => {
 
   return (
     <>
-      <Seo 
+      <Seo
         title="Fatai Salami - Backend Engineer"
         description="Backend Engineer specializing in Node.js, Express.js, MongoDB, and microservices. Building scalable APIs and robust backend systems."
       />
-      <div 
+      <div
         className="min-h-screen bg-page relative overflow-hidden"
         onMouseMove={(e) => {
           const { clientX, clientY } = e;
@@ -217,9 +231,9 @@ const Portfolio = () => {
         }}
         onMouseLeave={() => {
           // Reset to center when mouse leaves
-          setMousePosition({ 
-            x: window.innerWidth / 2, 
-            y: window.innerHeight / 2 
+          setMousePosition({
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2
           });
         }}
         onTouchMove={(e) => {
@@ -233,7 +247,7 @@ const Portfolio = () => {
         {/* Background Design */}
         <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
           {/* Single Gradient Orb - Mouse Interactive (Light theme) */}
-          <motion.div 
+          <motion.div
             className="absolute rounded-full"
             style={{
               width: `${orbSize}px`,
@@ -244,9 +258,9 @@ const Portfolio = () => {
               transform: `translate(${mousePosition.x - orbOffset}px, ${mousePosition.y - orbOffset}px)`,
             }}
           ></motion.div>
-          
+
           {/* Single Gradient Orb - Mouse Interactive (Dark theme) */}
-          <motion.div 
+          <motion.div
             className="dark:block hidden absolute rounded-full"
             style={{
               width: `${orbSize}px`,
@@ -258,7 +272,7 @@ const Portfolio = () => {
             }}
           ></motion.div>
         </div>
-        
+
         {/* Header Navigation */}
         <header className="fixed top-0 left-0 right-0 z-50 bg-page/80 backdrop-blur-md h-16">
           <div className="absolute bottom-0 left-0 right-0 h-px bg-[var(--border-subtle)]"></div>
@@ -294,7 +308,7 @@ const Portfolio = () => {
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[var(--accent)] group-hover:w-full transition-all duration-300"></span>
                 </button>
               </nav>
-              
+
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -305,7 +319,7 @@ const Portfolio = () => {
               </button>
             </div>
           </div>
-          
+
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
             <motion.div
@@ -357,7 +371,7 @@ const Portfolio = () => {
         </header>
 
         {/* Hero Section */}
-        <section 
+        <section
           ref={heroRef}
           className="relative pt-24 pb-12 sm:pt-28 sm:pb-16 md:pt-32 md:pb-20 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center"
         >
@@ -380,7 +394,7 @@ const Portfolio = () => {
                   <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--accent)] flex-shrink-0" />
                   <span>Lagos, Nigeria</span>
                 </div>
-                
+
                 {/* Action Buttons */}
                 <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-2 sm:pt-4">
                   <motion.a
@@ -394,7 +408,7 @@ const Portfolio = () => {
                     <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
                     Resume
                   </motion.a>
-                  
+
                   <div className="flex gap-2 sm:gap-3">
                     <motion.a
                       href="https://www.github.com/successamust"
@@ -449,8 +463,8 @@ const Portfolio = () => {
                 <div className="relative">
                   <div className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 rounded-full overflow-hidden shadow-2xl ring-4 ring-[var(--accent)]/20">
                     {!imageError ? (
-                      <img 
-                        src="/profile-photo.jpg" 
+                      <img
+                        src="/profile-photo.jpg"
                         alt="Fatai Salami"
                         className="w-full h-full object-cover"
                         loading="lazy"
@@ -466,16 +480,16 @@ const Portfolio = () => {
                   </div>
                   <motion.div
                     className="absolute -bottom-2 -right-2 sm:-bottom-4 sm:-right-4 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-[var(--accent)] rounded-full flex items-center justify-center shadow-xl"
-                    animate={{ 
+                    animate={{
                       rotate: [0, 10, -10, 0],
                     }}
-                    transition={{ 
+                    transition={{
                       duration: 4,
                       repeat: Infinity,
                       repeatType: "reverse"
                     }}
                   >
-                    <Code2 className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-white" />
+                    <Server className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-white" />
                   </motion.div>
                 </div>
               </motion.div>
@@ -498,17 +512,17 @@ const Portfolio = () => {
               </div>
               <div className="space-y-3 sm:space-y-4 text-text-secondary text-base sm:text-lg leading-relaxed">
                 <p>
-                  Backend Engineer with hands-on experience building scalable RESTful APIs using Node.js, Express.js, 
-                  and MongoDB. I specialize in designing robust backend systems, optimizing database performance, and 
+                  Backend Engineer with hands-on experience building scalable RESTful APIs using Node.js, Express.js,
+                  and MongoDB. I specialize in designing robust backend systems, optimizing database performance, and
                   implementing secure authentication systems.
                 </p>
                 <p>
-                  Currently working on production-grade applications serving thousands of users, with a focus on 
-                  microservices architecture, API optimization, and system scalability. Always exploring new technologies 
+                  Currently working on production-grade applications serving thousands of users, with a focus on
+                  microservices architecture, API optimization, and system scalability. Always exploring new technologies
                   to enhance my backend engineering skills.
                 </p>
                 <p>
-                  Passionate about building efficient systems, solving complex problems, and contributing to open-source 
+                  Passionate about building efficient systems, solving complex problems, and contributing to open-source
                   projects. I enjoy working with development teams and mentoring junior developers to help them grow.
                 </p>
               </div>
@@ -550,73 +564,106 @@ const Portfolio = () => {
                     initial={{ opacity: 0, x: 100 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -100 }}
-                    transition={{ 
+                    transition={{
                       duration: 0.5,
                       ease: [0.25, 0.1, 0.25, 1]
                     }}
                     className="p-4 sm:p-6 md:p-8 lg:p-12"
                   >
-                    <div className="grid md:grid-cols-2 gap-6 sm:gap-8 items-center">
+                    <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 items-center">
+                      {/* Project Image - New Addition */}
+                      <div className="relative group rounded-xl overflow-hidden shadow-2xl border border-border-subtle aspect-video lg:aspect-auto lg:h-full">
+                        {projects[currentProjectIndex].image ? (
+                          <>
+                            <img
+                              src={projects[currentProjectIndex].image}
+                              alt={projects[currentProjectIndex].name}
+                              className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+                          </>
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-[var(--accent)]/20 to-surface-bg flex items-center justify-center">
+                            <Code2 className="w-20 h-20 text-[var(--accent)] opacity-50" />
+                          </div>
+                        )}
+
+                        {/* Featured Badge */}
+                        {projects[currentProjectIndex].featured && (
+                          <div className="absolute top-4 left-4 px-3 py-1 bg-[var(--accent)] text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1">
+                            <Zap className="w-3 h-3 fill-current" />
+                            FEATURED
+                          </div>
+                        )}
+                      </div>
+
                       {/* Project Info */}
                       <div>
-                        <h3 className="text-2xl sm:text-3xl font-bold text-text-primary mb-3 sm:mb-4">
-                          {projects[currentProjectIndex].name}
-                        </h3>
-                        <p className="text-text-secondary leading-relaxed mb-4 sm:mb-6 text-base sm:text-lg">
-                          {projects[currentProjectIndex].description}
-                        </p>
-                        
-                        <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
+                        {/* Title & Description */}
+                        <div className="mb-6">
+                          <h3 className="text-2xl sm:text-3xl font-bold text-text-primary mb-3">
+                            {projects[currentProjectIndex].name}
+                          </h3>
+                          <p className="text-text-secondary leading-relaxed text-base sm:text-lg">
+                            {projects[currentProjectIndex].description}
+                          </p>
+                        </div>
+
+                        {/* Technologies */}
+                        <div className="flex flex-wrap gap-2 mb-6">
                           {projects[currentProjectIndex].tech.map(tech => (
                             <span
                               key={tech}
-                              className="px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-[var(--accent-soft)] text-[var(--accent)] rounded-lg font-medium hover:bg-[var(--accent)] hover:text-white transition-all cursor-default"
+                              className="px-3 py-1.5 text-xs sm:text-sm bg-[var(--accent-soft)] text-[var(--accent)] rounded-lg font-medium border border-[var(--accent)]/10"
                             >
                               {tech}
                             </span>
                           ))}
                         </div>
-                        
-                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+
+                        {/* Actions */}
+                        <div className="flex flex-wrap gap-3 sm:gap-4 mb-6">
                           <motion.a
                             href={projects[currentProjectIndex].github}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-surface-subtle text-text-secondary rounded-lg hover:bg-[var(--accent)] hover:text-white transition-all font-semibold text-sm sm:text-base min-h-[44px]"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center gap-2 px-6 py-3 bg-surface-subtle text-text-secondary rounded-lg hover:text-white hover:bg-[#24292e] transition-all font-semibold"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                           >
-                            <Github className="w-4 h-4 sm:w-5 sm:h-5" />
-                            View Code
+                            <Github className="w-5 h-5" />
+                            Source Code
                           </motion.a>
                           {projects[currentProjectIndex].live && (
                             <motion.a
                               href={projects[currentProjectIndex].live}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors font-semibold shadow-lg text-sm sm:text-base min-h-[44px]"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
+                              className="flex items-center gap-2 px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-all font-semibold shadow-lg shadow-[var(--accent)]/25"
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
                             >
-                              <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
-                              Visit Site
+                              <Globe className="w-5 h-5" />
+                              Live Demo
                             </motion.a>
                           )}
                         </div>
-                      </div>
-                      
-                      {/* Project Highlights */}
-                      <div className="space-y-3 sm:space-y-4">
-                        <h4 className="text-base sm:text-lg font-semibold text-text-primary mb-3 sm:mb-4">Key Features</h4>
-                        {projects[currentProjectIndex].highlights.map((feature, idx) => (
-                          <div 
-                            key={idx} 
-                            className="flex items-center gap-3 p-3 sm:p-4 bg-surface-subtle rounded-lg hover:bg-[var(--accent-soft)] transition-colors"
-                          >
-                            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--accent)] flex-shrink-0" />
-                            <span className="text-text-secondary text-sm sm:text-base">{feature}</span>
+
+                        {/* Highlights */}
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3">Key Highlights</h4>
+                          <div className="grid sm:grid-cols-2 gap-3">
+                            {projects[currentProjectIndex].highlights.map((feature, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-start gap-2 text-sm text-text-secondary"
+                              >
+                                <CheckCircle2 className="w-4 h-4 text-[var(--accent)] mt-0.5 flex-shrink-0" />
+                                <span>{feature}</span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -645,9 +692,8 @@ const Portfolio = () => {
                   <button
                     key={idx}
                     onClick={() => setCurrentProjectIndex(idx)}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      idx === currentProjectIndex ? 'bg-[var(--accent)] w-8' : 'bg-border-subtle hover:bg-[var(--accent)]/50'
-                    }`}
+                    className={`w-2 h-2 rounded-full transition-all ${idx === currentProjectIndex ? 'bg-[var(--accent)] w-8' : 'bg-border-subtle hover:bg-[var(--accent)]/50'
+                      }`}
                     aria-label={`Go to project ${idx + 1}`}
                   />
                 ))}
