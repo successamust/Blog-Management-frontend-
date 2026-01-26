@@ -644,7 +644,7 @@ const Portfolio = () => {
                               whileTap={{ scale: 0.98 }}
                             >
                               <Globe className="w-5 h-5" />
-                              Live Demo
+                              Live Product
                             </motion.a>
                           )}
                         </div>
