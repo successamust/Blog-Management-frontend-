@@ -21,12 +21,19 @@ const getEnvVar = (key) => {
 };
 
 // Priority: Process Env > .env file > Hardcoded fallback (Production)
-let BASE_URL = process.env.VITE_API_BASE_URL || getEnvVar('VITE_API_BASE_URL') || 'https://blog-management-sx5c.onrender.com/v1';
+const BASE_URL = process.env.VITE_API_BASE_URL || getEnvVar('VITE_API_BASE_URL') || 'https://blog-management-sx5c.onrender.com/v1';
 
-// Ensure BASE_URL is absolute for Node.js requests
-if (BASE_URL.startsWith('/')) {
-    // If it's a relative path lik /v1, we fallback to production URL for pre-fetching
-    BASE_URL = 'https://blog-management-sx5c.onrender.com' + BASE_URL;
+async function fetchWithRetry(url, params = {}, retries = 6, backoff = 15000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            console.log(`[Prefetch] Attempt ${i + 1}: Fetching ${url}...`);
+            return await axios.get(url, { params, timeout: 30000 });
+        } catch (error) {
+            if (i === retries - 1) throw error;
+            console.log(`[Prefetch] Backend might be sleeping. Waiting ${backoff / 1000}s before retry...`);
+            await new Promise(resolve => setTimeout(resolve, backoff));
+        }
+    }
 }
 
 async function prefetch() {
@@ -34,9 +41,9 @@ async function prefetch() {
 
     try {
         const [postsRes, categoriesRes, tagsRes] = await Promise.all([
-            axios.get(`${BASE_URL}/posts`, { params: { page: 1, limit: 10 } }),
-            axios.get(`${BASE_URL}/categories`),
-            axios.get(`${BASE_URL}/search/tags/popular`)
+            fetchWithRetry(`${BASE_URL}/posts`, { page: 1, limit: 10 }),
+            fetchWithRetry(`${BASE_URL}/categories`),
+            fetchWithRetry(`${BASE_URL}/search/tags/popular`)
         ]);
 
         const data = {

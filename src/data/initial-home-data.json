@@ -1,7 +1,787 @@
 {
-  "posts": [],
-  "categories": [],
-  "popularTags": [],
-  "prefetchedAt": null,
-  "error": "connect ECONNREFUSED ::1:4848"
+  "posts": [
+    {
+      "_id": "693f03b78d92c9934e474d98",
+      "title": "The Case for \"Un-Resolutions\": Why Quitting is Better Than Starting",
+      "excerpt": "Every December, the pressure mounts to add new goals to our already overflowing plates. But real progress requires space, not clutter. Before you commit to more, discover why the smartest move for 2026 is defining your \"un-resolutions\", and learning what to quit.",
+      "author": {
+        "_id": "690e4f024f115b821dd25417",
+        "username": "dkong",
+        "email": "unendinggrace19@gmail.com",
+        "authorProfile": {
+          "expertise": []
+        },
+        "bio": "",
+        "profilePicture": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764233046/blog/wvv75c6wq3ama9j4bgk9.jpg"
+      },
+      "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1765737385/blog/qujlbavq2dpi5na39qm3.png",
+      "isPublished": true,
+      "status": "published",
+      "publishedAt": "2025-12-14T18:36:39.155Z",
+      "scheduledAt": null,
+      "isFeatured": true,
+      "category": {
+        "_id": "6928890e46589147f9c4a8aa",
+        "slug": "productivity-lifestyle",
+        "color": "#EF4444",
+        "name": "Productivity & Lifestyle"
+      },
+      "tags": [
+        "productivity",
+        "personal-growth",
+        "new-year-resolutions",
+        "essentialism",
+        "burnout-prevention",
+        "2026-goals"
+      ],
+      "likes": [
+        "69281db6dd66ee1cb132fc4e"
+      ],
+      "dislikes": [],
+      "shareCount": 16,
+      "viewCount": 106,
+      "slug": "the-case-for-un-resolutions-why-quitting-is-better-than-starting",
+      "createdAt": "2025-12-14T18:36:39.157Z"
+    },
+    {
+      "_id": "6934bae44ffb709b7851e644",
+      "title": "The Power Of Micro-Habits Transforming Your Life One Small Step At A Time",
+      "excerpt": "Micro habits are tiny, consistent actions that, over time, lead to profound personal transformation.",
+      "author": {
+        "_id": "690e4f024f115b821dd25417",
+        "username": "dkong",
+        "email": "unendinggrace19@gmail.com",
+        "authorProfile": {
+          "expertise": []
+        },
+        "bio": "",
+        "profilePicture": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764233046/blog/wvv75c6wq3ama9j4bgk9.jpg"
+      },
+      "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1765062653/blog/apabjhewzwwsrbcill6b.png",
+      "isPublished": true,
+      "status": "published",
+      "publishedAt": "2025-12-06T23:23:16.692Z",
+      "scheduledAt": null,
+      "isFeatured": false,
+      "category": {
+        "_id": "6928890e46589147f9c4a8aa",
+        "slug": "productivity-lifestyle",
+        "color": "#EF4444",
+        "name": "Productivity & Lifestyle"
+      },
+      "tags": [],
+      "likes": [],
+      "dislikes": [],
+      "shareCount": 2,
+      "viewCount": 70,
+      "slug": "the-power-of-micro-habits-transforming-your-life-one-small-step-at-a-time",
+      "createdAt": "2025-12-06T23:23:16.694Z"
+    },
+    {
+      "_id": "6931e676a1d3d339fb51eadc",
+      "title": "FATE OR COINCIDENCE?",
+      "excerpt": "How does life really work? \n\nFate or coincidence, who will live long enough to find out?",
+      "author": {
+        "_id": "6931e01da1d3d339fb51e8ea",
+        "username": "BEN",
+        "email": "mosbabang@gmail.com",
+        "profilePicture": "",
+        "bio": "",
+        "authorProfile": {
+          "expertise": [
+            "Technology",
+            "Cybersecurity",
+            "PR",
+            "Life."
+          ]
+        }
+      },
+      "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764877932/blog/qgqbq1pudas0flbojgff.jpg",
+      "isPublished": true,
+      "publishedAt": "2025-12-04T19:52:22.081Z",
+      "scheduledAt": null,
+      "category": {
+        "_id": "6928890e46589147f9c4a895",
+        "slug": "personal-development",
+        "color": "#2563EB",
+        "name": "Personal Development"
+      },
+      "tags": [],
+      "likes": [
+        "690e4f024f115b821dd25417",
+        "69281db6dd66ee1cb132fc4e"
+      ],
+      "dislikes": [],
+      "shareCount": 8,
+      "viewCount": 61,
+      "slug": "fate-or-coincidence",
+      "createdAt": "2025-12-04T19:52:22.083Z",
+      "isFeatured": true,
+      "status": "published"
+    },
+    {
+      "_id": "6931dba2a1d3d339fb51e7d1",
+      "title": "The Ultimate Digital Teammate: Inside Anduril’s AI-Powered EagleEye Helmet",
+      "excerpt": "Anduril Industries unveiled EagleEye some months back, a revolutionary modular helmet system that integrates AI, mixed reality, and mission command directly into the soldier's visor.",
+      "author": {
+        "_id": "690e4f024f115b821dd25417",
+        "username": "dkong",
+        "email": "unendinggrace19@gmail.com",
+        "authorProfile": {
+          "expertise": []
+        },
+        "bio": "",
+        "profilePicture": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764233046/blog/wvv75c6wq3ama9j4bgk9.jpg"
+      },
+      "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764875039/blog/uibyjmfvrgjqqe5s6sam.jpg",
+      "isPublished": true,
+      "publishedAt": "2025-12-04T19:06:10.201Z",
+      "scheduledAt": null,
+      "category": {
+        "_id": "6928890e46589147f9c4a899",
+        "slug": "ai-data-science",
+        "color": "#14B8A6",
+        "name": "AI & Data Science"
+      },
+      "tags": [],
+      "likes": [
+        "6931e01da1d3d339fb51e8ea"
+      ],
+      "dislikes": [],
+      "shareCount": 3,
+      "viewCount": 75,
+      "slug": "the-ultimate-digital-teammate-inside-andurils-ai-powered-eagleeye-helmet",
+      "createdAt": "2025-12-04T19:06:10.208Z",
+      "isFeatured": false,
+      "status": "published"
+    },
+    {
+      "_id": "692cdb1b0f01fe049755dc4d",
+      "title": "How AI Is Reshaping Everyday Work: Embracing the Future of Collaboration, Not Replacement.",
+      "excerpt": "A practical look at how AI is transforming everyday work, what skills still matter, and how anyone can adapt without getting overwhelmed.",
+      "author": {
+        "_id": "690e4f024f115b821dd25417",
+        "username": "dkong",
+        "email": "unendinggrace19@gmail.com",
+        "authorProfile": {
+          "expertise": []
+        },
+        "bio": "",
+        "profilePicture": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764233046/blog/wvv75c6wq3ama9j4bgk9.jpg"
+      },
+      "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764551401/blog/pkn2ibt57sjxrn5cev2a.png",
+      "isPublished": true,
+      "publishedAt": "2025-12-01T01:03:03.540Z",
+      "scheduledAt": null,
+      "category": {
+        "_id": "6928890e46589147f9c4a899",
+        "slug": "ai-data-science",
+        "color": "#14B8A6",
+        "name": "AI & Data Science"
+      },
+      "tags": [],
+      "likes": [
+        "69281db6dd66ee1cb132fc4e",
+        "6931e01da1d3d339fb51e8ea"
+      ],
+      "dislikes": [],
+      "shareCount": 1,
+      "viewCount": 75,
+      "slug": "how-ai-is-reshaping-everyday-work-embracing-the-future-of-collaboration-not-replacement",
+      "createdAt": "2025-12-01T00:02:35.017Z",
+      "isFeatured": false,
+      "status": "published"
+    },
+    {
+      "_id": "692c58688b4044d68712d8a6",
+      "title": "Fixed asset disposal- Sale/Scrap in Microsoft Dynamics 365 Finance and Operations",
+      "excerpt": "In this blog, I will try explaining the Disposal process with accounting entries in Microsoft Dynamics 365 finance and operations.",
+      "author": {
+        "_id": "692c54148b4044d68712d6df",
+        "username": "Waris",
+        "email": "abdulsalamwaris@gmail.com",
+        "profilePicture": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764515184/blog/xzvhxdgbzant4cgccfre.jpg",
+        "bio": "",
+        "authorProfile": {
+          "bio": "Writer",
+          "expertise": [
+            "Consulting"
+          ]
+        }
+      },
+      "isPublished": true,
+      "publishedAt": "2025-11-30T14:44:56.206Z",
+      "scheduledAt": null,
+      "category": {
+        "_id": "6928890e46589147f9c4a893",
+        "slug": "education-learning",
+        "color": "#FBBF24",
+        "name": "Education & Learning"
+      },
+      "tags": [
+        "finance",
+        "operations",
+        "scm"
+      ],
+      "likes": [
+        "690e4f024f115b821dd25417",
+        "690fdd476a8d2b3fa6f66032",
+        "69281db6dd66ee1cb132fc4e"
+      ],
+      "dislikes": [],
+      "shareCount": 0,
+      "viewCount": 26,
+      "slug": "fixed-asset-disposal-salescrap-in-microsoft-dynamics-365-finance-and-operations",
+      "createdAt": "2025-11-30T14:44:56.207Z",
+      "featuredImage": "https://i0.wp.com/exploredynamics365home.wordpress.com/wp-content/uploads/2022/09/0-2.jpg?fit=1200%2C1161&ssl=1&resize=525%2C300",
+      "isFeatured": false,
+      "status": "published"
+    },
+    {
+      "_id": "692b62eaf3c16ecba88e5660",
+      "title": "Productivity Tips to Help Transform Your Daily Routine",
+      "excerpt": "Discover proven productivity strategies that successful people use to maximize their efficiency, manage time effectively, and achieve more in less time.",
+      "author": {
+        "_id": "690e4f024f115b821dd25417",
+        "username": "dkong",
+        "email": "unendinggrace19@gmail.com",
+        "authorProfile": {
+          "expertise": []
+        },
+        "bio": "",
+        "profilePicture": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764233046/blog/wvv75c6wq3ama9j4bgk9.jpg"
+      },
+      "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764450978/blog/tpdque9u3r8dbvtunr7u.png",
+      "isPublished": true,
+      "publishedAt": "2025-11-29T21:36:02.626Z",
+      "scheduledAt": null,
+      "category": {
+        "_id": "6928890e46589147f9c4a8aa",
+        "slug": "productivity-lifestyle",
+        "color": "#EF4444",
+        "name": "Productivity & Lifestyle"
+      },
+      "tags": [
+        "productivity",
+        "time-management",
+        "efficiency",
+        "work-life-balance",
+        "self-improvement",
+        "tips",
+        "guide"
+      ],
+      "likes": [
+        "69281db6dd66ee1cb132fc4e",
+        "690fdd476a8d2b3fa6f66032"
+      ],
+      "dislikes": [],
+      "shareCount": 7,
+      "viewCount": 635,
+      "slug": "productivity-tips-to-help-transform-your-daily-routine",
+      "createdAt": "2025-11-29T21:17:30.256Z"
+    },
+    {
+      "_id": "690ff04ed65332b25e013f98",
+      "title": "Creating My First Blog Post",
+      "excerpt": "A brief excerpt of the post",
+      "author": {
+        "_id": "690fdd476a8d2b3fa6f66032",
+        "username": "updatedusername",
+        "email": "test@example.com",
+        "authorProfile": {
+          "bio": "A future-of-work strategist and writer focused on the intersection of human creativity and technological leverage. For the past decade, I have advised companies on implementing digital tools while maintaining employee engagement and focusing on high-value human output. My background includes 5 years in product development, giving me a practical understanding of how AI is reshaping daily workflow. My work Centres on proving that the most valuable skills in the AI era are inherently human:",
+          "expertise": [
+            "Product development"
+          ]
+        },
+        "bio": "",
+        "profilePicture": ""
+      },
+      "isPublished": true,
+      "publishedAt": "2025-11-28T10:31:00.000Z",
+      "category": {
+        "_id": "690fe864d98f299f2b250e07",
+        "name": "Web development",
+        "color": "#6B7280",
+        "slug": "web-development"
+      },
+      "tags": [],
+      "likes": [
+        "690f9fce22ffa99bb09e6957",
+        "69281db6dd66ee1cb132fc4e"
+      ],
+      "dislikes": [],
+      "viewCount": 160,
+      "slug": "creating-my-first-blog-post",
+      "createdAt": "2025-11-09T01:37:18.458Z",
+      "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1762740808/blog/hzjp5b5zw41qyuamogfq.png",
+      "shareCount": 16,
+      "scheduledAt": null,
+      "status": "published",
+      "isFeatured": false
+    },
+    {
+      "_id": "6927b15e8adbdfa064cf508c",
+      "title": "UEFA Champions League Matchday 5 Review",
+      "excerpt": "This week’s Champions League action delivered big results, surprise performances, and a major shake-up in the group standings. From Arsenal’s statement win to Atalanta’s explosive comeback and Copenhagen’s first victory.",
+      "author": {
+        "_id": "690e4f024f115b821dd25417",
+        "username": "dkong",
+        "email": "unendinggrace19@gmail.com",
+        "authorProfile": {
+          "expertise": []
+        },
+        "bio": "",
+        "profilePicture": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764233046/blog/wvv75c6wq3ama9j4bgk9.jpg"
+      },
+      "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764208789/blog/w0u0gvfvcjih5wzlquru.jpg",
+      "isPublished": true,
+      "publishedAt": "2025-11-27T02:03:10.937Z",
+      "category": {
+        "_id": "6927a1329cb19fb7c53d5a3c",
+        "name": "Football",
+        "color": "#6B7280",
+        "slug": "football"
+      },
+      "tags": [
+        "football",
+        "soccer",
+        "uefachampionsleague",
+        "championsleague",
+        "ucl",
+        "footballnews",
+        "matchday5"
+      ],
+      "likes": [
+        "690e4f024f115b821dd25417",
+        "69281db6dd66ee1cb132fc4e"
+      ],
+      "dislikes": [],
+      "viewCount": 1634,
+      "slug": "uefa-champions-league-matchday-5-review",
+      "createdAt": "2025-11-27T02:03:10.944Z",
+      "shareCount": 17,
+      "isFeatured": false,
+      "status": "published"
+    },
+    {
+      "_id": "69223399d3f7745e0cc1028c",
+      "title": "State of the Crypto Market - November 22, 2025",
+      "excerpt": "After a year defined by sharp rallies, sudden reversals, and the growing weight of institutional money, the crypto market is closing out 2025 on uncertain footing. The momentum that carried Bitcoin and Ethereum to new highs has cooled, replaced by choppy price action and a tug-of-war between ETF flows and macro headlines.",
+      "author": {
+        "_id": "690e4f024f115b821dd25417",
+        "username": "dkong",
+        "email": "unendinggrace19@gmail.com",
+        "authorProfile": {
+          "expertise": []
+        },
+        "bio": "",
+        "profilePicture": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764233046/blog/wvv75c6wq3ama9j4bgk9.jpg"
+      },
+      "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1763848418/blog/rqefbe2mubeiwrlptava.webp",
+      "isPublished": true,
+      "publishedAt": "2025-11-22T22:05:13.156Z",
+      "category": {
+        "_id": "69222c7f4b2e56a7d89bb860",
+        "name": "Cryptocurrency Market Analysis",
+        "color": "#6B7280",
+        "slug": "cryptocurrency-market-analysis"
+      },
+      "tags": [
+        "btc",
+        "eth",
+        "sol",
+        "web3",
+        "crypto",
+        "bear",
+        "bull"
+      ],
+      "likes": [
+        "690e4f024f115b821dd25417",
+        "69281db6dd66ee1cb132fc4e",
+        "690fdd476a8d2b3fa6f66032",
+        "690f9fce22ffa99bb09e6957"
+      ],
+      "dislikes": [],
+      "viewCount": 454,
+      "slug": "state-of-the-crypto-market-november-22-2025",
+      "createdAt": "2025-11-22T22:05:13.157Z",
+      "shareCount": 9,
+      "isFeatured": false,
+      "status": "published"
+    }
+  ],
+  "categories": [
+    {
+      "_id": "6928890e46589147f9c4a899",
+      "slug": "ai-data-science",
+      "color": "#14B8A6",
+      "description": "Machine learning breakthroughs and data insights that mirror coverage on Towards Data Science and Google AI.",
+      "name": "AI & Data Science",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a2",
+      "slug": "automotive-mobility",
+      "color": "#2DD4BF",
+      "description": "EV news, car culture, and transportation policy similar to Top Gear, Jalopnik, and Electrek.",
+      "name": "Automotive & Mobility",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a7",
+      "slug": "business-finance",
+      "color": "#84CC16",
+      "description": "Macroeconomic analysis, company strategy, and personal finance content from Bloomberg and Harvard Business Review.",
+      "name": "Business & Finance",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a894",
+      "slug": "career-leadership",
+      "color": "#FB7185",
+      "description": "Management playbooks, career pivots, and people ops trends similar to LinkedIn Pulse and Forbes.",
+      "name": "Career & Leadership",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a8",
+      "slug": "crypto-web3",
+      "color": "#FACC15",
+      "description": "Blockchain use cases, DeFi news, and token insights inspired by CoinDesk, The Block, and Decrypt.",
+      "name": "Crypto & Web3",
+      "postCount": 0
+    },
+    {
+      "_id": "69222c7f4b2e56a7d89bb860",
+      "name": "Cryptocurrency Market Analysis",
+      "description": "Insightful breakdowns of market trends, price movements, investor behavior, and the forces shaping the digital asset landscape. ",
+      "color": "#6B7280",
+      "postCount": 0,
+      "slug": "cryptocurrency-market-analysis"
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a6",
+      "slug": "culture-society",
+      "color": "#FB7185",
+      "description": "Social commentary, identity, and civic discourse similar to The Atlantic and Vox.",
+      "name": "Culture & Society",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a89e",
+      "slug": "diy-crafts",
+      "color": "#EC4899",
+      "description": "Maker projects, upcycling, and step-by-step tutorials inspired by Instructables and A Beautiful Mess.",
+      "name": "DIY & Crafts",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a893",
+      "slug": "education-learning",
+      "color": "#FBBF24",
+      "description": "Learning science, edtech tools, and classroom innovation reflected on Edutopia and Coursera blogs.",
+      "name": "Education & Learning",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a89a",
+      "slug": "entertainment-pop-culture",
+      "color": "#84CC16",
+      "description": "Streaming launches, celebrity news, and box office analysis like Variety and Hollywood Reporter.",
+      "name": "Entertainment & Pop Culture",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a89c",
+      "slug": "fashion-beauty",
+      "color": "#F97316",
+      "description": "Runway trends, street style, and skincare tips similar to Vogue, Refinery29, and Into The Gloss.",
+      "name": "Fashion & Beauty",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8ac",
+      "slug": "fitness-nutrition",
+      "color": "#A855F7",
+      "description": "Training plans, workout science, and meal prep ideas like those on Men's Health and Women's Health.",
+      "name": "Fitness & Nutrition",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a891",
+      "slug": "food-recipes",
+      "color": "#2DD4BF",
+      "description": "Restaurant trends, chef tips, and home cooking staples similar to Bon Appetit and Serious Eats.",
+      "name": "Food & Recipes",
+      "postCount": 0
+    },
+    {
+      "_id": "6927a1329cb19fb7c53d5a3c",
+      "name": "Football",
+      "description": "Biggest stories, match reactions, standout performances, and key moments from around the football world.",
+      "color": "#6B7280",
+      "postCount": 0,
+      "slug": "football"
+    },
+    {
+      "_id": "6928890e46589147f9c4a898",
+      "slug": "gaming-esports",
+      "color": "#22C55E",
+      "description": "Game reviews, esports news, and streaming culture from IGN, Kotaku, and Polygon.",
+      "name": "Gaming & Esports",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a89f",
+      "slug": "gardening-homestead",
+      "color": "#A855F7",
+      "description": "Urban gardening, permaculture, and backyard farming content like Gardenista and The Spruce.",
+      "name": "Gardening & Homestead",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8ab",
+      "slug": "health-wellness",
+      "color": "#EC4899",
+      "description": "Holistic health trends, preventative care, and longevity research featured on Well+Good and MindBodyGreen.",
+      "name": "Health & Wellness",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a89d",
+      "slug": "home-interior-design",
+      "color": "#EF4444",
+      "description": "Home tours, decor how-tos, and organization ideas like Apartment Therapy and Architectural Digest.",
+      "name": "Home & Interior Design",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a9",
+      "slug": "marketing-growth",
+      "color": "#F97316",
+      "description": "Lifecycle marketing tactics, SEO, and brand storytelling like you find on HubSpot, Buffer, and Neil Patel.",
+      "name": "Marketing & Growth",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a88f",
+      "slug": "mental-health",
+      "color": "#6366F1",
+      "description": "Mindfulness practices, therapy resources, and burnout prevention from Calm, Headspace, and Verywell Mind.",
+      "name": "Mental Health",
+      "postCount": 0
+    },
+    {
+      "_id": "69114711f2a4ec38c48e3a07",
+      "name": "Mobile Development",
+      "description": "Mobile Development",
+      "color": "#6B7280",
+      "postCount": 0,
+      "slug": "mobile-development"
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a5",
+      "slug": "news-politics",
+      "color": "#FBBF24",
+      "description": "Policy explainers, elections, and geopolitical analysis like Axios, Politico, and The Economist.",
+      "name": "News & Politics",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a892",
+      "slug": "parenting-family",
+      "color": "#10B981",
+      "description": "Pregnancy advice, parenting wins, and family budgeting ideas like those on BabyCenter and Scary Mommy.",
+      "name": "Parenting & Family",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a895",
+      "slug": "personal-development",
+      "color": "#2563EB",
+      "description": "Goal setting, mindset shifts, and habit design inspired by James Clear, Tiny Buddha, and Farnam Street.",
+      "name": "Personal Development",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a1",
+      "slug": "pets-animals",
+      "color": "#0EA5E9",
+      "description": "Pet care tips, adoption stories, and training guides reminiscent of The Dodo and Rover.",
+      "name": "Pets & Animals",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a0",
+      "slug": "photography-videography",
+      "color": "#6366F1",
+      "description": "Gear reviews, shooting techniques, and editing workflows featured on PetaPixel and Fstoppers.",
+      "name": "Photography & Videography",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8aa",
+      "slug": "productivity-lifestyle",
+      "color": "#EF4444",
+      "description": "Habits, work-life balance, and minimalism content reminiscent of Lifehacker and Zen Habits.",
+      "name": "Productivity & Lifestyle",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a3",
+      "slug": "real-estate-investing",
+      "color": "#10B981",
+      "description": "Housing market insights, property management, and REIT analysis like BiggerPockets and Zillow.",
+      "name": "Real Estate & Investing",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a897",
+      "slug": "science-innovation",
+      "color": "#14B8A6",
+      "description": "Breakthrough research, space, and biotech summaries similar to Scientific American and Nature.",
+      "name": "Science & Innovation",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a88e",
+      "slug": "software-development",
+      "color": "#0EA5E9",
+      "description": "Programming tutorials, frameworks, and tooling guides similar to Smashing Magazine and freeCodeCamp.",
+      "name": "Software Development",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a89b",
+      "slug": "sports-outdoors",
+      "color": "#FACC15",
+      "description": "Pro sports recaps, endurance training, and outdoor gear reviews inspired by ESPN and Outside.",
+      "name": "Sports & Outdoors",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a4",
+      "slug": "startups-entrepreneurship",
+      "color": "#22C55E",
+      "description": "Founder stories, fundraising tips, and YC-style playbooks you see on IndieHackers and First Round Review.",
+      "name": "Startups & Entrepreneurship",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a896",
+      "slug": "sustainability-climate",
+      "color": "#0EA5E9",
+      "description": "Climate tech, circular economy, and ESG reporting like coverage on Grist and Treehugger.",
+      "name": "Sustainability & Climate",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a88d",
+      "slug": "technology-gadgets",
+      "color": "#2563EB",
+      "description": "Consumer tech launches, device reviews, and future trends inspired by TechCrunch, The Verge, and Wired.",
+      "name": "Technology & Gadgets",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a890",
+      "slug": "travel-adventure",
+      "color": "#0EA5E9",
+      "description": "Destination guides, itineraries, and travel hacks inspired by Lonely Planet and Conde Nast Traveler.",
+      "name": "Travel & Adventure",
+      "postCount": 0
+    },
+    {
+      "_id": "690fe864d98f299f2b250e07",
+      "name": "Web development",
+      "description": "Resources, frameworks, and best practices for building modern web applications.",
+      "color": "#6B7280",
+      "postCount": 0,
+      "slug": "web-development"
+    }
+  ],
+  "popularTags": [
+    {
+      "count": 2,
+      "name": "productivity"
+    },
+    {
+      "count": 1,
+      "name": "web3"
+    },
+    {
+      "count": 1,
+      "name": "matchday5"
+    },
+    {
+      "count": 1,
+      "name": "efficiency"
+    },
+    {
+      "count": 1,
+      "name": "programming"
+    },
+    {
+      "count": 1,
+      "name": "crypto"
+    },
+    {
+      "count": 1,
+      "name": "tech trends"
+    },
+    {
+      "count": 1,
+      "name": "tips"
+    },
+    {
+      "count": 1,
+      "name": "soccer"
+    },
+    {
+      "count": 1,
+      "name": "developer experience"
+    },
+    {
+      "count": 1,
+      "name": "finance"
+    },
+    {
+      "count": 1,
+      "name": "time-management"
+    },
+    {
+      "count": 1,
+      "name": "sveltekit"
+    },
+    {
+      "count": 1,
+      "name": "2026-goals"
+    },
+    {
+      "count": 1,
+      "name": "btc"
+    },
+    {
+      "count": 1,
+      "name": "javascript"
+    },
+    {
+      "count": 1,
+      "name": "essentialism"
+    },
+    {
+      "count": 1,
+      "name": "future of web"
+    },
+    {
+      "count": 1,
+      "name": "uefachampionsleague"
+    },
+    {
+      "count": 1,
+      "name": "ai in development"
+    }
+  ],
+  "prefetchedAt": "2026-02-02T18:14:39.570Z"
 }
