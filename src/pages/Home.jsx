@@ -331,7 +331,11 @@ const Home = () => {
 
     const fetchHomeData = async () => {
       try {
-        setLoading(true);
+        // Only show full-page loader if we don't have pre-fetched data
+        if (!postsRef.current?.length) {
+          setLoading(true);
+        }
+
         const initialPosts = await loadPostsPage(1, { reset: true });
 
         if (!isMounted) return;
@@ -681,8 +685,8 @@ const Home = () => {
                           <label
                             key={topic.value}
                             className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${selectedTopics.includes(topic.value)
-                                ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]'
-                                : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                              ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]'
+                              : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                               }`}
                           >
                             <input

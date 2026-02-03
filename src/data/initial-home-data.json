@@ -186,7 +186,7 @@
       ],
       "dislikes": [],
       "shareCount": 1,
-      "viewCount": 75,
+      "viewCount": 76,
       "slug": "how-ai-is-reshaping-everyday-work-embracing-the-future-of-collaboration-not-replacement",
       "createdAt": "2025-12-01T00:02:35.017Z",
       "isFeatured": false,
@@ -708,55 +708,7 @@
     },
     {
       "count": 1,
-      "name": "web3"
-    },
-    {
-      "count": 1,
-      "name": "matchday5"
-    },
-    {
-      "count": 1,
-      "name": "efficiency"
-    },
-    {
-      "count": 1,
-      "name": "programming"
-    },
-    {
-      "count": 1,
-      "name": "crypto"
-    },
-    {
-      "count": 1,
-      "name": "tech trends"
-    },
-    {
-      "count": 1,
-      "name": "tips"
-    },
-    {
-      "count": 1,
-      "name": "soccer"
-    },
-    {
-      "count": 1,
-      "name": "developer experience"
-    },
-    {
-      "count": 1,
-      "name": "finance"
-    },
-    {
-      "count": 1,
-      "name": "time-management"
-    },
-    {
-      "count": 1,
-      "name": "sveltekit"
-    },
-    {
-      "count": 1,
-      "name": "2026-goals"
+      "name": "clean code"
     },
     {
       "count": 1,
@@ -768,7 +720,11 @@
     },
     {
       "count": 1,
-      "name": "essentialism"
+      "name": "tips"
+    },
+    {
+      "count": 1,
+      "name": "efficiency"
     },
     {
       "count": 1,
@@ -776,12 +732,56 @@
     },
     {
       "count": 1,
-      "name": "uefachampionsleague"
+      "name": "tech trends"
+    },
+    {
+      "count": 1,
+      "name": "time-management"
+    },
+    {
+      "count": 1,
+      "name": "crypto"
+    },
+    {
+      "count": 1,
+      "name": "sveltekit"
+    },
+    {
+      "count": 1,
+      "name": "developer experience"
+    },
+    {
+      "count": 1,
+      "name": "web3"
+    },
+    {
+      "count": 1,
+      "name": "essentialism"
+    },
+    {
+      "count": 1,
+      "name": "finance"
+    },
+    {
+      "count": 1,
+      "name": "soccer"
+    },
+    {
+      "count": 1,
+      "name": "matchday5"
+    },
+    {
+      "count": 1,
+      "name": "programming"
     },
     {
       "count": 1,
       "name": "ai in development"
+    },
+    {
+      "count": 1,
+      "name": "uefachampionsleague"
     }
   ],
-  "prefetchedAt": "2026-02-02T18:14:39.570Z"
+  "prefetchedAt": "2026-02-03T01:18:17.420Z"
 }
