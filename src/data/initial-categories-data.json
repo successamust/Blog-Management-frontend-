@@ -1,0 +1,375 @@
+{
+  "categories": [
+    {
+      "_id": "6928890e46589147f9c4a899",
+      "slug": "ai-data-science",
+      "color": "#14B8A6",
+      "description": "Machine learning breakthroughs and data insights that mirror coverage on Towards Data Science and Google AI.",
+      "name": "AI & Data Science",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a2",
+      "slug": "automotive-mobility",
+      "color": "#2DD4BF",
+      "description": "EV news, car culture, and transportation policy similar to Top Gear, Jalopnik, and Electrek.",
+      "name": "Automotive & Mobility",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a7",
+      "slug": "business-finance",
+      "color": "#84CC16",
+      "description": "Macroeconomic analysis, company strategy, and personal finance content from Bloomberg and Harvard Business Review.",
+      "name": "Business & Finance",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a894",
+      "slug": "career-leadership",
+      "color": "#FB7185",
+      "description": "Management playbooks, career pivots, and people ops trends similar to LinkedIn Pulse and Forbes.",
+      "name": "Career & Leadership",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a8",
+      "slug": "crypto-web3",
+      "color": "#FACC15",
+      "description": "Blockchain use cases, DeFi news, and token insights inspired by CoinDesk, The Block, and Decrypt.",
+      "name": "Crypto & Web3",
+      "postCount": 0
+    },
+    {
+      "_id": "69222c7f4b2e56a7d89bb860",
+      "name": "Cryptocurrency Market Analysis",
+      "description": "Insightful breakdowns of market trends, price movements, investor behavior, and the forces shaping the digital asset landscape. ",
+      "color": "#6B7280",
+      "postCount": 0,
+      "slug": "cryptocurrency-market-analysis"
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a6",
+      "slug": "culture-society",
+      "color": "#FB7185",
+      "description": "Social commentary, identity, and civic discourse similar to The Atlantic and Vox.",
+      "name": "Culture & Society",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a89e",
+      "slug": "diy-crafts",
+      "color": "#EC4899",
+      "description": "Maker projects, upcycling, and step-by-step tutorials inspired by Instructables and A Beautiful Mess.",
+      "name": "DIY & Crafts",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a893",
+      "slug": "education-learning",
+      "color": "#FBBF24",
+      "description": "Learning science, edtech tools, and classroom innovation reflected on Edutopia and Coursera blogs.",
+      "name": "Education & Learning",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a89a",
+      "slug": "entertainment-pop-culture",
+      "color": "#84CC16",
+      "description": "Streaming launches, celebrity news, and box office analysis like Variety and Hollywood Reporter.",
+      "name": "Entertainment & Pop Culture",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a89c",
+      "slug": "fashion-beauty",
+      "color": "#F97316",
+      "description": "Runway trends, street style, and skincare tips similar to Vogue, Refinery29, and Into The Gloss.",
+      "name": "Fashion & Beauty",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8ac",
+      "slug": "fitness-nutrition",
+      "color": "#A855F7",
+      "description": "Training plans, workout science, and meal prep ideas like those on Men's Health and Women's Health.",
+      "name": "Fitness & Nutrition",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a891",
+      "slug": "food-recipes",
+      "color": "#2DD4BF",
+      "description": "Restaurant trends, chef tips, and home cooking staples similar to Bon Appetit and Serious Eats.",
+      "name": "Food & Recipes",
+      "postCount": 0
+    },
+    {
+      "_id": "6927a1329cb19fb7c53d5a3c",
+      "name": "Football",
+      "description": "Biggest stories, match reactions, standout performances, and key moments from around the football world.",
+      "color": "#6B7280",
+      "postCount": 0,
+      "slug": "football"
+    },
+    {
+      "_id": "6928890e46589147f9c4a898",
+      "slug": "gaming-esports",
+      "color": "#22C55E",
+      "description": "Game reviews, esports news, and streaming culture from IGN, Kotaku, and Polygon.",
+      "name": "Gaming & Esports",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a89f",
+      "slug": "gardening-homestead",
+      "color": "#A855F7",
+      "description": "Urban gardening, permaculture, and backyard farming content like Gardenista and The Spruce.",
+      "name": "Gardening & Homestead",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8ab",
+      "slug": "health-wellness",
+      "color": "#EC4899",
+      "description": "Holistic health trends, preventative care, and longevity research featured on Well+Good and MindBodyGreen.",
+      "name": "Health & Wellness",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a89d",
+      "slug": "home-interior-design",
+      "color": "#EF4444",
+      "description": "Home tours, decor how-tos, and organization ideas like Apartment Therapy and Architectural Digest.",
+      "name": "Home & Interior Design",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a9",
+      "slug": "marketing-growth",
+      "color": "#F97316",
+      "description": "Lifecycle marketing tactics, SEO, and brand storytelling like you find on HubSpot, Buffer, and Neil Patel.",
+      "name": "Marketing & Growth",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a88f",
+      "slug": "mental-health",
+      "color": "#6366F1",
+      "description": "Mindfulness practices, therapy resources, and burnout prevention from Calm, Headspace, and Verywell Mind.",
+      "name": "Mental Health",
+      "postCount": 0
+    },
+    {
+      "_id": "69114711f2a4ec38c48e3a07",
+      "name": "Mobile Development",
+      "description": "Mobile Development",
+      "color": "#6B7280",
+      "postCount": 0,
+      "slug": "mobile-development"
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a5",
+      "slug": "news-politics",
+      "color": "#FBBF24",
+      "description": "Policy explainers, elections, and geopolitical analysis like Axios, Politico, and The Economist.",
+      "name": "News & Politics",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a892",
+      "slug": "parenting-family",
+      "color": "#10B981",
+      "description": "Pregnancy advice, parenting wins, and family budgeting ideas like those on BabyCenter and Scary Mommy.",
+      "name": "Parenting & Family",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a895",
+      "slug": "personal-development",
+      "color": "#2563EB",
+      "description": "Goal setting, mindset shifts, and habit design inspired by James Clear, Tiny Buddha, and Farnam Street.",
+      "name": "Personal Development",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a1",
+      "slug": "pets-animals",
+      "color": "#0EA5E9",
+      "description": "Pet care tips, adoption stories, and training guides reminiscent of The Dodo and Rover.",
+      "name": "Pets & Animals",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a0",
+      "slug": "photography-videography",
+      "color": "#6366F1",
+      "description": "Gear reviews, shooting techniques, and editing workflows featured on PetaPixel and Fstoppers.",
+      "name": "Photography & Videography",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8aa",
+      "slug": "productivity-lifestyle",
+      "color": "#EF4444",
+      "description": "Habits, work-life balance, and minimalism content reminiscent of Lifehacker and Zen Habits.",
+      "name": "Productivity & Lifestyle",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a3",
+      "slug": "real-estate-investing",
+      "color": "#10B981",
+      "description": "Housing market insights, property management, and REIT analysis like BiggerPockets and Zillow.",
+      "name": "Real Estate & Investing",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a897",
+      "slug": "science-innovation",
+      "color": "#14B8A6",
+      "description": "Breakthrough research, space, and biotech summaries similar to Scientific American and Nature.",
+      "name": "Science & Innovation",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a88e",
+      "slug": "software-development",
+      "color": "#0EA5E9",
+      "description": "Programming tutorials, frameworks, and tooling guides similar to Smashing Magazine and freeCodeCamp.",
+      "name": "Software Development",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a89b",
+      "slug": "sports-outdoors",
+      "color": "#FACC15",
+      "description": "Pro sports recaps, endurance training, and outdoor gear reviews inspired by ESPN and Outside.",
+      "name": "Sports & Outdoors",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a8a4",
+      "slug": "startups-entrepreneurship",
+      "color": "#22C55E",
+      "description": "Founder stories, fundraising tips, and YC-style playbooks you see on IndieHackers and First Round Review.",
+      "name": "Startups & Entrepreneurship",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a896",
+      "slug": "sustainability-climate",
+      "color": "#0EA5E9",
+      "description": "Climate tech, circular economy, and ESG reporting like coverage on Grist and Treehugger.",
+      "name": "Sustainability & Climate",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a88d",
+      "slug": "technology-gadgets",
+      "color": "#2563EB",
+      "description": "Consumer tech launches, device reviews, and future trends inspired by TechCrunch, The Verge, and Wired.",
+      "name": "Technology & Gadgets",
+      "postCount": 0
+    },
+    {
+      "_id": "6928890e46589147f9c4a890",
+      "slug": "travel-adventure",
+      "color": "#0EA5E9",
+      "description": "Destination guides, itineraries, and travel hacks inspired by Lonely Planet and Conde Nast Traveler.",
+      "name": "Travel & Adventure",
+      "postCount": 0
+    },
+    {
+      "_id": "690fe864d98f299f2b250e07",
+      "name": "Web development",
+      "description": "Resources, frameworks, and best practices for building modern web applications.",
+      "color": "#6B7280",
+      "postCount": 0,
+      "slug": "web-development"
+    }
+  ],
+  "popularTags": [
+    {
+      "count": 2,
+      "name": "productivity"
+    },
+    {
+      "count": 1,
+      "name": "matchday5"
+    },
+    {
+      "count": 1,
+      "name": "bear"
+    },
+    {
+      "count": 1,
+      "name": "burnout-prevention"
+    },
+    {
+      "count": 1,
+      "name": "championsleague"
+    },
+    {
+      "count": 1,
+      "name": "tech trends"
+    },
+    {
+      "count": 1,
+      "name": "ucl"
+    },
+    {
+      "count": 1,
+      "name": "guide"
+    },
+    {
+      "count": 1,
+      "name": "footballnews"
+    },
+    {
+      "count": 1,
+      "name": "bull"
+    },
+    {
+      "count": 1,
+      "name": "next.js"
+    },
+    {
+      "count": 1,
+      "name": "self-improvement"
+    },
+    {
+      "count": 1,
+      "name": "2026-goals"
+    },
+    {
+      "count": 1,
+      "name": "eth"
+    },
+    {
+      "count": 1,
+      "name": "work-life-balance"
+    },
+    {
+      "count": 1,
+      "name": "scm"
+    },
+    {
+      "count": 1,
+      "name": "clean code"
+    },
+    {
+      "count": 1,
+      "name": "frontend"
+    },
+    {
+      "count": 1,
+      "name": "astro"
+    },
+    {
+      "count": 1,
+      "name": "sol"
+    }
+  ],
+  "prefetchedAt": "2026-02-04T09:32:58.550Z"
+}

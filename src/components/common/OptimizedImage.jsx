@@ -14,6 +14,7 @@ const OptimizedImage = ({
   fallback = null,
   onLoad,
   onError,
+  blurDataURL,
   ...props
 }) => {
   const [imageSrc, setImageSrc] = useState(null);
@@ -75,7 +76,7 @@ const OptimizedImage = ({
   // Generate responsive srcset for WebP if possible
   const generateSrcSet = (baseSrc) => {
     if (!baseSrc || typeof baseSrc !== 'string') return null;
-    
+
     // If it's an external URL or data URL, return as is
     if (baseSrc.startsWith('http') || baseSrc.startsWith('data:') || baseSrc.startsWith('//')) {
       return null;
@@ -117,8 +118,14 @@ const OptimizedImage = ({
       style={{ width, height }}
       {...props}
     >
-      {isLoading && (
-        <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse flex items-center justify-center">
+      {isLoading && blurDataURL && (
+        <div
+          className="absolute inset-0 bg-cover bg-center scale-110 blur-xl transition-opacity duration-500"
+          style={{ backgroundImage: `url(${blurDataURL})` }}
+        />
+      )}
+      {isLoading && !blurDataURL && (
+        <div className="absolute inset-0 bg-[var(--surface-subtle)] animate-pulse flex items-center justify-center">
           <ImageIcon className="w-8 h-8 text-gray-400" />
         </div>
       )}
@@ -138,9 +145,8 @@ const OptimizedImage = ({
             height={height}
             sizes={sizes}
             srcSet={srcSet || undefined}
-            className={`transition-opacity duration-300 ${
-              isLoading ? 'opacity-0' : 'opacity-100'
-            } ${className}`}
+            className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'
+              } ${className}`}
             loading={loading}
             onLoad={() => setIsLoading(false)}
             onError={() => {

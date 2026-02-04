@@ -19,8 +19,9 @@ import { useServiceWorker } from './hooks/useServiceWorker';
 import BackToTop from './components/common/BackToTop';
 import OfflineIndicator from './components/common/OfflineIndicator';
 import SecurityHandler from './components/common/SecurityHandler';
+import TopBarProgress from './components/common/TopBarProgress';
 
-// Lazy load pages for code splitting
+
 const Home = lazy(() => import('./pages/Home'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
@@ -45,37 +46,39 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 
 import ProtectedRoute from './components/common/ProtectedRoute';
 
-// Loading fallback component
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-page">
-    <Spinner size="2xl" />
-  </div>
-);
-
 import './styles/globals.css';
 
 function AppContent() {
   const location = useLocation();
   useServiceWorker();
 
-  // Track page loads
+
   React.useEffect(() => {
     const startTime = performance.now();
     const pageName = location.pathname;
-    
-    const handleLoad = () => {
+
+    const reportLoad = () => {
       const loadTime = performance.now() - startTime;
       import('./utils/performanceMonitor.js').then(({ default: perfMonitor }) => {
         perfMonitor.trackPageLoad(pageName, loadTime);
       });
     };
-    
-    // Track when page is fully loaded
+
     if (document.readyState === 'complete') {
-      handleLoad();
+      // For SPA transitions, document is already loaded.
+      // Wait for next paint to report load time.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          reportLoad();
+        });
+      });
     } else {
-      window.addEventListener('load', handleLoad);
-      return () => window.removeEventListener('load', handleLoad);
+      const handleInitialLoad = () => {
+        reportLoad();
+        window.removeEventListener('load', handleInitialLoad);
+      };
+      window.addEventListener('load', handleInitialLoad);
+      return () => window.removeEventListener('load', handleInitialLoad);
     }
   }, [location.pathname]);
 
@@ -90,7 +93,7 @@ function AppContent() {
         <Header />
         <main id="main-content" className="flex-1" style={{ minHeight: 0 }} tabIndex={-1}>
           <ErrorBoundary>
-            <Suspense fallback={<PageLoader />}>
+            <Suspense fallback={<TopBarProgress />}>
               <AnimatePresence mode="wait">
                 <Routes location={location} key={location.pathname}>
                   <Route path="/" element={<PageTransition><Home /></PageTransition>} />
@@ -110,27 +113,27 @@ function AppContent() {
                   <Route path="/search" element={<PageTransition><Search /></PageTransition>} />
                   <Route path="/portfolio" element={<PageTransition><Portfolio /></PageTransition>} />
                   <Route path="/write-button-demo" element={<PageTransition><WriteButtonDemo /></PageTransition>} />
-                  {/* Preview route - handles /preview/posts/:slug in development */}
+
                   <Route path="/preview/posts/:slug" element={<PreviewRedirect />} />
-                  
-                  <Route 
-                    path="/dashboard" 
+
+                  <Route
+                    path="/dashboard"
                     element={
                       <ProtectedRoute>
                         <PageTransition><Dashboard /></PageTransition>
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  {/* Admin routes - allow authors to access posts management */}
-                  <Route 
-                    path="/admin/*" 
+
+                  <Route
+                    path="/admin/*"
                     element={
                       <ProtectedRoute requireAuthorOrAdmin>
                         <Admin />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  
+
                   <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
                 </Routes>
               </AnimatePresence>
@@ -138,54 +141,54 @@ function AppContent() {
           </ErrorBoundary>
         </main>
         <Footer />
-      <Toaster 
-        position="top-right"
-        toastOptions={{
-          duration: 4200,
-          style: {
-            background: 'transparent',
-            boxShadow: 'none',
-            padding: 0,
-          },
-          className: `${baseToastClasses} border-l-4 border-[var(--accent)]/70`,
-          icon: (
-            <span className={`${iconBadgeClasses} bg-[var(--accent)]/20 text-[var(--accent)]`}>
-              <Info className="h-4 w-4" />
-            </span>
-          ),
-          success: {
-            duration: 3600,
-            className: `${baseToastClasses} border-l-4 border-emerald-400`,
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4200,
+            style: {
+              background: 'transparent',
+              boxShadow: 'none',
+              padding: 0,
+            },
+            className: `${baseToastClasses} border-l-4 border-[var(--accent)]/70`,
             icon: (
-              <span className={`${iconBadgeClasses} bg-emerald-100 text-emerald-600`}>
-                <CheckCircle2 className="h-4 w-4" />
+              <span className={`${iconBadgeClasses} bg-[var(--accent)]/20 text-[var(--accent)]`}>
+                <Info className="h-4 w-4" />
               </span>
             ),
-          },
-          error: {
-            duration: 4800,
-            className: `${baseToastClasses} border-l-4 border-rose-500`,
-            icon: (
-              <span className={`${iconBadgeClasses} bg-rose-100 text-rose-600`}>
-                <AlertTriangle className="h-4 w-4" />
-              </span>
-            ),
-          },
-          loading: {
-            duration: 6000,
-            className: `${baseToastClasses} border-l-4 border-amber-400`,
-            icon: (
-              <span className={`${iconBadgeClasses} bg-amber-100 text-amber-500`}>
-                <Spinner size="sm" tone="warning" />
-              </span>
-            ),
-          },
-        }}
-      />
-      <KeyboardShortcuts />
-      <BackToTop />
-      <OfflineIndicator />
-      <SecurityHandler />
+            success: {
+              duration: 3600,
+              className: `${baseToastClasses} border-l-4 border-emerald-400`,
+              icon: (
+                <span className={`${iconBadgeClasses} bg-emerald-100 text-emerald-600`}>
+                  <CheckCircle2 className="h-4 w-4" />
+                </span>
+              ),
+            },
+            error: {
+              duration: 4800,
+              className: `${baseToastClasses} border-l-4 border-rose-500`,
+              icon: (
+                <span className={`${iconBadgeClasses} bg-rose-100 text-rose-600`}>
+                  <AlertTriangle className="h-4 w-4" />
+                </span>
+              ),
+            },
+            loading: {
+              duration: 6000,
+              className: `${baseToastClasses} border-l-4 border-amber-400`,
+              icon: (
+                <span className={`${iconBadgeClasses} bg-amber-100 text-amber-500`}>
+                  <Spinner size="sm" tone="warning" />
+                </span>
+              ),
+            },
+          }}
+        />
+        <KeyboardShortcuts />
+        <BackToTop />
+        <OfflineIndicator />
+        <SecurityHandler />
       </div>
     </ErrorBoundary>
   );

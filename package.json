@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run prefetch && vite build",
-    "build:prod": "npm run prefetch && vite build --mode production",
+    "build": "npm run prefetch && vite build && npm run prerender",
+    "build:prod": "VITE_API_BASE_URL=https://blog-management-sx5c.onrender.com/v1 npm run prefetch && vite build --mode production && npm run prerender",
     "prefetch": "node scripts/prefetch-data.js",
+    "prerender": "node scripts/prerender.js",
     "preview": "vite preview",
     "preview:prod": "vite preview --mode production",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",

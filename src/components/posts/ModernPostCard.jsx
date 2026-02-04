@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import SmartLink from '../common/SmartLink';
 import { Calendar, Clock, Eye, Heart, User, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
@@ -81,9 +82,9 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
   );
   const sanitizedTags = Array.isArray(post.tags)
     ? post.tags
-        .map((tag) => (typeof tag === 'string' ? tag : tag?.name))
-        .map((tag) => getDisplayLabel(tag))
-        .filter(Boolean)
+      .map((tag) => (typeof tag === 'string' ? tag : tag?.name))
+      .map((tag) => getDisplayLabel(tag))
+      .filter(Boolean)
     : [];
 
   const toSafeDate = (value) => {
@@ -110,7 +111,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
         transition={{ duration: 0.45, delay }}
         className="group h-full"
       >
-        <Link to={postHref} className="block h-full" aria-label={`Read ${postTitle}`}>
+        <SmartLink to={postHref} className="block h-full" aria-label={`Read ${postTitle}`}>
           <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-[var(--border-subtle)] bg-[var(--surface-bg)] transition-all duration-300 hover:border-[var(--border-subtle)] hover:shadow-lg" style={{ boxShadow: '0 2px 8px var(--shadow-default)' }}>
             <div className="relative w-full">
               <div className="aspect-[16/10] w-full bg-[var(--surface-subtle)]">
@@ -123,6 +124,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
                     <OptimizedImage
                       src={post.featuredImage}
                       alt={postTitle}
+                      blurDataURL={post.blurDataURL}
                       className="h-full w-full object-cover"
                       loading="lazy"
                     />
@@ -192,7 +194,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
               </div>
             </div>
           </div>
-        </Link>
+        </SmartLink>
       </motion.article>
     );
   }
@@ -205,7 +207,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
       transition={{ duration: 0.4, delay }}
       className="group h-full"
     >
-      <Link to={postHref} className="block h-full" aria-label={`Read ${postTitle}`}>
+      <SmartLink to={postHref} className="block h-full" aria-label={`Read ${postTitle}`}>
         <div className="flex h-full flex-col sm:flex-row gap-6 pb-8 border-b border-[var(--border-subtle)] hover:border-[var(--border-subtle)] transition-colors">
           {/* Image */}
           {post.featuredImage && (
@@ -218,6 +220,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
                 <OptimizedImage
                   src={post.featuredImage}
                   alt={postTitle}
+                  blurDataURL={post.blurDataURL}
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
@@ -279,11 +282,11 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
 
             {/* Tags & Meta */}
             <div className="flex items-center justify-between flex-wrap gap-3 mt-auto pt-2">
-                <div className="flex items-center space-x-4 text-sm text-[var(--text-muted)]">
-                  {sanitizedTags.length > 0 && (
-                    <div className="flex items-center space-x-2">
-                      {sanitizedTags.slice(0, 2).map((tag) => (
-                        <span key={tag} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+              <div className="flex items-center space-x-4 text-sm text-[var(--text-muted)]">
+                {sanitizedTags.length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    {sanitizedTags.slice(0, 2).map((tag) => (
+                      <span key={tag} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
                         #{tag}
                       </span>
                     ))}
@@ -309,7 +312,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
             </div>
           </div>
         </div>
-      </Link>
+      </SmartLink>
 
       <motion.div
         className="flex items-center text-[var(--text-secondary)] font-semibold opacity-0 group-hover:opacity-100 transition-opacity"

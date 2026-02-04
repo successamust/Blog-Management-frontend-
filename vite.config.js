@@ -5,7 +5,6 @@ import { removeConsolePlugin } from './vite-plugin-remove-console.js'
 export default defineConfig({
   plugins: [
     react(),
-    // Remove console.log in production (keeps console.error and console.warn)
     ...(process.env.NODE_ENV === 'production' ? [removeConsolePlugin()] : []),
   ],
   resolve: {
@@ -23,12 +22,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    sourcemap: false,
-    minify: 'esbuild',
-    target: 'es2015',
-    cssCodeSplit: true,
-    // Optimize chunk size
-    chunkSizeWarningLimit: 600,
     commonjsOptions: {
       include: [/node_modules/],
       transformMixedEsModules: true,
@@ -50,11 +43,11 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             // React core - keep in entry chunk (don't split)
             if (
-              id === 'react' || 
+              id === 'react' ||
               id === 'react-dom' ||
               id.endsWith('/react') ||
               id.endsWith('/react-dom') ||
-              id.includes('/react/') || 
+              id.includes('/react/') ||
               id.includes('/react-dom/') ||
               id.includes('scheduler') ||
               id.includes('/react/jsx-runtime') ||
@@ -73,7 +66,7 @@ export default defineConfig({
             }
             // ALL React-related libraries - keep in entry
             if (
-              id.includes('react-hot-toast') || 
+              id.includes('react-hot-toast') ||
               id.includes('react-markdown') ||
               id.includes('react-quill') ||
               id.includes('@tiptap/react') ||

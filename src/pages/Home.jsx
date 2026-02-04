@@ -11,6 +11,7 @@ import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
 import TagCloud from '../components/common/TagCloud';
 import initialHomeData from '../data/initial-home-data.json';
+import { normalizeDate, getPostDate } from '../utils/shared';
 
 const HOME_DESCRIPTION = 'The central hub for diverse voices, where every perspective is shared and every idea is explored.';
 const POSTS_PER_PAGE = 10;
@@ -42,29 +43,6 @@ const Home = () => {
 
   // Check if user can apply to become an author
   const canApplyForAuthor = isAuthenticated && user?.role !== 'author' && user?.role !== 'admin';
-
-  const normalizeDate = useCallback((value) => {
-    if (!value) return null;
-    try {
-      const date = new Date(value);
-      return Number.isNaN(date.getTime()) ? null : date;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const getPostDate = useCallback(
-    (post) => {
-      if (!post) return new Date(0);
-      return (
-        normalizeDate(post.publishedAt) ||
-        normalizeDate(post.createdAt) ||
-        normalizeDate(post.updatedAt) ||
-        new Date(0)
-      );
-    },
-    [normalizeDate]
-  );
 
   const mergePosts = useCallback(
     (incoming = [], { reset = false } = {}) => {

@@ -3,11 +3,11 @@ import { format } from 'date-fns';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Calendar, 
-  Eye, 
-  Heart, 
-  Share2, 
-  MessageCircle, 
+  Calendar,
+  Eye,
+  Heart,
+  Share2,
+  MessageCircle,
   Bookmark,
   ThumbsUp,
   ThumbsDown,
@@ -18,19 +18,25 @@ import {
   User,
   Users,
   UserPlus,
-  UserMinus
+  UserMinus,
+  Clock
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DOMPurify from 'dompurify';
+import featuredPostsContent from '../data/featured-posts-content.json';
+import {
+  stripHtmlTags,
+  normalizeImageSource,
+  wrapTablesWithScroll,
+  formatReadingTime
+} from '../utils/shared';
 import { postsAPI, commentsAPI, interactionsAPI, pollsAPI, collaborationsAPI, followsAPI } from '../services/api';
 import { clearCache } from '../utils/apiCache';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import toast from 'react-hot-toast';
-import ReadingProgress from '../components/common/ReadingProgress';
-import { calculateReadingTime, formatReadingTime } from '../utils/readingTime';
-import { Clock } from 'lucide-react';
+import { calculateReadingTime } from '../utils/readingTime';
 import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
 import SocialShare from '../components/posts/SocialShare';
@@ -47,40 +53,20 @@ import CommentThread from '../components/posts/CommentThread';
 const DEFAULT_POST_DESCRIPTION = 'The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers.';
 const REPORTED_COMMENTS_KEY = 'nexus_reported_comments';
 
-const stripHtmlTags = (value) => {
-  if (!value) return '';
-  return value.replace(/<[^>]*>/g, '');
-};
-
-const normalizeImageSource = (imagePath) => {
-  if (!imagePath) {
-    return DEFAULT_OG_IMAGE;
-  }
-
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('//')) {
-    return imagePath;
-  }
-
-  return imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-};
-
-const wrapTablesWithScroll = (html = '') => {
-  if (typeof html !== 'string' || !html.includes('<table')) return html;
-  return html
-    .replace(/<table/gi, '<div class="table-scroll"><table')
-    .replace(/<\/table>/gi, '</table></div>');
-};
-
 const PostDetail = () => {
   const { slug } = useParams();
   const { user, isAuthenticated, isAdmin } = useAuth();
   const { addNotification } = useNotifications();
-  const [post, setPost] = useState(null);
+
+  // Check if we already have this post's content pre-fetched (for featured posts)
+  const initialPost = featuredPostsContent[slug] || null;
+
+  const [post, setPost] = useState(initialPost);
   const [comments, setComments] = useState([]);
   const optimisticLikesRef = useRef(new Map()); // Track optimistic like updates
   const [relatedPosts, setRelatedPosts] = useState([]);
   const [collaborators, setCollaborators] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialPost);
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [interactionLoading, setInteractionLoading] = useState(false);
@@ -166,7 +152,7 @@ const PostDetail = () => {
 
   const seoImage = useMemo(() => {
     if (!post) return DEFAULT_OG_IMAGE;
-    const imagePath = normalizeImageSource(post.featuredImage);
+    const imagePath = normalizeImageSource(post.featuredImage, DEFAULT_OG_IMAGE);
     if (!imagePath) return DEFAULT_OG_IMAGE;
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath;
@@ -261,23 +247,23 @@ const PostDetail = () => {
     if (fetchedSlugRef.current === slug) {
       return;
     }
-    
+
     // Mark that we're fetching this slug
     fetchedSlugRef.current = slug;
-    
+
     try {
       setLoading(true);
       const postRes = await postsAPI.getBySlug(slug);
       // Handle different API response structures
       const post = postRes.data?.post || postRes.data?.data || postRes.data;
-      
+
       if (!post || (!post._id && !post.id)) {
         toast.error('Post not found');
         setLoading(false);
         fetchedSlugRef.current = null;
         return;
       }
-      
+
       if (isAuthenticated && user?._id) {
         const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
         if (savedPosts.includes(post._id)) {
@@ -293,23 +279,23 @@ const PostDetail = () => {
           }
         }
       }
-      
+
       setPost(post);
-      
+
       const postId = String(post._id || post.id);
       const userFromStorage = JSON.parse(localStorage.getItem('user') || '{}');
       const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
       const userBookmarked = user?.bookmarkedPosts?.map(id => String(id)) || [];
       const storageBookmarked = userFromStorage?.bookmarkedPosts?.map(id => String(id)) || [];
       const savedPostsNormalized = savedPosts.map(id => String(id));
-      
-      const bookmarked = 
+
+      const bookmarked =
         userBookmarked.includes(postId) ||
         storageBookmarked.includes(postId) ||
         savedPostsNormalized.includes(postId);
-      
+
       setIsBookmarked(bookmarked);
-      
+
       const [commentsRes, relatedRes] = await Promise.all([
         commentsAPI.getByPost(post._id).catch(() => ({ data: { comments: [] } })),
         postsAPI.getRelated(post._id).catch(() => ({ data: { relatedPosts: [] } }))
@@ -318,10 +304,10 @@ const PostDetail = () => {
       // Handle different response structures for comments and related posts
       const comments = commentsRes.data?.comments || commentsRes.data?.data?.comments || commentsRes.data?.data || [];
       const relatedPosts = relatedRes.data?.relatedPosts || relatedRes.data?.data?.relatedPosts || relatedRes.data?.data || [];
-      
+
       setComments(ensureCommentTree(Array.isArray(comments) ? comments : []));
       setRelatedPosts(Array.isArray(relatedPosts) ? relatedPosts : []);
-      
+
       // Fetch collaborators (optional - may fail for public posts)
       try {
         const collaboratorsRes = await collaborationsAPI.getCollaborators(post._id);
@@ -334,10 +320,10 @@ const PostDetail = () => {
           console.debug('Failed to fetch collaborators:', error);
         }
       }
-      
+
       // Add to history after post is loaded
       addToHistory(post);
-      
+
       // Fetch follow status if user is authenticated and post has an author (non-blocking)
       const currentUserId = user?._id || user?.id;
       const authorId = post?.author?._id || post?.author;
@@ -354,7 +340,7 @@ const PostDetail = () => {
             }
           });
       }
-      
+
     } catch (error) {
       console.error('Error fetching post:', error);
       // Don't show error toast if it's a 401 - the API interceptor handles it
@@ -388,28 +374,28 @@ const PostDetail = () => {
       clearCache('/comments');
       const commentsRes = await commentsAPI.getByPost(postId);
       const freshComments = ensureCommentTree(commentsRes.data?.comments || []);
-      
+
       // Preserve optimistic like updates that happened recently (within last 3 seconds)
       const now = Date.now();
       const optimisticThreshold = 3000; // 3 seconds
-      
+
       setComments(prevComments => {
         // If we have recent optimistic updates, merge them with fresh data
         const hasRecentOptimistic = Array.from(optimisticLikesRef.current.values()).some(
           timestamp => (now - timestamp) < optimisticThreshold
         );
-        
+
         if (!hasRecentOptimistic) {
           // No recent optimistic updates, use fresh data as-is
           return freshComments;
         }
-        
+
         // Merge optimistic updates with fresh data
         const mergeOptimisticLikes = (commentList) => {
           return commentList.map((comment) => {
             const commentId = String(comment._id || comment.id);
             const optimisticTimestamp = optimisticLikesRef.current.get(commentId);
-            
+
             // If this comment has a recent optimistic update, preserve it from prevComments
             if (optimisticTimestamp && (now - optimisticTimestamp) < optimisticThreshold) {
               const prevComment = prevComments.find(
@@ -417,7 +403,7 @@ const PostDetail = () => {
               ) || prevComments
                 .flatMap(c => c.replies || [])
                 .find(c => String(c._id || c.id) === commentId);
-              
+
               if (prevComment) {
                 return {
                   ...comment,
@@ -425,7 +411,7 @@ const PostDetail = () => {
                 };
               }
             }
-            
+
             // Check replies recursively
             if (comment.replies && comment.replies.length > 0) {
               return {
@@ -433,11 +419,11 @@ const PostDetail = () => {
                 replies: mergeOptimisticLikes(comment.replies)
               };
             }
-            
+
             return comment;
           });
         };
-        
+
         return mergeOptimisticLikes(freshComments);
       });
     } catch (error) {
@@ -452,18 +438,18 @@ const PostDetail = () => {
       clearCache(`/posts/${slug}`);
       // Also clear the general posts cache
       clearCache('/posts');
-      
+
       // Temporarily reset the fetched slug ref to allow refetch
       const previousSlug = fetchedSlugRef.current;
       fetchedSlugRef.current = null;
-      
+
       const postRes = await postsAPI.getBySlug(slug);
       const updatedPost = postRes.data?.post || postRes.data?.data || postRes.data;
-      
+
       if (updatedPost && (updatedPost._id || updatedPost.id)) {
         setPost(updatedPost);
       }
-      
+
       // Restore the fetched slug ref
       fetchedSlugRef.current = previousSlug;
     } catch (error) {
@@ -579,7 +565,7 @@ const PostDetail = () => {
         setTimeRemainingMinutes(resultsResponse.data.timeRemainingMinutes || 0);
         setChangesRemaining(resultsResponse.data.changesRemaining || 0);
       }
-      
+
       // Show appropriate message
       if (voteResponse.data?.canChangeAgain) {
         toast.success(`Vote ${poll.userVote ? 'updated' : 'recorded'}! You can change it ${voteResponse.data.changesRemaining} more time${voteResponse.data.changesRemaining !== 1 ? 's' : ''}.`);
@@ -611,11 +597,11 @@ const PostDetail = () => {
 
     // Normalize user ID
     const userId = String(user._id);
-    
+
     // Optimistic update - update UI immediately
-      setPost(prevPost => {
-        if (!prevPost) return prevPost;
-      
+    setPost(prevPost => {
+      if (!prevPost) return prevPost;
+
       // Normalize all like IDs to strings for comparison
       const normalizedLikes = (prevPost.likes || []).map(id => {
         if (typeof id === 'object' && id !== null && 'toString' in id) {
@@ -623,14 +609,14 @@ const PostDetail = () => {
         }
         return String(id);
       });
-      
+
       const isLiked = normalizedLikes.includes(userId);
-      
+
       // Toggle like state
-          const newLikes = isLiked 
+      const newLikes = isLiked
         ? normalizedLikes.filter(id => id !== userId)
         : [...normalizedLikes, userId];
-      
+
       // Remove from dislikes if present
       const normalizedDislikes = (prevPost.dislikes || []).map(id => {
         if (typeof id === 'object' && id !== null && 'toString' in id) {
@@ -638,23 +624,23 @@ const PostDetail = () => {
         }
         return String(id);
       });
-      
+
       const newDislikes = normalizedDislikes.filter(id => id !== userId);
-        
-        return {
-          ...prevPost,
-          likes: newLikes,
-          dislikes: newDislikes
-        };
-      });
+
+      return {
+        ...prevPost,
+        likes: newLikes,
+        dislikes: newDislikes
+      };
+    });
 
     try {
       setInteractionLoading(true);
       await postsAPI.like(post._id);
-      
+
       // Refetch to sync with server (in case of any discrepancies)
       await refreshPost();
-      
+
       toast.success('Post liked!');
     } catch (error) {
       console.error('Like error:', error);
@@ -679,11 +665,11 @@ const PostDetail = () => {
 
     // Normalize user ID
     const userId = String(user._id);
-    
+
     // Optimistic update - update UI immediately
-      setPost(prevPost => {
-        if (!prevPost) return prevPost;
-      
+    setPost(prevPost => {
+      if (!prevPost) return prevPost;
+
       // Normalize all dislike IDs to strings for comparison
       const normalizedDislikes = (prevPost.dislikes || []).map(id => {
         if (typeof id === 'object' && id !== null && 'toString' in id) {
@@ -691,14 +677,14 @@ const PostDetail = () => {
         }
         return String(id);
       });
-      
+
       const isDisliked = normalizedDislikes.includes(userId);
-      
+
       // Toggle dislike state
-          const newDislikes = isDisliked 
+      const newDislikes = isDisliked
         ? normalizedDislikes.filter(id => id !== userId)
         : [...normalizedDislikes, userId];
-      
+
       // Remove from likes if present
       const normalizedLikes = (prevPost.likes || []).map(id => {
         if (typeof id === 'object' && id !== null && 'toString' in id) {
@@ -706,23 +692,23 @@ const PostDetail = () => {
         }
         return String(id);
       });
-      
+
       const newLikes = normalizedLikes.filter(id => id !== userId);
-        
-        return {
-          ...prevPost,
-          dislikes: newDislikes,
-          likes: newLikes
-        };
-      });
+
+      return {
+        ...prevPost,
+        dislikes: newDislikes,
+        likes: newLikes
+      };
+    });
 
     try {
       setInteractionLoading(true);
       await postsAPI.dislike(post._id);
-      
+
       // Refetch to sync with server (in case of any discrepancies)
       await refreshPost();
-      
+
       toast.success('Post disliked!');
     } catch (error) {
       console.error('Dislike error:', error);
@@ -779,8 +765,8 @@ const PostDetail = () => {
 
   const handleShareTrack = async (platform) => {
     try {
-      postsAPI.share(post._id, { platform }).catch(() => {});
-      
+      postsAPI.share(post._id, { platform }).catch(() => { });
+
       setPost(prevPost => {
         if (!prevPost) return prevPost;
         return {
@@ -805,14 +791,14 @@ const PostDetail = () => {
       setInteractionLoading(true);
       const wasBookmarked = isBookmarked;
       const postId = post._id || post.id;
-      
+
       try {
         const response = await postsAPI.bookmark(postId);
         const { bookmarked } = response.data;
-        
+
         // Update local state immediately
         setIsBookmarked(bookmarked);
-        
+
         // Update user's bookmarkedPosts array in context
         if (user) {
           const updatedUser = { ...user };
@@ -830,25 +816,25 @@ const PostDetail = () => {
               id => String(id) !== String(postId)
             ) || [];
           }
-          
+
           // Update localStorage
           localStorage.setItem('user', JSON.stringify(updatedUser));
         }
-        
+
         toast.success(wasBookmarked ? 'Post removed from saved!' : 'Post saved!');
       } catch (apiError) {
         // If 404, the endpoint doesn't exist yet - use localStorage as fallback
         if (apiError.response?.status === 404) {
           const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
           const newBookmarkedState = !wasBookmarked;
-          
+
           // Update local state immediately
           setIsBookmarked(newBookmarkedState);
-          
+
           // Normalize IDs to strings for comparison
           const normalizedSavedPosts = savedPosts.map(id => String(id));
           const normalizedPostId = String(postId);
-          
+
           if (wasBookmarked) {
             const updated = savedPosts.filter(id => String(id) !== normalizedPostId);
             localStorage.setItem('savedPosts', JSON.stringify(updated));
@@ -860,7 +846,7 @@ const PostDetail = () => {
             }
             toast.success('Post saved! (Saved locally until backend is updated)');
           }
-          
+
           // Update user's bookmarkedPosts array in localStorage for UI consistency
           if (user) {
             const updatedUser = { ...user };
@@ -949,29 +935,29 @@ const PostDetail = () => {
     const updateCommentLikes = (commentList) => {
       return commentList.map((comment) => {
         const commentIdNormalized = normalizeCommentId(comment._id || comment.id);
-        
+
         // Check if this is the comment being liked
         if (commentIdNormalized === normalizedCommentId) {
-          const currentLikes = Array.isArray(comment.likes) 
+          const currentLikes = Array.isArray(comment.likes)
             ? comment.likes.map(id => {
-                if (typeof id === 'object' && id !== null && 'toString' in id) {
-                  return id.toString();
-                }
-                return String(id);
-              })
+              if (typeof id === 'object' && id !== null && 'toString' in id) {
+                return id.toString();
+              }
+              return String(id);
+            })
             : [];
           const isLiked = currentLikes.includes(userId);
-          
+
           const newLikes = isLiked
             ? currentLikes.filter(id => id !== userId)
             : [...currentLikes, userId];
-          
+
           return {
             ...comment,
             likes: newLikes
           };
         }
-        
+
         // Check replies recursively
         if (comment.replies && comment.replies.length > 0) {
           return {
@@ -979,7 +965,7 @@ const PostDetail = () => {
             replies: updateCommentLikes(comment.replies)
           };
         }
-        
+
         return comment;
       });
     };
@@ -999,12 +985,12 @@ const PostDetail = () => {
 
     try {
       await commentsAPI.like(commentId);
-      
+
       // Clear the optimistic tracking after successful API call (after a delay to ensure server processed it)
       setTimeout(() => {
         optimisticLikesRef.current.delete(normalizedCommentId);
       }, 2000);
-      
+
       // Don't refresh on success - the optimistic update is already correct
       // The optimistic update shows the correct state immediately
       // Only refresh on error to rollback if something went wrong
@@ -1103,7 +1089,7 @@ const PostDetail = () => {
     }
     return String(id);
   });
-  
+
   const hasLiked = normalizedUserId ? normalizedLikes.includes(normalizedUserId) : false;
   const hasDisliked = normalizedUserId ? normalizedDislikes.includes(normalizedUserId) : false;
   const hasBookmarked = isBookmarked;
@@ -1127,470 +1113,467 @@ const PostDetail = () => {
       />
       <ReadingProgress />
       <div className="bg-page">
-      <div className="layout-container-wide py-6 sm:py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-3">
-          <motion.article
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="card-elevated card-elevated-hover overflow-hidden"
-          >
-            {/* Featured Image */}
-            {post.featuredImage && (
-              <OptimizedImage
-                src={post.featuredImage}
-                alt={post.title}
-                className="w-full h-48 sm:h-64 md:h-96 object-cover"
-                loading="eager"
-              />
-            )}
-
-            <div className="p-6">
-              {/* Post Header */}
-              <div className="mb-4 sm:mb-6">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-3 sm:mb-4">
-                  {post.title}
-                </h1>
-                
-                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted mb-3 sm:mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center">
-                      <User className="w-4 h-4 mr-2" />
-                      <Link 
-                        to={`/authors/${post.author?.username}`}
-                        className="font-medium hover:text-[var(--accent)] transition-colors"
-                      >
-                        {post.author?.username}
-                      </Link>
-                    </div>
-                    {isAuthenticated && user && postAuthorId && String(user._id || user.id) !== String(postAuthorId) && (
-                      <button
-                        onClick={handleFollowAuthor}
-                        disabled={followLoading}
-                        className={`ml-2 px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-colors flex items-center gap-1 min-w-[2rem] sm:min-w-auto ${
-                          isFollowingAuthor
-                            ? 'bg-[var(--surface-subtle)] text-secondary hover:bg-[var(--surface-subtle)]'
-                            : 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]'
-                        }`}
-                        title={isFollowingAuthor ? 'Unfollow' : 'Follow'}
-                        aria-label={isFollowingAuthor ? 'Unfollow' : 'Follow'}
-                      >
-                        {followLoading ? (
-                          <Spinner size="xs" />
-                        ) : isFollowingAuthor ? (
-                          <>
-                            <UserMinus className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span className="hidden sm:inline">Following</span>
-                          </>
-                        ) : (
-                          <>
-                            <UserPlus className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span className="hidden sm:inline">Follow</span>
-                          </>
-                        )}
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    <span>{format(new Date(post.publishedAt), 'MMMM d, yyyy')}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2" />
-                    <span>{formatReadingTime(calculateReadingTime(post.content))}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Eye className="w-4 h-4 mr-2" />
-                    <span>{post.viewCount} views</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Post Content */}
-              <div 
-                className="article-content prose prose-lg max-w-[680px] mx-auto mb-8"
-                onClick={(e) => {
-                  // Handle image clicks for lightbox
-                  if (e.target.tagName === 'IMG' && e.target.src) {
-                    const images = Array.from(document.querySelectorAll('.prose img'))
-                      .map(img => ({ src: img.src, alt: img.alt || '' }));
-                    const index = images.findIndex(img => img.src === e.target.src);
-                    if (index >= 0) {
-                      setLightboxImages(images);
-                      setLightboxIndex(index);
-                    }
-                  }
-                }}
+        <div className="layout-container-wide py-6 sm:py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-3">
+              <motion.article
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="card-elevated card-elevated-hover overflow-hidden"
               >
-                {(() => {
-                  // Check if content is HTML (contains HTML tags)
-                  const isHTML = /<[a-z][\s\S]*>/i.test(post.content);
-                  
-                  if (isHTML) {
-                    // Render HTML content (from rich text editor)
-                    const sanitizedHTML = DOMPurify.sanitize(wrapTablesWithScroll(post.content), {
-                      ALLOWED_TAGS: [
-                        'p', 'br', 'strong', 'em', 'u', 's',
-                        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-                        'ul', 'ol', 'li', 'blockquote', 'code', 'pre',
-                        'a', 'img', 'video', 'div', 'span', 'hr',
-                        'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'colgroup', 'col'
-                      ],
-                      ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel', 'colspan', 'rowspan', 'width', 'data-borderless'],
-                      ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i
-                    });
-                    return <div dangerouslySetInnerHTML={{ __html: sanitizedHTML }} />;
-                  } else {
-                    // Render Markdown content (legacy posts)
-                    return (
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          table: ({ node, ...props }) => (
-                            <div className="table-scroll">
-                              <table {...props} />
-                            </div>
-                          ),
-                        }}
-                      >
-                        {post.content}
-                      </ReactMarkdown>
-                    );
-                  }
-                })()}
-              </div>
+                {/* Featured Image */}
+                {post.featuredImage && (
+                  <OptimizedImage
+                    src={normalizeImageSource(post.featuredImage, DEFAULT_OG_IMAGE)}
+                    alt={post.title}
+                    blurDataURL={post.blurDataURL}
+                    className="w-full h-full object-cover"
+                    loading="eager"
+                  />
+                )}
 
-              {/* Collaborators */}
-              {collaborators && collaborators.length > 0 && (
-                <div className="mb-8 rounded-xl border border-[var(--border-subtle)] bg-surface-subtle p-5">
-                  <div className="mb-3 flex items-center gap-2">
-                    <div className="rounded-lg bg-blue-500/12 p-2 text-blue-600 dark:text-blue-400">
-                      <Users className="h-4 w-4" />
-                    </div>
-                    <span className="text-xs font-semibold uppercase tracking-wide text-muted">Collaborators</span>
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    {collaborators.map((collaborator) => (
-                      <div
-                        key={collaborator.id || collaborator.user?._id || collaborator.user}
-                        className="inline-flex items-center gap-2 rounded-full bg-[var(--surface-bg)] px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)]"
-                      >
-                        {collaborator.user?.profilePicture ? (
-                          <img
-                            src={collaborator.user.profilePicture}
-                            alt={collaborator.email || collaborator.user?.username || 'Collaborator'}
-                            className="w-6 h-6 rounded-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
-                            {(collaborator.email || collaborator.user?.username || 'C').charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <span>{collaborator.user?.username || collaborator.email || 'Collaborator'}</span>
-                        {collaborator.role && (
-                          <span className="text-xs text-muted capitalize">({collaborator.role})</span>
+                <div className="p-6">
+                  {/* Post Header */}
+                  <div className="mb-4 sm:mb-6">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-3 sm:mb-4">
+                      {post.title}
+                    </h1>
+
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted mb-3 sm:mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center">
+                          <User className="w-4 h-4 mr-2" />
+                          <Link
+                            to={`/authors/${post.author?.username}`}
+                            className="font-medium hover:text-[var(--accent)] transition-colors"
+                          >
+                            {post.author?.username}
+                          </Link>
+                        </div>
+                        {isAuthenticated && user && postAuthorId && String(user._id || user.id) !== String(postAuthorId) && (
+                          <button
+                            onClick={handleFollowAuthor}
+                            disabled={followLoading}
+                            className={`ml-2 px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-colors flex items-center gap-1 min-w-[2rem] sm:min-w-auto ${isFollowingAuthor
+                              ? 'bg-[var(--surface-subtle)] text-secondary hover:bg-[var(--surface-subtle)]'
+                              : 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]'
+                              }`}
+                            title={isFollowingAuthor ? 'Unfollow' : 'Follow'}
+                            aria-label={isFollowingAuthor ? 'Unfollow' : 'Follow'}
+                          >
+                            {followLoading ? (
+                              <Spinner size="xs" />
+                            ) : isFollowingAuthor ? (
+                              <>
+                                <UserMinus className="w-3 h-3 sm:w-4 sm:h-4" />
+                                <span className="hidden sm:inline">Following</span>
+                              </>
+                            ) : (
+                              <>
+                                <UserPlus className="w-3 h-3 sm:w-4 sm:h-4" />
+                                <span className="hidden sm:inline">Follow</span>
+                              </>
+                            )}
+                          </button>
                         )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Tags */}
-              {post.tags && post.tags.length > 0 && (
-                <div className="mb-8 rounded-xl border border-[var(--border-subtle)] bg-surface-subtle p-5">
-                  <div className="mb-3 flex items-center gap-2">
-                    <div className="rounded-lg bg-[var(--accent)]/12 p-2 text-[var(--accent)]">
-                      <Tag className="h-4 w-4" />
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        <span>{format(new Date(post.publishedAt), 'MMMM d, yyyy')}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Clock className="w-4 h-4 mr-2" />
+                        <span>{formatReadingTime(calculateReadingTime(post.content))}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Eye className="w-4 h-4 mr-2" />
+                        <span>{post.viewCount} views</span>
+                      </div>
                     </div>
-                    <span className="text-xs font-semibold uppercase tracking-wide text-muted">Tags</span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {post.tags.map((tag) => (
-                      <Link
-                        key={tag}
-                        to={`/search?tags=${tag}`}
-                        className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-bg)] px-3 py-1 text-sm font-medium text-[var(--text-secondary)] transition-all hover:bg-[var(--accent)] hover:text-white hover:shadow-[0_8px_20px_rgba(26,137,23,0.2)]"
-                      >
-                        <span>#</span>
-                        <span>{tag}</span>
-                      </Link>
-                    ))}
+
+                  {/* Post Content */}
+                  <div
+                    className="article-content prose prose-lg max-w-[680px] mx-auto mb-8"
+                    onClick={(e) => {
+                      // Handle image clicks for lightbox
+                      if (e.target.tagName === 'IMG' && e.target.src) {
+                        const images = Array.from(document.querySelectorAll('.prose img'))
+                          .map(img => ({ src: img.src, alt: img.alt || '' }));
+                        const index = images.findIndex(img => img.src === e.target.src);
+                        if (index >= 0) {
+                          setLightboxImages(images);
+                          setLightboxIndex(index);
+                        }
+                      }
+                    }}
+                  >
+                    {(() => {
+                      // Check if content is HTML (contains HTML tags)
+                      const isHTML = /<[a-z][\s\S]*>/i.test(post.content);
+
+                      if (isHTML) {
+                        // Render HTML content (from rich text editor)
+                        const sanitizedHTML = DOMPurify.sanitize(wrapTablesWithScroll(post.content), {
+                          ALLOWED_TAGS: [
+                            'p', 'br', 'strong', 'em', 'u', 's',
+                            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                            'ul', 'ol', 'li', 'blockquote', 'code', 'pre',
+                            'a', 'img', 'video', 'div', 'span', 'hr',
+                            'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'colgroup', 'col'
+                          ],
+                          ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel', 'colspan', 'rowspan', 'width', 'data-borderless'],
+                          ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i
+                        });
+                        return <div dangerouslySetInnerHTML={{ __html: sanitizedHTML }} />;
+                      } else {
+                        // Render Markdown content (legacy posts)
+                        return (
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              table: ({ node, ...props }) => (
+                                <div className="table-scroll">
+                                  <table {...props} />
+                                </div>
+                              ),
+                            }}
+                          >
+                            {post.content}
+                          </ReactMarkdown>
+                        );
+                      }
+                    })()}
                   </div>
+
+                  {/* Collaborators */}
+                  {collaborators && collaborators.length > 0 && (
+                    <div className="mb-8 rounded-xl border border-[var(--border-subtle)] bg-surface-subtle p-5">
+                      <div className="mb-3 flex items-center gap-2">
+                        <div className="rounded-lg bg-blue-500/12 p-2 text-blue-600 dark:text-blue-400">
+                          <Users className="h-4 w-4" />
+                        </div>
+                        <span className="text-xs font-semibold uppercase tracking-wide text-muted">Collaborators</span>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        {collaborators.map((collaborator) => (
+                          <div
+                            key={collaborator.id || collaborator.user?._id || collaborator.user}
+                            className="inline-flex items-center gap-2 rounded-full bg-[var(--surface-bg)] px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)]"
+                          >
+                            {collaborator.user?.profilePicture ? (
+                              <img
+                                src={collaborator.user.profilePicture}
+                                alt={collaborator.email || collaborator.user?.username || 'Collaborator'}
+                                className="w-6 h-6 rounded-full object-cover"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
+                                {(collaborator.email || collaborator.user?.username || 'C').charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <span>{collaborator.user?.username || collaborator.email || 'Collaborator'}</span>
+                            {collaborator.role && (
+                              <span className="text-xs text-muted capitalize">({collaborator.role})</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tags */}
+                  {post.tags && post.tags.length > 0 && (
+                    <div className="mb-8 rounded-xl border border-[var(--border-subtle)] bg-surface-subtle p-5">
+                      <div className="mb-3 flex items-center gap-2">
+                        <div className="rounded-lg bg-[var(--accent)]/12 p-2 text-[var(--accent)]">
+                          <Tag className="h-4 w-4" />
+                        </div>
+                        <span className="text-xs font-semibold uppercase tracking-wide text-muted">Tags</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {post.tags.map((tag) => (
+                          <Link
+                            key={tag}
+                            to={`/search?tags=${tag}`}
+                            className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-bg)] px-3 py-1 text-sm font-medium text-[var(--text-secondary)] transition-all hover:bg-[var(--accent)] hover:text-white hover:shadow-[0_8px_20px_rgba(26,137,23,0.2)]"
+                          >
+                            <span>#</span>
+                            <span>{tag}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Interaction Buttons */}
+                  <div className="flex flex-wrap items-center gap-3 border-t border-[var(--border-subtle)] pt-4 sm:pt-6">
+                    <motion.button
+                      onClick={handleLike}
+                      disabled={interactionLoading}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${hasLiked
+                        ? 'bg-[var(--accent)] text-white shadow-[0_12px_30px_rgba(26,137,23,0.22)] hover:text-white'
+                        : 'glass-card text-[var(--text-secondary)] hover:bg-[var(--surface-bg)]/80'
+                        }`}
+                    >
+                      <ThumbsUp className="w-4 h-4" />
+                      <span>{post.likes?.length || 0}</span>
+                    </motion.button>
+
+                    <motion.button
+                      onClick={handleDislike}
+                      disabled={interactionLoading}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${hasDisliked
+                        ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg shadow-rose-500/25'
+                        : 'glass-card text-[var(--text-secondary)] hover:bg-[var(--surface-bg)]/80'
+                        }`}
+                    >
+                      <ThumbsDown className="w-4 h-4" />
+                      <span>{post.dislikes?.length || 0}</span>
+                    </motion.button>
+
+                    <motion.button
+                      onClick={handleShare}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center space-x-2 px-3 sm:px-4 py-2 glass-card text-secondary rounded-xl hover:bg-[var(--surface-bg)]/80 transition-all text-sm sm:text-base"
+                    >
+                      <Share2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Share</span>
+                    </motion.button>
+
+                    <motion.button
+                      onClick={handleSave}
+                      disabled={interactionLoading}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${hasBookmarked
+                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/25'
+                        : 'glass-card text-secondary hover:bg-[var(--surface-bg)]/80'
+                        }`}
+                    >
+                      <Bookmark className={`w-4 h-4 ${hasBookmarked ? 'fill-current' : ''}`} />
+                      <span className="hidden sm:inline">{hasBookmarked ? 'Saved' : 'Save'}</span>
+                    </motion.button>
+
+                    <motion.button
+                      onClick={() => setShowFullscreenReader(true)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center space-x-2 px-3 sm:px-4 py-2 glass-card text-secondary rounded-xl hover:bg-[var(--surface-bg)]/80 transition-all text-sm sm:text-base"
+                      title="Fullscreen reading mode"
+                    >
+                      <Maximize className="w-4 h-4" />
+                      <span className="hidden sm:inline">Fullscreen</span>
+                    </motion.button>
+
+                  </div>
+                </div>
+              </motion.article>
+
+              {/* Poll */}
+              {post && poll && !loadingPoll && (
+                <div className="mt-4 sm:mt-6 -mx-4 sm:mx-0 px-4 sm:px-0">
+                  <Poll
+                    poll={poll}
+                    postId={post._id}
+                    onVote={handlePollVote}
+                    userVote={poll.userVote}
+                    results={poll.results}
+                    canChangeVote={canChangeVote}
+                    timeRemainingMinutes={timeRemainingMinutes}
+                    changesRemaining={changesRemaining}
+                  />
                 </div>
               )}
 
-              {/* Interaction Buttons */}
-              <div className="flex flex-wrap items-center gap-3 border-t border-[var(--border-subtle)] pt-4 sm:pt-6">
-                <motion.button
-                  onClick={handleLike}
-                  disabled={interactionLoading}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
-                    hasLiked
-                      ? 'bg-[var(--accent)] text-white shadow-[0_12px_30px_rgba(26,137,23,0.22)] hover:text-white'
-                      : 'glass-card text-[var(--text-secondary)] hover:bg-[var(--surface-bg)]/80'
-                  }`}
-                >
-                  <ThumbsUp className="w-4 h-4" />
-                  <span>{post.likes?.length || 0}</span>
-                </motion.button>
-
-                <motion.button
-                  onClick={handleDislike}
-                  disabled={interactionLoading}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
-                    hasDisliked
-                      ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg shadow-rose-500/25'
-                      : 'glass-card text-[var(--text-secondary)] hover:bg-[var(--surface-bg)]/80'
-                  }`}
-                >
-                  <ThumbsDown className="w-4 h-4" />
-                  <span>{post.dislikes?.length || 0}</span>
-                </motion.button>
-
-                <motion.button
-                  onClick={handleShare}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center space-x-2 px-3 sm:px-4 py-2 glass-card text-secondary rounded-xl hover:bg-[var(--surface-bg)]/80 transition-all text-sm sm:text-base"
-                >
-                  <Share2 className="w-4 h-4" />
-                  <span className="hidden sm:inline">Share</span>
-                </motion.button>
-
-                <motion.button
-                  onClick={handleSave}
-                  disabled={interactionLoading}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${
-                    hasBookmarked
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/25'
-                      : 'glass-card text-secondary hover:bg-[var(--surface-bg)]/80'
-                  }`}
-                >
-                  <Bookmark className={`w-4 h-4 ${hasBookmarked ? 'fill-current' : ''}`} />
-                  <span className="hidden sm:inline">{hasBookmarked ? 'Saved' : 'Save'}</span>
-                </motion.button>
-
-                <motion.button
-                  onClick={() => setShowFullscreenReader(true)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center space-x-2 px-3 sm:px-4 py-2 glass-card text-secondary rounded-xl hover:bg-[var(--surface-bg)]/80 transition-all text-sm sm:text-base"
-                  title="Fullscreen reading mode"
-                >
-                  <Maximize className="w-4 h-4" />
-                  <span className="hidden sm:inline">Fullscreen</span>
-                </motion.button>
-
-              </div>
-            </div>
-          </motion.article>
-
-          {/* Poll */}
-          {post && poll && !loadingPoll && (
-            <div className="mt-4 sm:mt-6 -mx-4 sm:mx-0 px-4 sm:px-0">
-              <Poll 
-                poll={poll}
-                postId={post._id}
-                onVote={handlePollVote}
-                userVote={poll.userVote}
-                results={poll.results}
-                canChangeVote={canChangeVote}
-                timeRemainingMinutes={timeRemainingMinutes}
-                changesRemaining={changesRemaining}
-              />
-            </div>
-          )}
-
-          {/* Reading List */}
-          {post && isAuthenticated && (
-            <div className="mt-6 p-4 bg-surface-subtle rounded-xl">
-              <ReadingList post={post} />
-            </div>
-          )}
-
-          {/* Comments Section */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mt-8 card-elevated card-elevated-hover p-6"
-          >
-            <h2 className="text-2xl font-bold text-primary mb-6 flex items-center">
-              <MessageCircle className="w-6 h-6 mr-2" />
-              Comments ({comments.length})
-            </h2>
-
-            {/* Add Comment */}
-            {isAuthenticated ? (
-              <form onSubmit={handleCommentSubmit} className="mb-8">
-                <div className="mb-4">
-                  <textarea
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    placeholder="Share your thoughts..."
-                    rows="4"
-                    className="w-full px-4 py-3 glass-card rounded-xl focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-[var(--surface-bg)]/90 resize-none transition-all"
-                  />
+              {/* Reading List */}
+              {post && isAuthenticated && (
+                <div className="mt-6 p-4 bg-surface-subtle rounded-xl">
+                  <ReadingList post={post} />
                 </div>
-                <motion.button
-                  type="submit"
-                  disabled={submittingComment || !commentText.trim()}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_30px_rgba(26,137,23,0.18)]"
-                >
-                  {submittingComment ? 'Posting...' : 'Post Comment'}
-                </motion.button>
-              </form>
-            ) : (
-              <div className="mb-8 p-4 glass-card rounded-xl text-center">
-                <p className="text-muted mb-2">
-                  Please log in to leave a comment
-                </p>
-                <Link
-                  to="/login"
-                    className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium transition-colors"
-                >
-                  Sign In
-                </Link>
-              </div>
-            )}
-
-            {/* Comments List */}
-            <div className="space-y-6">
-              {comments.length > 0 ? (
-                comments.map((comment) => (
-                  <CommentThread
-                    key={comment._id}
-                    comment={comment}
-                    onEdit={handleUpdateComment}
-                    onDelete={handleDeleteComment}
-                    onLike={handleCommentLike}
-                    onReply={handleReplyToComment}
-                    onReport={handleReportComment}
-                    reportedCommentIds={reportedIdsForPost}
-                    postAuthorId={postAuthorId}
-                    postCollaborators={collaborators}
-                  />
-                ))
-              ) : (
-                <p className="text-center text-[var(--text-muted)]">
-                  No comments yet. Be the first to share your thoughts!
-                </p>
               )}
-            </div>
-          </motion.section>
-        </div>
 
-        {/* Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Post Stats */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="card-elevated card-elevated-hover p-6"
-          >
-            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Post Stats</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between py-2">
-                <span className="text-[var(--text-secondary)]">Views</span>
-                <span className="font-semibold text-[var(--text-primary)]">{post.viewCount}</span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="text-[var(--text-secondary)]">Likes</span>
-                <span className="font-semibold text-[var(--text-primary)]">{post.likes?.length || 0}</span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="text-[var(--text-secondary)]">Dislikes</span>
-                <span className="font-semibold text-[var(--text-primary)]">{post.dislikes?.length || 0}</span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="text-[var(--text-secondary)]">Shares</span>
-                <span className="font-semibold text-[var(--text-primary)]">{post.shares || 0}</span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="text-[var(--text-secondary)]">Comments</span>
-                <span className="font-semibold text-[var(--text-primary)]">{comments.length}</span>
-              </div>
-            </div>
-          </motion.div>
+              {/* Comments Section */}
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="mt-8 card-elevated card-elevated-hover p-6"
+              >
+                <h2 className="text-2xl font-bold text-primary mb-6 flex items-center">
+                  <MessageCircle className="w-6 h-6 mr-2" />
+                  Comments ({comments.length})
+                </h2>
 
+                {/* Add Comment */}
+                {isAuthenticated ? (
+                  <form onSubmit={handleCommentSubmit} className="mb-8">
+                    <div className="mb-4">
+                      <textarea
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        placeholder="Share your thoughts..."
+                        rows="4"
+                        className="w-full px-4 py-3 glass-card rounded-xl focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/35 focus:bg-[var(--surface-bg)]/90 resize-none transition-all"
+                      />
+                    </div>
+                    <motion.button
+                      type="submit"
+                      disabled={submittingComment || !commentText.trim()}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_30px_rgba(26,137,23,0.18)]"
+                    >
+                      {submittingComment ? 'Posting...' : 'Post Comment'}
+                    </motion.button>
+                  </form>
+                ) : (
+                  <div className="mb-8 p-4 glass-card rounded-xl text-center">
+                    <p className="text-muted mb-2">
+                      Please log in to leave a comment
+                    </p>
+                    <Link
+                      to="/login"
+                      className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium transition-colors"
+                    >
+                      Sign In
+                    </Link>
+                  </div>
+                )}
+
+                {/* Comments List */}
+                <div className="space-y-6">
+                  {comments.length > 0 ? (
+                    comments.map((comment) => (
+                      <CommentThread
+                        key={comment._id}
+                        comment={comment}
+                        onEdit={handleUpdateComment}
+                        onDelete={handleDeleteComment}
+                        onLike={handleCommentLike}
+                        onReply={handleReplyToComment}
+                        onReport={handleReportComment}
+                        reportedCommentIds={reportedIdsForPost}
+                        postAuthorId={postAuthorId}
+                        postCollaborators={collaborators}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-center text-[var(--text-muted)]">
+                      No comments yet. Be the first to share your thoughts!
+                    </p>
+                  )}
+                </div>
+              </motion.section>
+            </div>
+
+            {/* Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Post Stats */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+                className="card-elevated card-elevated-hover p-6"
+              >
+                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Post Stats</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between py-2">
+                    <span className="text-[var(--text-secondary)]">Views</span>
+                    <span className="font-semibold text-[var(--text-primary)]">{post.viewCount}</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-[var(--text-secondary)]">Likes</span>
+                    <span className="font-semibold text-[var(--text-primary)]">{post.likes?.length || 0}</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-[var(--text-secondary)]">Dislikes</span>
+                    <span className="font-semibold text-[var(--text-primary)]">{post.dislikes?.length || 0}</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-[var(--text-secondary)]">Shares</span>
+                    <span className="font-semibold text-[var(--text-primary)]">{post.shares || 0}</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-[var(--text-secondary)]">Comments</span>
+                    <span className="font-semibold text-[var(--text-primary)]">{comments.length}</span>
+                  </div>
+                </div>
+              </motion.div>
+
+            </div>
+          </div>
+          {post && (
+            <div className="mt-12 pb-6">
+              <PostRecommendations currentPost={post} limit={3} />
+            </div>
+          )}
         </div>
       </div>
-      {post && (
-        <div className="mt-12 pb-6">
-          <PostRecommendations currentPost={post} limit={3} />
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowShareModal(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            onClick={(e) => e.stopPropagation()}
+            className="surface-card max-w-sm sm:max-w-md w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 relative shadow-xl rounded-xl"
+          >
+            <button
+              onClick={() => setShowShareModal(false)}
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="mb-4 sm:mb-6 pr-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-1 sm:mb-2">Share Post</h2>
+              <p className="text-sm sm:text-base text-[var(--text-secondary)]">Share this post with others</p>
+            </div>
+
+            <SocialShare
+              post={post}
+              shareUrl={shareUrl}
+              onShare={handleShareTrack}
+            />
+          </motion.div>
         </div>
       )}
-      </div>
-    </div>
 
-    {/* Share Modal */}
-    {showShareModal && (
-      <div 
-        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm"
-        onClick={() => setShowShareModal(false)}
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          onClick={(e) => e.stopPropagation()}
-          className="surface-card max-w-sm sm:max-w-md w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 relative shadow-xl rounded-xl"
-        >
-          <button
-            onClick={() => setShowShareModal(false)}
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors z-10"
-          >
-            <X className="w-5 h-5" />
-          </button>
+      {/* Fullscreen Reader */}
+      {post && (
+        <FullscreenReader
+          post={post}
+          isOpen={showFullscreenReader}
+          onClose={() => setShowFullscreenReader(false)}
+        />
+      )}
 
-          <div className="mb-4 sm:mb-6 pr-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-1 sm:mb-2">Share Post</h2>
-            <p className="text-sm sm:text-base text-[var(--text-secondary)]">Share this post with others</p>
-          </div>
-
-          <SocialShare 
-            post={post} 
-            shareUrl={shareUrl} 
-            onShare={handleShareTrack}
-          />
-        </motion.div>
-      </div>
-    )}
-
-    {/* Fullscreen Reader */}
-    {post && (
-      <FullscreenReader
-        post={post}
-        isOpen={showFullscreenReader}
-        onClose={() => setShowFullscreenReader(false)}
-      />
-    )}
-
-    {/* Image Lightbox */}
-    {lightboxIndex >= 0 && lightboxImages.length > 0 && (
-      <ImageLightbox
-        images={lightboxImages}
-        currentIndex={lightboxIndex}
-        onClose={() => setLightboxIndex(-1)}
-        onNext={() => setLightboxIndex((lightboxIndex + 1) % lightboxImages.length)}
-        onPrevious={() => setLightboxIndex((lightboxIndex - 1 + lightboxImages.length) % lightboxImages.length)}
-      />
-    )}
+      {/* Image Lightbox */}
+      {lightboxIndex >= 0 && lightboxImages.length > 0 && (
+        <ImageLightbox
+          images={lightboxImages}
+          currentIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(-1)}
+          onNext={() => setLightboxIndex((lightboxIndex + 1) % lightboxImages.length)}
+          onPrevious={() => setLightboxIndex((lightboxIndex - 1 + lightboxImages.length) % lightboxImages.length)}
+        />
+      )}
     </>
   );
 };

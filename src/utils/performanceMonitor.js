@@ -11,7 +11,7 @@ class PerformanceMonitor {
       userInteractions: [],
     };
     this.isEnabled = process.env.NODE_ENV === 'production';
-    
+
     // Expose to window for easy access in console
     if (typeof window !== 'undefined') {
       window.performanceMonitor = this;
@@ -68,7 +68,6 @@ class PerformanceMonitor {
     // Simplified version - Web Vitals tracking disabled due to Vite build issues
     if (!this.isEnabled || typeof window === 'undefined') return;
     if (!('PerformanceObserver' in window)) return;
-    // TODO: Re-implement Web Vitals tracking when Vite parsing issue is resolved
   }
 
   /**
@@ -110,7 +109,7 @@ class PerformanceMonitor {
     const mostFrequent = Object.entries(endpointCounts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
-      .map(function(entry) {
+      .map(function (entry) {
         return { endpoint: entry[0], count: entry[1] };
       });
 
@@ -121,7 +120,7 @@ class PerformanceMonitor {
         slowCalls: slowAPICalls.length,
         failedCalls: failedAPICalls.length,
         successfulCalls: successfulAPICalls.length,
-        successRate: apiCalls.length > 0 
+        successRate: apiCalls.length > 0
           ? ((successfulAPICalls.length / apiCalls.length) * 100).toFixed(1) + '%'
           : 'N/A',
         slowestCalls,

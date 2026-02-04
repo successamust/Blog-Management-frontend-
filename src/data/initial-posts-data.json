@@ -792,6 +792,77 @@
       "isFeatured": false,
       "status": "published",
       "blurDataURL": "data:image/jpeg;base64,UklGRnYAAABXRUJQVlA4IGoAAAAwBACdASoUAAsAPm0skkWkIqGYBABABsS2AE6ZQjgAEoY/wIS1oydsa4AA/vsYoruv9pfv6Av0UoXsxMQGR5jVWAA/8FE/8bex9QTrtrbn4HHWYEs9b4icEB9UzWg/yj6hiV5r58KBwAAA"
+    },
+    {
+      "_id": "691181e57975d7468fdbbdbd",
+      "title": "The Future of Web Development: Why Simplicity Will Shape the Next Generation of the Web",
+      "excerpt": "Web development has evolved faster than ever, but with that speed has come unnecessary complexity. The next wave of innovation isn’t about building bigger frameworks or using flashier tools—it’s about creating simpler, faster, and more human-centered experiences.",
+      "author": {
+        "_id": "690f9fce22ffa99bb09e6957",
+        "username": "succesamust",
+        "email": "succesamust@gmail.com",
+        "authorProfile": {
+          "bio": "I’m a tech enthusiast and content creator with a background in software engineering and product development. I enjoy exploring new frameworks, building meaningful digital experiences, and sharing practical knowledge through writing. Outside of tech, I’m passionate about design, entrepreneurship, and personal growth, all of which influence the way I approach storytelling and problem-solving.",
+          "expertise": [
+            "Web Development",
+            "UI/UX Design",
+            "Software Engineering",
+            "Product Development",
+            "Cloud Computing",
+            "Tech Writing",
+            "Startups",
+            "Productivity"
+          ],
+          "website": "https://github.com/successamust"
+        },
+        "bio": "",
+        "profilePicture": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1762796598/blog/ngeshgetg2kram47x7a5.jpg"
+      },
+      "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1762755008/blog/ykme6mmbspnzofqgdhey.png",
+      "isPublished": true,
+      "publishedAt": "2025-11-10T06:10:45.369Z",
+      "category": {
+        "_id": "690fe864d98f299f2b250e07",
+        "name": "Web development",
+        "color": "#6B7280",
+        "slug": "web-development"
+      },
+      "tags": [
+        "web development",
+        "frontend",
+        "javascript",
+        "next.js",
+        "sveltekit",
+        "astro",
+        "ai in development",
+        "tech trends",
+        "simplicity",
+        "software engineering",
+        "developer experience",
+        "programming",
+        "technology",
+        "future of web",
+        "clean code"
+      ],
+      "likes": [
+        "690f9fce22ffa99bb09e6957",
+        "690e4f024f115b821dd25417",
+        "69281db6dd66ee1cb132fc4e",
+        "692c54148b4044d68712d6df"
+      ],
+      "dislikes": [],
+      "viewCount": 153,
+      "slug": "the-future-of-web-development-why-simplicity-will-shape-the-next-generation-of-the-web",
+      "createdAt": "2025-11-10T06:10:45.374Z",
+      "shareCount": 4,
+      "status": "published",
+      "isFeatured": false,
+      "blurDataURL": "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAANCAIAAAAmMtkJAAAACXBIWXMAAAsTAAALEwEAmpwYAAACk0lEQVR4nCWSaU/bWhRF/f9/QaXqqcN7tGpLWl4LESklUDCBAImT2E48xPH19XDnG880IUPl9mh/Xdp7SUfZ13JXy00lVgWrM1qmpExxnZFVztYFX+WsXtJcYEkRx4gTJBnOBalT9lwIZVfLbSXXJS9TInlMCaQkEBRmPC4FyjliOImiaAFC24OOB/0gSpJkyclTxht4U8o6Y5IncQJ8OPeBEwYuiX2OQppEEIaWBzUL9A3/3gQTB3pBTAkuU6ZsK7kqRC4xQnDuu6ZtGjPDskzfc0KwgAA4XjCygp4Ofo7A1Rg8zKDlxwjjYsmU56qpZTRagPl4ZvS14e1g8DjUDN2wLdtxvKkDNAvemvDaCHtmpDmxCxEhtEy5si5EKlAYLXRLVx/7Z9fq98vri6tevz8YjXRzak9tX3eh5sRDNxnPkRPgCBEpWOP8K2eMhLY36w367Ytuq33aOj497nQvr27vH7SJMbPcheNHboC8iAQJxYRJwaqUrwuh1BlFCExm4zP18sPxt9cfD998aH06Oun8uLy5ux/ruu3OfRhGCcKEcEZzSeuUrgu2LblSZySJfU0fnnTP3hwevnh78PLfd+9bR+2zc/XubmxM3LkTRpCQZMlxIfGvlKxzsi3ZruLKU0YJCibmqHNxftD6/M9/714dvP909H+ne3770Nen+nzhxDHkNMkEriRepfg5J7uS7qvGmQoSus5U7alf2+2Pn78cfjk66Zxe3VwPxwPLnQbQIzhsyJT8rd0UdFeyBl4XrBAoDub6RLtR1e6fU3vqcPQ4s00QuCgJljypU9o8bM42jW2zeV8LZVPyp5RIDIOFPTMmY20wGj7q+si2TQBclABJo3KJ1wXflqJJJXaV2NdiX8vfc/WljC45xyYAAAAASUVORK5CYII="
     }
-  ]
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 1,
+    "totalPosts": 12
+  }
 }
