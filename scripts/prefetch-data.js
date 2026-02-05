@@ -29,6 +29,14 @@ const getEnvVar = (key) => {
 const PROD_URL = 'https://blog-management-sx5c.onrender.com/v1';
 let BASE_URL = process.env.VITE_API_BASE_URL || getEnvVar('VITE_API_BASE_URL') || PROD_URL;
 
+const wordsPerMinute = 225;
+function calculateReadingTime(content) {
+    if (!content) return 1;
+    const text = content.replace(/<[^>]*>/g, '');
+    const wordCount = text.trim().split(/\s+/).filter(word => word.length > 0).length;
+    return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
+}
+
 async function getBlurPlaceholder(imageUrl) {
     if (!imageUrl) return null;
     try {
@@ -96,13 +104,26 @@ async function prefetch() {
 async function runPrefetch(baseUrlToUse) {
     // 1. Fetch Global/Common Data
     console.log('[Prefetch] Fetching Global Data...');
-    const [categoriesRes, tagsRes] = await Promise.all([
+    const [categoriesRes, tagsRes, statsRes] = await Promise.all([
         fetchWithRetry(`${baseUrlToUse}/categories`),
-        fetchWithRetry(`${baseUrlToUse}/search/tags/popular`)
+        fetchWithRetry(`${baseUrlToUse}/search/tags/popular`),
+        fetchWithRetry(`${baseUrlToUse}/categories/stats`).catch(() => ({ data: { stats: [] } }))
     ]);
 
+    // Merge stats into categories
+    const rawCategories = categoriesRes.data?.categories || categoriesRes.data?.data || (Array.isArray(categoriesRes.data) ? categoriesRes.data : []);
+    const stats = statsRes.data?.stats || statsRes.data?.data || [];
+
+    const categoriesWithStats = rawCategories.map(cat => {
+        const catStats = stats.find(s => s._id === cat._id || s.id === cat.id);
+        return {
+            ...cat,
+            postCount: catStats ? catStats.count : (cat.postCount || 0)
+        };
+    });
+
     const commonData = {
-        categories: categoriesRes.data?.categories || categoriesRes.data?.data || (Array.isArray(categoriesRes.data) ? categoriesRes.data : []),
+        categories: categoriesWithStats,
         popularTags: tagsRes.data?.tags || tagsRes.data?.data || (Array.isArray(tagsRes.data) ? tagsRes.data : []),
         prefetchedAt: new Date().toISOString()
     };
@@ -117,20 +138,22 @@ async function runPrefetch(baseUrlToUse) {
     const rawHomePosts = homePostsRes.data?.posts || homePostsRes.data?.data || (Array.isArray(homePostsRes.data) ? homePostsRes.data : []);
     const rawArchivePosts = archivePostsRes.data?.posts || archivePostsRes.data?.data || (Array.isArray(archivePostsRes.data) ? archivePostsRes.data : []);
 
-    // Enrich Home Posts with Blur Data
-    console.log('[Prefetch] Generating Blur Placeholders for Home Posts...');
+    // Enrich Home Posts
+    console.log('[Prefetch] Enriching Home Posts (Blur + Reading Time)...');
     const homePostsWithBlur = await Promise.all(rawHomePosts.map(async (post) => ({
         ...post,
+        readingTime: calculateReadingTime(post.content || post.excerpt || ''),
         blurDataURL: post.featuredImage ? await getBlurPlaceholder(post.featuredImage) : null
     })));
 
-    // Enrich Archive Posts with Blur Data (reuse if already in home)
-    console.log('[Prefetch] Generating Blur Placeholders for Archive Posts...');
+    // Enrich Archive Posts
+    console.log('[Prefetch] Enriching Archive Posts...');
     const archivePostsWithBlur = await Promise.all(rawArchivePosts.map(async (post) => {
         const existing = homePostsWithBlur.find(p => (p._id || p.id) === (post._id || post.id));
-        if (existing) return { ...post, blurDataURL: existing.blurDataURL };
+        if (existing) return { ...post, readingTime: existing.readingTime, blurDataURL: existing.blurDataURL };
         return {
             ...post,
+            readingTime: calculateReadingTime(post.content || post.excerpt || ''),
             blurDataURL: post.featuredImage ? await getBlurPlaceholder(post.featuredImage) : null
         };
     }));

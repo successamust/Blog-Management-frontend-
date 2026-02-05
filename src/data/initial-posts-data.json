@@ -296,39 +296,27 @@
     },
     {
       "count": 1,
-      "name": "matchday5"
+      "name": "efficiency"
     },
     {
       "count": 1,
-      "name": "bear"
+      "name": "sveltekit"
     },
     {
       "count": 1,
-      "name": "burnout-prevention"
+      "name": "tips"
     },
     {
       "count": 1,
-      "name": "championsleague"
+      "name": "developer experience"
     },
     {
       "count": 1,
-      "name": "tech trends"
+      "name": "programming"
     },
     {
       "count": 1,
-      "name": "ucl"
-    },
-    {
-      "count": 1,
-      "name": "guide"
-    },
-    {
-      "count": 1,
-      "name": "footballnews"
-    },
-    {
-      "count": 1,
-      "name": "bull"
+      "name": "operations"
     },
     {
       "count": 1,
@@ -336,23 +324,39 @@
     },
     {
       "count": 1,
-      "name": "self-improvement"
+      "name": "essentialism"
     },
     {
       "count": 1,
-      "name": "2026-goals"
+      "name": "btc"
     },
     {
       "count": 1,
-      "name": "eth"
+      "name": "uefachampionsleague"
     },
     {
       "count": 1,
-      "name": "work-life-balance"
+      "name": "future of web"
     },
     {
       "count": 1,
-      "name": "scm"
+      "name": "ai in development"
+    },
+    {
+      "count": 1,
+      "name": "crypto"
+    },
+    {
+      "count": 1,
+      "name": "soccer"
+    },
+    {
+      "count": 1,
+      "name": "finance"
+    },
+    {
+      "count": 1,
+      "name": "javascript"
     },
     {
       "count": 1,
@@ -360,18 +364,14 @@
     },
     {
       "count": 1,
-      "name": "frontend"
+      "name": "time-management"
     },
     {
       "count": 1,
-      "name": "astro"
-    },
-    {
-      "count": 1,
-      "name": "sol"
+      "name": "web3"
     }
   ],
-  "prefetchedAt": "2026-02-04T09:32:58.550Z",
+  "prefetchedAt": "2026-02-04T17:44:30.852Z",
   "posts": [
     {
       "_id": "693f03b78d92c9934e474d98",
@@ -412,9 +412,10 @@
       ],
       "dislikes": [],
       "shareCount": 16,
-      "viewCount": 109,
+      "viewCount": 116,
       "slug": "the-case-for-un-resolutions-why-quitting-is-better-than-starting",
       "createdAt": "2025-12-14T18:36:39.157Z",
+      "readingTime": 1,
       "blurDataURL": "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAANCAIAAAAmMtkJAAAACXBIWXMAAAsTAAALEwEAmpwYAAAC0klEQVR4nEWN20/aYBiH+xfubssutmRbjMmcwcNARZByEAeoEd3wgPNE1G0qeNxkBlFBkAo9t1gEq6XwfW05lD9hqTdLnqtf3ud5ERJ2CNDBnyk8g4MOCTsU7DCKAau0WaXJwgYLNQ5qnNIoqq2SpleaOsKpxoWRgP99AhoLbcg6A1uGBhSuDngAeKgWlYagtctNHRE0nVd1RtFJqONAN+S6USGen9NQp0GTrimMXGOqVVaWjQTUimpbaOgIW4WUBHEJ5iXlVlJvq4283CzUWni9TQCdBG2iphFSHRef8AeREB8pSWbqKqe0eFVHMpyQZoUUW0px9+liJSM83pQlTKzlnwAhq6Ss4RLIP0hYqZwTSrf3ZVyUKFlhYYtRdCSWSMcSqYNk+uQqG89i57d4iqSzLI8JpUJFJESpUBExoZzlixmOv7krFSqPVBUysEVDHQltRhc2d5e39yK7sZ3Do8P4aTyZOE9fprBMlshjDJmjySxFpgkiTZJZjiuUK1S1zoImBdoIOhP2BBd9swvB+aXwyvfNrY1odPv4aCd+up9InFxcxC+uzpKpRPL64jKXyZBEQRCopyoLNBq0EJNzyuz0j7p97gnf1HRgPjSzsRL6EVnc2wrHfq4c7Kwf7EUO97dPfsf+JuOXuSzGsZT4xNVVFjaRLou7x4L2j6AjdtTldk0GvKFZ/3IosGbgX/0WWAlNri0FtyLh6P6v0/OzNF7A78t8DdypDeRtr7Wrz/rp8+jgsN025vCMu6b847MBz5zPGfTap93WSbd1emLsa9C3trq0dxBNXKfyRb4oyw+ahrx83/eme7DbNGSy2IbtqMPl9o67fR70CzrqsZpRS/+YxeQYGfC6bHPBQGRz/c9ZHKPJUvVRbirIi9fdr971fugx95ptFrvL5vSgThdqtzuGzdYB05Cpx2L6ODTwyTY86Pc6l8Oho+N9DM9VpLLSBv8A8kk/XF8Yek0AAAAASUVORK5CYII="
     },
     {
@@ -447,9 +448,10 @@
       "likes": [],
       "dislikes": [],
       "shareCount": 2,
-      "viewCount": 70,
+      "viewCount": 72,
       "slug": "the-power-of-micro-habits-transforming-your-life-one-small-step-at-a-time",
       "createdAt": "2025-12-06T23:23:16.694Z",
+      "readingTime": 1,
       "blurDataURL": "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAANCAIAAAAmMtkJAAAACXBIWXMAAAsTAAALEwEAmpwYAAAC00lEQVR4nEWQW0/aAACF+YtLTLbFOR+2GTezLG6JL063uQfJZhxQKHcsIioopbRKgdmK3OVSamm5iwqBlrtcyvOCbllyXr9zvhxJJ++opg9y0d203xA/00a96ohXHfaoQzgY8oAxn4Y61+ci5iq112atg9y+WLCKxf1J2TapwJJW9riStDJBU8ynCbpVfgw4xwASBQiXgkAVFyfKmE/DBEyVOCTQ0D1rGnNGMWsSC3uTsl0icEeluIU6NwTdIOFS+Jwyn1PmhWVe+JcHlp0h8hAO0n5DOWbiKWOf0Y0ymjGnE3PQpGSTNLmjcmIv7TeEcJBEgd+I/DEPLXISBSIeNRMwVuI7Am26z+hHrPYffChp545vqX0uvJMgdGEPeHGqnJqjinNU7seAMA6mSH0+aq5RljZjHrDGEasfc3oxZ57C/SLMs/ablDUXNTMBY4rQxn1gDAdibiDuVdGkLh+BqpS1yVh7rHnIGkYZzSijHWdNYvFAMiwj3QIssPYafVBJWLJB49WZOoUrkm457VPmA7q7BNRkLF0G6l9pB2nFILU9oGRDRjPOWyRiBR2WkX4R7uSOeeawcglxpJrGZenTbdYrvw6AjYS+S+v7FNC7lPbCX7vBtV544z65PWKNEvEGHV277kvOXgFusrbbS4gjVNTJVhLZZE6k5bOfjdBWJyrtBNfbxHLT87aJL7aJ5V7k+/BK/RcePIy3ONttHMoSSgr7kYQ3rpAvJfd6nfjcIlda3iUBm284n/HIbAtf7AbXBmnlFB5eI4/LAvsAk0r6VEo51xh4pej6WHO/508XBHSu4ZipHz1pwE+b+EI3uDZMq/5rdwsOgbVVk+ZiQMV5pRl0NYssXyPvaujrBvqSR543HDMNxwzvetHyLfXC36bakxt0XHE9ftbO2uvp3ZsIWCKlRXy1jH24wxbr2CsemxfQOd41y6NzTfebNvmpH9scZXR/ALlJQIGQTbCaAAAAAElFTkSuQmCC"
     },
     {
@@ -488,11 +490,12 @@
       ],
       "dislikes": [],
       "shareCount": 8,
-      "viewCount": 67,
+      "viewCount": 75,
       "slug": "fate-or-coincidence",
       "createdAt": "2025-12-04T19:52:22.083Z",
       "isFeatured": true,
       "status": "published",
+      "readingTime": 1,
       "blurDataURL": "data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAMABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAcCBAUI/8QAIBAAAQQCAQUAAAAAAAAAAAAAAQACAwUEESEGByIjcf/EABUBAQEAAAAAAAAAAAAAAAAAAAMC/8QAFxEBAQEBAAAAAAAAAAAAAAAAAQARMv/aAAwDAQACEQMRAD8A6TtJjBE9440Fg0VpLmZT2uPAKudeyugppHxnTtJY9u7PKkvDG+TbS5G9EhmLPKI+sbQpMHgPiFcd/9k="
     },
     {
@@ -525,11 +528,12 @@
       ],
       "dislikes": [],
       "shareCount": 3,
-      "viewCount": 76,
+      "viewCount": 77,
       "slug": "the-ultimate-digital-teammate-inside-andurils-ai-powered-eagleeye-helmet",
       "createdAt": "2025-12-04T19:06:10.208Z",
       "isFeatured": false,
       "status": "published",
+      "readingTime": 1,
       "blurDataURL": "data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAUHBv/EACIQAAICAgEDBQAAAAAAAAAAAAECAAMEBREGEjETITJRUv/EABUBAQEAAAAAAAAAAAAAAAAAAAQB/8QAGxEAAgMAAwAAAAAAAAAAAAAAAAECAxEhQVH/2gAMAwEAAhEDEQA/AJziaIX6F7X+fHiZ/VaJMiywXv2FfHMqVdarQ6BQF+pNutrGxsgegxr5/MPX4Ntublq7EubhGjJetXBAPtCKWyLWYlnYmErihEbZYuT/2Q=="
     },
     {
@@ -563,11 +567,12 @@
       ],
       "dislikes": [],
       "shareCount": 1,
-      "viewCount": 76,
+      "viewCount": 78,
       "slug": "how-ai-is-reshaping-everyday-work-embracing-the-future-of-collaboration-not-replacement",
       "createdAt": "2025-12-01T00:02:35.017Z",
       "isFeatured": false,
       "status": "published",
+      "readingTime": 1,
       "blurDataURL": "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAOCAIAAACgpqunAAAACXBIWXMAAAsTAAALEwEAmpwYAAADQ0lEQVR4nAXBaVMaBwAA0P09tcq1srssEDBgsCACKkeFIOCJSEEOBYTIueteLLeLCAQ0YFQSo9FJajqZyeToZPqlM5nOdPpj+h4wGtQvT6uX/erVaf31gHs76j7cnX/7dPfj78///fvXPz++ff/6+8eHV+9uh+9uBx/uz9/fnl0O6jU2FY+uAINu8UWbftFmhh32olcdDZo3V88f7i+/fLr//ueHr5/f//FwfXczvL7qvb7ovhk9f/Wy1e8wLBWL7bqB41qmWUk3K5lWNddpEL3j4lm3fjHsvLkevL29uLl5Obo6PR92zvrNfqd+1q31WsVGJYPng9HwUwDPBfBsAM8GyVyYweIlMl1hce6odNJutLvcSYc7Pmm0WjWuwTYqZKOMV6iDw2x4P7bu37YCoaAjHHwaCTr3djzJXV96P5LPJkmqQLMEzVJ0iWLKdLnClFiCIbJUPplL7sRC636v3b1sAFxOnWdZv+oyeFfMwS3XbsifTMZyWAYjChiZx8gCQeNFlmCowmE+ld2P7AU2vCt255Jx0aQBFo0K24LKbtZ4lgy+NUc06HuWiuNEjmIwmsHoIlYsYmUWZ8hcIR2Ph/1bq067xWTQaTSqR8DcE2ReK7cZVC6rfnvVkYj4sVyyXMKP6lSzQTXrRLN2yJWxMpnJp3bD/g233WqY1aqUCjkCA/op2KiWmrVK54LW5/41EfKRuf1GGetwdP+Y7nFkp4YdMWk6F0tFtr0ep8VkmH78GIURSCgE9ApkVimZU8nMOrXHZgp53dnETplItavYKUf0G1ireMBmo+noVmDNaV80ap+o5SgqFoEgjw/8IkempdC0FJ5RSE0zapfVFNxYTu/9xhbiHH3AUaliJvJsZ93vtjnmZ3XqKQUqgUBQxOeDPB6gliIKRCyDQBk0qURhrUppM81uupcSO958IphPBBKBtU2n2aLXaBRSGTQJCYUgnw/y+WKhEFCgiAyBJOJJsUgICgQwCE7JUKNuxuOwBTbdgU3PmtO2oJ9RyVFYJBBOjAt5E6BAIBaJELEYkKMSOSqRIrAYnORN8MbHxgV8/iOZ1DSncy5Zlu1Wy7xhekoBgaKJsZ/HfxoT8ngQCKIwLEPR/wH+83T+vUjdMwAAAABJRU5ErkJggg=="
     },
     {
@@ -608,12 +613,13 @@
       ],
       "dislikes": [],
       "shareCount": 0,
-      "viewCount": 26,
+      "viewCount": 29,
       "slug": "fixed-asset-disposal-salescrap-in-microsoft-dynamics-365-finance-and-operations",
       "createdAt": "2025-11-30T14:44:56.207Z",
       "featuredImage": "https://i0.wp.com/exploredynamics365home.wordpress.com/wp-content/uploads/2022/09/0-2.jpg?fit=1200%2C1161&ssl=1&resize=525%2C300",
       "isFeatured": false,
       "status": "published",
+      "readingTime": 1,
       "blurDataURL": "data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAALABQDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAABwD/xAAjEAABAwMEAgMAAAAAAAAAAAABAAIDBAURBgcSIRUiMTJR/8QAFQEBAQAAAAAAAAAAAAAAAAAABAX/xAAeEQABBAIDAQAAAAAAAAAAAAABAAIEEQMTBSEyUf/aAAwDAQACEQMRAD8AS9w79W2yikJz2hqg1zcn3AR0/Lk4pl3haHUzw4AjCEdHQxm/DLB9k2HxOPQXv7P1FjzMhl62mglq2Veo5qNkga/Du1JRsETPFQejfj8Upxj0atX3T6PgL//Z"
     },
     {
@@ -655,9 +661,10 @@
       ],
       "dislikes": [],
       "shareCount": 7,
-      "viewCount": 635,
+      "viewCount": 637,
       "slug": "productivity-tips-to-help-transform-your-daily-routine",
       "createdAt": "2025-11-29T21:17:30.256Z",
+      "readingTime": 1,
       "blurDataURL": "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAALCAIAAADwazoUAAAACXBIWXMAAAsTAAALEwEAmpwYAAACgElEQVR4nDXCaU/aYAAA4P7E7YNL/DAXF+Nm1DCBDOXsyyFlWnA1OIGCVGi52kKBXhQQBFTEC6ebzGNkDBlIluwfLFmyJw+UI+C9mL1Fr14x9ts06DKGHvO+z6gHtGpAL/76d0gv/D83Ss2Mk1O/Uy/+0M8ghvQo7KemEPgs+78pW99ltCfZ+4LxMa97zGkHOc0wrxnxmrGgHfPap7x6lF0cZt4M09PD9EsonsAlPna4l27X052D5EM99KOK9crOnmLpyfq+vDJQ9KOiflw2PpVMA9nQE5a7ee1DTn2XX4LIFCkWuMMD5fKk1DmT7k9SD0fB+33PbcnRKVjuFHO3bPlZgftVW7fk6Ij2y5z1lLO2cram4IQidEIoCo1m9fy89rVdvjnlbprE1T52UXSeyXC7YLkuwp2y7Utp9VRwVRlEiiN8wiWybon3QkSSykrZSq3YbO5dtArtI/aiHm6VsYaE1HjQEOAjERyLtv2sMxdDorgT33aGAi4qirJpLxSiwjSXFGWuXMrVKpl6iaopeEXcULKInLEqGbiYAQprTZN2fNuBrtsQBGy4AeG3ZeIIFNjxxmIBhg5z7G4+Hc6zfpHdlNg1gV7laauQAnwSZCkQCQDPusUKDLBZ53ZoSEytEBrIv41E8A9UcI0MomTQTQbXkmGEi9rzFBBiQIwDngIZAia8Jo9z2W5UO/QLW2CWc78+xqchHDNEN1ciH3Uh94p/3eBHjQRmZPx6fkcvR00KCctRwIctCa/eh2g2TPOYYSYCporo5LVvAgq5l2LuedL1Nmib88ILm0CFI+9SmEoOqCu7uhplqlFwJWLmfcsxVLVjnQ2bX7G2yQY6ce97/hdpqakDgUzA4gAAAABJRU5ErkJggg=="
     },
     {
@@ -691,7 +698,7 @@
         "69281db6dd66ee1cb132fc4e"
       ],
       "dislikes": [],
-      "viewCount": 160,
+      "viewCount": 161,
       "slug": "creating-my-first-blog-post",
       "createdAt": "2025-11-09T01:37:18.458Z",
       "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1762740808/blog/hzjp5b5zw41qyuamogfq.png",
@@ -699,6 +706,7 @@
       "scheduledAt": null,
       "status": "published",
       "isFeatured": false,
+      "readingTime": 1,
       "blurDataURL": "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAIAAAAC64paAAAACXBIWXMAAAsTAAALEwEAmpwYAAABtElEQVR4nH2TaY7CMAyFozg9BgOF0gKF8hO6pBsw9z/S6NlJShAayUJg8uV5eVHJ9ZVUr+TyRJwfppzNaeLgL+Vsyoc5878Vn7z+hlCOFOw4mcNg8t7kPRU95b0pBnMYkS/n5PxwV1xdqKTy5GEEk3W0a2nb4hPRUWZp3+PS0/TBq+QimiPlPe06nTZ6U+t1jc9NTWlD2wZX7C1uL+cFrl4KssfJ5ANOpI1e3/UPx1qipk1DaUtZhxZEPMBSMO0tbVsIgrzFMOvvOozgOBnAT1c2plpAVm++yPrKWw+PpuS2HXyc0K3ICiyYa1tIlA04tO1gqTl06wV12iyaGQb2BaZioMxiyNLt+i6laodZXpX9B+4iWARZDZvf9wGmTzj3MMq+oWaZLZOYZf4NrhzsvSETlm4hy/YUMvNtF5HPFFK7luF6gZ0r7UJyLeS2NWPbl6dCdtvykhlG2bVOg7272OQW4v6dKEfCz9F6pQQ3vLCwjMWZT8qHetN8s0fIBIcJL/p+Z2o5Ghkz/HTeZs+0bvl+cso9QDkaxe3thcSPVHx+GN/KXvHREKsbZ+Kk1IIXak0x/AHBcJ2hp6DcIwAAAABJRU5ErkJggg=="
     },
     {
@@ -738,12 +746,13 @@
         "69281db6dd66ee1cb132fc4e"
       ],
       "dislikes": [],
-      "viewCount": 1634,
+      "viewCount": 1636,
       "slug": "uefa-champions-league-matchday-5-review",
       "createdAt": "2025-11-27T02:03:10.944Z",
       "shareCount": 17,
       "isFeatured": false,
       "status": "published",
+      "readingTime": 1,
       "blurDataURL": "data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAQFB//EAB8QAAEEAgIDAAAAAAAAAAAAAAEAAgMEERITMQUhIv/EABcBAAMBAAAAAAAAAAAAAAAAAAIEBQf/xAAeEQABAwQDAAAAAAAAAAAAAAABAAIhAwQTMRIVIv/aAAwDAQACEQMRAD8AwOhSFoCXYDCa8iJzAA05aFHoyvbF8uIVYyONI5celoYFSs/Jyk7UzTplR+bX0e0JOcnlKEfb3DPIOkzjBX//2Q=="
     },
     {
@@ -785,12 +794,13 @@
         "690f9fce22ffa99bb09e6957"
       ],
       "dislikes": [],
-      "viewCount": 454,
+      "viewCount": 455,
       "slug": "state-of-the-crypto-market-november-22-2025",
       "createdAt": "2025-11-22T22:05:13.157Z",
       "shareCount": 9,
       "isFeatured": false,
       "status": "published",
+      "readingTime": 1,
       "blurDataURL": "data:image/jpeg;base64,UklGRnYAAABXRUJQVlA4IGoAAAAwBACdASoUAAsAPm0skkWkIqGYBABABsS2AE6ZQjgAEoY/wIS1oydsa4AA/vsYoruv9pfv6Av0UoXsxMQGR5jVWAA/8FE/8bex9QTrtrbn4HHWYEs9b4icEB9UzWg/yj6hiV5r58KBwAAA"
     },
     {
@@ -857,6 +867,7 @@
       "shareCount": 4,
       "status": "published",
       "isFeatured": false,
+      "readingTime": 1,
       "blurDataURL": "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAANCAIAAAAmMtkJAAAACXBIWXMAAAsTAAALEwEAmpwYAAACk0lEQVR4nCWSaU/bWhRF/f9/QaXqqcN7tGpLWl4LESklUDCBAImT2E48xPH19XDnG880IUPl9mh/Xdp7SUfZ13JXy00lVgWrM1qmpExxnZFVztYFX+WsXtJcYEkRx4gTJBnOBalT9lwIZVfLbSXXJS9TInlMCaQkEBRmPC4FyjliOImiaAFC24OOB/0gSpJkyclTxht4U8o6Y5IncQJ8OPeBEwYuiX2OQppEEIaWBzUL9A3/3gQTB3pBTAkuU6ZsK7kqRC4xQnDuu6ZtGjPDskzfc0KwgAA4XjCygp4Ofo7A1Rg8zKDlxwjjYsmU56qpZTRagPl4ZvS14e1g8DjUDN2wLdtxvKkDNAvemvDaCHtmpDmxCxEhtEy5si5EKlAYLXRLVx/7Z9fq98vri6tevz8YjXRzak9tX3eh5sRDNxnPkRPgCBEpWOP8K2eMhLY36w367Ytuq33aOj497nQvr27vH7SJMbPcheNHboC8iAQJxYRJwaqUrwuh1BlFCExm4zP18sPxt9cfD998aH06Oun8uLy5ux/ruu3OfRhGCcKEcEZzSeuUrgu2LblSZySJfU0fnnTP3hwevnh78PLfd+9bR+2zc/XubmxM3LkTRpCQZMlxIfGvlKxzsi3ZruLKU0YJCibmqHNxftD6/M9/714dvP909H+ne3770Nen+nzhxDHkNMkEriRepfg5J7uS7qvGmQoSus5U7alf2+2Pn78cfjk66Zxe3VwPxwPLnQbQIzhsyJT8rd0UdFeyBl4XrBAoDub6RLtR1e6fU3vqcPQ4s00QuCgJljypU9o8bM42jW2zeV8LZVPyp5RIDIOFPTMmY20wGj7q+si2TQBclABJo3KJ1wXflqJJJXaV2NdiX8vfc/WljC45xyYAAAAASUVORK5CYII="
     }
   ],

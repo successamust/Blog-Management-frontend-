@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import SmartLink from '../common/SmartLink';
 import { Calendar, Clock, Eye, Heart, User, ArrowRight } from 'lucide-react';
-import { format } from 'date-fns';
-import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
+import { formatAuthorName, formatDate, formatReadingTime } from '../../utils/shared';
+import { calculateReadingTime } from '../../utils/readingTime';
 import OptimizedImage from '../common/OptimizedImage';
 
 const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
@@ -65,15 +65,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
     : calculateReadingTime(postContent || buildExcerpt());
   const readingTime = formatReadingTime(readingTimeMinutes);
   const author = post.author || {};
-  const formatDisplayName = (value) => {
-    if (!value || typeof value !== 'string') return 'Anonymous';
-    return value
-      .split(' ')
-      .filter(Boolean)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-      .join(' ');
-  };
-  const authorName = formatDisplayName(author.username || 'Anonymous');
+  const authorName = formatAuthorName(author);
   const authorAvatar = author.profilePicture || '';
   const categoryLabel = getDisplayLabel(
     typeof post.category === 'string'
@@ -87,15 +79,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
       .filter(Boolean)
     : [];
 
-  const toSafeDate = (value) => {
-    if (value instanceof Date) {
-      return Number.isNaN(value.getTime()) ? new Date() : value;
-    }
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? new Date() : date;
-  };
-
-  const postDateObject = toSafeDate(postDate);
+  const postDateFormatted = formatDate(postDate);
 
   if (featured) {
     const fallbackInitial =
@@ -182,7 +166,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
                   <div>
                     <p className="text-sm font-semibold text-[var(--text-primary)] normal-case">{authorName}</p>
                     <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-muted)] whitespace-nowrap">
-                      {format(postDateObject, 'MMM d, yyyy')}
+                      {postDateFormatted}
                     </p>
                   </div>
                 </div>
@@ -259,7 +243,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
               <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-[0.7rem] uppercase tracking-[0.14em] text-[var(--text-muted)]">
                 <span className="text-sm font-semibold tracking-normal text-[var(--text-primary)] normal-case">{authorName}</span>
                 <span>•</span>
-                <span className="whitespace-nowrap">{format(postDateObject, 'MMM d, yyyy')}</span>
+                <span className="whitespace-nowrap">{postDateFormatted}</span>
                 <span>•</span>
                 <span className="flex items-center">
                   <Clock className="w-3 h-3 mr-1" />

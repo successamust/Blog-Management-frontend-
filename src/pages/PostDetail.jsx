@@ -29,7 +29,9 @@ import {
   stripHtmlTags,
   normalizeImageSource,
   wrapTablesWithScroll,
-  formatReadingTime
+  formatReadingTime,
+  formatAuthorName,
+  formatDate
 } from '../utils/shared';
 import { postsAPI, commentsAPI, interactionsAPI, pollsAPI, collaborationsAPI, followsAPI } from '../services/api';
 import { clearCache } from '../utils/apiCache';
@@ -1123,13 +1125,15 @@ const PostDetail = () => {
               >
                 {/* Featured Image */}
                 {post.featuredImage && (
-                  <OptimizedImage
-                    src={normalizeImageSource(post.featuredImage, DEFAULT_OG_IMAGE)}
-                    alt={post.title}
-                    blurDataURL={post.blurDataURL}
-                    className="w-full h-full object-cover"
-                    loading="eager"
-                  />
+                  <div className="relative overflow-hidden aspect-video sm:aspect-[21/9]">
+                    <OptimizedImage
+                      src={normalizeImageSource(post.featuredImage, DEFAULT_OG_IMAGE)}
+                      alt={post.title}
+                      blurDataURL={post.blurDataURL}
+                      className="w-full h-full object-cover"
+                      loading="eager"
+                    />
+                  </div>
                 )}
 
                 <div className="p-6">
@@ -1147,7 +1151,7 @@ const PostDetail = () => {
                             to={`/authors/${post.author?.username}`}
                             className="font-medium hover:text-[var(--accent)] transition-colors"
                           >
-                            {post.author?.username}
+                            {formatAuthorName(post.author)}
                           </Link>
                         </div>
                         {isAuthenticated && user && postAuthorId && String(user._id || user.id) !== String(postAuthorId) && (
@@ -1179,7 +1183,7 @@ const PostDetail = () => {
                       </div>
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-2" />
-                        <span>{format(new Date(post.publishedAt), 'MMMM d, yyyy')}</span>
+                        <span>{formatDate(post.publishedAt || post.createdAt)}</span>
                       </div>
                       <div className="flex items-center">
                         <Clock className="w-4 h-4 mr-2" />

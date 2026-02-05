@@ -296,39 +296,27 @@
     },
     {
       "count": 1,
-      "name": "matchday5"
+      "name": "efficiency"
     },
     {
       "count": 1,
-      "name": "bear"
+      "name": "sveltekit"
     },
     {
       "count": 1,
-      "name": "burnout-prevention"
+      "name": "tips"
     },
     {
       "count": 1,
-      "name": "championsleague"
+      "name": "developer experience"
     },
     {
       "count": 1,
-      "name": "tech trends"
+      "name": "programming"
     },
     {
       "count": 1,
-      "name": "ucl"
-    },
-    {
-      "count": 1,
-      "name": "guide"
-    },
-    {
-      "count": 1,
-      "name": "footballnews"
-    },
-    {
-      "count": 1,
-      "name": "bull"
+      "name": "operations"
     },
     {
       "count": 1,
@@ -336,23 +324,39 @@
     },
     {
       "count": 1,
-      "name": "self-improvement"
+      "name": "essentialism"
     },
     {
       "count": 1,
-      "name": "2026-goals"
+      "name": "btc"
     },
     {
       "count": 1,
-      "name": "eth"
+      "name": "uefachampionsleague"
     },
     {
       "count": 1,
-      "name": "work-life-balance"
+      "name": "future of web"
     },
     {
       "count": 1,
-      "name": "scm"
+      "name": "ai in development"
+    },
+    {
+      "count": 1,
+      "name": "crypto"
+    },
+    {
+      "count": 1,
+      "name": "soccer"
+    },
+    {
+      "count": 1,
+      "name": "finance"
+    },
+    {
+      "count": 1,
+      "name": "javascript"
     },
     {
       "count": 1,
@@ -360,16 +364,12 @@
     },
     {
       "count": 1,
-      "name": "frontend"
+      "name": "time-management"
     },
     {
       "count": 1,
-      "name": "astro"
-    },
-    {
-      "count": 1,
-      "name": "sol"
+      "name": "web3"
     }
   ],
-  "prefetchedAt": "2026-02-04T09:32:58.550Z"
+  "prefetchedAt": "2026-02-04T17:44:30.852Z"
 }

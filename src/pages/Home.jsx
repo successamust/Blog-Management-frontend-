@@ -5,13 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { postsAPI, categoriesAPI, searchAPI, newsletterAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ModernPostCard from '../components/posts/ModernPostCard';
-import { format } from 'date-fns';
-import toast from 'react-hot-toast';
 import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
 import TagCloud from '../components/common/TagCloud';
 import initialHomeData from '../data/initial-home-data.json';
-import { normalizeDate, getPostDate } from '../utils/shared';
+import { normalizeDate, getPostDate, formatAuthorName, formatDate } from '../utils/shared';
 
 const HOME_DESCRIPTION = 'The central hub for diverse voices, where every perspective is shared and every idea is explored.';
 const POSTS_PER_PAGE = 10;
@@ -27,8 +25,8 @@ const Home = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [categories, setCategories] = useState(initialHomeData?.categories || []);
-  const [popularTags, setPopularTags] = useState(initialHomeData?.popularTags || []);
+  const [categories, setCategories] = useState((initialHomeData?.categories || []).slice(0, 8));
+  const [popularTags, setPopularTags] = useState((initialHomeData?.popularTags || []).slice(0, 12));
   const [loading, setLoading] = useState(!(initialHomeData?.posts?.length > 0));
   const [isAuthorSectionOpen, setIsAuthorSectionOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -808,9 +806,9 @@ const Home = () => {
                                   {post.title}
                                 </h4>
                                 <div className="flex items-center space-x-2 text-xs text-[var(--text-muted)]">
-                                  <span>{authorName}</span>
+                                  <span>{formatAuthorName(author)}</span>
                                   <span>•</span>
-                                  <span>{format(new Date(postDate), 'MMM d')}</span>
+                                  <span>{formatDate(postDate, 'MMM d')}</span>
                                 </div>
                               </div>
                             </div>

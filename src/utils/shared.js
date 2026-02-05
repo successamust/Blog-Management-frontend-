@@ -67,3 +67,39 @@ export const formatReadingTime = (minutes) => {
     if (minutes < 1) return '< 1 min read';
     return `${Math.ceil(minutes)} min read`;
 };
+/**
+ * Formats an author's display name consistently.
+ * Handles both object (author.username) and string formats.
+ */
+export const formatAuthorName = (author) => {
+    if (!author) return 'Anonymous';
+
+    let name = '';
+    if (typeof author === 'string') {
+        name = author;
+    } else {
+        name = author.username || author.name || author.displayName || 'Anonymous';
+    }
+
+    if (name === 'Anonymous') return name;
+
+    // Title case formatting
+    return name
+        .split(' ')
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(' ');
+};
+
+/**
+ * Formats a date object or string consistently.
+ */
+export const formatDate = (date, formatString = 'MMM d, yyyy') => {
+    const d = normalizeDate(date);
+    if (!d) return '';
+    try {
+        return format(d, formatString);
+    } catch {
+        return '';
+    }
+};
