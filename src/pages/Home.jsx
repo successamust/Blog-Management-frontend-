@@ -4,6 +4,7 @@ import { ArrowRight, ChevronDown, ChevronUp, PenLine, UsersRound, LineChart, Box
 import { motion, AnimatePresence } from 'framer-motion';
 import { postsAPI, categoriesAPI, searchAPI, newsletterAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 import ModernPostCard from '../components/posts/ModernPostCard';
 import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';

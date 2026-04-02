@@ -52,12 +52,12 @@ async function prerender() {
             if (newDesc) {
                 // More robust meta description replacement
                 updatedHtml = updatedHtml.replace(
-                    /<meta name=\"description\" content=\"[^\"]*\">/,
+                    /<meta name="description" content="[^"]*">/,
                     `<meta name="description" content="${newDesc}">`
                 );
                 // Also update OG description
                 updatedHtml = updatedHtml.replace(
-                    /<meta property=\"og:description\" content=\"[^\"]*\">/,
+                    /<meta property="og:description" content="[^"]*">/,
                     `<meta property="og:description" content="${newDesc}">`
                 );
             }

@@ -296,51 +296,23 @@
     },
     {
       "count": 1,
-      "name": "efficiency"
-    },
-    {
-      "count": 1,
-      "name": "sveltekit"
-    },
-    {
-      "count": 1,
-      "name": "tips"
-    },
-    {
-      "count": 1,
-      "name": "developer experience"
-    },
-    {
-      "count": 1,
-      "name": "programming"
-    },
-    {
-      "count": 1,
       "name": "operations"
     },
     {
       "count": 1,
-      "name": "next.js"
+      "name": "ucl"
     },
     {
       "count": 1,
-      "name": "essentialism"
+      "name": "simplicity"
     },
     {
       "count": 1,
-      "name": "btc"
+      "name": "2026-goals"
     },
     {
       "count": 1,
-      "name": "uefachampionsleague"
-    },
-    {
-      "count": 1,
-      "name": "future of web"
-    },
-    {
-      "count": 1,
-      "name": "ai in development"
+      "name": "sol"
     },
     {
       "count": 1,
@@ -348,31 +320,121 @@
     },
     {
       "count": 1,
-      "name": "soccer"
-    },
-    {
-      "count": 1,
-      "name": "finance"
-    },
-    {
-      "count": 1,
-      "name": "javascript"
-    },
-    {
-      "count": 1,
       "name": "clean code"
     },
     {
       "count": 1,
-      "name": "time-management"
+      "name": "web3"
     },
     {
       "count": 1,
-      "name": "web3"
+      "name": "footballnews"
+    },
+    {
+      "count": 1,
+      "name": "tech trends"
+    },
+    {
+      "count": 1,
+      "name": "future of web"
+    },
+    {
+      "count": 1,
+      "name": "digitaldetox"
+    },
+    {
+      "count": 1,
+      "name": "scm"
+    },
+    {
+      "count": 1,
+      "name": "burnoutrecovery"
+    },
+    {
+      "count": 1,
+      "name": "championsleague"
+    },
+    {
+      "count": 1,
+      "name": "self-improvement"
+    },
+    {
+      "count": 1,
+      "name": "new-year-resolutions"
+    },
+    {
+      "count": 1,
+      "name": "matchday5"
+    },
+    {
+      "count": 1,
+      "name": "mentalwellness"
     }
   ],
-  "prefetchedAt": "2026-02-04T17:44:30.852Z",
+  "prefetchedAt": "2026-04-02T08:55:18.856Z",
   "posts": [
+    {
+      "_id": "69ce2acab224408245ef2aa7",
+      "title": "The Enduring Human Quest for Meaning in a Tech-Driven World",
+      "excerpt": "Yet, amidst this digital surge, a fundamental human yearning persists: the quest for meaning.",
+      "author": {
+        "_id": "690f9fce22ffa99bb09e6957",
+        "username": "succesamust",
+        "email": "succesamust@gmail.com",
+        "authorProfile": {
+          "bio": "I’m a tech enthusiast and content creator with a background in software engineering and product development. I enjoy exploring new frameworks, building meaningful digital experiences, and sharing practical knowledge through writing. Outside of tech, I’m passionate about design, entrepreneurship, and personal growth, all of which influence the way I approach storytelling and problem-solving.",
+          "expertise": [
+            "Web Development",
+            "UI/UX Design",
+            "Software Engineering",
+            "Product Development",
+            "Cloud Computing",
+            "Tech Writing",
+            "Startups",
+            "Productivity"
+          ],
+          "website": "https://github.com/successamust"
+        },
+        "bio": "",
+        "profilePicture": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1762796598/blog/ngeshgetg2kram47x7a5.jpg"
+      },
+      "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1775117993/blog/gazn9jzgk66ndr0s3zeo.png",
+      "isPublished": true,
+      "status": "published",
+      "publishedAt": "2026-04-02T08:37:30.363Z",
+      "scheduledAt": null,
+      "isFeatured": false,
+      "category": {
+        "_id": "6928890e46589147f9c4a8ab",
+        "slug": "health-wellness",
+        "color": "#EC4899",
+        "name": "Health & Wellness"
+      },
+      "tags": [
+        "digitaldetox",
+        "mentalwellness",
+        "personalgrowth",
+        "selfimprovement",
+        "mindfulness",
+        "findingpurpose",
+        "burnoutrecovery",
+        "technologybalance",
+        "intentionalliving",
+        "digitalminimalism",
+        "wellbeing",
+        "healthyhabits",
+        "screentimemanagement",
+        "lifebalance"
+      ],
+      "likes": [],
+      "dislikes": [],
+      "shareCount": 0,
+      "viewCount": 1,
+      "slug": "the-enduring-human-quest-for-meaning-in-a-tech-driven-world",
+      "createdAt": "2026-04-02T08:37:30.369Z",
+      "readingTime": 1,
+      "blurDataURL": "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAANCAIAAAAmMtkJAAAACXBIWXMAAAsTAAALEwEAmpwYAAACfElEQVR4nCXN627aPAAA0Lz/g2zap23at2oURFlgQBOS2PE1F9uJHSchF2CstKz03zRNOv+P45NxHQ9u1D8E3czfT7323mvuH5v7bT3Z/GPvN3a6tTOvfvCbZdhu4y4gPeCDg9MR8H5H+ke0X8N2BZplWLuBdXfW9SvXN0vfrHbmR2C2UeVDC0hNeJvkeyE7R6kul/sk39O0QbyG1AJsIqRDWIawiKACUMWxwrigtEgTLXNjlK113ZrGaXTdaGvLqiqMVroQhcykSITgueCZ5KlKsjLNTJbVMm+V6LUcTXG05dFqZ9DFaNTByIPJR5MNZdoXvFOsk6xXbFBsLPlRs5NmZ8POFf9VJecq+2nyoxHOWKTHMjkb9mTIpcIXgy4mvhh4qdDF4ueavjT0+he+1ui5Qk8Gn0o6SN7miTNIdlTkVxk/a/i7il6r8NWGtzq6tfFbR24de+3Z7z29NujFwicNTyruclIlTNHE6QQ7SHwu4IsGr1V4s+FbHb414G2Pbh297vml5WdLTjoeFehz0KbIcCoI5yhzWpH2kp0Ufvqbg6sBLxV8ruKLxWfLRs1bxUyGCxZLAgSGOcIJ4gRmMZBOlctGZJ3kg6QHhQ8KDxJ3Ajc5NRkTjFJEQIgCH+48GPooChiIsiiSISgdlekiLcpUlElaJlwxlhOWIEoABSH1PLJco7kbzxbx7DtaLMlqk2x88RgUXqgdxmtKDcEFigUAaRAkns/XW+b+oHOXTOb4/yn6NIk/TtDnKfk651M3W2zkyivWO+NEuAmg3QblypMP62y2TCYLfjdnX2b004T89428v8PvvuJ3d+TDN/Z5lt4txHSlHjbl90fzB0o/jZ+vpBaPAAAAAElFTkSuQmCC"
+    },
     {
       "_id": "693f03b78d92c9934e474d98",
       "title": "The Case for \"Un-Resolutions\": Why Quitting is Better Than Starting",
@@ -412,7 +474,7 @@
       ],
       "dislikes": [],
       "shareCount": 16,
-      "viewCount": 116,
+      "viewCount": 181,
       "slug": "the-case-for-un-resolutions-why-quitting-is-better-than-starting",
       "createdAt": "2025-12-14T18:36:39.157Z",
       "readingTime": 1,
@@ -448,7 +510,7 @@
       "likes": [],
       "dislikes": [],
       "shareCount": 2,
-      "viewCount": 72,
+      "viewCount": 126,
       "slug": "the-power-of-micro-habits-transforming-your-life-one-small-step-at-a-time",
       "createdAt": "2025-12-06T23:23:16.694Z",
       "readingTime": 1,
@@ -490,7 +552,7 @@
       ],
       "dislikes": [],
       "shareCount": 8,
-      "viewCount": 75,
+      "viewCount": 140,
       "slug": "fate-or-coincidence",
       "createdAt": "2025-12-04T19:52:22.083Z",
       "isFeatured": true,
@@ -528,7 +590,7 @@
       ],
       "dislikes": [],
       "shareCount": 3,
-      "viewCount": 77,
+      "viewCount": 125,
       "slug": "the-ultimate-digital-teammate-inside-andurils-ai-powered-eagleeye-helmet",
       "createdAt": "2025-12-04T19:06:10.208Z",
       "isFeatured": false,
@@ -567,7 +629,7 @@
       ],
       "dislikes": [],
       "shareCount": 1,
-      "viewCount": 78,
+      "viewCount": 123,
       "slug": "how-ai-is-reshaping-everyday-work-embracing-the-future-of-collaboration-not-replacement",
       "createdAt": "2025-12-01T00:02:35.017Z",
       "isFeatured": false,
@@ -613,7 +675,7 @@
       ],
       "dislikes": [],
       "shareCount": 0,
-      "viewCount": 29,
+      "viewCount": 75,
       "slug": "fixed-asset-disposal-salescrap-in-microsoft-dynamics-365-finance-and-operations",
       "createdAt": "2025-11-30T14:44:56.207Z",
       "featuredImage": "https://i0.wp.com/exploredynamics365home.wordpress.com/wp-content/uploads/2022/09/0-2.jpg?fit=1200%2C1161&ssl=1&resize=525%2C300",
@@ -661,7 +723,7 @@
       ],
       "dislikes": [],
       "shareCount": 7,
-      "viewCount": 637,
+      "viewCount": 678,
       "slug": "productivity-tips-to-help-transform-your-daily-routine",
       "createdAt": "2025-11-29T21:17:30.256Z",
       "readingTime": 1,
@@ -698,7 +760,7 @@
         "69281db6dd66ee1cb132fc4e"
       ],
       "dislikes": [],
-      "viewCount": 161,
+      "viewCount": 201,
       "slug": "creating-my-first-blog-post",
       "createdAt": "2025-11-09T01:37:18.458Z",
       "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1762740808/blog/hzjp5b5zw41qyuamogfq.png",
@@ -746,7 +808,7 @@
         "69281db6dd66ee1cb132fc4e"
       ],
       "dislikes": [],
-      "viewCount": 1636,
+      "viewCount": 1695,
       "slug": "uefa-champions-league-matchday-5-review",
       "createdAt": "2025-11-27T02:03:10.944Z",
       "shareCount": 17,
@@ -794,7 +856,7 @@
         "690f9fce22ffa99bb09e6957"
       ],
       "dislikes": [],
-      "viewCount": 455,
+      "viewCount": 508,
       "slug": "state-of-the-crypto-market-november-22-2025",
       "createdAt": "2025-11-22T22:05:13.157Z",
       "shareCount": 9,
@@ -861,7 +923,7 @@
         "692c54148b4044d68712d6df"
       ],
       "dislikes": [],
-      "viewCount": 153,
+      "viewCount": 154,
       "slug": "the-future-of-web-development-why-simplicity-will-shape-the-next-generation-of-the-web",
       "createdAt": "2025-11-10T06:10:45.374Z",
       "shareCount": 4,

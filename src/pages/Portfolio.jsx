@@ -385,7 +385,7 @@ const Portfolio = () => {
                 className="space-y-4 sm:space-y-6 order-2 lg:order-1"
               >
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-text-primary leading-tight">
-                  <span className="block sm:whitespace-nowrap">Hi, I'm <span className="text-[var(--accent)]">Fatai Salami</span></span>
+                  <span className="block sm:whitespace-nowrap">Hi, I&apos;m <span className="text-[var(--accent)]">Fatai Salami</span></span>
                 </h1>
                 <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-text-secondary leading-relaxed">
                   A backend engineer, specialized in building scalable and efficient backend systems.
@@ -818,7 +818,7 @@ const Portfolio = () => {
                 <div className="h-1 w-6 sm:w-12 bg-[var(--accent)] rounded-full"></div>
               </div>
               <p className="text-text-secondary text-base sm:text-lg mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
-                I'm always open to discussing backend engineering opportunities, interesting projects, or just having a chat about technology.
+                I&apos;m always open to discussing backend engineering opportunities, interesting projects, or just having a chat about technology.
               </p>
               <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-4">
                 <motion.a

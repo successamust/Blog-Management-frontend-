@@ -142,9 +142,12 @@ const isCrawler = (userAgent, headers = {}) => {
 };
 
 const handler = async (req, res) => {
+  let slugValue;
+  let decodedSlug;
+
   try {
     const slugParam = req.query?.slug;
-    const slugValue = Array.isArray(slugParam) ? slugParam[0] : slugParam;
+    slugValue = Array.isArray(slugParam) ? slugParam[0] : slugParam;
     const userAgent = req.headers['user-agent'] || '';
     const headers = req.headers || {};
 
@@ -167,7 +170,7 @@ const handler = async (req, res) => {
     }
 
     // URL decode the slug in case it contains encoded characters
-    const decodedSlug = decodeURIComponent(slugValue);
+    decodedSlug = decodeURIComponent(slugValue);
     console.log('[social-preview] Slug processing:', {
       original: slugValue,
       decoded: decodedSlug,

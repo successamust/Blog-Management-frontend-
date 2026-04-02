@@ -540,9 +540,11 @@ api.interceptors.response.use(
         // For public endpoints with 401, just clear invalid token but don't redirect
         // This allows users to view public content even if their token is invalid
         if (import.meta.env.DEV) {
+          const url = error.config?.url || '';
+          const fullUrl = error.config?.baseURL ? `${error.config.baseURL}${url}` : url;
           console.warn('[API] 401 on public endpoint or auth/me on public page, clearing token but not redirecting:', {
             normalizedUrl,
-            fullUrl: url,
+            fullUrl,
             currentPage: currentPath,
             isPublicEndpoint,
             isAuthMe,
