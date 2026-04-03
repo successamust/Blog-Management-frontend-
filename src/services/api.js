@@ -7,20 +7,25 @@ import {
   fetchCsrfToken, 
   getSecurityHeaders,
   sanitizeInput,
-  sanitizeHtml 
+  sanitizeHtml,
+  setCsrfToken,
 } from '../utils/securityUtils.js';
 import { 
   refreshAccessToken, 
   isAccessTokenExpired,
   setAccessTokenExpiry,
   clearRefreshToken,
-  clearAllTokens 
+  clearAllTokens,
+  setRefreshToken,
 } from '../utils/refreshToken.js';
 import { 
   handleRateLimitError, 
   getRateLimitInfo,
-  formatRetryMessage 
+  formatRetryMessage,
+  storeRateLimitInfo,
 } from '../utils/rateLimiter.js';
+import perfMonitor from '../utils/performanceMonitor.js';
+import { hydrateAxiosErrorMessage } from '../utils/apiError.js';
 
 // Determine base URL based on environment
 let BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -215,24 +220,18 @@ api.interceptors.response.use(
   async (response) => {
     if (typeof window !== 'undefined' && response.config._startTime) {
       const duration = Date.now() - response.config._startTime;
-      import('../utils/performanceMonitor.js').then(({ default: perfMonitor }) => {
-        perfMonitor.trackAPICall(
-          response.config.url,
-          response.config.method,
-          duration,
-          response.status
-        );
-      });
+      perfMonitor.trackAPICall(
+        response.config.url,
+        response.config.method,
+        duration,
+        response.status
+      );
     }
 
     // Handle CSRF token from response (if provided)
     const csrfToken = response.headers['x-csrf-token'] || response.data?.csrfToken;
     if (csrfToken) {
-      import('../utils/securityUtils.js').then(({ setCsrfToken }) => {
-        setCsrfToken(csrfToken);
-      }).catch(() => {
-        // Silently fail if module doesn't exist
-      });
+      setCsrfToken(csrfToken);
     }
 
     // Handle token expiry info from response
@@ -243,22 +242,14 @@ api.interceptors.response.use(
     
     // Handle refresh token expiry info from response (for login/refresh endpoints)
     if (response.data?.refreshTokenExpiresIn) {
-      import('../utils/refreshToken.js').then(({ setRefreshToken }) => {
-        const refreshExpiry = Date.now() + (response.data.refreshTokenExpiresIn * 1000);
-        setRefreshToken(null, refreshExpiry); // Token is in httpOnly cookie, but store expiry
-      }).catch(() => {
-        // Silently fail if module doesn't exist
-      });
+      const refreshExpiry = Date.now() + (response.data.refreshTokenExpiresIn * 1000);
+      setRefreshToken(null, refreshExpiry); // Token is in httpOnly cookie, but store expiry
     }
 
     // Store rate limit info
     const rateLimitInfo = getRateLimitInfo(response);
     if (rateLimitInfo.limit !== null) {
-      import('../utils/rateLimiter.js').then(({ storeRateLimitInfo }) => {
-        storeRateLimitInfo(response.config?.url || 'unknown', rateLimitInfo);
-      }).catch(() => {
-        // Silently fail if module doesn't exist
-      });
+      storeRateLimitInfo(response.config?.url || 'unknown', rateLimitInfo);
     }
 
     const config = response.config;
@@ -313,16 +304,12 @@ api.interceptors.response.use(
       // Track performance for cached responses
       if (typeof window !== 'undefined' && error.config._startTime) {
         const duration = Date.now() - error.config._startTime;
-        import('../utils/performanceMonitor.js').then(({ default: perfMonitor }) => {
-          perfMonitor.trackAPICall(
-            error.config.url,
-            error.config.method,
-            duration,
-            200
-          );
-        }).catch(() => {
-          // Silently fail if module doesn't exist
-        });
+        perfMonitor.trackAPICall(
+          error.config.url,
+          error.config.method,
+          duration,
+          200
+        );
       }
       
       return Promise.resolve(cachedResponse);
@@ -417,8 +404,12 @@ api.interceptors.response.use(
     if (error.response?.status === 403) {
       const errorData = error.response.data || {};
       
-      // Check if it's a CSRF error
-      if (errorData.code === 'CSRF_ERROR' || errorData.message?.toLowerCase().includes('csrf')) {
+      const csrfCode = typeof errorData.code === 'string' ? errorData.code : '';
+      const isCsrf =
+        errorData.code === 'CSRF_ERROR' ||
+        csrfCode.startsWith('CSRF') ||
+        errorData.message?.toLowerCase().includes('csrf');
+      if (isCsrf) {
         // Try to fetch new CSRF token and retry
         try {
           await fetchCsrfToken(api);
@@ -662,7 +653,11 @@ api.interceptors.response.use(
         error.silent = true;
       }
     }
-    
+
+    if (error.response) {
+      hydrateAxiosErrorMessage(error);
+    }
+
     return Promise.reject(error);
   }
 );

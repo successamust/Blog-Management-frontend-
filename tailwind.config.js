@@ -16,9 +16,9 @@ export default {
           }
         },
         fontFamily: {
-          sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'SF Pro Text', 'Source Sans Pro', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
-          display: ['Playfair Display', 'Georgia', 'Times New Roman', 'serif'],
-          serif: ['Playfair Display', 'Georgia', 'Times New Roman', 'serif'],
+          sans: ['Instrument Sans', 'ui-sans-serif', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+          display: ['Fraunces', 'Georgia', 'Times New Roman', 'serif'],
+          serif: ['Fraunces', 'Georgia', 'Times New Roman', 'serif'],
         },
         animation: {
           'fade-in': 'fadeIn 0.6s ease-out',

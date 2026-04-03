@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Shield, ShieldCheck, ShieldOff, QrCode, Copy, Check } from 'lucide-react';
 import { authAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import Spinner from '../common/Spinner';
 
 const TwoFactorAuth = () => {
@@ -52,7 +53,7 @@ const TwoFactorAuth = () => {
       setShowBackupCodes(true);
     } catch (error) {
       console.error('Error setting up 2FA:', error);
-      toast.error(error.response?.data?.message || 'Failed to setup 2FA');
+      toast.error(getApiErrorMessage(error, 'Failed to setup 2FA'));
     } finally {
       setLoading(false);
     }
@@ -73,7 +74,7 @@ const TwoFactorAuth = () => {
       await fetch2FAStatus();
     } catch (error) {
       console.error('Error verifying 2FA:', error);
-      toast.error(error.response?.data?.message || 'Invalid verification code');
+      toast.error(getApiErrorMessage(error, 'Invalid verification code'));
     } finally {
       setLoading(false);
     }
@@ -93,7 +94,7 @@ const TwoFactorAuth = () => {
       await fetch2FAStatus();
     } catch (error) {
       console.error('Error disabling 2FA:', error);
-      toast.error(error.response?.data?.message || 'Failed to disable 2FA');
+      toast.error(getApiErrorMessage(error, 'Failed to disable 2FA'));
     } finally {
       setLoading(false);
     }

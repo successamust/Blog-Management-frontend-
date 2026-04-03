@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { authAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import Spinner from '../../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
 import PasswordStrength from '../../components/common/PasswordStrength';
@@ -77,7 +78,7 @@ const ResetPassword = () => {
       toast.success('Password reset successfully');
       navigate('/login');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to reset password');
+      toast.error(getApiErrorMessage(error, 'Failed to reset password'));
     } finally {
       setLoading(false);
     }
@@ -128,7 +129,7 @@ const ResetPassword = () => {
           <div className="flex justify-center">
             <motion.div
               whileHover={{ scale: 1.1, rotate: 5 }}
-              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-[rgba(26,137,23,0.25)] bg-[var(--accent)] text-white font-bold text-lg"
+              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-[rgba(21,128,61,0.25)] bg-[var(--accent)] text-white font-bold text-lg"
             >
               B
             </motion.div>
@@ -224,7 +225,7 @@ const ResetPassword = () => {
             disabled={loading}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="btn btn-primary group relative disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
+            className="btn btn-primary group relative disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_14px_30px_rgba(21,128,61,0.2)]"
           >
             {loading ? <Spinner size="sm" tone="light" /> : 'Reset Password'}
           </motion.button>

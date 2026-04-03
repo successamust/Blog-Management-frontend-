@@ -3,6 +3,7 @@ import { BarChart3, Download, TrendingUp, Users, Clock, RefreshCw } from 'lucide
 import { pollsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import Spinner from '../common/Spinner';
+import { NexusTrendingIcon, NexusSubscribersIcon } from '../brand/NexusIcons';
 
 const PollAnalytics = ({ pollId, onClose }) => {
   const [analytics, setAnalytics] = useState(null);
@@ -120,10 +121,12 @@ const PollAnalytics = ({ pollId, onClose }) => {
   const { poll, statistics, distribution, recentVotes } = analytics;
 
   return (
-    <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+    <div className="bg-[var(--surface-bg)] rounded-2xl shadow-[0_16px_44px_var(--shadow-default)] border border-[var(--border-subtle)] p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <BarChart3 className="w-6 h-6 text-[var(--accent)]" />
+          <div className="p-2.5 rounded-xl bg-[var(--accent-soft)] text-[var(--accent)]">
+            <NexusTrendingIcon className="w-5 h-5" />
+          </div>
           <div>
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">Poll Analytics</h3>
             <p className="text-sm text-[var(--text-secondary)]">{poll.question}</p>
@@ -168,28 +171,28 @@ const PollAnalytics = ({ pollId, onClose }) => {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-[var(--surface-subtle)] p-4 rounded-lg">
+        <div className="bg-[var(--surface-subtle)] p-4 rounded-xl border border-[var(--border-subtle)]">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-4 h-4 text-[var(--accent)]" />
+            <NexusTrendingIcon className="w-4 h-4 text-[var(--accent)]" />
             <span className="text-sm text-[var(--text-secondary)]">Total Votes</span>
           </div>
           <p className="text-2xl font-bold text-[var(--text-primary)]">{statistics.totalVotes}</p>
         </div>
-        <div className="bg-[var(--surface-subtle)] p-4 rounded-lg">
+        <div className="bg-[var(--surface-subtle)] p-4 rounded-xl border border-[var(--border-subtle)]">
           <div className="flex items-center gap-2 mb-2">
-            <Users className="w-4 h-4 text-[var(--accent)]" />
+            <NexusSubscribersIcon className="w-4 h-4 text-[var(--accent)]" />
             <span className="text-sm text-[var(--text-secondary)]">Unique Voters</span>
           </div>
           <p className="text-2xl font-bold text-[var(--text-primary)]">{statistics.uniqueVoters}</p>
         </div>
-        <div className="bg-[var(--surface-subtle)] p-4 rounded-lg">
+        <div className="bg-[var(--surface-subtle)] p-4 rounded-xl border border-[var(--border-subtle)]">
           <div className="flex items-center gap-2 mb-2">
             <RefreshCw className="w-4 h-4 text-[var(--accent)]" />
             <span className="text-sm text-[var(--text-secondary)]">Vote Changes</span>
           </div>
           <p className="text-2xl font-bold text-[var(--text-primary)]">{statistics.voteChanges}</p>
         </div>
-        <div className="bg-[var(--surface-subtle)] p-4 rounded-lg">
+        <div className="bg-[var(--surface-subtle)] p-4 rounded-xl border border-[var(--border-subtle)]">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="w-4 h-4 text-[var(--accent)]" />
             <span className="text-sm text-[var(--text-secondary)]">Avg per Voter</span>

@@ -8,6 +8,7 @@ import Spinner from '../components/common/Spinner';
 import Seo from '../components/common/Seo';
 import EmptyState from '../components/common/EmptyState';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../utils/apiError.js';
 
 const TagPage = () => {
   const { tag } = useParams();
@@ -64,7 +65,7 @@ const TagPage = () => {
       setTotalPosts(response.data?.totalPosts || filteredPosts.length);
     } catch (error) {
       console.error('Error fetching tag posts:', error);
-      toast.error('Failed to load posts');
+      toast.error(getApiErrorMessage(error, 'Failed to load posts'));
     } finally {
       setLoading(false);
     }
@@ -80,36 +81,38 @@ const TagPage = () => {
         url={`/tags/${tag}`}
       />
       <div className="bg-page">
-        <div className="layout-container-wide py-6 sm:py-8">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <Link
-              to="/posts"
-              className="inline-flex items-center gap-2 text-secondary hover:text-[var(--accent)] mb-4 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Posts</span>
-            </Link>
-
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-[var(--accent)]/10 rounded-xl">
-                <Tag className="w-6 h-6 text-[var(--accent)]" />
+        <section className="page-hero-strip">
+          <div className="pointer-events-none absolute inset-0 hero-mesh" aria-hidden />
+          <div className="layout-container-wide py-10 md:py-12 relative z-[1]">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+              <Link
+                to="/posts"
+                className="inline-flex items-center gap-2 text-secondary hover:text-[var(--accent)] mb-6 transition-colors text-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to posts</span>
+              </Link>
+              <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-3">
+                Tag
+              </p>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="p-3 bg-[var(--accent)]/12 rounded-2xl ring-1 ring-[var(--accent)]/20">
+                  <Tag className="w-6 h-6 text-[var(--accent)]" />
+                </div>
+                <div>
+                  <h1 className="font-display text-3xl sm:text-4xl text-primary leading-tight">
+                    #{decodedTag}
+                  </h1>
+                  <p className="text-secondary mt-1 text-sm sm:text-base">
+                    {totalPosts} {totalPosts === 1 ? 'post' : 'posts'} tagged with this topic
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-primary">
-                  #{decodedTag}
-                </h1>
-                <p className="text-secondary mt-1">
-                  {totalPosts} {totalPosts === 1 ? 'post' : 'posts'} tagged with this topic
-                </p>
-              </div>
-            </div>
-          </motion.div>
-
+            </motion.div>
+          </div>
+        </section>
+        <div className="bg-content">
+        <div className="layout-container-wide py-8 sm:py-10">
           {/* Posts */}
           {loading ? (
             <div className="flex justify-center py-12">
@@ -158,6 +161,7 @@ const TagPage = () => {
               }
             />
           )}
+        </div>
         </div>
       </div>
     </>

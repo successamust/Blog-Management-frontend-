@@ -74,6 +74,10 @@ export default defineConfig({
             ) {
               return undefined;
             }
+            // Recharts stays in the main graph; d3-* can be split to keep the catch-all vendor chunk smaller
+            if (id.includes('node_modules/d3-') || id.includes('node_modules\\d3-')) {
+              return 'd3';
+            }
             // Chart libraries (recharts depends on React, so keep with React)
             if (id.includes('recharts')) {
               return undefined;
@@ -94,7 +98,28 @@ export default defineConfig({
             if (id.includes('axios') || id.includes('socket.io')) {
               return 'network-vendor';
             }
-            // Everything else
+            // Split catch-all vendor so no single chunk exceeds Rollup's default warning threshold
+            if (id.includes('date-fns')) return 'date-fns';
+            if (id.includes('validator')) return 'validator';
+            if (id.includes('dompurify') || id.includes('turndown')) return 'content-sanitize';
+            if (id.includes('node_modules/marked') || id.includes('node_modules\\marked')) {
+              return 'content-sanitize';
+            }
+            if (id.includes('highlight.js') || id.includes('lowlight') || id.includes('prismjs')) {
+              return 'syntax-highlight';
+            }
+            if (
+              id.includes('node_modules/remark') ||
+              id.includes('node_modules\\remark') ||
+              id.includes('node_modules/unified') ||
+              id.includes('node_modules\\unified') ||
+              id.includes('micromark') ||
+              id.includes('mdast-util') ||
+              id.includes('unist-util')
+            ) {
+              return 'remark-md';
+            }
+            if (id.includes('prop-types')) return 'prop-types';
             return 'vendor';
           }
         },

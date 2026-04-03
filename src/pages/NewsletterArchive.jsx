@@ -8,6 +8,7 @@ import Spinner from '../components/common/Spinner';
 import Seo from '../components/common/Seo';
 import EmptyState from '../components/common/EmptyState';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../utils/apiError.js';
 
 const NewsletterArchive = () => {
   const [newsletters, setNewsletters] = useState([]);
@@ -27,7 +28,7 @@ const NewsletterArchive = () => {
       setNewsletters(response.data?.newsletters || response.data?.data || []);
     } catch (error) {
       console.error('Error fetching newsletters:', error);
-      toast.error('Failed to load newsletter archive');
+      toast.error(getApiErrorMessage(error, 'Failed to load newsletter archive'));
     } finally {
       setLoading(false);
     }
@@ -46,48 +47,49 @@ const NewsletterArchive = () => {
         url="/newsletter/archive"
       />
       <div className="bg-page">
-        <div className="layout-container-wide py-6 sm:py-8">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-secondary hover:text-[var(--accent)] mb-6 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Home</span>
-          </Link>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-[var(--accent)]/10 rounded-xl">
-                <Mail className="w-6 h-6 text-[var(--accent)]" />
+        <section className="page-hero-strip">
+          <div className="pointer-events-none absolute inset-0 hero-mesh" aria-hidden />
+          <div className="layout-container-wide py-10 md:py-12 relative z-[1]">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2 text-secondary hover:text-[var(--accent)] mb-6 transition-colors text-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to home</span>
+              </Link>
+              <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-3">
+                Updates
+              </p>
+              <div className="flex flex-wrap items-center gap-4 mb-6">
+                <div className="p-3 bg-[var(--accent)]/12 rounded-2xl ring-1 ring-[var(--accent)]/20">
+                  <Mail className="w-6 h-6 text-[var(--accent)]" />
+                </div>
+                <div>
+                  <h1 className="font-display text-3xl sm:text-4xl text-primary leading-tight">
+                    Newsletter archive
+                  </h1>
+                  <p className="text-secondary mt-1 text-sm sm:text-base">
+                    Browse past newsletters and updates
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-primary">
-                  Newsletter Archive
-                </h1>
-                <p className="text-secondary mt-1">
-                  Browse past newsletters and updates
-                </p>
-              </div>
-            </div>
-
-            {/* Search */}
-            <div className="relative max-w-md">
+            </motion.div>
+          </div>
+        </section>
+        <div className="bg-content">
+        <div className="layout-container-wide py-8 sm:py-10">
+            <div className="relative max-w-md mb-10">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search newsletters..."
-                className="w-full pl-10 pr-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)]"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-bg)] focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-shadow"
               />
             </div>
-          </motion.div>
-
-          {loading ? (
+            {loading ? (
             <div className="flex justify-center py-12">
               <Spinner size="xl" />
             </div>
@@ -104,7 +106,7 @@ const NewsletterArchive = () => {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <Mail className="w-5 h-5 text-[var(--accent)]" />
-                      <h3 className="font-semibold text-primary line-clamp-2">
+                      <h3 className="font-display font-medium text-primary line-clamp-2">
                         {newsletter.subject || 'Newsletter'}
                       </h3>
                     </div>
@@ -132,6 +134,7 @@ const NewsletterArchive = () => {
               description={searchQuery ? 'Try a different search term' : 'No newsletters have been sent yet.'}
             />
           )}
+        </div>
         </div>
       </div>
     </>

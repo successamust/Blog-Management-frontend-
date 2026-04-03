@@ -6,6 +6,7 @@ import { categoriesAPI, postsAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+import { getApiErrorMessage } from '../utils/apiError.js';
 
 import initialCategoriesData from '../data/initial-categories-data.json';
 
@@ -69,7 +70,7 @@ const Categories = () => {
     } catch (error) {
       console.error('Error fetching categories:', error);
       console.error('Error response:', error.response);
-      toast.error('Failed to load categories. Please try again.');
+      toast.error(getApiErrorMessage(error, 'Failed to load categories. Please try again.'));
       setCategories([]);
     } finally {
       setLoading(false);
@@ -93,27 +94,36 @@ const Categories = () => {
         image={DEFAULT_OG_IMAGE}
       />
       <div className="bg-page">
-        <div className="bg-content">
-          <div className="layout-container-wide py-8">
-            {/* Header */}
+        <section className="page-hero-strip">
+          <div className="pointer-events-none absolute inset-0 hero-mesh" aria-hidden />
+          <div className="layout-container-wide py-12 md:py-14 relative z-[1]">
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="mb-8"
+              className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6"
             >
-              <div className="inline-flex items-center gap-3">
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[var(--accent)]/10 text-[var(--accent)]">
-                  <Folder className="w-5 h-5" />
-                </span>
-                <h1 className="text-3xl sm:text-4xl font-bold text-primary mb-0">
-                  Categories
-                </h1>
+              <div>
+                <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-3">
+                  Explore
+                </p>
+                <div className="inline-flex items-center gap-4">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent)]/12 text-[var(--accent)] ring-1 ring-[var(--accent)]/20">
+                    <Folder className="w-6 h-6" />
+                  </span>
+                  <h1 className="font-display text-3xl sm:text-4xl text-primary leading-tight">
+                    Categories
+                  </h1>
+                </div>
+                <p className="text-secondary mt-3 max-w-xl text-sm sm:text-base">
+                  Browse posts by topic—each collection is curated by the community.
+                </p>
               </div>
-              <p className="text-muted">
-                Browse posts by category
-              </p>
             </motion.div>
+          </div>
+        </section>
+        <div className="bg-content">
+          <div className="layout-container-wide py-10 md:py-12">
 
             {/* Categories Grid */}
             {categories.length > 0 ? (
@@ -185,7 +195,7 @@ const CategoryCard = ({ category }) => {
           </motion.div>
         </div>
 
-        <h3 className="text-xl font-bold text-primary mb-2 group-hover:text-[var(--accent)] transition-colors">
+        <h3 className="font-display text-xl text-primary mb-2 group-hover:text-[var(--accent)] transition-colors">
           {category.name}
         </h3>
 

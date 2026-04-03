@@ -4,6 +4,7 @@ import { FileText, CheckCircle, XCircle, Clock, Send, AlertCircle } from 'lucide
 import { authorsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import { format } from 'date-fns';
 import Spinner from '../common/Spinner';
 
@@ -69,21 +70,10 @@ const AuthorApplication = () => {
         website: '',
       });
     } catch (error) {
-      if (error.response?.status === 400) {
-        // Handle validation errors from backend
-        const errorData = error.response.data;
-        if (errorData.errors && Array.isArray(errorData.errors)) {
-          const errorMessages = errorData.errors.map(err => 
-            typeof err === 'string' ? err : err.msg || err.message || 'Validation error'
-          ).join(', ');
-          toast.error(errorMessages);
-        } else {
-          toast.error(errorData.message || 'Failed to submit application. Please check your input.');
-        }
-      } else if (error.response?.status === 404) {
+      if (error.response?.status === 404) {
         toast.error('Author application endpoint not found. Please ensure the backend is updated.');
       } else {
-        toast.error(error.response?.data?.message || 'Failed to submit application');
+        toast.error(getApiErrorMessage(error, 'Failed to submit application'));
       }
     } finally {
       setSubmitting(false);
@@ -289,7 +279,7 @@ const AuthorApplication = () => {
         <button
           type="submit"
           disabled={submitting}
-          className="btn btn-primary flex items-center justify-center space-x-2 shadow-[0_14px_30px_rgba(26,137,23,0.2)] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn btn-primary flex items-center justify-center space-x-2 shadow-[0_14px_30px_rgba(21,128,61,0.2)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? (
             <>

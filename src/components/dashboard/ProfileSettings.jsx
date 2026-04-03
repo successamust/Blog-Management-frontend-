@@ -3,6 +3,7 @@ import { User, Mail, Edit2, Save, X, Upload, Camera, Trash2 } from 'lucide-react
 import { useAuth } from '../../context/AuthContext';
 import { authAPI, imagesAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import ChangePassword from './ChangePassword';
 import Spinner from '../common/Spinner';
 import TwoFactorAuth from '../auth/TwoFactorAuth';
@@ -118,7 +119,7 @@ const ProfileSettings = () => {
       }));
       toast.success('Profile picture uploaded successfully');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to upload profile picture');
+      toast.error(getApiErrorMessage(error, 'Failed to upload profile picture'));
     } finally {
       setUploadingPicture(false);
       if (fileInputRef.current) {
@@ -186,7 +187,7 @@ const ProfileSettings = () => {
       setIsEditing(false);
     } catch (error) {
       console.error('Profile update error:', error);
-      toast.error(error.response?.data?.message || 'Failed to update profile');
+      toast.error(getApiErrorMessage(error, 'Failed to update profile'));
     } finally {
       setSubmitting(false);
     }
@@ -215,7 +216,7 @@ const ProfileSettings = () => {
           {!isEditing ? (
             <button
               onClick={handleEdit}
-              className="btn btn-primary shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
+              className="btn btn-primary shadow-[0_12px_26px_rgba(21,128,61,0.2)]"
             >
               <Edit2 className="w-4 h-4" />
               <span>Edit Profile</span>
@@ -232,7 +233,7 @@ const ProfileSettings = () => {
               <button
                 onClick={handleSubmit}
                 disabled={submitting || !hasChanges}
-                className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
+                className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(21,128,61,0.2)]"
               >
                 <Save className="w-4 h-4" />
                 <span>{submitting ? 'Saving...' : 'Save Changes'}</span>
@@ -280,7 +281,7 @@ const ProfileSettings = () => {
               <p className="text-sm font-medium text-[var(--text-primary)] mb-2">Profile Picture</p>
               {isEditing ? (
                 <div className="space-y-2">
-                  <label className="btn btn-primary inline-flex items-center space-x-2 cursor-pointer shadow-[0_12px_24px_rgba(26,137,23,0.18)]">
+                  <label className="btn btn-primary inline-flex items-center space-x-2 cursor-pointer shadow-[0_12px_24px_rgba(21,128,61,0.18)]">
                     <Camera className="w-4 h-4" />
                     <span>{uploadingPicture ? 'Uploading...' : formData.profilePicture ? 'Change Picture' : 'Upload Picture'}</span>
                     <input

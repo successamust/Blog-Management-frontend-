@@ -20,7 +20,7 @@ const VARIANTS = {
     container: 'font-display font-bold text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl leading-[0.9]',
     gap: 'gap-[0.45em] sm:gap-[0.55em]',
     left: 'tracking-[0.28em] text-slate-900',
-    accent: 'tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] via-[#189112] to-[var(--accent-hover)] drop-shadow-[0_12px_32px_rgba(26,137,23,0.25)]',
+    accent: 'tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] via-[#15803d] to-[var(--accent-hover)] drop-shadow-[0_12px_32px_rgba(21,128,61,0.22)]',
     right: 'tracking-[0.28em] text-slate-900',
   },
   footer: {

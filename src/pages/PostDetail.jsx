@@ -38,6 +38,7 @@ import { clearCache } from '../utils/apiCache';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../utils/apiError.js';
 import { calculateReadingTime } from '../utils/readingTime';
 import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
@@ -347,8 +348,7 @@ const PostDetail = () => {
       console.error('Error fetching post:', error);
       // Don't show error toast if it's a 401 - the API interceptor handles it
       if (error.response?.status !== 401) {
-        const errorMessage = error.response?.data?.message || error.message || 'Failed to load post';
-        toast.error(errorMessage);
+        toast.error(getApiErrorMessage(error, 'Failed to load post'));
       }
       fetchedSlugRef.current = null;
       setPost(null);
@@ -576,11 +576,11 @@ const PostDetail = () => {
       }
     } catch (error) {
       if (error.response?.status === 400) {
-        toast.error(error.response.data?.message || 'You have already voted');
+        toast.error(getApiErrorMessage(error, 'You have already voted'));
       } else if (error.response?.status === 404) {
         toast.error('Poll not found');
       } else {
-        toast.error('Failed to vote. Please try again.');
+        toast.error(getApiErrorMessage(error, 'Failed to vote. Please try again.'));
       }
       throw error; // Re-throw for component to handle rollback
     }
@@ -751,7 +751,7 @@ const PostDetail = () => {
       }
     } catch (error) {
       console.error('Error following/unfollowing:', error);
-      toast.error(error.response?.data?.message || 'Failed to update follow status');
+      toast.error(getApiErrorMessage(error, 'Failed to update follow status'));
     } finally {
       setFollowLoading(false);
     }
@@ -873,7 +873,7 @@ const PostDetail = () => {
       }
     } catch (error) {
       console.error('Error saving post:', error);
-      toast.error(error.response?.data?.message || 'Failed to save post');
+      toast.error(getApiErrorMessage(error, 'Failed to save post'));
     } finally {
       setInteractionLoading(false);
     }
@@ -904,7 +904,7 @@ const PostDetail = () => {
       toast.success('Comment added!');
     } catch (error) {
       console.error('Error adding comment:', error);
-      toast.error(error.response?.data?.message || 'Failed to add comment');
+      toast.error(getApiErrorMessage(error, 'Failed to add comment'));
     } finally {
       setSubmittingComment(false);
     }
@@ -1001,7 +1001,7 @@ const PostDetail = () => {
       optimisticLikesRef.current.delete(normalizedCommentId);
       // Rollback optimistic update on error by refreshing from server
       await refreshComments();
-      toast.error(error.response?.data?.message || 'Failed to like comment');
+      toast.error(getApiErrorMessage(error, 'Failed to like comment'));
     }
   };
 
@@ -1113,6 +1113,7 @@ const PostDetail = () => {
         ] : undefined}
       />
       <div className="bg-page">
+        <div className="bg-content">
         <div className="layout-container-wide py-6 sm:py-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
             {/* Main Content */}
@@ -1139,7 +1140,7 @@ const PostDetail = () => {
                 <div className="p-6">
                   {/* Post Header */}
                   <div className="mb-4 sm:mb-6">
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-3 sm:mb-4">
+                    <h1 className="font-display text-2xl sm:text-3xl md:text-4xl text-primary mb-3 sm:mb-4">
                       {post.title}
                     </h1>
 
@@ -1303,7 +1304,7 @@ const PostDetail = () => {
                           <Link
                             key={tag}
                             to={`/search?tags=${tag}`}
-                            className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-bg)] px-3 py-1 text-sm font-medium text-[var(--text-secondary)] transition-all hover:bg-[var(--accent)] hover:text-white hover:shadow-[0_8px_20px_rgba(26,137,23,0.2)]"
+                            className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-bg)] px-3 py-1 text-sm font-medium text-[var(--text-secondary)] transition-all hover:bg-[var(--accent)] hover:text-white hover:shadow-[0_8px_20px_rgba(21,128,61,0.2)]"
                           >
                             <span>#</span>
                             <span>{tag}</span>
@@ -1321,7 +1322,7 @@ const PostDetail = () => {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all text-sm sm:text-base ${hasLiked
-                        ? 'bg-[var(--accent)] text-white shadow-[0_12px_30px_rgba(26,137,23,0.22)] hover:text-white'
+                        ? 'bg-[var(--accent)] text-white shadow-[0_12px_30px_rgba(21,128,61,0.22)] hover:text-white'
                         : 'glass-card text-[var(--text-secondary)] hover:bg-[var(--surface-bg)]/80'
                         }`}
                     >
@@ -1434,7 +1435,7 @@ const PostDetail = () => {
                       disabled={submittingComment || !commentText.trim()}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_30px_rgba(26,137,23,0.18)]"
+                      className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_30px_rgba(21,128,61,0.18)]"
                     >
                       {submittingComment ? 'Posting...' : 'Post Comment'}
                     </motion.button>
@@ -1520,6 +1521,7 @@ const PostDetail = () => {
               <PostRecommendations currentPost={post} limit={3} />
             </div>
           )}
+        </div>
         </div>
       </div>
 

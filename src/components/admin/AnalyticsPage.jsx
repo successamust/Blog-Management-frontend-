@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LineChart } from 'lucide-react';
+import { NexusTrendingIcon } from '../brand/NexusIcons';
 import AdvancedAnalytics from './AdvancedAnalytics';
 import { postsAPI, commentsAPI, pollsAPI, searchAPI, dashboardAPI, categoriesAPI } from '../../services/api';
 import SkeletonLoader from '../common/SkeletonLoader';
@@ -276,11 +276,13 @@ const AnalyticsPage = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div className="flex-1 min-w-0">
           <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2">
-            <LineChart className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span className="inline-flex items-center justify-center rounded-xl bg-[var(--accent-soft)] p-2 text-[var(--accent)]">
+              <NexusTrendingIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+            </span>
             Advanced Analytics
           </h2>
           <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1">
-            Detailed insights into your posts performance and engagement
+            Performance intelligence across audience behavior, content depth, and engagement momentum.
           </p>
         </div>
         <select

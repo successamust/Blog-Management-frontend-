@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import {
   Github,
   Linkedin,
@@ -24,8 +25,6 @@ import {
   Server,
   ChevronLeft,
   ChevronRight,
-  Menu,
-  X,
   Globe
 } from 'lucide-react';
 import {
@@ -42,12 +41,9 @@ import {
   SiPostman,
   SiWhatsapp
 } from 'react-icons/si';
-import Seo from '../components/common/Seo';
-import { useTheme } from '../context/ThemeContext';
+import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
 
 const Portfolio = () => {
-  const { scrollYProgress } = useScroll();
-  const { theme, setTheme } = useTheme();
   const heroRef = useRef(null);
   const skillsRef = useRef(null);
   const projectsRef = useRef(null);
@@ -58,18 +54,8 @@ const Portfolio = () => {
     y: typeof window !== 'undefined' ? window.innerHeight / 2 : 0
   });
   const [imageError, setImageError] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [orbSize, setOrbSize] = useState(400);
   const [orbOffset, setOrbOffset] = useState(200);
-
-  // Default to dark mode for this page when no user preference is stored
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const saved = localStorage.getItem('theme');
-    if (!saved && theme !== 'dark') {
-      setTheme('dark');
-    }
-  }, [theme, setTheme]);
 
   useEffect(() => {
     // Initialize mouse position to center of screen
@@ -222,6 +208,8 @@ const Portfolio = () => {
       <Seo
         title="Fatai Salami - Backend Engineer"
         description="Backend Engineer specializing in Node.js, Express.js, MongoDB, and microservices. Building scalable APIs and robust backend systems."
+        url="/portfolio"
+        image={DEFAULT_OG_IMAGE}
       />
       <div
         className="min-h-screen bg-page relative overflow-hidden"
@@ -246,22 +234,21 @@ const Portfolio = () => {
       >
         {/* Background Design */}
         <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-          {/* Single Gradient Orb - Mouse Interactive (Light theme) */}
+          <div className="absolute inset-0 hero-mesh opacity-80" aria-hidden />
+          <div className="absolute inset-0 hero-grain opacity-70" aria-hidden />
           <motion.div
-            className="absolute rounded-full"
+            className="absolute rounded-full dark:hidden"
             style={{
               width: `${orbSize}px`,
               height: `${orbSize}px`,
-              background: 'radial-gradient(circle, rgba(26, 137, 23, 0.12) 0%, rgba(26, 137, 23, 0.04) 40%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(21, 128, 61, 0.14) 0%, rgba(21, 128, 61, 0.05) 40%, transparent 70%)',
               filter: 'blur(100px)',
               willChange: 'transform',
               transform: `translate(${mousePosition.x - orbOffset}px, ${mousePosition.y - orbOffset}px)`,
             }}
-          ></motion.div>
-
-          {/* Single Gradient Orb - Mouse Interactive (Dark theme) */}
+          />
           <motion.div
-            className="dark:block hidden absolute rounded-full"
+            className="absolute rounded-full hidden dark:block"
             style={{
               width: `${orbSize}px`,
               height: `${orbSize}px`,
@@ -270,110 +257,13 @@ const Portfolio = () => {
               willChange: 'transform',
               transform: `translate(${mousePosition.x - orbOffset}px, ${mousePosition.y - orbOffset}px)`,
             }}
-          ></motion.div>
+          />
         </div>
-
-        {/* Header Navigation */}
-        <header className="fixed top-0 left-0 right-0 z-50 bg-page/80 backdrop-blur-md h-16">
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-[var(--border-subtle)]"></div>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
-            <div className="flex items-center justify-end h-full">
-              <nav className="hidden md:flex items-center gap-6 lg:gap-8">
-                <button
-                  onClick={() => scrollToSection('projects')}
-                  className="text-text-secondary hover:text-[var(--accent)] transition-colors font-medium relative group text-sm lg:text-base"
-                >
-                  Projects
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[var(--accent)] group-hover:w-full transition-all duration-300"></span>
-                </button>
-                <button
-                  onClick={() => scrollToSection('about')}
-                  className="text-text-secondary hover:text-[var(--accent)] transition-colors font-medium relative group text-sm lg:text-base"
-                >
-                  About
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[var(--accent)] group-hover:w-full transition-all duration-300"></span>
-                </button>
-                <button
-                  onClick={() => scrollToSection('experience')}
-                  className="text-text-secondary hover:text-[var(--accent)] transition-colors font-medium relative group text-sm lg:text-base"
-                >
-                  Experience
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[var(--accent)] group-hover:w-full transition-all duration-300"></span>
-                </button>
-                <button
-                  onClick={() => scrollToSection('contact')}
-                  className="text-text-secondary hover:text-[var(--accent)] transition-colors font-medium relative group text-sm lg:text-base"
-                >
-                  Contact
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[var(--accent)] group-hover:w-full transition-all duration-300"></span>
-                </button>
-              </nav>
-
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 text-text-secondary hover:text-[var(--accent)] transition-colors"
-                aria-label="Toggle menu"
-              >
-                {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Menu */}
-          {isMobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="md:hidden absolute top-16 left-0 right-0 bg-page/95 backdrop-blur-md border-b border-[var(--border-subtle)]"
-            >
-              <nav className="flex flex-col py-4">
-                <button
-                  onClick={() => {
-                    scrollToSection('projects');
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="px-6 py-3 text-left text-text-secondary hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors font-medium"
-                >
-                  Projects
-                </button>
-                <button
-                  onClick={() => {
-                    scrollToSection('about');
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="px-6 py-3 text-left text-text-secondary hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors font-medium"
-                >
-                  About
-                </button>
-                <button
-                  onClick={() => {
-                    scrollToSection('experience');
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="px-6 py-3 text-left text-text-secondary hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors font-medium"
-                >
-                  Experience
-                </button>
-                <button
-                  onClick={() => {
-                    scrollToSection('contact');
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="px-6 py-3 text-left text-text-secondary hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors font-medium"
-                >
-                  Contact
-                </button>
-              </nav>
-            </motion.div>
-          )}
-        </header>
 
         {/* Hero Section */}
         <section
           ref={heroRef}
-          className="relative pt-24 pb-12 sm:pt-28 sm:pb-16 md:pt-32 md:pb-20 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center"
+          className="relative z-[1] pt-16 pb-12 sm:pt-20 sm:pb-16 md:min-h-[min(100vh,920px)] flex items-center px-4 sm:px-6 lg:px-8"
         >
           <div className="max-w-7xl mx-auto w-full">
             <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
@@ -384,16 +274,44 @@ const Portfolio = () => {
                 transition={{ duration: 0.6 }}
                 className="space-y-4 sm:space-y-6 order-2 lg:order-1"
               >
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-text-primary leading-tight">
+                <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)]">
+                  Portfolio
+                </p>
+                <Link
+                  to="/"
+                  className="inline-flex text-sm text-secondary hover:text-[var(--accent)] transition-colors"
+                >
+                  ← Back to Nexus
+                </Link>
+                <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-primary leading-tight">
                   <span className="block sm:whitespace-nowrap">Hi, I&apos;m <span className="text-[var(--accent)]">Fatai Salami</span></span>
                 </h1>
-                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-text-secondary leading-relaxed">
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-secondary leading-relaxed">
                   A backend engineer, specialized in building scalable and efficient backend systems.
                 </p>
-                <div className="flex items-center gap-2 text-text-secondary text-base sm:text-lg">
+                <div className="flex items-center gap-2 text-secondary text-base sm:text-lg">
                   <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--accent)] flex-shrink-0" />
                   <span>Lagos, Nigeria</span>
                 </div>
+
+                <nav className="flex flex-wrap gap-x-4 gap-y-2 pt-1" aria-label="On this page">
+                  {[
+                    ['About', 'about'],
+                    ['Projects', 'projects'],
+                    ['Tech', 'skills'],
+                    ['Experience', 'experience'],
+                    ['Contact', 'contact'],
+                  ].map(([label, id]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => scrollToSection(id)}
+                      className="text-xs sm:text-sm font-medium text-secondary hover:text-[var(--accent)] transition-colors"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </nav>
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-2 sm:pt-4">
@@ -401,7 +319,7 @@ const Portfolio = () => {
                     href={cvLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-5 py-2.5 sm:px-6 sm:py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors font-semibold shadow-lg shadow-[var(--accent)]/30 flex items-center gap-2 text-sm sm:text-base min-h-[44px]"
+                    className="btn btn-primary inline-flex items-center gap-2 text-sm sm:text-base min-h-[44px] shadow-[0_14px_30px_rgba(21,128,61,0.18)]"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -414,40 +332,40 @@ const Portfolio = () => {
                       href="https://www.github.com/successamust"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-surface-bg border border-border-subtle flex items-center justify-center hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all shadow-lg group hover:shadow-[var(--accent)]/30 min-h-[44px] min-w-[44px]"
+                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-surface-bg border border-[var(--border-subtle)] flex items-center justify-center hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all shadow-lg group hover:shadow-[var(--accent)]/30 min-h-[44px] min-w-[44px]"
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       whileTap={{ scale: 0.9 }}
                     >
-                      <Github className="w-5 h-5 sm:w-6 sm:h-6 text-text-secondary group-hover:text-white transition-colors" />
+                      <Github className="w-5 h-5 sm:w-6 sm:h-6 text-secondary group-hover:text-white transition-colors" />
                     </motion.a>
                     <motion.a
                       href="https://www.linkedin.com/in/fataiopeyemi"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-surface-bg border border-border-subtle flex items-center justify-center hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all shadow-lg group hover:shadow-[var(--accent)]/30 min-h-[44px] min-w-[44px]"
+                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-surface-bg border border-[var(--border-subtle)] flex items-center justify-center hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all shadow-lg group hover:shadow-[var(--accent)]/30 min-h-[44px] min-w-[44px]"
                       whileHover={{ scale: 1.1, rotate: -5 }}
                       whileTap={{ scale: 0.9 }}
                     >
-                      <Linkedin className="w-5 h-5 sm:w-6 sm:h-6 text-text-secondary group-hover:text-white transition-colors" />
+                      <Linkedin className="w-5 h-5 sm:w-6 sm:h-6 text-secondary group-hover:text-white transition-colors" />
                     </motion.a>
                     <motion.a
                       href={whatsappLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-surface-bg border border-border-subtle flex items-center justify-center hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all shadow-lg group hover:shadow-[var(--accent)]/30 min-h-[44px] min-w-[44px]"
+                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-surface-bg border border-[var(--border-subtle)] flex items-center justify-center hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all shadow-lg group hover:shadow-[var(--accent)]/30 min-h-[44px] min-w-[44px]"
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       whileTap={{ scale: 0.9 }}
                     >
-                      <SiWhatsapp className="w-5 h-5 sm:w-6 sm:h-6 text-text-secondary group-hover:text-white transition-colors" />
+                      <SiWhatsapp className="w-5 h-5 sm:w-6 sm:h-6 text-secondary group-hover:text-white transition-colors" />
                     </motion.a>
                     <motion.a
                       href="mailto:fosalami1@gmail.com?subject=Portfolio%20Inquiry"
                       aria-label="Send email to Fatai Salami"
-                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-surface-bg border border-border-subtle flex items-center justify-center hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all shadow-lg group hover:shadow-[var(--accent)]/30 min-h-[44px] min-w-[44px]"
+                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-surface-bg border border-[var(--border-subtle)] flex items-center justify-center hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all shadow-lg group hover:shadow-[var(--accent)]/30 min-h-[44px] min-w-[44px]"
                       whileHover={{ scale: 1.1, rotate: -5 }}
                       whileTap={{ scale: 0.9 }}
                     >
-                      <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-text-secondary group-hover:text-white transition-colors" />
+                      <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-secondary group-hover:text-white transition-colors" />
                     </motion.a>
                   </div>
                 </div>
@@ -498,7 +416,7 @@ const Portfolio = () => {
         </section>
 
         {/* About Me Section */}
-        <section id="about" className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-content-bg">
+        <section id="about" className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-content">
           <div className="max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -506,11 +424,13 @@ const Portfolio = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                <div className="h-1 w-8 sm:w-12 bg-[var(--accent)] rounded-full"></div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--accent)] uppercase tracking-wide">About Me</h2>
+              <div className="mb-6">
+                <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2">
+                  Profile
+                </p>
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl text-primary">About me</h2>
               </div>
-              <div className="space-y-3 sm:space-y-4 text-text-secondary text-base sm:text-lg leading-relaxed">
+              <div className="space-y-3 sm:space-y-4 text-secondary text-base sm:text-lg leading-relaxed">
                 <p>
                   Backend Engineer with hands-on experience building scalable RESTful APIs using Node.js, Express.js,
                   and MongoDB. I specialize in designing robust backend systems, optimizing database performance, and
@@ -547,16 +467,17 @@ const Portfolio = () => {
               transition={{ duration: 0.6 }}
               className="text-center mb-8 sm:mb-12"
             >
-              <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4">
-                <div className="h-1 w-6 sm:w-12 bg-[var(--accent)] rounded-full"></div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--accent)] uppercase tracking-wide">Recent Projects</h2>
-                <div className="h-1 w-6 sm:w-12 bg-[var(--accent)] rounded-full"></div>
+              <div className="mb-4">
+                <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2">
+                  Selected work
+                </p>
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl text-primary">Recent projects</h2>
               </div>
             </motion.div>
 
             <div className="relative">
               {/* Project Carousel */}
-              <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-surface-bg shadow-xl border border-border-subtle min-h-[400px] sm:min-h-[500px]">
+              <div className="relative overflow-hidden rounded-xl sm:rounded-2xl card-elevated border border-[var(--border-subtle)] min-h-[400px] sm:min-h-[500px]">
                 <AnimatePresence mode="wait" custom={currentProjectIndex}>
                   <motion.div
                     key={currentProjectIndex}
@@ -572,7 +493,7 @@ const Portfolio = () => {
                   >
                     <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 items-center">
                       {/* Project Image - New Addition */}
-                      <div className="relative group rounded-xl overflow-hidden shadow-2xl border border-border-subtle aspect-video lg:aspect-auto lg:h-full">
+                      <div className="relative group rounded-xl overflow-hidden shadow-2xl border border-[var(--border-subtle)] aspect-video lg:aspect-auto lg:h-full">
                         {projects[currentProjectIndex].image ? (
                           <>
                             <img
@@ -601,10 +522,10 @@ const Portfolio = () => {
                       <div>
                         {/* Title & Description */}
                         <div className="mb-6">
-                          <h3 className="text-2xl sm:text-3xl font-bold text-text-primary mb-3">
+                          <h3 className="font-display text-2xl sm:text-3xl text-primary mb-3">
                             {projects[currentProjectIndex].name}
                           </h3>
-                          <p className="text-text-secondary leading-relaxed text-base sm:text-lg">
+                          <p className="text-secondary leading-relaxed text-base sm:text-lg">
                             {projects[currentProjectIndex].description}
                           </p>
                         </div>
@@ -627,7 +548,7 @@ const Portfolio = () => {
                             href={projects[currentProjectIndex].github}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-6 py-3 bg-surface-subtle text-text-secondary rounded-lg hover:text-white hover:bg-[#24292e] transition-all font-semibold"
+                            className="flex items-center gap-2 px-6 py-3 bg-surface-subtle text-secondary rounded-lg hover:text-white hover:bg-[#24292e] transition-all font-semibold"
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                           >
@@ -651,12 +572,12 @@ const Portfolio = () => {
 
                         {/* Highlights */}
                         <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3">Key Highlights</h4>
+                          <h4 className="text-sm font-semibold text-secondary uppercase tracking-wider mb-3">Key Highlights</h4>
                           <div className="grid sm:grid-cols-2 gap-3">
                             {projects[currentProjectIndex].highlights.map((feature, idx) => (
                               <div
                                 key={idx}
-                                className="flex items-start gap-2 text-sm text-text-secondary"
+                                className="flex items-start gap-2 text-sm text-secondary"
                               >
                                 <CheckCircle2 className="w-4 h-4 text-[var(--accent)] mt-0.5 flex-shrink-0" />
                                 <span>{feature}</span>
@@ -673,17 +594,17 @@ const Portfolio = () => {
               {/* Navigation Arrows */}
               <button
                 onClick={prevProject}
-                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-surface-bg border border-border-subtle flex items-center justify-center hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all shadow-lg z-10 group min-h-[44px] min-w-[44px]"
+                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-surface-bg border border-[var(--border-subtle)] flex items-center justify-center hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all shadow-lg z-10 group min-h-[44px] min-w-[44px]"
                 aria-label="Previous project"
               >
-                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-text-secondary group-hover:text-white transition-colors" />
+                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-secondary group-hover:text-white transition-colors" />
               </button>
               <button
                 onClick={nextProject}
-                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-surface-bg border border-border-subtle flex items-center justify-center hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all shadow-lg z-10 group min-h-[44px] min-w-[44px]"
+                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-surface-bg border border-[var(--border-subtle)] flex items-center justify-center hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all shadow-lg z-10 group min-h-[44px] min-w-[44px]"
                 aria-label="Next project"
               >
-                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-text-secondary group-hover:text-white transition-colors" />
+                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-secondary group-hover:text-white transition-colors" />
               </button>
 
               {/* Project Indicators */}
@@ -692,7 +613,7 @@ const Portfolio = () => {
                   <button
                     key={idx}
                     onClick={() => setCurrentProjectIndex(idx)}
-                    className={`w-2 h-2 rounded-full transition-all ${idx === currentProjectIndex ? 'bg-[var(--accent)] w-8' : 'bg-border-subtle hover:bg-[var(--accent)]/50'
+                    className={`w-2 h-2 rounded-full transition-all ${idx === currentProjectIndex ? 'bg-[var(--accent)] w-8' : 'bg-[var(--border-subtle)] hover:bg-[var(--accent)]/50'
                       }`}
                     aria-label={`Go to project ${idx + 1}`}
                   />
@@ -703,7 +624,7 @@ const Portfolio = () => {
         </section>
 
         {/* Technologies Section */}
-        <section id="skills" ref={skillsRef} className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-content-bg">
+        <section id="skills" ref={skillsRef} className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-content">
           <div className="max-w-7xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -711,10 +632,11 @@ const Portfolio = () => {
               transition={{ duration: 0.6 }}
               className="text-center mb-8 sm:mb-12"
             >
-              <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4">
-                <div className="h-1 w-6 sm:w-12 bg-[var(--accent)] rounded-full"></div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--accent)] uppercase tracking-wide">Technologies</h2>
-                <div className="h-1 w-6 sm:w-12 bg-[var(--accent)] rounded-full"></div>
+              <div className="mb-4">
+                <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2">
+                  Stack
+                </p>
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl text-primary">Technologies</h2>
               </div>
             </motion.div>
 
@@ -730,10 +652,10 @@ const Portfolio = () => {
                     whileHover={{ scale: 1.15, y: -5 }}
                     className="flex flex-col items-center group cursor-pointer"
                   >
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-surface-bg border-2 border-border-subtle flex items-center justify-center shadow-lg group-hover:border-[var(--accent)] group-hover:bg-[var(--accent-soft)] transition-all mb-2 sm:mb-3">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-surface-bg border-2 border-[var(--border-subtle)] flex items-center justify-center shadow-lg group-hover:border-[var(--accent)] group-hover:bg-[var(--accent-soft)] transition-all mb-2 sm:mb-3">
                       <Icon className={`w-8 h-8 sm:w-10 sm:h-10 ${tech.color} group-hover:scale-110 transition-transform`} />
                     </div>
-                    <span className="text-xs sm:text-sm font-medium text-text-secondary group-hover:text-[var(--accent)] transition-colors text-center">
+                    <span className="text-xs sm:text-sm font-medium text-secondary group-hover:text-[var(--accent)] transition-colors text-center">
                       {tech.name}
                     </span>
                   </motion.div>
@@ -752,9 +674,11 @@ const Portfolio = () => {
               transition={{ duration: 0.6 }}
               className="mb-8 sm:mb-12"
             >
-              <div className="flex items-center gap-2 sm:gap-3 mb-4">
-                <div className="h-1 w-8 sm:w-12 bg-[var(--accent)] rounded-full"></div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--accent)] uppercase tracking-wide">Experience</h2>
+              <div className="mb-6">
+                <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2">
+                  Career
+                </p>
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl text-primary">Experience</h2>
               </div>
             </motion.div>
 
@@ -765,22 +689,22 @@ const Portfolio = () => {
                   initial={{ opacity: 0, x: -30 }}
                   animate={experienceInView ? { opacity: 1, x: 0 } : {}}
                   transition={{ delay: index * 0.2, duration: 0.6 }}
-                  className="bg-surface-bg rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 border-l-4 border-[var(--accent)]"
+                  className="card-elevated rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 border-l-4 border-[var(--accent)]"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 sm:mb-6">
                     <div className="flex-1">
-                      <h3 className="text-xl sm:text-2xl font-bold text-text-primary mb-2">{exp.role}</h3>
+                      <h3 className="font-display text-xl sm:text-2xl text-primary mb-2">{exp.role}</h3>
                       <div className="flex items-center gap-2 text-[var(--accent)] font-semibold mb-2">
                         <Briefcase className="w-4 h-4 sm:w-5 sm:h-5" />
                         {exp.company}
                       </div>
-                      <div className="flex items-center gap-2 text-text-secondary text-sm sm:text-base">
+                      <div className="flex items-center gap-2 text-secondary text-sm sm:text-base">
                         <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
                         {exp.location}
                       </div>
                     </div>
                     <div className="mt-4 sm:mt-0 text-left sm:text-right">
-                      <div className="flex items-center gap-2 text-text-secondary mb-2 sm:justify-end text-sm sm:text-base">
+                      <div className="flex items-center gap-2 text-secondary mb-2 sm:justify-end text-sm sm:text-base">
                         <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                         {exp.period}
                       </div>
@@ -791,7 +715,7 @@ const Portfolio = () => {
                   </div>
                   <ul className="space-y-2 sm:space-y-3">
                     {exp.achievements.map((achievement, idx) => (
-                      <li key={idx} className="flex items-start gap-2 sm:gap-3 text-text-secondary p-2 sm:p-3 rounded-lg hover:bg-[var(--accent-soft)] transition-colors text-sm sm:text-base">
+                      <li key={idx} className="flex items-start gap-2 sm:gap-3 text-secondary p-2 sm:p-3 rounded-lg hover:bg-[var(--accent-soft)] transition-colors text-sm sm:text-base">
                         <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--accent)] mt-0.5 sm:mt-1 flex-shrink-0" />
                         <span>{achievement}</span>
                       </li>
@@ -804,7 +728,7 @@ const Portfolio = () => {
         </section>
 
         {/* Contact Section */}
-        <section id="contact" className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-content-bg">
+        <section id="contact" className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-content">
           <div className="max-w-4xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -812,12 +736,13 @@ const Portfolio = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                <div className="h-1 w-6 sm:w-12 bg-[var(--accent)] rounded-full"></div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--accent)] uppercase tracking-wide">Get In Touch</h2>
-                <div className="h-1 w-6 sm:w-12 bg-[var(--accent)] rounded-full"></div>
+              <div className="mb-4 sm:mb-6">
+                <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2">
+                  Contact
+                </p>
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl text-primary">Get in touch</h2>
               </div>
-              <p className="text-text-secondary text-base sm:text-lg mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
+              <p className="text-secondary text-base sm:text-lg mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
                 I&apos;m always open to discussing backend engineering opportunities, interesting projects, or just having a chat about technology.
               </p>
               <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-4">
@@ -825,7 +750,7 @@ const Portfolio = () => {
                   href={cvLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-text-primary hover:text-[var(--accent)] transition-colors font-semibold text-sm sm:text-base min-h-[44px]"
+                  className="flex items-center gap-2 text-primary hover:text-[var(--accent)] transition-colors font-semibold text-sm sm:text-base min-h-[44px]"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -836,40 +761,40 @@ const Portfolio = () => {
                   href="https://www.github.com/successamust"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-border-subtle flex items-center justify-center hover:border-[var(--accent)] hover:bg-[var(--accent)] transition-all group min-h-[44px] min-w-[44px]"
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-[var(--border-subtle)] flex items-center justify-center hover:border-[var(--accent)] hover:bg-[var(--accent)] transition-all group min-h-[44px] min-w-[44px]"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <Github className="w-5 h-5 text-text-primary group-hover:text-white transition-colors" />
+                  <Github className="w-5 h-5 text-primary group-hover:text-white transition-colors" />
                 </motion.a>
                 <motion.a
                   href="https://www.linkedin.com/in/fataiopeyemi"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-border-subtle flex items-center justify-center hover:border-[var(--accent)] hover:bg-[var(--accent)] transition-all group min-h-[44px] min-w-[44px]"
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-[var(--border-subtle)] flex items-center justify-center hover:border-[var(--accent)] hover:bg-[var(--accent)] transition-all group min-h-[44px] min-w-[44px]"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <Linkedin className="w-5 h-5 text-text-primary group-hover:text-white transition-colors" />
+                  <Linkedin className="w-5 h-5 text-primary group-hover:text-white transition-colors" />
                 </motion.a>
                 <motion.a
                   href={whatsappLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-border-subtle flex items-center justify-center hover:border-[var(--accent)] hover:bg-[var(--accent)] transition-all group min-h-[44px] min-w-[44px]"
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-[var(--border-subtle)] flex items-center justify-center hover:border-[var(--accent)] hover:bg-[var(--accent)] transition-all group min-h-[44px] min-w-[44px]"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <SiWhatsapp className="w-5 h-5 text-text-primary group-hover:text-white transition-colors" />
+                  <SiWhatsapp className="w-5 h-5 text-primary group-hover:text-white transition-colors" />
                 </motion.a>
                 <motion.a
                   href="mailto:fosalami1@gmail.com?subject=Portfolio%20Inquiry"
                   aria-label="Send email to Fatai Salami"
-                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-border-subtle flex items-center justify-center hover:border-[var(--accent)] hover:bg-[var(--accent)] transition-all group min-h-[44px] min-w-[44px]"
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-[var(--border-subtle)] flex items-center justify-center hover:border-[var(--accent)] hover:bg-[var(--accent)] transition-all group min-h-[44px] min-w-[44px]"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <Mail className="w-5 h-5 text-text-primary group-hover:text-white transition-colors" />
+                  <Mail className="w-5 h-5 text-primary group-hover:text-white transition-colors" />
                 </motion.a>
               </div>
             </motion.div>

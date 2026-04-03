@@ -1,5 +1,5 @@
-const CACHE_NAME = 'nexus-blog-v5';
-const RUNTIME_CACHE = 'nexus-runtime-v5';
+const CACHE_NAME = 'nexus-blog-v6';
+const RUNTIME_CACHE = 'nexus-runtime-v6';
 
 // Detect if we're in development mode
 const isDevelopment = 

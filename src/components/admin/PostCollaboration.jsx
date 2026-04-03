@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, UserPlus, X, Mail, Check, Clock } from 'lucide-react';
+import { UserPlus, X, Mail, Check, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { collaborationsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
+import { NexusSubscribersIcon } from '../brand/NexusIcons';
 
 const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => {
   const { user } = useAuth();
@@ -81,7 +83,7 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
       // Refresh received invitations
       await fetchReceivedInvitations();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to send invitation');
+      toast.error(getApiErrorMessage(error, 'Failed to send invitation'));
     } finally {
       setLoading(false);
     }
@@ -102,7 +104,7 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
         onCollaboratorsChange(collaborators.filter(c => c.user?._id !== userId && c.user !== userId));
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to remove collaborator');
+      toast.error(getApiErrorMessage(error, 'Failed to remove collaborator'));
     } finally {
       setLoading(false);
     }
@@ -138,8 +140,7 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
       } else if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
         toast.error('Network error. Please check your connection and try again.');
       } else {
-        const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to accept invitation';
-        toast.error(errorMessage);
+        toast.error(getApiErrorMessage(error, 'Failed to accept invitation'));
       }
     } finally {
       setLoading(false);
@@ -167,7 +168,7 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
       } else if (error.response?.status === 403) {
         toast.error('You do not have permission to reject this invitation.');
       } else {
-        toast.error(error.response?.data?.message || error.message || 'Failed to reject invitation');
+        toast.error(getApiErrorMessage(error, 'Failed to reject invitation'));
       }
     } finally {
       setLoading(false);
@@ -181,10 +182,12 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-bg)] p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-primary flex items-center gap-2">
-          <Users className="w-5 h-5" />
+          <span className="inline-flex rounded-xl bg-[var(--accent-soft)] p-1.5 text-[var(--accent)]">
+            <NexusSubscribersIcon className="w-4 h-4" />
+          </span>
           Collaborators
         </h3>
         {isOwner && (
@@ -209,11 +212,11 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
             return (
               <motion.div
                 key={collaboratorId}
-                className="flex items-center justify-between p-3 bg-surface-subtle rounded-lg"
+                className="flex items-center justify-between p-3 bg-surface-subtle rounded-xl border border-[var(--border-subtle)]/60"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-[var(--accent)]/20 rounded-full flex items-center justify-center">
-                    <Users className="w-4 h-4 text-[var(--accent)]" />
+                    <NexusSubscribersIcon className="w-4 h-4 text-[var(--accent)]" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-primary">{collaborator.email || collaborator.user?.email}</p>
@@ -294,7 +297,7 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-xl p-6 max-w-md w-full"
+            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-2xl border border-[var(--border-subtle)] p-6 max-w-md w-full shadow-[0_24px_60px_var(--shadow-elevated)]"
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-primary">Invite Collaborator</h3>

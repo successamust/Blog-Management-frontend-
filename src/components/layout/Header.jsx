@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -11,9 +11,9 @@ import { useAuth } from '../../context/AuthContext';
 import BrandWordmark from '../common/BrandWordmark';
 import NotificationCenter from '../common/NotificationCenter';
 import ThemeToggle from '../common/ThemeToggle';
-import LanguageSwitcher from '../common/LanguageSwitcher';
 import WriteButton from '../common/WriteButton';
 import ProfileDropdown from '../common/ProfileDropdown';
+import { NexusPostsIcon, NexusCategoriesIcon } from '../brand/NexusIcons';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,7 +22,29 @@ const Header = () => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
   const searchRef = useRef(null);
-  
+
+  const openSearchFromShortcut = useCallback(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches) {
+      setShowSearch(true);
+    } else {
+      setIsMenuOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onOpenSearch = () => openSearchFromShortcut();
+    window.addEventListener('nexus-open-search', onOpenSearch);
+    return () => window.removeEventListener('nexus-open-search', onOpenSearch);
+  }, [openSearchFromShortcut]);
+
+  useEffect(() => {
+    if (!showSearch && !isMenuOpen) return undefined;
+    const t = window.setTimeout(() => {
+      document.querySelector('[data-global-search]')?.focus();
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [showSearch, isMenuOpen]);
+
   const canApplyForAuthor = isAuthenticated && user?.role !== 'author' && user?.role !== 'admin';
   const isAuthorOrAdmin = isAuthenticated && (user?.role === 'author' || user?.role === 'admin');
 
@@ -59,9 +81,12 @@ const Header = () => {
 
 
   return (
-    <header className="bg-[var(--surface-bg)] sticky top-0 z-50 border-b border-[var(--border-subtle)]" style={{ boxShadow: '0 2px 10px var(--shadow-default)' }}>
+    <header
+      className="sticky top-0 z-50 border-b border-[var(--border-subtle)] bg-[color-mix(in_oklab,var(--surface-bg)_88%,transparent)] backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-[color-mix(in_oklab,var(--surface-bg)_78%,transparent)]"
+      style={{ boxShadow: '0 1px 0 var(--border-subtle), 0 12px 40px var(--shadow-default)' }}
+    >
       <div className="w-full px-4 sm:px-6 lg:px-8 relative" style={{ position: 'relative' }}>
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-[4.25rem]">
           <Link to="/" className="flex items-center group">
             <motion.img
               src="/nexus-logo-icon.svg"
@@ -73,19 +98,21 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-4 lg:gap-6">
+          <nav className="hidden md:flex items-center gap-4 lg:gap-5">
             {/* Navigation Links */}
-            <div className="flex items-center gap-3 lg:gap-4">
+            <div className="flex items-center gap-1 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-1">
               <Link
                 to="/posts"
-                className="text-sm font-medium text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--surface-bg)] transition-colors"
               >
+                <NexusPostsIcon className="w-4 h-4" />
                 Posts
               </Link>
               <Link
                 to="/categories"
-                className="text-sm font-medium text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--surface-bg)] transition-colors"
               >
+                <NexusCategoriesIcon className="w-4 h-4" />
                 Categories
               </Link>
             </div>
@@ -130,7 +157,21 @@ const Header = () => {
                 </div>
               </>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <motion.button
+                  type="button"
+                  onClick={() => setShowSearch(!showSearch)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="hidden md:inline-flex p-2 rounded-lg hover:bg-[var(--surface-subtle)] transition-colors"
+                  title="Search"
+                  aria-label="Search"
+                >
+                  <Search className="w-5 h-5 text-[var(--text-secondary)]" />
+                </motion.button>
+                <div className="hidden md:block">
+                  <ThemeToggle className="p-2 rounded-lg hover:bg-[var(--surface-subtle)]" />
+                </div>
                 <Link
                   to="/login"
                   className="text-sm font-medium text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
@@ -165,11 +206,14 @@ const Header = () => {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-5 h-5" />
                     <input
-                      type="text"
+                      data-global-search
+                      type="search"
                       placeholder="Search articles..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       autoFocus
+                      autoComplete="off"
+                      enterKeyHint="search"
                       className="w-full pl-10 pr-12 py-3 text-sm bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all placeholder:text-[var(--text-muted)]"
                     />
                     <button
@@ -208,10 +252,13 @@ const Header = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-4 h-4" />
                 <input
-                  type="text"
+                  data-global-search
+                  type="search"
                   placeholder="Search articles..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  autoComplete="off"
+                  enterKeyHint="search"
                   className="w-full pl-9 pr-4 py-2 text-sm bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--text-primary)] focus:border-transparent"
                 />
               </div>
@@ -235,16 +282,18 @@ const Header = () => {
             <div className="flex flex-col space-y-1 px-2">
               <Link
                 to="/posts"
-                className="px-3 py-2.5 text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-lg transition-all duration-200"
+                className="px-3 py-2.5 text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-lg transition-all duration-200 inline-flex items-center gap-2"
                 onClick={() => setIsMenuOpen(false)}
               >
+                <NexusPostsIcon className="w-4 h-4" />
                 Posts
               </Link>
               <Link
                 to="/categories"
-                className="px-3 py-2.5 text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-lg transition-all duration-200"
+                className="px-3 py-2.5 text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-lg transition-all duration-200 inline-flex items-center gap-2"
                 onClick={() => setIsMenuOpen(false)}
               >
+                <NexusCategoriesIcon className="w-4 h-4" />
                 Categories
               </Link>
               

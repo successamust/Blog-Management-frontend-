@@ -296,55 +296,15 @@
     },
     {
       "count": 1,
-      "name": "operations"
+      "name": "digitalminimalism"
     },
     {
       "count": 1,
-      "name": "ucl"
+      "name": "soccer"
     },
     {
       "count": 1,
-      "name": "simplicity"
-    },
-    {
-      "count": 1,
-      "name": "2026-goals"
-    },
-    {
-      "count": 1,
-      "name": "sol"
-    },
-    {
-      "count": 1,
-      "name": "crypto"
-    },
-    {
-      "count": 1,
-      "name": "clean code"
-    },
-    {
-      "count": 1,
-      "name": "web3"
-    },
-    {
-      "count": 1,
-      "name": "footballnews"
-    },
-    {
-      "count": 1,
-      "name": "tech trends"
-    },
-    {
-      "count": 1,
-      "name": "future of web"
-    },
-    {
-      "count": 1,
-      "name": "digitaldetox"
-    },
-    {
-      "count": 1,
-      "name": "scm"
+      "name": "mentalwellness"
     },
     {
       "count": 1,
@@ -352,11 +312,11 @@
     },
     {
       "count": 1,
-      "name": "championsleague"
+      "name": "screentimemanagement"
     },
     {
       "count": 1,
-      "name": "self-improvement"
+      "name": "eth"
     },
     {
       "count": 1,
@@ -364,14 +324,54 @@
     },
     {
       "count": 1,
-      "name": "matchday5"
+      "name": "finance"
     },
     {
       "count": 1,
-      "name": "mentalwellness"
+      "name": "ucl"
+    },
+    {
+      "count": 1,
+      "name": "frontend"
+    },
+    {
+      "count": 1,
+      "name": "future of web"
+    },
+    {
+      "count": 1,
+      "name": "bear"
+    },
+    {
+      "count": 1,
+      "name": "intentionalliving"
+    },
+    {
+      "count": 1,
+      "name": "btc"
+    },
+    {
+      "count": 1,
+      "name": "web development"
+    },
+    {
+      "count": 1,
+      "name": "scm"
+    },
+    {
+      "count": 1,
+      "name": "programming"
+    },
+    {
+      "count": 1,
+      "name": "uefachampionsleague"
+    },
+    {
+      "count": 1,
+      "name": "healthyhabits"
     }
   ],
-  "prefetchedAt": "2026-04-02T08:55:18.856Z",
+  "prefetchedAt": "2026-04-03T17:40:09.980Z",
   "posts": [
     {
       "_id": "69ce2acab224408245ef2aa7",
@@ -380,7 +380,6 @@
       "author": {
         "_id": "690f9fce22ffa99bb09e6957",
         "username": "succesamust",
-        "email": "succesamust@gmail.com",
         "authorProfile": {
           "bio": "I’m a tech enthusiast and content creator with a background in software engineering and product development. I enjoy exploring new frameworks, building meaningful digital experiences, and sharing practical knowledge through writing. Outside of tech, I’m passionate about design, entrepreneurship, and personal growth, all of which influence the way I approach storytelling and problem-solving.",
           "expertise": [
@@ -398,12 +397,12 @@
         "bio": "",
         "profilePicture": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1762796598/blog/ngeshgetg2kram47x7a5.jpg"
       },
-      "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1775117993/blog/gazn9jzgk66ndr0s3zeo.png",
+      "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1775123147/blog/onhcjriz5lvoog2cf5p5.png",
       "isPublished": true,
       "status": "published",
       "publishedAt": "2026-04-02T08:37:30.363Z",
       "scheduledAt": null,
-      "isFeatured": false,
+      "isFeatured": true,
       "category": {
         "_id": "6928890e46589147f9c4a8ab",
         "slug": "health-wellness",
@@ -429,11 +428,11 @@
       "likes": [],
       "dislikes": [],
       "shareCount": 0,
-      "viewCount": 1,
+      "viewCount": 37,
       "slug": "the-enduring-human-quest-for-meaning-in-a-tech-driven-world",
       "createdAt": "2026-04-02T08:37:30.369Z",
       "readingTime": 1,
-      "blurDataURL": "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAANCAIAAAAmMtkJAAAACXBIWXMAAAsTAAALEwEAmpwYAAACfElEQVR4nCXN627aPAAA0Lz/g2zap23at2oURFlgQBOS2PE1F9uJHSchF2CstKz03zRNOv+P45NxHQ9u1D8E3czfT7323mvuH5v7bT3Z/GPvN3a6tTOvfvCbZdhu4y4gPeCDg9MR8H5H+ke0X8N2BZplWLuBdXfW9SvXN0vfrHbmR2C2UeVDC0hNeJvkeyE7R6kul/sk39O0QbyG1AJsIqRDWIawiKACUMWxwrigtEgTLXNjlK113ZrGaXTdaGvLqiqMVroQhcykSITgueCZ5KlKsjLNTJbVMm+V6LUcTXG05dFqZ9DFaNTByIPJR5MNZdoXvFOsk6xXbFBsLPlRs5NmZ8POFf9VJecq+2nyoxHOWKTHMjkb9mTIpcIXgy4mvhh4qdDF4ueavjT0+he+1ui5Qk8Gn0o6SN7miTNIdlTkVxk/a/i7il6r8NWGtzq6tfFbR24de+3Z7z29NujFwicNTyruclIlTNHE6QQ7SHwu4IsGr1V4s+FbHb414G2Pbh297vml5WdLTjoeFehz0KbIcCoI5yhzWpH2kp0Ufvqbg6sBLxV8ruKLxWfLRs1bxUyGCxZLAgSGOcIJ4gRmMZBOlctGZJ3kg6QHhQ8KDxJ3Ajc5NRkTjFJEQIgCH+48GPooChiIsiiSISgdlekiLcpUlElaJlwxlhOWIEoABSH1PLJco7kbzxbx7DtaLMlqk2x88RgUXqgdxmtKDcEFigUAaRAkns/XW+b+oHOXTOb4/yn6NIk/TtDnKfk651M3W2zkyivWO+NEuAmg3QblypMP62y2TCYLfjdnX2b004T89428v8PvvuJ3d+TDN/Z5lt4txHSlHjbl90fzB0o/jZ+vpBaPAAAAAElFTkSuQmCC"
+      "blurDataURL": "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAHCAIAAACHqfpvAAAACXBIWXMAAAsTAAALEwEAmpwYAAABcklEQVR4nAXBiXLSQBgA4Lz/c6jjOONoqbVSnCKW0uxmj3+PnJtjE0JCsK0gvQJhxu9zHjOxK/izpW+ld1iiY42G2h1W7qnBpzU5dXTo6NCSY4P7Gr2UaJd7m5hVGgyAszHiMeX/cvJS4L5Ehwodl2hY4aGlQwfHjew7+drAc0331tvm3h9DVwFkUoZMOetY3RvYZuypIK+l11feYen1Ne0beGvVU6O3tb63osvYOiZNSCuf50pF4CsWOqs47Ix+SOU2h33B95btLdtZ+Gvlg9VtpstEp76IJAs5DTkPuPR5IFjMqXGqOK2TuE2CzuhNqjoj20TUkbCBTLXyQTIiXJfP52w+Z4tbcO8URhHGBnuZk0U2j7I8TPIgzH3fKB2ClEQQJNwFzH7zyTW7uKKjH2Q0ZhcTuJrq65todmtu7jIn8Je+LrRMJURAAw+rxUJOf8H4J/s2pl++008j8uGMvPtK3p+xj+fw+VKdT4LLaTyZmf+W6GAB6yMonAAAAABJRU5ErkJggg=="
     },
     {
       "_id": "693f03b78d92c9934e474d98",
@@ -442,7 +441,6 @@
       "author": {
         "_id": "690e4f024f115b821dd25417",
         "username": "dkong",
-        "email": "unendinggrace19@gmail.com",
         "authorProfile": {
           "expertise": []
         },
@@ -474,7 +472,7 @@
       ],
       "dislikes": [],
       "shareCount": 16,
-      "viewCount": 181,
+      "viewCount": 203,
       "slug": "the-case-for-un-resolutions-why-quitting-is-better-than-starting",
       "createdAt": "2025-12-14T18:36:39.157Z",
       "readingTime": 1,
@@ -487,7 +485,6 @@
       "author": {
         "_id": "690e4f024f115b821dd25417",
         "username": "dkong",
-        "email": "unendinggrace19@gmail.com",
         "authorProfile": {
           "expertise": []
         },
@@ -510,7 +507,7 @@
       "likes": [],
       "dislikes": [],
       "shareCount": 2,
-      "viewCount": 126,
+      "viewCount": 132,
       "slug": "the-power-of-micro-habits-transforming-your-life-one-small-step-at-a-time",
       "createdAt": "2025-12-06T23:23:16.694Z",
       "readingTime": 1,
@@ -523,7 +520,6 @@
       "author": {
         "_id": "6931e01da1d3d339fb51e8ea",
         "username": "BEN",
-        "email": "mosbabang@gmail.com",
         "profilePicture": "",
         "bio": "",
         "authorProfile": {
@@ -552,10 +548,10 @@
       ],
       "dislikes": [],
       "shareCount": 8,
-      "viewCount": 140,
+      "viewCount": 163,
       "slug": "fate-or-coincidence",
       "createdAt": "2025-12-04T19:52:22.083Z",
-      "isFeatured": true,
+      "isFeatured": false,
       "status": "published",
       "readingTime": 1,
       "blurDataURL": "data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAMABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAcCBAUI/8QAIBAAAQQCAQUAAAAAAAAAAAAAAQACAwUEESEGByIjcf/EABUBAQEAAAAAAAAAAAAAAAAAAAMC/8QAFxEBAQEBAAAAAAAAAAAAAAAAAQARMv/aAAwDAQACEQMRAD8A6TtJjBE9440Fg0VpLmZT2uPAKudeyugppHxnTtJY9u7PKkvDG+TbS5G9EhmLPKI+sbQpMHgPiFcd/9k="
@@ -567,7 +563,6 @@
       "author": {
         "_id": "690e4f024f115b821dd25417",
         "username": "dkong",
-        "email": "unendinggrace19@gmail.com",
         "authorProfile": {
           "expertise": []
         },
@@ -590,7 +585,7 @@
       ],
       "dislikes": [],
       "shareCount": 3,
-      "viewCount": 125,
+      "viewCount": 129,
       "slug": "the-ultimate-digital-teammate-inside-andurils-ai-powered-eagleeye-helmet",
       "createdAt": "2025-12-04T19:06:10.208Z",
       "isFeatured": false,
@@ -605,7 +600,6 @@
       "author": {
         "_id": "690e4f024f115b821dd25417",
         "username": "dkong",
-        "email": "unendinggrace19@gmail.com",
         "authorProfile": {
           "expertise": []
         },
@@ -629,7 +623,7 @@
       ],
       "dislikes": [],
       "shareCount": 1,
-      "viewCount": 123,
+      "viewCount": 128,
       "slug": "how-ai-is-reshaping-everyday-work-embracing-the-future-of-collaboration-not-replacement",
       "createdAt": "2025-12-01T00:02:35.017Z",
       "isFeatured": false,
@@ -644,7 +638,6 @@
       "author": {
         "_id": "692c54148b4044d68712d6df",
         "username": "Waris",
-        "email": "abdulsalamwaris@gmail.com",
         "profilePicture": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1764515184/blog/xzvhxdgbzant4cgccfre.jpg",
         "bio": "",
         "authorProfile": {
@@ -675,7 +668,7 @@
       ],
       "dislikes": [],
       "shareCount": 0,
-      "viewCount": 75,
+      "viewCount": 81,
       "slug": "fixed-asset-disposal-salescrap-in-microsoft-dynamics-365-finance-and-operations",
       "createdAt": "2025-11-30T14:44:56.207Z",
       "featuredImage": "https://i0.wp.com/exploredynamics365home.wordpress.com/wp-content/uploads/2022/09/0-2.jpg?fit=1200%2C1161&ssl=1&resize=525%2C300",
@@ -691,7 +684,6 @@
       "author": {
         "_id": "690e4f024f115b821dd25417",
         "username": "dkong",
-        "email": "unendinggrace19@gmail.com",
         "authorProfile": {
           "expertise": []
         },
@@ -723,7 +715,7 @@
       ],
       "dislikes": [],
       "shareCount": 7,
-      "viewCount": 678,
+      "viewCount": 683,
       "slug": "productivity-tips-to-help-transform-your-daily-routine",
       "createdAt": "2025-11-29T21:17:30.256Z",
       "readingTime": 1,
@@ -736,7 +728,6 @@
       "author": {
         "_id": "690fdd476a8d2b3fa6f66032",
         "username": "updatedusername",
-        "email": "test@example.com",
         "authorProfile": {
           "bio": "A future-of-work strategist and writer focused on the intersection of human creativity and technological leverage. For the past decade, I have advised companies on implementing digital tools while maintaining employee engagement and focusing on high-value human output. My background includes 5 years in product development, giving me a practical understanding of how AI is reshaping daily workflow. My work Centres on proving that the most valuable skills in the AI era are inherently human:",
           "expertise": [
@@ -760,7 +751,7 @@
         "69281db6dd66ee1cb132fc4e"
       ],
       "dislikes": [],
-      "viewCount": 201,
+      "viewCount": 204,
       "slug": "creating-my-first-blog-post",
       "createdAt": "2025-11-09T01:37:18.458Z",
       "featuredImage": "https://res.cloudinary.com/duhgs7fy0/image/upload/v1762740808/blog/hzjp5b5zw41qyuamogfq.png",
@@ -778,7 +769,6 @@
       "author": {
         "_id": "690e4f024f115b821dd25417",
         "username": "dkong",
-        "email": "unendinggrace19@gmail.com",
         "authorProfile": {
           "expertise": []
         },
@@ -808,7 +798,7 @@
         "69281db6dd66ee1cb132fc4e"
       ],
       "dislikes": [],
-      "viewCount": 1695,
+      "viewCount": 1703,
       "slug": "uefa-champions-league-matchday-5-review",
       "createdAt": "2025-11-27T02:03:10.944Z",
       "shareCount": 17,
@@ -824,7 +814,6 @@
       "author": {
         "_id": "690e4f024f115b821dd25417",
         "username": "dkong",
-        "email": "unendinggrace19@gmail.com",
         "authorProfile": {
           "expertise": []
         },
@@ -872,7 +861,6 @@
       "author": {
         "_id": "690f9fce22ffa99bb09e6957",
         "username": "succesamust",
-        "email": "succesamust@gmail.com",
         "authorProfile": {
           "bio": "I’m a tech enthusiast and content creator with a background in software engineering and product development. I enjoy exploring new frameworks, building meaningful digital experiences, and sharing practical knowledge through writing. Outside of tech, I’m passionate about design, entrepreneurship, and personal growth, all of which influence the way I approach storytelling and problem-solving.",
           "expertise": [

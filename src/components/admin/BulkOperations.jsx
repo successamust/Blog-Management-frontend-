@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Trash2, Edit, Tag, Folder, Archive, CheckSquare, Square } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { NexusCategoriesIcon, NexusPostsIcon } from '../brand/NexusIcons';
 
 const BulkOperations = ({ selectedPosts, onBulkDelete, onBulkUpdate, categories = [] }) => {
   const [showMenu, setShowMenu] = useState(false);
@@ -71,7 +72,7 @@ const BulkOperations = ({ selectedPosts, onBulkDelete, onBulkUpdate, categories 
         animate={{ opacity: 1, y: 0 }}
         className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40"
       >
-        <div className="bg-[var(--surface-bg)] rounded-xl shadow-2xl border border-[var(--border-subtle)] p-4">
+        <div className="bg-[color-mix(in_oklab,var(--surface-bg)_92%,transparent)] backdrop-blur-xl rounded-2xl shadow-2xl border border-[var(--border-subtle)] p-4">
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-primary">
               {selectedPosts.length} post{selectedPosts.length !== 1 ? 's' : ''} selected
@@ -96,14 +97,14 @@ const BulkOperations = ({ selectedPosts, onBulkDelete, onBulkUpdate, categories 
                 onClick={() => setShowCategoryModal(true)}
                 className="w-full flex items-center gap-2 px-4 py-2 hover:bg-[var(--surface-subtle)] rounded-lg text-left"
               >
-                <Folder className="w-4 h-4" />
+                <NexusCategoriesIcon className="w-4 h-4 text-[var(--accent)]" />
                 Change Category
               </button>
               <button
                 onClick={() => setShowStatusModal(true)}
                 className="w-full flex items-center gap-2 px-4 py-2 hover:bg-[var(--surface-subtle)] rounded-lg text-left"
               >
-                <Archive className="w-4 h-4" />
+                <NexusPostsIcon className="w-4 h-4 text-[var(--accent)]" />
                 Change Status
               </button>
               <button
@@ -124,9 +125,12 @@ const BulkOperations = ({ selectedPosts, onBulkDelete, onBulkUpdate, categories 
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-xl p-6 max-w-md w-full"
+            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-2xl border border-[var(--border-subtle)] p-6 max-w-md w-full shadow-[0_24px_60px_var(--shadow-elevated)]"
           >
-            <h3 className="text-xl font-bold text-primary mb-4">Change Category</h3>
+            <h3 className="text-xl font-bold text-primary mb-4 inline-flex items-center gap-2">
+              <NexusCategoriesIcon className="w-5 h-5 text-[var(--accent)]" />
+              Change Category
+            </h3>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
@@ -155,9 +159,12 @@ const BulkOperations = ({ selectedPosts, onBulkDelete, onBulkUpdate, categories 
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-xl p-6 max-w-md w-full"
+            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-2xl border border-[var(--border-subtle)] p-6 max-w-md w-full shadow-[0_24px_60px_var(--shadow-elevated)]"
           >
-            <h3 className="text-xl font-bold text-primary mb-4">Change Status</h3>
+            <h3 className="text-xl font-bold text-primary mb-4 inline-flex items-center gap-2">
+              <NexusPostsIcon className="w-5 h-5 text-[var(--accent)]" />
+              Change Status
+            </h3>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}

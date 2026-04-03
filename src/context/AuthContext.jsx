@@ -2,8 +2,15 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback } 
 import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { getAuthToken, setAuthToken, clearAuthToken } from '../utils/tokenStorage.js';
-import { setAccessTokenExpiry, clearAllTokens } from '../utils/refreshToken.js';
+import {
+  setAccessTokenExpiry,
+  clearAllTokens,
+  refreshAccessToken,
+  setRefreshToken,
+} from '../utils/refreshToken.js';
 import { fetchCsrfToken } from '../utils/securityUtils.js';
+import { clearSession } from '../utils/sessionManager.js';
+import { getApiErrorMessage } from '../utils/apiError.js';
 
 
 const authReducer = (state, action) => {
@@ -153,11 +160,9 @@ export const AuthProvider = ({ children }) => {
             // But don't immediately logout - try to refresh first
             // Only logout if refresh also fails
             try {
-              const { refreshAccessToken } = await import('../utils/refreshToken.js');
               const newToken = await refreshAccessToken(authAPI);
               if (newToken) {
                 // Refresh succeeded - update token and retry verification
-                const { setAuthToken } = await import('../utils/tokenStorage.js');
                 setAuthToken(newToken);
                 // Retry verification with new token
                 const retryResponse = await authAPI.getMe();
@@ -380,7 +385,6 @@ export const AuthProvider = ({ children }) => {
       
       // Store refresh token expiry if provided (refresh token is in httpOnly cookie, but we need expiry for checking)
       if (refreshTokenExpiresIn) {
-        const { setRefreshToken } = await import('../utils/refreshToken.js');
         const refreshExpiry = Date.now() + (refreshTokenExpiresIn * 1000);
         setRefreshToken(null, refreshExpiry); // Token is in cookie, but store expiry
       }
@@ -399,8 +403,8 @@ export const AuthProvider = ({ children }) => {
       toast.success('Welcome back!');
       return { success: true };
     } catch (error) {
-      let message = error.response?.data?.message || 'Login failed';
-      
+      let message = error.userMessage || getApiErrorMessage(error, 'Login failed');
+
       // Handle rate limiting
       if (error.response?.status === 429) {
         const retryAfter = error.rateLimitInfo?.retryAfter;
@@ -442,7 +446,6 @@ export const AuthProvider = ({ children }) => {
       
       // Store refresh token expiry if provided (refresh token is in httpOnly cookie, but we need expiry for checking)
       if (refreshTokenExpiresIn) {
-        const { setRefreshToken } = await import('../utils/refreshToken.js');
         const refreshExpiry = Date.now() + (refreshTokenExpiresIn * 1000);
         setRefreshToken(null, refreshExpiry); // Token is in cookie, but store expiry
       }
@@ -461,8 +464,8 @@ export const AuthProvider = ({ children }) => {
       toast.success('Account created successfully!');
       return { success: true };
     } catch (error) {
-      let message = error.response?.data?.message || 'Registration failed';
-      
+      let message = error.userMessage || getApiErrorMessage(error, 'Registration failed');
+
       // Handle rate limiting
       if (error.response?.status === 429) {
         const retryAfter = error.rateLimitInfo?.retryAfter;
@@ -489,8 +492,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('lastAuthCheck');
     
-    // Clear session manager
-    const { clearSession } = await import('../utils/sessionManager.js');
     clearSession();
     
     dispatch({ type: 'LOGOUT' });
@@ -525,7 +526,7 @@ export const AuthProvider = ({ children }) => {
       toast.success('Password changed successfully');
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to change password';
+      const message = error.userMessage || getApiErrorMessage(error, 'Failed to change password');
       toast.error(message);
       return { success: false, error: message };
     }

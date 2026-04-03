@@ -9,6 +9,9 @@ import BrandWordmark from '../../components/common/BrandWordmark';
 import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
 import TwoFactorVerification from '../../components/auth/TwoFactorVerification';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
+import { setAuthToken } from '../../utils/tokenStorage.js';
+import { setAccessTokenExpiry, setRefreshToken } from '../../utils/refreshToken.js';
 
 const LOGIN_DESCRIPTION = 'Sign in to Nexus to manage your publications, subscriptions, and saved reading list.';
 
@@ -73,10 +76,6 @@ const Login = () => {
       // Use accessToken if available, otherwise fall back to token
       const finalToken = accessToken || token;
       
-      // Set tokens using auth context methods
-      const { setAuthToken } = await import('../../utils/tokenStorage.js');
-      const { setAccessTokenExpiry, setRefreshToken } = await import('../../utils/refreshToken.js');
-      
       setAuthToken(finalToken);
       
       if (expiresIn) {
@@ -96,7 +95,7 @@ const Login = () => {
       toast.success('Login successful!');
       navigate(from, { replace: true });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid verification code');
+      toast.error(getApiErrorMessage(error, 'Invalid verification code'));
     } finally {
       setVerifying2FA(false);
     }
@@ -246,7 +245,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary group relative disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
+              className="btn btn-primary group relative disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_14px_30px_rgba(21,128,61,0.2)]"
             >
               {loading ? <Spinner size="sm" tone="light" /> : 'Sign in'}
             </button>

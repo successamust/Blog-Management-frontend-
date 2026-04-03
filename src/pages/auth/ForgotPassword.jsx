@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { authAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import Spinner from '../../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
 
@@ -34,7 +35,7 @@ const ForgotPassword = () => {
       setSubmitted(true);
       toast.success('Password reset link sent to your email');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to send reset link');
+      toast.error(getApiErrorMessage(error, 'Failed to send reset link'));
     } finally {
       setLoading(false);
     }
@@ -97,7 +98,7 @@ const ForgotPassword = () => {
           <div className="flex justify-center">
             <motion.div
               whileHover={{ scale: 1.1, rotate: 5 }}
-              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-[rgba(26,137,23,0.25)] bg-[var(--accent)] text-white font-bold text-lg"
+              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-[rgba(21,128,61,0.25)] bg-[var(--accent)] text-white font-bold text-lg"
             >
               B
             </motion.div>
@@ -138,7 +139,7 @@ const ForgotPassword = () => {
               disabled={loading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="btn btn-primary group relative disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
+              className="btn btn-primary group relative disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_14px_30px_rgba(21,128,61,0.2)]"
             >
               {loading ? <Spinner size="sm" tone="light" /> : 'Send Reset Link'}
             </motion.button>

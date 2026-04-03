@@ -3,6 +3,9 @@
  * Handles refresh token storage, rotation, and automatic token refresh
  */
 
+import { setAuthToken, clearAuthToken } from './tokenStorage.js';
+import { clearCsrfToken } from './securityUtils.js';
+
 const REFRESH_TOKEN_KEY = 'nexus_refresh_token';
 const ACCESS_TOKEN_EXPIRY_KEY = 'nexus_token_expiry';
 const REFRESH_TOKEN_EXPIRY_KEY = 'nexus_refresh_token_expiry';
@@ -154,7 +157,6 @@ export const refreshAccessToken = async (apiInstance) => {
       
       // Update tokens
       if (accessToken) {
-        const { setAuthToken } = await import('./tokenStorage.js');
         setAuthToken(accessToken);
         
       // Calculate expiry - use default 1 hour if not provided
@@ -180,9 +182,7 @@ export const refreshAccessToken = async (apiInstance) => {
       // Don't clear on network errors or other failures - those might be temporary
       if (error.response?.status === 401 || error.response?.status === 403) {
         clearRefreshToken();
-        const { clearAuthToken } = await import('./tokenStorage.js');
         clearAuthToken();
-        const { clearCsrfToken } = await import('./securityUtils.js');
         clearCsrfToken();
       }
       // For network errors or other failures, don't clear tokens - let the request fail
@@ -201,7 +201,6 @@ export const refreshAccessToken = async (apiInstance) => {
  */
 export const clearAllTokens = async () => {
   clearRefreshToken();
-  const { clearAuthToken } = await import('./tokenStorage.js');
   clearAuthToken();
 };
 

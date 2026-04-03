@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, ArrowLeft, Users } from 'lucide-react';
 import { collaborationsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import Spinner from '../../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
 
@@ -77,7 +78,7 @@ const AcceptCollaboration = () => {
         setErrorMessage(message);
         toast.error(message);
       } else {
-        const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to accept invitation';
+        const message = getApiErrorMessage(error, 'Failed to accept invitation');
         setErrorMessage(message);
         toast.error(message);
       }
@@ -248,7 +249,7 @@ const AcceptCollaboration = () => {
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                className="w-16 h-16 rounded-xl flex items-center justify-center shadow-lg shadow-[rgba(26,137,23,0.25)] bg-[var(--accent)] text-white"
+                className="w-16 h-16 rounded-xl flex items-center justify-center shadow-lg shadow-[rgba(21,128,61,0.25)] bg-[var(--accent)] text-white"
               >
                 <Users className="w-8 h-8" />
               </motion.div>

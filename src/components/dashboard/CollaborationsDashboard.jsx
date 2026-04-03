@@ -5,6 +5,7 @@ import { Users, UserPlus, X, Mail, Check, Clock, Send, FileText, ExternalLink } 
 import { useAuth } from '../../context/AuthContext';
 import { collaborationsAPI, postsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import SkeletonLoader from '../common/SkeletonLoader';
 
 const CollaborationsDashboard = () => {
@@ -134,8 +135,7 @@ const CollaborationsDashboard = () => {
       } else if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
         toast.error('Network error. Please check your connection and try again.');
       } else {
-        const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to accept invitation';
-        toast.error(errorMessage);
+        toast.error(getApiErrorMessage(error, 'Failed to accept invitation'));
       }
     } finally {
       setActionLoading(false);
@@ -164,7 +164,7 @@ const CollaborationsDashboard = () => {
       } else if (error.response?.status === 403) {
         toast.error('You do not have permission to reject this invitation.');
       } else {
-        toast.error(error.response?.data?.message || error.message || 'Failed to reject invitation');
+        toast.error(getApiErrorMessage(error, 'Failed to reject invitation'));
       }
     } finally {
       setActionLoading(false);
@@ -193,16 +193,15 @@ const CollaborationsDashboard = () => {
       if (error.response?.status === 404) {
         toast.error('Invitation not found. It may have been deleted or already processed.');
       } else if (error.response?.status === 400) {
-        const message = error.response?.data?.message || 'Cannot revoke this invitation';
-        toast.error(message);
+        toast.error(getApiErrorMessage(error, 'Cannot revoke this invitation'));
       } else if (error.response?.status === 401) {
         toast.error('Please log in to revoke invitations.');
       } else if (error.response?.status === 403) {
         toast.error('You do not have permission to revoke this invitation.');
       } else if (error.response?.status === 500) {
-        toast.error(error.response?.data?.message || 'Server error. Please try again later.');
+        toast.error(getApiErrorMessage(error, 'Server error. Please try again later.'));
       } else {
-        toast.error(error.response?.data?.message || error.message || 'Failed to revoke invitation');
+        toast.error(getApiErrorMessage(error, 'Failed to revoke invitation'));
       }
     } finally {
       setActionLoading(false);

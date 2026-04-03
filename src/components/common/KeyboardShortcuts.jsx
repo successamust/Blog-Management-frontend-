@@ -67,16 +67,13 @@ const KeyboardShortcuts = () => {
         setShowHelp(true);
       }
 
-      // Focus search with / or Ctrl+K
+      // Open global search: / or Ctrl/Cmd+K (Header opens overlay or mobile menu, then focuses input)
       if (
         (e.key === '/' && !e.ctrlKey && !e.metaKey) ||
-        (e.key === 'k' && (e.ctrlKey || e.metaKey))
+        (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey))
       ) {
-        const searchInput = document.querySelector('input[type="text"][placeholder*="Search"]');
-        if (searchInput) {
-          e.preventDefault();
-          searchInput.focus();
-        }
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('nexus-open-search'));
       }
 
       // Navigation shortcuts (g + key)

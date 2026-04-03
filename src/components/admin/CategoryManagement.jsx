@@ -3,8 +3,10 @@ import { Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import { Folder, Plus, Edit, Trash2, Search, Eye } from 'lucide-react';
 import { categoriesAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import SkeletonLoader from '../common/SkeletonLoader';
 import Spinner from '../common/Spinner';
+import { NexusCategoriesIcon, NexusTrendingIcon } from '../brand/NexusIcons';
 
 const CategoryManagement = () => {
   const [categories, setCategories] = useState([]);
@@ -75,10 +77,15 @@ const CategoryList = ({ categories, searchQuery, setSearchQuery, onDelete }) => 
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-[var(--text-primary)]">Categories Management</h2>
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] inline-flex items-center gap-2">
+          <span className="inline-flex rounded-xl bg-[var(--accent-soft)] p-2 text-[var(--accent)]">
+            <NexusCategoriesIcon className="w-4 h-4" />
+          </span>
+          Categories Management
+        </h2>
         <Link
           to="/admin/categories/create"
-          className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
+          className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(21,128,61,0.2)]"
         >
           <Plus className="w-4 h-4" />
           <span>Create Category</span>
@@ -86,7 +93,7 @@ const CategoryList = ({ categories, searchQuery, setSearchQuery, onDelete }) => 
       </div>
 
       {/* Search */}
-      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-4 mb-6">
+      <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-4 mb-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-5 h-5" />
           <input
@@ -102,7 +109,7 @@ const CategoryList = ({ categories, searchQuery, setSearchQuery, onDelete }) => 
       {/* Categories List */}
       {hasCategories ? (
         <>
-          <div className="hidden md:block bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] overflow-hidden">
+          <div className="hidden md:block bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-[var(--border-subtle)]">
                 <thead className="bg-[var(--surface-subtle)]">
@@ -123,7 +130,7 @@ const CategoryList = ({ categories, searchQuery, setSearchQuery, onDelete }) => 
                 </thead>
                 <tbody className="bg-[var(--surface-bg)] divide-y divide-[var(--border-subtle)]">
                   {categories.map((category) => (
-                    <tr key={category._id} className="hover:bg-[var(--surface-subtle)]">
+                    <tr key={category._id} className="hover:bg-[var(--surface-subtle)] transition-colors">
                       <td className="px-6 py-4">
                         <div className="text-sm font-medium text-[var(--text-primary)]">{category.name}</div>
                       </td>
@@ -166,7 +173,7 @@ const CategoryList = ({ categories, searchQuery, setSearchQuery, onDelete }) => 
             {categories.map((category) => (
               <div
                 key={category._id}
-                className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-4 space-y-3"
+                className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-4 space-y-3"
               >
                 <div className="flex flex-col gap-2">
                   <div className="flex items-start justify-between gap-4">
@@ -209,9 +216,9 @@ const CategoryList = ({ categories, searchQuery, setSearchQuery, onDelete }) => 
           </div>
         </>
       ) : (
-        <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)]">
+        <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)]">
           <div className="text-center py-12 text-[var(--text-secondary)]">
-            <Folder className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
+            <NexusTrendingIcon className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
             <p>No categories found</p>
           </div>
         </div>
@@ -245,15 +252,20 @@ const CreateCategory = ({ onSuccess }) => {
       onSuccess();
       navigate('/admin/categories');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create category');
+      toast.error(getApiErrorMessage(error, 'Failed to create category'));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
-      <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Create New Category</h2>
+    <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
+      <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6 inline-flex items-center gap-2">
+        <span className="inline-flex rounded-xl bg-[var(--accent-soft)] p-2 text-[var(--accent)]">
+          <NexusCategoriesIcon className="w-4 h-4" />
+        </span>
+        Create New Category
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Name</label>
@@ -288,7 +300,7 @@ const CreateCategory = ({ onSuccess }) => {
           <button
             type="submit"
             disabled={submitting}
-            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
+            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(21,128,61,0.2)]"
           >
             {submitting ? 'Creating...' : 'Create Category'}
           </button>
@@ -359,7 +371,7 @@ const EditCategory = ({ onSuccess }) => {
       onSuccess();
       navigate('/admin/categories');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update category');
+      toast.error(getApiErrorMessage(error, 'Failed to update category'));
     } finally {
       setSubmitting(false);
     }
@@ -372,8 +384,13 @@ const EditCategory = ({ onSuccess }) => {
   }
 
   return (
-    <div className="surface-card p-6">
-      <h2 className="text-2xl font-bold text-primary mb-6">Edit Category</h2>
+    <div className="surface-card p-6 rounded-2xl">
+      <h2 className="text-2xl font-bold text-primary mb-6 inline-flex items-center gap-2">
+        <span className="inline-flex rounded-xl bg-[var(--accent-soft)] p-2 text-[var(--accent)]">
+          <NexusCategoriesIcon className="w-4 h-4" />
+        </span>
+        Edit Category
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-secondary mb-2">Name</label>
@@ -408,7 +425,7 @@ const EditCategory = ({ onSuccess }) => {
           <button
             type="submit"
             disabled={submitting}
-            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
+            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(21,128,61,0.2)]"
           >
             {submitting ? 'Updating...' : 'Update Category'}
           </button>

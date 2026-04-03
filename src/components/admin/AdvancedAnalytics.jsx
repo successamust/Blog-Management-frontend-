@@ -7,6 +7,7 @@ import {
 import { format, subDays, subMonths } from 'date-fns';
 import AnimatedCounter from '../common/AnimatedCounter';
 import Sparkline from '../common/Sparkline';
+import { NexusTrendingIcon, NexusSubscribersIcon, NexusCategoriesIcon } from '../brand/NexusIcons';
 
 const AdvancedAnalytics = ({ posts = [], timeRange = '30d', additionalStats = {} }) => {
   const [analytics, setAnalytics] = useState({
@@ -341,27 +342,62 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d', additionalStats = {}
     },
   ];
 
+  const statToneMap = {
+    views: {
+      iconWrap: 'bg-[color-mix(in_oklab,var(--accent)_16%,transparent)]',
+      iconColor: 'text-[var(--accent)]',
+      spark: '#15803d',
+    },
+    likes: {
+      iconWrap: 'bg-rose-100 dark:bg-rose-900/20',
+      iconColor: 'text-rose-500',
+      spark: '#e11d48',
+    },
+    comments: {
+      iconWrap: 'bg-emerald-100 dark:bg-emerald-900/20',
+      iconColor: 'text-emerald-500',
+      spark: '#10b981',
+    },
+    shares: {
+      iconWrap: 'bg-sky-100 dark:bg-sky-900/20',
+      iconColor: 'text-sky-500',
+      spark: '#0ea5e9',
+    },
+    engagement: {
+      iconWrap: 'bg-amber-100 dark:bg-amber-900/20',
+      iconColor: 'text-amber-500',
+      spark: '#f59e0b',
+    },
+    reading: {
+      iconWrap: 'bg-indigo-100 dark:bg-indigo-900/20',
+      iconColor: 'text-indigo-500',
+      spark: '#6366f1',
+    },
+  };
+
   return (
     <div className="space-y-6">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
+          const toneKey = ['views', 'likes', 'comments', 'shares', 'engagement', 'reading'][index] || 'views';
+          const tone = statToneMap[toneKey];
           return (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 border border-[var(--border-subtle)]"
+              className="bg-[var(--surface-bg)] rounded-2xl p-4 sm:p-6 border border-[var(--border-subtle)] shadow-sm"
             >
               <div className="flex items-center justify-between mb-3 sm:mb-4">
-                <div className={`p-2 sm:p-3 rounded-lg bg-${stat.color.split('-')[1]}-100 dark:bg-${stat.color.split('-')[1]}-900/20`}>
-                  <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${stat.color}`} />
+                <div className={`p-2 sm:p-3 rounded-xl ${tone.iconWrap}`}>
+                  <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${tone.iconColor}`} />
                 </div>
                 {stat.trend && (
                   <div className="hidden sm:block">
-                    <Sparkline data={stat.trend} color={stat.color} />
+                    <Sparkline data={stat.trend} color={tone.spark} />
                   </div>
                 )}
               </div>
@@ -380,9 +416,9 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d', additionalStats = {}
 
       {/* Top Posts */}
       {analytics.topPosts.length > 0 && (
-        <div className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 border border-[var(--border-subtle)]">
+        <div className="bg-[var(--surface-bg)] rounded-2xl p-4 sm:p-6 border border-[var(--border-subtle)] shadow-sm">
           <h3 className="text-base sm:text-lg font-semibold text-primary mb-3 sm:mb-4 flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />
+            <NexusTrendingIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--accent)]" />
             Top Performing Posts
           </h3>
           <div className="space-y-2 sm:space-y-3">
@@ -403,9 +439,9 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d', additionalStats = {}
 
       {/* Category Distribution */}
       {Object.keys(analytics.categoryDistribution).length > 0 && (
-        <div className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 border border-[var(--border-subtle)]">
+        <div className="bg-[var(--surface-bg)] rounded-2xl p-4 sm:p-6 border border-[var(--border-subtle)] shadow-sm">
           <h3 className="text-base sm:text-lg font-semibold text-primary mb-3 sm:mb-4 flex items-center gap-2">
-            <PieChart className="w-4 h-4 sm:w-5 sm:h-5" />
+            <NexusCategoriesIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--accent)]" />
             Category Distribution
           </h3>
           <div className="space-y-2">
@@ -431,9 +467,9 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d', additionalStats = {}
 
       {/* Time-based Distribution */}
       {Object.keys(analytics.timeDistribution).length > 0 && (
-        <div className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 border border-[var(--border-subtle)]">
+        <div className="bg-[var(--surface-bg)] rounded-2xl p-4 sm:p-6 border border-[var(--border-subtle)] shadow-sm">
           <h3 className="text-base sm:text-lg font-semibold text-primary mb-3 sm:mb-4 flex items-center gap-2">
-            <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+            <NexusTrendingIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--accent)]" />
             Publishing Time Distribution
           </h3>
           <div className="space-y-2 sm:space-y-3">
@@ -477,10 +513,10 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d', additionalStats = {}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 border border-[var(--border-subtle)]"
+              className="bg-[var(--surface-bg)] rounded-2xl p-4 sm:p-6 border border-[var(--border-subtle)] shadow-sm"
             >
               <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-5 h-5 text-purple-500" />
+                <NexusTrendingIcon className="w-5 h-5 text-[var(--accent)]" />
                 <h4 className="text-sm sm:text-base font-semibold text-primary">Polls</h4>
               </div>
               <p className="text-2xl sm:text-3xl font-bold text-primary">{additionalStats.polls.total}</p>
@@ -494,7 +530,7 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d', additionalStats = {}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 border border-[var(--border-subtle)]"
+              className="bg-[var(--surface-bg)] rounded-2xl p-4 sm:p-6 border border-[var(--border-subtle)] shadow-sm"
             >
               <div className="flex items-center gap-2 mb-3">
                 <Share2 className="w-5 h-5 text-amber-500" />
@@ -521,7 +557,7 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d', additionalStats = {}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 border border-[var(--border-subtle)]"
+              className="bg-[var(--surface-bg)] rounded-2xl p-4 sm:p-6 border border-[var(--border-subtle)] shadow-sm"
             >
               <div className="flex items-center gap-2 mb-3">
                 <Clock className="w-5 h-5 text-indigo-500" />
@@ -538,7 +574,7 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d', additionalStats = {}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 border border-[var(--border-subtle)] sm:col-span-2 lg:col-span-1"
+              className="bg-[var(--surface-bg)] rounded-2xl p-4 sm:p-6 border border-[var(--border-subtle)] sm:col-span-2 lg:col-span-1 shadow-sm"
             >
               <div className="flex items-center gap-2 mb-3">
                 <Tag className="w-5 h-5 text-green-500" />
@@ -563,10 +599,10 @@ const AdvancedAnalytics = ({ posts = [], timeRange = '30d', additionalStats = {}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
-              className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 border border-[var(--border-subtle)]"
+              className="bg-[var(--surface-bg)] rounded-2xl p-4 sm:p-6 border border-[var(--border-subtle)] shadow-sm"
             >
               <div className="flex items-center gap-2 mb-3">
-                <PieChart className="w-5 h-5 text-blue-500" />
+                <NexusSubscribersIcon className="w-5 h-5 text-[var(--accent)]" />
                 <h4 className="text-sm sm:text-base font-semibold text-primary">Categories</h4>
               </div>
               <p className="text-2xl sm:text-3xl font-bold text-primary">{additionalStats.categoryStats.totalCategories}</p>

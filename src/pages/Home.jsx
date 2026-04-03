@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ChevronDown, ChevronUp, PenLine, UsersRound, LineChart, Boxes, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, PenLine, X, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { postsAPI, categoriesAPI, searchAPI, newsletterAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -10,9 +10,18 @@ import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
 import TagCloud from '../components/common/TagCloud';
 import initialHomeData from '../data/initial-home-data.json';
-import { normalizeDate, getPostDate, formatAuthorName, formatDate } from '../utils/shared';
+import { getPostDate, formatAuthorName, formatDate } from '../utils/shared';
+import { getApiErrorMessage } from '../utils/apiError.js';
+import NexusHeroVisual from '../components/visual/NexusHeroVisual';
+import {
+  NexusSubscribersIcon,
+  NexusArrowRightIcon,
+  NexusTrendingIcon,
+  NexusCategoriesIcon,
+} from '../components/brand/NexusIcons';
 
-const HOME_DESCRIPTION = 'The central hub for diverse voices, where every perspective is shared and every idea is explored.';
+const HOME_DESCRIPTION =
+  'The central hub for diverse voices, where every perspective is shared and every idea is explored.';
 const POSTS_PER_PAGE = 10;
 const NEWSLETTER_TOPICS = [
   { value: 'weekly-digest', label: 'Weekly digest' },
@@ -278,6 +287,7 @@ const Home = () => {
   }, [posts, getPostDate]);
 
   const recentPosts = useMemo(() => posts, [posts]);
+
   const trendingPosts = useMemo(() => {
     if (!posts.length) return [];
     return [...posts]
@@ -331,9 +341,7 @@ const Home = () => {
         setPopularTags([]);
 
         // Store error for display
-        const errorMessage = error?.response?.data?.message ||
-          error?.message ||
-          'Failed to load the latest stories.';
+        const errorMessage = getApiErrorMessage(error, 'Failed to load the latest stories.');
         setError(errorMessage);
         toast.error(errorMessage);
       } finally {
@@ -422,7 +430,7 @@ const Home = () => {
       resetNewsletterForm();
       closeOptInModal();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to start subscription. Please try again.');
+      toast.error(getApiErrorMessage(error, 'Failed to start subscription. Please try again.'));
     } finally {
       setSubscribing(false);
     }
@@ -450,18 +458,23 @@ const Home = () => {
           image={DEFAULT_OG_IMAGE}
         />
         <div className="bg-page">
-          <section className="border-b border-[var(--border-subtle)]">
-            <div className="layout-container section-hero-spacing-y">
+          <section className="relative border-b border-[var(--border-subtle)] overflow-hidden">
+            <div className="pointer-events-none absolute inset-0 hero-mesh" aria-hidden />
+            <div className="pointer-events-none absolute inset-0 hero-grain" aria-hidden />
+            <div className="layout-container section-hero-spacing-y relative">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="text-center"
+                className="max-w-3xl"
               >
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[var(--text-primary)] mb-6 leading-tight tracking-tight">
-                  Connect. Create. Discover.
+                <p className="font-sans text-[11px] sm:text-xs uppercase tracking-[0.28em] text-[var(--text-muted)] mb-5">
+                  Nexus — editorial
+                </p>
+                <h1 className="hero-title text-[var(--text-primary)] mb-6 text-[clamp(2.25rem,5.5vw,3.75rem)]">
+                  Connect. <span className="italic text-[var(--accent)]">Create.</span> Discover.
                 </h1>
-                <p className="text-base sm:text-lg md:text-xl text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto leading-relaxed">
+                <p className="hero-subtitle text-base sm:text-lg max-w-xl">
                   The central hub for diverse voices, where every perspective is shared and every idea is explored.
                 </p>
               </motion.div>
@@ -495,7 +508,7 @@ const Home = () => {
                           await fetchCategoriesAndTags(initialPosts);
                         } catch (err) {
                           console.error('Retry failed:', err);
-                          setError(err?.response?.data?.message || err?.message || 'Failed to load content');
+                          setError(getApiErrorMessage(err, 'Failed to load content'));
                         } finally {
                           setLoading(false);
                         }
@@ -524,39 +537,49 @@ const Home = () => {
         image={DEFAULT_OG_IMAGE}
       />
       <div className="bg-page">
-        {/* Minimal Hero Section - Medium/Substack Style */}
-        <section className="border-b border-[var(--border-subtle)]">
-          <div className="layout-container section-hero-spacing-y">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-center"
-            >
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[var(--text-primary)] mb-6 leading-tight tracking-tight">
-                Connect. Create. Discover.
-              </h1>
-              <p className="text-base sm:text-lg md:text-xl text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto leading-relaxed">
-                The central hub for diverse voices, where every perspective is shared and every idea is explored.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-xl mx-auto">
-                <Link
-                  to="/posts"
-                  className="btn btn-primary"
-                >
-                  Start Reading
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Link>
-                {canApplyForAuthor && (
-                  <Link
-                    to="/dashboard?tab=author"
-                    className="btn btn-outline text-[var(--accent)]"
-                  >
-                    Write for us
+        <section className="relative isolate border-b border-[var(--border-subtle)] overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 z-0 hero-mesh opacity-70" aria-hidden />
+          <div className="pointer-events-none absolute inset-0 z-0 hero-grain opacity-20" aria-hidden />
+          <NexusHeroVisual mode="background" />
+          <div className="layout-container section-hero-spacing-y relative z-10">
+            <div className="max-w-3xl mx-auto text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 22 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <p className="font-sans text-[11px] sm:text-xs uppercase tracking-[0.28em] text-[var(--text-muted)] mb-5">
+                  Independent publishing
+                </p>
+                <h1 className="hero-title text-[var(--text-primary)] mb-6 text-[clamp(2.45rem,6vw,4.35rem)]">
+                  Connect. <span className="italic text-[var(--accent)]">Create.</span>{' '}
+                  <span className="text-[color-mix(in_oklab,var(--text-primary)_92%,var(--accent))]">Discover.</span>
+                </h1>
+                <p className="hero-subtitle text-base sm:text-lg max-w-2xl mx-auto mb-10">
+                  {HOME_DESCRIPTION}
+                </p>
+                <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 sm:gap-4 w-full max-w-2xl mx-auto">
+                  <Link to="/posts" className="btn btn-primary justify-center !w-full sm:!w-auto">
+                    Start reading
+                    <NexusArrowRightIcon className="w-4 h-4" />
                   </Link>
-                )}
-              </div>
-            </motion.div>
+                  <Link
+                    to="/categories"
+                    className="btn btn-outline text-[var(--text-primary)] justify-center border-[var(--border-subtle)] !w-full sm:!w-auto"
+                  >
+                    Explore topics
+                  </Link>
+                  {canApplyForAuthor && (
+                    <Link
+                      to="/dashboard?tab=author"
+                      className="btn btn-ghost text-[var(--accent)] justify-center !w-full sm:!w-auto"
+                    >
+                      Write for us
+                    </Link>
+                  )}
+                </div>
+              </motion.div>
+            </div>
           </div>
         </section>
 
@@ -570,7 +593,7 @@ const Home = () => {
                 {featuredPosts.length > 0 && (
                   <section className="mb-16">
                     <div className="flex items-center justify-between mb-8">
-                      <h2 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Featured</h2>
+                      <h2 className="font-display text-2xl md:text-3xl text-[var(--text-primary)]">Featured</h2>
                       <Link
                         to="/posts"
                         className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
@@ -589,7 +612,7 @@ const Home = () => {
                 {/* Latest Articles */}
                 <section className="mb-16">
                   <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Latest</h2>
+                    <h2 className="font-display text-2xl md:text-3xl text-[var(--text-primary)]">Latest</h2>
                     <Link
                       to="/posts"
                       className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
@@ -637,11 +660,14 @@ const Home = () => {
                   className="bg-surface-subtle rounded-2xl p-6 border border-[var(--border-subtle)] shadow-sm"
                 >
                   <div className="flex items-center mb-4">
-                    <UsersRound className="w-5 h-5 text-[var(--text-primary)] mr-2" />
+                    <NexusSubscribersIcon className="w-5 h-5 text-[var(--accent)] mr-2 shrink-0" />
                     <h3 className="text-lg font-bold text-[var(--text-primary)]">Subscribe to our newsletter</h3>
                   </div>
-                  <p className="text-sm text-[var(--text-secondary)] mb-4">
-                    Get the latest articles delivered to your inbox
+                  <p className="text-sm text-[var(--text-secondary)] mb-2">
+                    Get the latest articles delivered to your inbox.
+                  </p>
+                  <p className="text-[11px] text-[var(--text-muted)] mb-4">
+                    Zero spam. Double opt-in confirmation required.
                   </p>
                   <form onSubmit={handleNewsletterSubscribe} className="space-y-3">
                     <input
@@ -782,7 +808,7 @@ const Home = () => {
                     className="surface-card p-6"
                   >
                     <div className="flex items-center mb-6">
-                      <LineChart className="w-5 h-5 text-[var(--text-primary)] mr-2" />
+                      <NexusTrendingIcon className="w-5 h-5 text-[var(--accent)] mr-2" />
                       <h3 className="text-lg font-bold text-[var(--text-primary)]">Trending</h3>
                     </div>
                     <div className="space-y-4">
@@ -830,7 +856,7 @@ const Home = () => {
                     className="surface-card p-6"
                   >
                     <div className="flex items-center mb-6">
-                      <Boxes className="w-5 h-5 text-[var(--text-primary)] mr-2" />
+                      <NexusCategoriesIcon className="w-5 h-5 text-[var(--accent)] mr-2" />
                       <h3 className="text-lg font-bold text-[var(--text-primary)]">Topics</h3>
                     </div>
                     <div className="space-y-2">

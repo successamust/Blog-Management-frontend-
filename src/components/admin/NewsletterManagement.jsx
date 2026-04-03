@@ -3,9 +3,11 @@ import { Mail, Send, Users, TrendingUp, FileText, Eye, Pencil } from 'lucide-rea
 import DOMPurify from 'dompurify';
 import { adminAPI, newsletterAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import RichTextEditor from './RichTextEditor';
 import SkeletonLoader from '../common/SkeletonLoader';
 import Spinner from '../common/Spinner';
+import { NexusSubscribersIcon, NexusTrendingIcon } from '../brand/NexusIcons';
 
 const NewsletterManagement = () => {
   const [stats, setStats] = useState(null);
@@ -57,7 +59,7 @@ const NewsletterManagement = () => {
               <div style="margin-bottom: 20px;">
                 <img 
                   src="${logoUrl}" 
-                  alt="NEXOS" 
+                  alt="Nexus" 
                   width="200"
                   height="auto"
                   style="max-width: 200px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;"
@@ -196,7 +198,7 @@ const NewsletterManagement = () => {
       setShowSendForm(false);
       setPreviewMode(false);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to send newsletter');
+      toast.error(getApiErrorMessage(error, 'Failed to send newsletter'));
     } finally {
       setSending(false);
     }
@@ -208,7 +210,7 @@ const NewsletterManagement = () => {
       {
         title: 'Total Subscribers',
         value: stats.totalSubscribers || 0,
-        icon: <Users className="w-8 h-8 text-[var(--accent)]" />,
+        icon: <NexusSubscribersIcon className="w-8 h-8 text-[var(--accent)]" />,
         description: stats.lastNewsletter?.subject
           ? `Last: ${new Date(stats.lastNewsletter.sentAt || stats.lastNewsletter.date || Date.now()).toLocaleDateString()}`
           : 'Latest totals',
@@ -224,7 +226,7 @@ const NewsletterManagement = () => {
       {
         title: 'Average Open Rate',
         value: stats.openRate != null ? `${stats.openRate}%` : 'N/A',
-        icon: <TrendingUp className="w-8 h-8 text-purple-600" />,
+        icon: <NexusTrendingIcon className="w-8 h-8 text-[var(--accent)]" />,
         description: stats.clickRate != null ? `Click rate: ${stats.clickRate}%` : 'Click rate pending',
       },
     ];
@@ -242,7 +244,7 @@ const NewsletterManagement = () => {
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {statsCards.map((card) => (
-            <div key={card.title} className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+            <div key={card.title} className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-[var(--text-secondary)]">{card.title}</p>
@@ -259,9 +261,14 @@ const NewsletterManagement = () => {
       )}
 
       {/* Send Newsletter */}
-      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+      <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-[var(--text-primary)]">Send Newsletter</h2>
+          <h2 className="text-2xl font-bold text-[var(--text-primary)] inline-flex items-center gap-2">
+            <span className="inline-flex rounded-xl bg-[var(--accent-soft)] p-2 text-[var(--accent)]">
+              <Mail className="w-4 h-4" />
+            </span>
+            Send Newsletter
+          </h2>
           <div className="flex items-center gap-3">
             {showSendForm && (
               <button
@@ -278,7 +285,7 @@ const NewsletterManagement = () => {
                 setShowSendForm((prev) => !prev);
                 setPreviewMode(false);
               }}
-              className="btn btn-primary !w-auto shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
+              className="btn btn-primary !w-auto shadow-[0_12px_26px_rgba(21,128,61,0.2)]"
             >
               <Send className="w-4 h-4" />
               <span>{showSendForm ? 'Cancel' : 'New Newsletter'}</span>
@@ -325,7 +332,7 @@ const NewsletterManagement = () => {
             <button
               type="submit"
               disabled={sending}
-              className="btn btn-primary inline-flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
+              className="btn btn-primary inline-flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_12px_28px_rgba(21,128,61,0.2)]"
             >
               {sending ? <Spinner size="xs" tone="light" /> : <Send className="w-4 h-4" />}
               <span>{sending ? 'Sending...' : 'Send Newsletter'}</span>
@@ -335,9 +342,14 @@ const NewsletterManagement = () => {
       </div>
 
       {/* Subscribers List */}
-      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] overflow-hidden">
+      <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] overflow-hidden">
         <div className="p-6 border-b border-[var(--border-subtle)]">
-          <h2 className="text-2xl font-bold text-[var(--text-primary)]">Subscribers</h2>
+          <h2 className="text-2xl font-bold text-[var(--text-primary)] inline-flex items-center gap-2">
+            <span className="inline-flex rounded-xl bg-[var(--accent-soft)] p-2 text-[var(--accent)]">
+              <NexusSubscribersIcon className="w-4 h-4" />
+            </span>
+            Subscribers
+          </h2>
         </div>
         {subscribers.length > 0 ? (
           <>
@@ -388,7 +400,7 @@ const NewsletterManagement = () => {
               {subscribers.map((subscriber) => (
                 <div
                   key={subscriber._id}
-                  className="rounded-xl border border-[var(--border-subtle)] p-4 flex flex-col gap-3 bg-[var(--surface-bg)] shadow-sm"
+                  className="rounded-2xl border border-[var(--border-subtle)] p-4 flex flex-col gap-3 bg-[var(--surface-bg)] shadow-sm"
                 >
                   <div>
                     <p className="text-base font-semibold text-[var(--text-primary)] break-words">
@@ -413,7 +425,7 @@ const NewsletterManagement = () => {
           </>
         ) : (
           <div className="text-center py-12 text-[var(--text-secondary)]">
-            <Mail className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
+            <NexusTrendingIcon className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
             <p>No subscribers yet</p>
           </div>
         )}

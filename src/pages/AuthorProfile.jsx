@@ -30,6 +30,7 @@ import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
 import EmptyState from '../components/common/EmptyState';
 import toast from 'react-hot-toast';
 import OptimizedImage from '../components/common/OptimizedImage';
+import { getApiErrorMessage } from '../utils/apiError.js';
 
 const AuthorProfile = () => {
   const { username } = useParams();
@@ -122,7 +123,7 @@ const AuthorProfile = () => {
       }
     } catch (error) {
       console.error('Error following/unfollowing:', error);
-      toast.error(error.response?.data?.message || 'Failed to update follow status');
+      toast.error(getApiErrorMessage(error, 'Failed to update follow status'));
     } finally {
       setFollowLoading(false);
     }
@@ -196,7 +197,7 @@ const AuthorProfile = () => {
       }
     } catch (error) {
       console.error('Error fetching author:', error);
-      toast.error('Failed to load author profile');
+      toast.error(getApiErrorMessage(error, 'Failed to load author profile'));
     } finally {
       setLoading(false);
     }
@@ -244,7 +245,7 @@ const AuthorProfile = () => {
       setTotalPages(response.data?.totalPages || 1);
     } catch (error) {
       console.error('Error fetching author posts:', error);
-      toast.error('Failed to load posts');
+      toast.error(getApiErrorMessage(error, 'Failed to load posts'));
     } finally {
       setPostsLoading(false);
     }
@@ -287,21 +288,31 @@ const AuthorProfile = () => {
         url={`/authors/${username}`}
       />
       <div className="bg-page">
-        <div className="layout-container-wide py-6 sm:py-8">
-          {/* Back Button */}
-          <Link
-            to="/posts"
-            className="inline-flex items-center gap-2 text-secondary hover:text-[var(--accent)] mb-6 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Posts</span>
-          </Link>
-
+        <section className="page-hero-strip">
+          <div className="pointer-events-none absolute inset-0 hero-mesh" aria-hidden />
+          <div className="layout-container-wide py-8 md:py-10 relative z-[1]">
+            <Link
+              to="/posts"
+              className="inline-flex items-center gap-2 text-secondary hover:text-[var(--accent)] mb-6 transition-colors text-sm"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to posts</span>
+            </Link>
+            <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2">
+              Author
+            </p>
+            <h1 className="font-display text-3xl sm:text-4xl text-primary tracking-tight">
+              {authorName}
+            </h1>
+          </div>
+        </section>
+        <div className="bg-content">
+        <div className="layout-container-wide py-6 sm:py-10">
           {/* Author Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[var(--surface-bg)] rounded-2xl shadow-lg p-6 sm:p-8 mb-8"
+            className="card-elevated rounded-2xl p-6 sm:p-8 mb-8"
           >
             <div className="flex flex-col sm:flex-row gap-6">
               {/* Author Avatar */}
@@ -323,7 +334,6 @@ const AuthorProfile = () => {
 
               {/* Author Info */}
               <div className="flex-1">
-                <h1 className="text-3xl sm:text-4xl font-bold text-primary mb-2">{authorName}</h1>
                 {authorBio && (
                   <p className="text-secondary mb-4 max-w-2xl">{authorBio}</p>
                 )}
@@ -442,7 +452,7 @@ const AuthorProfile = () => {
 
           {/* Author Posts */}
           <div>
-            <h2 className="text-2xl font-bold text-primary mb-6 flex items-center gap-2">
+            <h2 className="font-display text-2xl text-primary mb-6 flex items-center gap-2">
               <FileText className="w-6 h-6" />
               Posts by {authorName}
             </h2>
@@ -490,6 +500,7 @@ const AuthorProfile = () => {
               />
             )}
           </div>
+        </div>
         </div>
       </div>
     </>

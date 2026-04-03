@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Users, Shield, UserMinus, Search, UserCheck, PenLine } from 'lucide-react';
 import { adminAPI, authorsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import SkeletonLoader from '../common/SkeletonLoader';
 import Spinner from '../common/Spinner';
+import { NexusSubscribersIcon, NexusTrendingIcon } from '../brand/NexusIcons';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -64,7 +66,7 @@ const UserManagement = () => {
       toast.success('User promoted to admin');
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to promote user');
+      toast.error(getApiErrorMessage(error, 'Failed to promote user'));
     }
   };
 
@@ -74,7 +76,7 @@ const UserManagement = () => {
       toast.success('User demoted to regular user');
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to demote user');
+      toast.error(getApiErrorMessage(error, 'Failed to demote user'));
     }
   };
 
@@ -84,7 +86,7 @@ const UserManagement = () => {
       toast.success('Admin demoted to author');
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to demote admin to author');
+      toast.error(getApiErrorMessage(error, 'Failed to demote admin to author'));
     }
   };
 
@@ -94,7 +96,7 @@ const UserManagement = () => {
       toast.success('User promoted to author');
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to promote user to author');
+      toast.error(getApiErrorMessage(error, 'Failed to promote user to author'));
     }
   };
 
@@ -104,7 +106,7 @@ const UserManagement = () => {
       toast.success('User demoted from author');
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to demote user from author');
+      toast.error(getApiErrorMessage(error, 'Failed to demote user from author'));
     }
   };
 
@@ -126,28 +128,38 @@ const UserManagement = () => {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2 inline-flex items-center gap-2">
+          <span className="inline-flex rounded-xl bg-[var(--accent-soft)] p-2 text-[var(--accent)]">
+            <NexusSubscribersIcon className="w-4 h-4" />
+          </span>
+          User Management
+        </h2>
+        <p className="text-[var(--text-secondary)]">Manage role hierarchy and access across the platform.</p>
+      </div>
+
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+          <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-[var(--text-secondary)]">Total Users</p>
                 <p className="text-2xl font-bold text-[var(--text-primary)] mt-1">{stats.totalUsers || 0}</p>
               </div>
-              <Users className="w-8 h-8 text-[var(--accent)]" />
+              <NexusSubscribersIcon className="w-8 h-8 text-[var(--accent)]" />
             </div>
           </div>
-          <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+          <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-[var(--text-secondary)]">Admins</p>
                 <p className="text-2xl font-bold text-[var(--text-primary)] mt-1">{stats.totalAdmins || 0}</p>
               </div>
-              <Shield className="w-8 h-8 text-purple-400" />
+              <Shield className="w-8 h-8 text-[var(--accent)]" />
             </div>
           </div>
-          <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+          <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-[var(--text-secondary)]">Authors</p>
@@ -156,20 +168,20 @@ const UserManagement = () => {
               <PenLine className="w-8 h-8 text-emerald-400" />
             </div>
           </div>
-          <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+          <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-[var(--text-secondary)]">Regular Users</p>
                 <p className="text-2xl font-bold text-[var(--text-primary)] mt-1">{stats.totalRegularUsers || 0}</p>
               </div>
-              <UserMinus className="w-8 h-8 text-blue-400" />
+              <UserMinus className="w-8 h-8 text-sky-500" />
             </div>
           </div>
         </div>
       )}
 
       {/* Filters */}
-      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+      <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-5 h-5" />
@@ -197,7 +209,7 @@ const UserManagement = () => {
       {/* Users Table */}
       {hasUsers ? (
         <>
-          <div className="hidden md:block bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] overflow-hidden">
+          <div className="hidden md:block bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-[var(--border-subtle)]">
                 <thead className="bg-[var(--surface-subtle)]">
@@ -218,7 +230,7 @@ const UserManagement = () => {
                 </thead>
                 <tbody className="bg-[var(--surface-bg)] divide-y divide-[var(--border-subtle)]">
                   {filteredUsers.map((user) => (
-                    <tr key={user._id} className="hover:bg-[var(--surface-subtle)]">
+                    <tr key={user._id} className="hover:bg-[var(--surface-subtle)] transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-[var(--text-primary)]">{user.username}</div>
                       </td>
@@ -300,7 +312,7 @@ const UserManagement = () => {
             {filteredUsers.map((user) => (
               <div
                 key={user._id}
-                className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-4 space-y-3"
+                className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-4 space-y-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -373,9 +385,9 @@ const UserManagement = () => {
           </div>
         </>
       ) : (
-        <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)]">
+        <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)]">
           <div className="text-center py-12 text-[var(--text-secondary)]">
-            <Users className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
+            <NexusTrendingIcon className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
             <p>No users found</p>
           </div>
         </div>

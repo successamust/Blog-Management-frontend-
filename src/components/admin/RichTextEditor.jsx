@@ -57,6 +57,7 @@ import {
 } from 'lucide-react';
 import { imagesAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import Spinner from '../common/Spinner';
 
 const lowlight = createLowlight();
@@ -987,7 +988,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       }
       toast.success('Image uploaded successfully');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to upload image');
+      toast.error(getApiErrorMessage(error, 'Failed to upload image'));
     }
   };
 
@@ -1356,7 +1357,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       disabled={disabled}
       title={title}
       aria-pressed={isActive}
-      className={`p-2 rounded-lg transition-colors ${
+      className={`p-2 rounded-xl transition-colors ${
         isActive
           ? 'bg-[var(--accent)]/15 text-[var(--accent)] dark:bg-emerald-900/50 dark:text-emerald-200'
           : `hover:bg-[var(--accent-soft)] ${isDark ? 'text-[var(--text-muted)]' : 'text-[var(--text-primary)]'}`
@@ -1368,7 +1369,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
 
   const editorContent = (
     <div 
-      className={`rich-text-editor border border-[var(--border-subtle)] rounded-lg overflow-hidden bg-[var(--surface-bg)] transition-colors ${isFullscreen ? 'rounded-none h-full flex flex-col' : ''}`} 
+      className={`rich-text-editor border border-[var(--border-subtle)] rounded-2xl overflow-hidden bg-[var(--surface-bg)] shadow-sm transition-colors ${isFullscreen ? 'rounded-none shadow-none h-full flex flex-col' : ''}`} 
       style={isFullscreen && isDark ? { backgroundColor: '#0F172A', borderColor: '#334155' } : isFullscreen ? { backgroundColor: '#ffffff', borderColor: '#E2E8F0' } : {}}
       data-rich-text-editor="true"
     >
@@ -2197,7 +2198,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           onClick={handleCancelLink}
         >
           <div 
-            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
+            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-2xl border border-[var(--border-subtle)] shadow-[0_24px_60px_var(--shadow-elevated)] p-6 w-full max-w-md mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)] dark:text-[var(--text-primary)]">
@@ -2284,7 +2285,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
           onClick={handleCancelTable}
         >
           <div
-            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
+            className="bg-[var(--surface-bg)] dark:bg-[var(--surface-bg)] rounded-2xl border border-[var(--border-subtle)] shadow-[0_24px_60px_var(--shadow-elevated)] p-6 w-full max-w-md mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)] dark:text-[var(--text-primary)]">

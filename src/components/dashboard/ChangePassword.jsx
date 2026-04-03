@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import PasswordStrength from '../common/PasswordStrength';
 import { validatePassword } from '../../utils/securityUtils';
 
@@ -60,10 +61,10 @@ const ChangePassword = () => {
           newPassword: '',
           confirmPassword: '',
         });
-    }
-  } catch (error) {
-    toast.error(error.response?.data?.message || 'Failed to change password');
-  } finally {
+      }
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to change password'));
+    } finally {
       setSubmitting(false);
     }
   };
@@ -179,7 +180,7 @@ const ChangePassword = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
+            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_28px_rgba(21,128,61,0.2)]"
           >
             {submitting ? 'Changing...' : 'Change Password'}
           </button>

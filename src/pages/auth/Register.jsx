@@ -273,7 +273,7 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary group relative disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
+              className="btn btn-primary group relative disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_14px_30px_rgba(21,128,61,0.2)]"
             >
               {loading ? <Spinner size="sm" tone="light" /> : 'Create Account'}
             </button>

@@ -23,7 +23,6 @@ import {
   PenLine,
   Boxes,
   UsersRound,
-  TrendingUp,
   LineChart as LineChartIcon,
   HeartHandshake,
   MessageSquare,
@@ -37,12 +36,21 @@ import {
 } from 'lucide-react';
 import { adminAPI, postsAPI, categoriesAPI, newsletterAPI, dashboardAPI, pollsAPI, searchAPI, followsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import AnimatedCard from '../common/AnimatedCard';
 import SkeletonLoader from '../common/SkeletonLoader';
 import Spinner from '../common/Spinner';
+import {
+  NexusUsersIcon,
+  NexusPostsIcon,
+  NexusCategoriesIcon,
+  NexusSubscribersIcon,
+  NexusTrendingIcon,
+} from '../brand/NexusIcons';
+import { NEXUS_CHART_COLORS, nexusTooltipProps } from '../../theme/chartTheme';
 
-const COLORS = ['#1A8917', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
-const ACTIVE_STROKE = 'var(--accent, #8b5cf6)';
+const COLORS = NEXUS_CHART_COLORS;
+const ACTIVE_STROKE = 'var(--accent)';
 
 const renderActiveSector = (props) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
@@ -1238,7 +1246,7 @@ const AdminOverview = () => {
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
-      setError(error.response?.data?.message || error.message || 'Failed to load statistics');
+      setError(getApiErrorMessage(error, 'Failed to load statistics'));
       toast.error('Failed to load statistics');
     } finally {
       setLoading(false);
@@ -1793,7 +1801,7 @@ const AdminOverview = () => {
           <StatCard
             title="Total Users"
             value={stats.users?.totalUsers || 0}
-            icon={<Users className="w-6 h-6" />}
+            icon={<NexusUsersIcon className="w-6 h-6" />}
             color="blue"
             subtitle={`${stats.users?.totalAdmins || 0} admins`}
           />
@@ -1802,7 +1810,7 @@ const AdminOverview = () => {
           <StatCard
             title="Total Posts"
             value={totalPosts}
-            icon={<PenLine className="w-6 h-6" />}
+            icon={<NexusPostsIcon className="w-6 h-6" />}
             color="purple"
             subtitle={`${stats.posts?.published || 0} published`}
           />
@@ -1811,7 +1819,7 @@ const AdminOverview = () => {
           <StatCard
             title="Categories"
             value={stats.categories?.total || 0}
-            icon={<Boxes className="w-6 h-6" />}
+            icon={<NexusCategoriesIcon className="w-6 h-6" />}
             color="green"
             subtitle="Active categories"
           />
@@ -1820,7 +1828,7 @@ const AdminOverview = () => {
           <StatCard
             title="Subscribers"
             value={stats.newsletter?.totalSubscribers || 0}
-            icon={<UsersRound className="w-6 h-6" />}
+            icon={<NexusSubscribersIcon className="w-6 h-6" />}
             color="orange"
             subtitle="Newsletter subscribers"
           />
@@ -1834,7 +1842,7 @@ const AdminOverview = () => {
             <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Engagement Metrics</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg">
-                <LineChartIcon className="w-8 h-8 text-[var(--accent)] mx-auto mb-2" />
+                <NexusTrendingIcon className="w-8 h-8 text-[var(--accent)] mx-auto mb-2" />
                 <p className="text-2xl font-bold text-[var(--text-primary)]">{totalViews}</p>
                 <p className="text-sm text-[var(--text-secondary)]">Total Views</p>
               </div>
@@ -1849,7 +1857,7 @@ const AdminOverview = () => {
                 <p className="text-sm text-[var(--text-secondary)]">Total Comments</p>
               </div>
               <div className="text-center p-4 bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg">
-                <TrendingUp className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                <NexusTrendingIcon className="w-8 h-8 text-[var(--accent)] mx-auto mb-2" />
                 <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.posts?.published || publishedPostsCount || 0}</p>
                 <p className="text-sm text-[var(--text-secondary)]">Published Posts</p>
               </div>
@@ -1886,16 +1894,7 @@ const AdminOverview = () => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'var(--surface-bg)', 
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-                    }}
-                    labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
-                    itemStyle={{ color: 'var(--text-primary)' }}
-                  />
+                  <Tooltip {...nexusTooltipProps} />
                   <Legend 
                     wrapperStyle={{ color: 'var(--text-primary)' }}
                     iconType="circle"
@@ -1930,16 +1929,7 @@ const AdminOverview = () => {
                       <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'var(--surface-bg)', 
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-                    }}
-                    labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
-                    itemStyle={{ color: 'var(--text-primary)' }}
-                  />
+                  <Tooltip {...nexusTooltipProps} />
                   <Legend 
                     wrapperStyle={{ color: 'var(--text-primary)' }}
                     iconType="circle"
@@ -1958,7 +1948,7 @@ const AdminOverview = () => {
           <AnimatedCard delay={0.8}>
             <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 relative overflow-hidden">
               {/* Decorative background */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[var(--accent)]/15 to-teal-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
               
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-6">
@@ -1974,8 +1964,8 @@ const AdminOverview = () => {
                   <BarChart data={postsByCategoryData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="categoryGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#1A8917" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#166E14" stopOpacity={0.7} />
+                        <stop offset="0%" stopColor="#15803d" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#14532d" stopOpacity={0.72} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" opacity={0.3} />
@@ -1990,24 +1980,17 @@ const AdminOverview = () => {
                       axisLine={{ stroke: 'var(--border-subtle)' }}
                       tickLine={{ stroke: 'var(--border-subtle)' }}
                     />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'var(--surface-bg)', 
-                        border: '1px solid var(--border-subtle)',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-                      }}
-                      labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
-                      itemStyle={{ color: 'var(--text-primary)' }}
-                      cursor={{ fill: 'rgba(26, 137, 23, 0.1)', stroke: '#1A8917', strokeWidth: 1 }}
+                    <Tooltip
+                      {...nexusTooltipProps}
+                      cursor={{ fill: 'rgba(21,128,61,0.1)', stroke: '#15803d', strokeWidth: 1 }}
                     />
                     <Bar 
                       dataKey="posts" 
                       fill="url(#categoryGradient)"
                       radius={[8, 8, 0, 0]}
-                      stroke="#1A8917"
+                      stroke="#15803d"
                       strokeWidth={1}
-                      activeBar={{ fill: '#4ADE80', stroke: '#1A8917', strokeWidth: 2 }}
+                      activeBar={{ fill: '#4ade80', stroke: '#15803d', strokeWidth: 2 }}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -2021,7 +2004,7 @@ const AdminOverview = () => {
           <AnimatedCard delay={0.9}>
             <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 relative overflow-hidden">
               {/* Decorative background */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[var(--accent)]/18 to-teal-600/12 rounded-full blur-3xl -mr-16 -mt-16" />
               
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-6">
@@ -2029,17 +2012,17 @@ const AdminOverview = () => {
                     <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">Posts Over Time</h3>
                     <p className="text-sm text-[var(--text-muted)]">Last 6 months trend</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30">
-                    <TrendingUp className="w-6 h-6 text-purple-500" />
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-[var(--accent)]/20 to-teal-600/15 border border-[var(--accent)]/35 text-[var(--accent)]">
+                    <NexusTrendingIcon className="w-6 h-6" />
                   </div>
                 </div>
                 <ResponsiveContainer width="100%" height={320}>
                   <AreaChart data={postsByMonthData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="timeGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.8} />
-                        <stop offset="50%" stopColor="#a855f7" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="#ec4899" stopOpacity={0.1} />
+                        <stop offset="0%" stopColor="#15803d" stopOpacity={0.88} />
+                        <stop offset="45%" stopColor="#0d9488" stopOpacity={0.38} />
+                        <stop offset="100%" stopColor="#15803d" stopOpacity={0.08} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" opacity={0.3} />
@@ -2054,25 +2037,18 @@ const AdminOverview = () => {
                       axisLine={{ stroke: 'var(--border-subtle)' }}
                       tickLine={{ stroke: 'var(--border-subtle)' }}
                     />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'var(--surface-bg)', 
-                        border: '1px solid var(--border-subtle)',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-                      }}
-                      labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
-                      itemStyle={{ color: 'var(--text-primary)' }}
-                      cursor={{ stroke: '#8b5cf6', strokeWidth: 2, strokeDasharray: '5 5' }}
+                    <Tooltip
+                      {...nexusTooltipProps}
+                      cursor={{ stroke: '#15803d', strokeWidth: 2, strokeDasharray: '5 5' }}
                     />
                     <Area 
                       type="monotone" 
                       dataKey="posts" 
-                      stroke="url(#timeGradient)"
-                      strokeWidth={3}
+                      stroke="#15803d"
+                      strokeWidth={2.5}
                       fill="url(#timeGradient)"
-                      dot={{ fill: '#a855f7', strokeWidth: 2, r: 5 }}
-                      activeDot={{ r: 8, stroke: '#8b5cf6', strokeWidth: 3, fill: '#a855f7' }}
+                      dot={{ fill: '#0d9488', strokeWidth: 2, r: 4, stroke: '#15803d' }}
+                      activeDot={{ r: 7, stroke: '#15803d', strokeWidth: 2, fill: '#4ade80' }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -2126,15 +2102,8 @@ const AdminOverview = () => {
                     axisLine={{ stroke: 'var(--border-subtle)' }}
                     tickLine={{ stroke: 'var(--border-subtle)' }}
                   />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'var(--surface-bg)', 
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-                    }}
-                    labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
-                    itemStyle={{ color: 'var(--text-primary)' }}
+                  <Tooltip
+                    {...nexusTooltipProps}
                     cursor={{ fill: 'rgba(16, 185, 129, 0.1)', stroke: '#10b981', strokeWidth: 1 }}
                   />
                   <Legend 
@@ -2173,8 +2142,8 @@ const AdminOverview = () => {
           <AnimatedCard delay={1.0}>
             <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 h-full">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <div className="p-2 bg-[var(--accent-soft)] rounded-lg text-[var(--accent)]">
+                  <NexusTrendingIcon className="w-5 h-5" />
                 </div>
                 <h3 className="text-lg font-semibold text-[var(--text-primary)]">Polls Analytics</h3>
               </div>

@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import ModernPostCard from '../components/posts/ModernPostCard';
 import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+import { getApiErrorMessage } from '../utils/apiError.js';
 
 import initialPostsData from '../data/initial-posts-data.json';
 
@@ -156,7 +157,7 @@ const Posts = () => {
       // if (error.response?.status === 429) { // COMMENTED OUT FOR TESTING
       //   toast.error('Too many requests. Please try again in a moment.');
       // } else {
-      toast.error('Failed to load posts');
+      toast.error(getApiErrorMessage(error, 'Failed to load posts'));
       // }
     } finally {
       setLoading(false);
@@ -187,25 +188,30 @@ const Posts = () => {
         image={DEFAULT_OG_IMAGE}
       />
       <div className="bg-page">
-        <div className="bg-content">
-          <div className="layout-container max-w-6xl mx-auto section-spacing-y">
-            {/* Header */}
+        <section className="page-hero-strip">
+          <div className="pointer-events-none absolute inset-0 hero-mesh" aria-hidden />
+          <div className="layout-container max-w-6xl mx-auto py-12 md:py-16 relative z-[1]">
             <motion.div
-              initial={{ opacity: 0, y: -16 }}
+              initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45 }}
-              className="mb-12"
             >
-              <h1 className="text-4xl sm:text-5xl font-bold text-primary mb-4 tracking-tight">
-                All Articles
+              <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-3">
+                Archive
+              </p>
+              <h1 className="font-display text-4xl sm:text-5xl text-primary mb-3 tracking-tight">
+                All articles
               </h1>
-              <p className="text-sm sm:text-base text-muted">
+              <p className="text-sm sm:text-base text-secondary max-w-2xl">
                 {pagination.totalPosts} {pagination.totalPosts === 1 ? 'article' : 'articles'}
                 {category ? ` · Category: ${category}` : ''}
                 {tag ? ` · Tag: ${tag}` : ''}
               </p>
             </motion.div>
-
+          </div>
+        </section>
+        <div className="bg-content">
+          <div className="layout-container max-w-6xl mx-auto section-spacing-y">
             {/* Posts List */}
             {posts.length > 0 ? (
               <div className="space-y-10">

@@ -3,9 +3,11 @@ import { motion } from 'framer-motion';
 import { FileText, CheckCircle, XCircle, Clock, Search, UserCheck, AlertCircle } from 'lucide-react';
 import { authorsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import { format } from 'date-fns';
 import SkeletonLoader from '../common/SkeletonLoader';
 import Spinner from '../common/Spinner';
+import { NexusSubscribersIcon, NexusTrendingIcon } from '../brand/NexusIcons';
 
 const AuthorManagement = () => {
   const [applications, setApplications] = useState([]);
@@ -143,7 +145,7 @@ const AuthorManagement = () => {
           duration: 5000,
         });
       } else {
-        toast.error(error.response?.data?.message || 'Failed to load author applications');
+        toast.error(getApiErrorMessage(error, 'Failed to load author applications'));
       }
       setAllApplications([]);
     } finally {
@@ -197,7 +199,7 @@ const AuthorManagement = () => {
           toast.error(errorData.message || 'Invalid request. Please check your input.');
         }
       } else {
-        toast.error(error.response?.data?.message || 'Failed to review application');
+        toast.error(getApiErrorMessage(error, 'Failed to review application'));
       }
     }
   };
@@ -290,13 +292,18 @@ const AuthorManagement = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Author Applications</h2>
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2 inline-flex items-center gap-2">
+          <span className="inline-flex rounded-xl bg-[var(--accent-soft)] p-2 text-[var(--accent)]">
+            <NexusSubscribersIcon className="w-4 h-4" />
+          </span>
+          Author Applications
+        </h2>
         <p className="text-[var(--text-secondary)]">Review and manage author applications</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+        <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-[var(--text-secondary)]">Pending</p>
@@ -307,7 +314,7 @@ const AuthorManagement = () => {
             <Clock className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
           </div>
         </div>
-        <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+        <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-[var(--text-secondary)]">Approved</p>
@@ -318,7 +325,7 @@ const AuthorManagement = () => {
             <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
         </div>
-        <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+        <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-[var(--text-secondary)]">Rejected</p>
@@ -332,7 +339,7 @@ const AuthorManagement = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+      <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-5 h-5" />
@@ -359,8 +366,8 @@ const AuthorManagement = () => {
       {/* Applications List */}
       <div className="space-y-4">
         {filteredApplications.length === 0 ? (
-          <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-12 text-center">
-            <FileText className="w-12 h-12 mx-auto text-[var(--text-muted)] mb-4" />
+          <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-12 text-center">
+            <NexusTrendingIcon className="w-12 h-12 mx-auto text-[var(--text-muted)] mb-4" />
             <p className="text-[var(--text-secondary)]">No applications found</p>
           </div>
         ) : (
@@ -369,7 +376,7 @@ const AuthorManagement = () => {
               key={application._id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6"
+              className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -499,7 +506,7 @@ const AuthorManagement = () => {
                   ) : (
                     <button
                       onClick={() => setReviewingId(application._id)}
-                      className="w-full bg-[var(--accent)] text-white py-2 px-4 rounded-lg font-medium hover:bg-[var(--accent-hover)] transition-all shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
+                      className="w-full bg-[var(--accent)] text-white py-2 px-4 rounded-lg font-medium hover:bg-[var(--accent-hover)] transition-all shadow-[0_12px_28px_rgba(21,128,61,0.2)]"
                     >
                       Review Application
                     </button>

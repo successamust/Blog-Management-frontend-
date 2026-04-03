@@ -6,6 +6,7 @@ import { clearCache } from '../../utils/apiCache';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import { format } from 'date-fns';
 import RichTextEditor from './RichTextEditor';
 import SkeletonLoader from '../common/SkeletonLoader';
@@ -15,6 +16,7 @@ import PostScheduler from './PostScheduler';
 import PostCollaboration from './PostCollaboration';
 import PostTemplates from './PostTemplates';
 import PostVersioning from './PostVersioning';
+import { NexusPostsIcon, NexusTrendingIcon } from '../brand/NexusIcons';
 
 const PostManagement = () => {
   const [posts, setPosts] = useState([]);
@@ -640,13 +642,16 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] inline-flex items-center gap-2">
+          <span className="inline-flex rounded-xl bg-[var(--accent-soft)] p-2 text-[var(--accent)]">
+            <NexusPostsIcon className="w-4 h-4" />
+          </span>
           {isAuthor && !isAdmin() ? 'My Posts' : 'Posts Management'}
         </h2>
         {isAuthor && (
           <Link
             to="/admin/posts/create"
-            className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
+            className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(21,128,61,0.2)]"
           >
             <Plus className="w-4 h-4" />
             <span>Create Post</span>
@@ -655,7 +660,7 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
       </div>
 
       {/* Search */}
-      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-4 mb-6">
+      <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-5 h-5" />
@@ -684,7 +689,7 @@ const PostList = ({ posts, searchQuery, setSearchQuery, statusFilter, setStatusF
       {/* Posts List */}
       {posts.length > 0 ? (
         <>
-          <div className="hidden md:block bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] overflow-hidden">
+          <div className="hidden md:block bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-[var(--surface-subtle)]">
@@ -1172,8 +1177,7 @@ const CreatePost = ({ onSuccess }) => {
       if (import.meta.env.DEV) {
         console.error('Error creating post:', error);
       }
-      const errorMessage = error.response?.data?.message || 'Failed to create post';
-      toast.error(errorMessage);
+      toast.error(getApiErrorMessage(error, 'Failed to create post'));
     } finally {
       setSubmitting(false);
     }
@@ -1377,7 +1381,7 @@ const CreatePost = ({ onSuccess }) => {
         <div className="border-t border-[var(--border-subtle)] pt-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-[var(--accent)]" />
+              <NexusTrendingIcon className="w-5 h-5 text-[var(--accent)]" />
               <h3 className="text-lg font-semibold text-[var(--text-primary)]">Poll (Optional)</h3>
             </div>
             {!showPollForm && (
@@ -1535,7 +1539,7 @@ const CreatePost = ({ onSuccess }) => {
           <button
             type="submit"
             disabled={submitting}
-            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(26,137,23,0.2)]"
+            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(21,128,61,0.2)]"
           >
             {submitting ? 'Creating...' : 'Create Post'}
           </button>
@@ -2482,7 +2486,7 @@ const EditPost = ({ onSuccess }) => {
         <div className="border-t border-[var(--border-subtle)] pt-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-[var(--accent)]" />
+              <NexusTrendingIcon className="w-5 h-5 text-[var(--accent)]" />
               <h3 className="text-lg font-semibold text-[var(--text-primary)]">Poll</h3>
             </div>
             {poll && !showPollForm && (
@@ -2714,7 +2718,7 @@ const EditPost = ({ onSuccess }) => {
           <button
             type="submit"
             disabled={submitting}
-            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(26,137,23,0.2)] w-full sm:w-auto"
+            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(21,128,61,0.2)] w-full sm:w-auto"
           >
             {submitting ? 'Updating...' : 'Update Post'}
           </button>

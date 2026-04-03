@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 import { newsletterAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import Spinner from '../../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../../components/common/Seo';
 
@@ -40,7 +41,7 @@ const Unsubscribe = () => {
       setSuccess(true);
       toast.success('Successfully unsubscribed from newsletter');
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to unsubscribe';
+      const errorMessage = getApiErrorMessage(error, 'Failed to unsubscribe');
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -99,7 +100,7 @@ const Unsubscribe = () => {
               </p>
               <Link
                 to="/"
-                className="btn btn-primary inline-flex items-center space-x-2 shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
+                className="btn btn-primary inline-flex items-center space-x-2 shadow-[0_14px_30px_rgba(21,128,61,0.2)]"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back to Home</span>
@@ -128,7 +129,7 @@ const Unsubscribe = () => {
                   setError(null);
                   setEmail('');
                 }}
-                className="btn btn-primary shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
+                className="btn btn-primary shadow-[0_14px_30px_rgba(21,128,61,0.2)]"
               >
                 Try Again
               </button>
@@ -169,7 +170,7 @@ const Unsubscribe = () => {
                   disabled={loading || !email.trim()}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
+                  className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_14px_30px_rgba(21,128,61,0.2)]"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center space-x-2">

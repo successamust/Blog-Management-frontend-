@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Plus, Trash2, Edit, Save, X, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, Sparkles } from 'lucide-react';
+import { NexusPostsIcon, NexusTrendingIcon } from '../brand/NexusIcons';
 import { templatesAPI, categoriesAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import Spinner from '../common/Spinner';
 import SkeletonLoader from '../common/SkeletonLoader';
 
@@ -116,7 +118,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
       await fetchTemplates();
     } catch (error) {
       console.error('Error saving template:', error);
-      toast.error(error.response?.data?.message || 'Failed to save template');
+      toast.error(getApiErrorMessage(error, 'Failed to save template'));
     } finally {
       setSubmitting(false);
     }
@@ -148,7 +150,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
       await fetchTemplates();
     } catch (error) {
       console.error('Error deleting template:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete template');
+      toast.error(getApiErrorMessage(error, 'Failed to delete template'));
     }
   };
 
@@ -202,7 +204,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
       await fetchTemplates();
     } catch (error) {
       console.error('Error initializing defaults:', error);
-      toast.error(error.response?.data?.message || 'Failed to initialize default templates');
+      toast.error(getApiErrorMessage(error, 'Failed to initialize default templates'));
     }
   };
 
@@ -219,7 +221,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h3 className="font-semibold text-primary flex items-center gap-2">
-            <FileText className="w-5 h-5" />
+            <NexusPostsIcon className="w-5 h-5 text-[var(--accent)]" />
             Post Templates
           </h3>
           <p className="text-xs text-muted mt-1">
@@ -248,7 +250,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
       </div>
 
       {/* Help Section */}
-      <div className="bg-[var(--accent-soft)] dark:bg-[var(--accent)]/20 border border-[var(--accent)]/30 dark:border-[var(--accent)]/40 rounded-lg p-3 sm:p-4 mb-4">
+      <div className="bg-[var(--accent-soft)] dark:bg-[var(--accent)]/20 border border-[var(--accent)]/30 dark:border-[var(--accent)]/40 rounded-2xl p-3 sm:p-4 mb-4">
         <h4 className="font-semibold text-[var(--accent)] dark:text-[var(--accent)] mb-2 text-xs sm:text-sm">How to Use Templates:</h4>
         <ul className="text-xs text-[var(--accent-hover)] dark:text-[var(--accent)] space-y-1 list-disc list-inside mb-3">
           <li>Click &quot;Use Template&quot; to apply a template to your post form</li>
@@ -266,8 +268,8 @@ const PostTemplates = ({ onSelectTemplate }) => {
       </div>
 
       {templates.length === 0 ? (
-        <div className="p-6 bg-surface-subtle rounded-xl text-center">
-          <FileText className="w-12 h-12 mx-auto text-muted mb-3 opacity-50" />
+        <div className="p-6 bg-surface-subtle rounded-2xl border border-[var(--border-subtle)] text-center">
+          <NexusTrendingIcon className="w-12 h-12 mx-auto text-[var(--accent)] mb-3 opacity-80" />
           <p className="text-sm text-muted mb-2">No templates yet</p>
           <p className="text-xs text-muted mb-4">
             {isAdmin() && defaultTemplates.length === 0
@@ -295,7 +297,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
           {defaultTemplates.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-4 h-4 text-[var(--accent)]" />
+                <NexusTrendingIcon className="w-4 h-4 text-[var(--accent)]" />
                 <h4 className="text-sm font-semibold text-[var(--text-primary)]">Default Templates</h4>
                 <span className="text-xs text-[var(--text-muted)] bg-[var(--surface-subtle)] px-2 py-1 rounded-full">
                   {defaultTemplates.length} templates
@@ -305,7 +307,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
                 {defaultTemplates.map((template) => (
                   <motion.div
                     key={template._id || template.id}
-                    className="p-4 bg-gradient-to-br from-[var(--accent-soft)]/20 to-[var(--surface-subtle)] rounded-xl border border-[var(--accent)]/20"
+                    className="p-4 bg-gradient-to-br from-[var(--accent-soft)]/20 to-[var(--surface-subtle)] rounded-2xl border border-[var(--accent)]/20"
                   >
                     <div className="flex items-start justify-between mb-2 gap-2">
                       <div className="flex-1 flex flex-wrap items-center gap-2 min-w-0">
@@ -350,7 +352,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
           {customTemplates.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <FileText className="w-4 h-4 text-[var(--text-secondary)]" />
+                <NexusPostsIcon className="w-4 h-4 text-[var(--accent)]" />
                 <h4 className="text-sm font-semibold text-[var(--text-primary)]">Your Templates</h4>
                 <span className="text-xs text-[var(--text-muted)] bg-[var(--surface-subtle)] px-2 py-1 rounded-full">
                   {customTemplates.length} templates
@@ -360,7 +362,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
                 {customTemplates.map((template) => (
                   <motion.div
                     key={template._id || template.id}
-                    className="p-4 bg-surface-subtle rounded-xl border border-[var(--border-subtle)]"
+                    className="p-4 bg-surface-subtle rounded-2xl border border-[var(--border-subtle)]"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-semibold text-primary">{template.name}</h4>
@@ -404,7 +406,7 @@ const PostTemplates = ({ onSelectTemplate }) => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden"
+            className="bg-[var(--surface-bg)] rounded-2xl border border-[var(--border-subtle)] p-4 sm:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden shadow-[0_24px_60px_var(--shadow-elevated)]"
             style={{ position: 'relative', zIndex: 50 }}
           >
             <div className="flex items-center justify-between mb-4 gap-2">

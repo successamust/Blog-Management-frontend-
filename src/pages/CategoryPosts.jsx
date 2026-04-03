@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import ModernPostCard from '../components/posts/ModernPostCard';
 import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+import { getApiErrorMessage } from '../utils/apiError.js';
 
 const FALLBACK_CATEGORY_DESCRIPTION = (name) =>
   `Fresh stories, guides, and resources from Nexus contributors writing about ${name}.`;
@@ -185,7 +186,7 @@ const CategoryPosts = () => {
             description: null,
           };
         }
-        toast.error('Failed to load posts. Please try again.');
+        toast.error(getApiErrorMessage(postsError, 'Failed to load posts. Please try again.'));
       }
 
       setCategory(categoryData);
@@ -204,7 +205,7 @@ const CategoryPosts = () => {
       
       setCategory(fallbackCategory);
       setPosts([]);
-      toast.error('Failed to load category data. Please try again.');
+      toast.error(getApiErrorMessage(error, 'Failed to load category data. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -261,35 +262,38 @@ const CategoryPosts = () => {
         type="website"
       />
       <div className="bg-page">
+        <section className="page-hero-strip">
+          <div className="pointer-events-none absolute inset-0 hero-mesh" aria-hidden />
+          <div className="layout-container section-spacing-y py-12 md:py-16 relative z-[1]">
+            <motion.div
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45 }}
+            >
+              <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-3">
+                Category
+              </p>
+              <div className="flex flex-wrap items-center gap-4 mb-4">
+                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent)] text-white shadow-sm ring-1 ring-[var(--accent)]/30">
+                  <Folder className="w-6 h-6" />
+                </span>
+                <h1 className="font-display text-4xl sm:text-5xl text-primary tracking-tight">
+                  {displayCategory?.name}
+                </h1>
+              </div>
+              {displayCategory?.description && (
+                <p className="text-sm sm:text-base text-secondary leading-relaxed max-w-3xl">
+                  {displayCategory.description}
+                </p>
+              )}
+              <p className="text-xs sm:text-sm text-muted mt-4 uppercase tracking-[0.2em]">
+                {pagination.totalPosts} {pagination.totalPosts === 1 ? 'article' : 'articles'} in this category
+              </p>
+            </motion.div>
+          </div>
+        </section>
       <div className="bg-content">
         <div className="layout-container section-spacing-y">
-        {/* Category Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="mb-12"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent)] text-white">
-              <Folder className="w-5 h-5" />
-            </span>
-            <div>
-              <h1 className="text-4xl sm:text-5xl font-bold text-primary tracking-tight">
-                {displayCategory?.name}
-              </h1>
-            </div>
-          </div>
-          {displayCategory?.description && (
-            <p className="text-sm sm:text-base text-secondary leading-relaxed max-w-3xl">
-              {displayCategory.description}
-            </p>
-          )}
-          <p className="text-xs sm:text-sm text-muted mt-4 uppercase tracking-[0.2em]">
-            {pagination.totalPosts} {pagination.totalPosts === 1 ? 'article' : 'articles'} in this category
-          </p>
-        </motion.div>
-
         {/* Posts List */}
         {hasPosts ? (
           <div className="space-y-10">

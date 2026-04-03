@@ -1,8 +1,7 @@
 import React, { memo } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import SmartLink from '../common/SmartLink';
-import { Calendar, Clock, Eye, Heart, User, ArrowRight } from 'lucide-react';
+import { Clock, Eye, Heart, ArrowRight } from 'lucide-react';
 import { formatAuthorName, formatDate, formatReadingTime } from '../../utils/shared';
 import { calculateReadingTime } from '../../utils/readingTime';
 import OptimizedImage from '../common/OptimizedImage';
@@ -96,7 +95,10 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
         className="group h-full"
       >
         <SmartLink to={postHref} className="block h-full" aria-label={`Read ${postTitle}`}>
-          <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-[var(--border-subtle)] bg-[var(--surface-bg)] transition-all duration-300 hover:border-[var(--border-subtle)] hover:shadow-lg" style={{ boxShadow: '0 2px 8px var(--shadow-default)' }}>
+          <div
+            className="flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-bg)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_64px_var(--shadow-elevated)]"
+            style={{ boxShadow: '0 4px 24px var(--shadow-default)' }}
+          >
             <div className="relative w-full">
               <div className="aspect-[16/10] w-full bg-[var(--surface-subtle)]">
                 {post.featuredImage ? (
@@ -135,7 +137,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
                   </span>
                 </div>
               )}
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight tracking-tight text-[var(--text-primary)] transition-colors group-hover:text-[var(--text-secondary)]">
+              <h2 className="font-display text-2xl md:text-3xl lg:text-[2.35rem] leading-[1.08] text-[var(--text-primary)] transition-colors group-hover:text-[var(--text-secondary)]">
                 {postTitle}
               </h2>
               {postExcerpt && (
@@ -192,7 +194,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
       className="group h-full"
     >
       <SmartLink to={postHref} className="block h-full" aria-label={`Read ${postTitle}`}>
-        <div className="flex h-full flex-col sm:flex-row gap-6 pb-8 border-b border-[var(--border-subtle)] hover:border-[var(--border-subtle)] transition-colors">
+        <div className="flex h-full flex-col sm:flex-row gap-6 pb-8 border-b border-[var(--border-subtle)] transition-colors group-hover:border-[color-mix(in_oklab,var(--accent)_35%,var(--border-subtle))]">
           {/* Image */}
           {post.featuredImage && (
             <div className="flex-shrink-0 sm:w-48 sm:h-32 w-full h-48 overflow-hidden rounded-xl">
@@ -253,7 +255,7 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
             </div>
 
             {/* Title */}
-            <h3 className="text-xl md:text-2xl font-bold text-[var(--text-primary)] mb-2 group-hover:text-[var(--text-secondary)] transition-colors leading-tight line-clamp-2">
+            <h3 className="font-display text-xl md:text-2xl text-[var(--text-primary)] mb-2 group-hover:text-[var(--text-secondary)] transition-colors leading-snug line-clamp-2">
               {postTitle}
             </h3>
 
@@ -266,19 +268,23 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
 
             {/* Tags & Meta */}
             <div className="flex items-center justify-between flex-wrap gap-3 mt-auto pt-2">
-              <div className="flex items-center space-x-4 text-sm text-[var(--text-muted)]">
+              <div className="flex items-center flex-wrap gap-3 text-sm text-[var(--text-muted)]">
                 {sanitizedTags.length > 0 && (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     {sanitizedTags.slice(0, 2).map((tag) => (
-                      <span key={tag} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+                      <span key={tag} className="text-xs text-[var(--text-muted)]">
                         #{tag}
                       </span>
                     ))}
                   </div>
                 )}
+                <span className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--accent)] opacity-0 transition-opacity group-hover:opacity-100">
+                  Read
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </span>
               </div>
               {(typeof post.viewCount === 'number' || Array.isArray(post.likes)) && (
-                <div className="flex items-center space-x-4 text-sm text-[var(--text-muted)]">
+                <div className="flex items-center gap-4 text-sm text-[var(--text-muted)]">
                   {typeof post.viewCount === 'number' && (
                     <span className="flex items-center">
                       <Eye className="w-4 h-4 mr-1" />
@@ -297,14 +303,6 @@ const ModernPostCard = memo(({ post, featured = false, delay = 0 }) => {
           </div>
         </div>
       </SmartLink>
-
-      <motion.div
-        className="flex items-center text-[var(--text-secondary)] font-semibold opacity-0 group-hover:opacity-100 transition-opacity"
-        whileHover={{ x: 5 }}
-      >
-        Read more
-        <ArrowRight className="ml-2 w-4 h-4" />
-      </motion.div>
     </motion.article>
   );
 });

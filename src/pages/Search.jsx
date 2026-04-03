@@ -13,6 +13,7 @@ import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
 import { useDebounce } from '../hooks/useDebounce';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import EmptyState from '../components/common/EmptyState';
+import { getApiErrorMessage } from '../utils/apiError.js';
 
 const SEARCH_DESCRIPTION_BASE = 'Search Nexus to find stories, authors, tags, and categories that match your interests.';
 
@@ -114,7 +115,7 @@ const Search = () => {
       }
     } catch (error) {
       console.error('Error searching:', error);
-      toast.error('Failed to perform search');
+      toast.error(getApiErrorMessage(error, 'Failed to perform search'));
     } finally {
       setLoading(false);
       setShowSuggestions(false);
@@ -254,23 +255,28 @@ const Search = () => {
         image={DEFAULT_OG_IMAGE}
       />
       <div className="bg-page">
+        <section className="page-hero-strip">
+          <div className="pointer-events-none absolute inset-0 hero-mesh" aria-hidden />
+          <div className="layout-container section-spacing-y py-12 md:py-14 relative z-[1]">
+            <motion.div
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45 }}
+            >
+              <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-3">
+                Find
+              </p>
+              <h1 className="font-display text-4xl sm:text-5xl text-primary mb-3 tracking-tight">
+                Search
+              </h1>
+              <p className="text-sm sm:text-base text-secondary max-w-2xl">
+                Find stories, authors, categories, and tags across the publication.
+              </p>
+            </motion.div>
+          </div>
+        </section>
       <div className="bg-content">
         <div className="layout-container section-spacing-y">
-        {/* Search Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="mb-12"
-        >
-          <h1 className="text-4xl sm:text-5xl font-bold text-primary mb-4 tracking-tight">
-            Search
-          </h1>
-          <p className="text-sm sm:text-base text-muted">
-            Find stories, authors, categories, and tags across the publication.
-          </p>
-        </motion.div>
-
         {/* Search Form */}
         <motion.form
           onSubmit={handleSubmit}

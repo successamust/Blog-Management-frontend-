@@ -30,7 +30,7 @@ const TopBarProgress = () => {
                 initial={{ width: '0%', opacity: 1 }}
                 animate={{ width: `${progress}%` }}
                 exit={{ opacity: 0, transition: { duration: 0.3 } }}
-                className="h-[3px] bg-gradient-to-r from-[var(--accent)] via-[var(--primary)] to-[var(--accent-secondary)] shadow-[0_0_8px_rgba(26,137,23,0.5)]"
+                className="h-[3px] bg-gradient-to-r from-[var(--accent)] via-[var(--primary)] to-[var(--accent-secondary)] shadow-[0_0_8px_rgba(21,128,61,0.5)]"
                 transition={{ type: 'spring', stiffness: 50, damping: 20 }}
             />
         </div>

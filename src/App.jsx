@@ -20,6 +20,7 @@ import BackToTop from './components/common/BackToTop';
 import OfflineIndicator from './components/common/OfflineIndicator';
 import SecurityHandler from './components/common/SecurityHandler';
 import TopBarProgress from './components/common/TopBarProgress';
+import perfMonitor from './utils/performanceMonitor.js';
 
 
 const Home = lazy(() => import('./pages/Home'));
@@ -43,6 +44,9 @@ const PreviewRedirect = lazy(() => import('./pages/PreviewRedirect'));
 const Portfolio = lazy(() => import('./pages/Portfolio'));
 const WriteButtonDemo = lazy(() => import('./pages/WriteButtonDemo'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const Contact = lazy(() => import('./pages/Contact'));
 
 import ProtectedRoute from './components/common/ProtectedRoute';
 
@@ -59,9 +63,7 @@ function AppContent() {
 
     const reportLoad = () => {
       const loadTime = performance.now() - startTime;
-      import('./utils/performanceMonitor.js').then(({ default: perfMonitor }) => {
-        perfMonitor.trackPageLoad(pageName, loadTime);
-      });
+      perfMonitor.trackPageLoad(pageName, loadTime);
     };
 
     if (document.readyState === 'complete') {
@@ -82,13 +84,13 @@ function AppContent() {
     }
   }, [location.pathname]);
 
-  const baseToastClasses = 'flex items-start gap-3 w-full max-w-sm rounded-2xl px-4 py-3 sm:px-5 sm:py-4 shadow-xl shadow-[rgba(26,137,23,0.12)] border border-white/30 bg-white/95 backdrop-blur-md text-slate-900';
+  const baseToastClasses = 'flex items-start gap-3 w-full max-w-sm rounded-2xl px-4 py-3 sm:px-5 sm:py-4 shadow-xl shadow-[rgba(21,128,61,0.14)] border border-white/30 bg-white/95 backdrop-blur-md text-slate-900';
   const iconBadgeClasses = 'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold';
 
   return (
     <ErrorBoundary>
       <SkipToContent />
-      <div className="bg-page flex flex-col" style={{ minHeight: '100vh', height: 'auto' }}>
+      <div className="bg-page nexus-app-shell flex flex-col" style={{ minHeight: '100vh', height: 'auto' }}>
         <ReadingProgress />
         <Header />
         <main id="main-content" className="flex-1" style={{ minHeight: 0 }} tabIndex={-1}>
@@ -113,6 +115,9 @@ function AppContent() {
                   <Route path="/search" element={<PageTransition><Search /></PageTransition>} />
                   <Route path="/portfolio" element={<PageTransition><Portfolio /></PageTransition>} />
                   <Route path="/write-button-demo" element={<PageTransition><WriteButtonDemo /></PageTransition>} />
+                  <Route path="/privacy" element={<PageTransition><PrivacyPolicy /></PageTransition>} />
+                  <Route path="/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
+                  <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
 
                   <Route path="/preview/posts/:slug" element={<PreviewRedirect />} />
 

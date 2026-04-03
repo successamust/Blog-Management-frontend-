@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
-import { BarChart3, Plus, Edit, Trash2, Search, Eye, X, BarChart } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Eye, X } from 'lucide-react';
 import { pollsAPI, postsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../../utils/apiError.js';
 import SkeletonLoader from '../common/SkeletonLoader';
 import Spinner from '../common/Spinner';
 import PollAnalytics from './PollAnalytics';
+import { NexusTrendingIcon } from '../brand/NexusIcons';
 
 const PollManagement = () => {
-                        const [polls, setPolls] = useState([]);
+  const [polls, setPolls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -52,7 +54,7 @@ const PollManagement = () => {
       fetchPolls();
     } catch (error) {
       console.error('Error deleting poll:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete poll');
+      toast.error(getApiErrorMessage(error, 'Failed to delete poll'));
     }
   };
 
@@ -86,10 +88,15 @@ const PollList = ({ polls, searchQuery, setSearchQuery, onDelete }) => {
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-[var(--text-primary)]">Polls Management</h2>
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] inline-flex items-center gap-2">
+          <span className="inline-flex rounded-xl bg-[var(--accent-soft)] p-2 text-[var(--accent)]">
+            <NexusTrendingIcon className="w-4 h-4" />
+          </span>
+          Polls Management
+        </h2>
         <Link
           to="/admin/polls/create"
-          className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
+          className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(21,128,61,0.2)]"
         >
           <Plus className="w-4 h-4" />
           <span>Create Poll</span>
@@ -97,7 +104,7 @@ const PollList = ({ polls, searchQuery, setSearchQuery, onDelete }) => {
       </div>
 
       {/* Search */}
-      <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-4 mb-6">
+      <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-4 mb-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-5 h-5" />
           <input
@@ -111,8 +118,8 @@ const PollList = ({ polls, searchQuery, setSearchQuery, onDelete }) => {
       </div>
 
       {!hasPolls ? (
-        <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-12 text-center">
-          <BarChart3 className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4" />
+        <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-12 text-center">
+          <NexusTrendingIcon className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">No Polls Found</h3>
           <p className="text-[var(--text-secondary)] mb-6">
             {searchQuery ? 'No polls match your search.' : 'Get started by creating your first poll.'}
@@ -132,12 +139,12 @@ const PollList = ({ polls, searchQuery, setSearchQuery, onDelete }) => {
           {polls.map((poll) => (
             <div
               key={poll.id || poll._id}
-              className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6 hover:border-[var(--accent)]/30 transition-colors"
+              className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6 hover:border-[var(--accent)]/30 transition-colors"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <BarChart3 className="w-5 h-5 text-[var(--accent)] flex-shrink-0" />
+                    <NexusTrendingIcon className="w-5 h-5 text-[var(--accent)] flex-shrink-0" />
                     <h3 className="text-lg font-semibold text-[var(--text-primary)]">
                       {poll.question}
                     </h3>
@@ -192,10 +199,10 @@ const PollList = ({ polls, searchQuery, setSearchQuery, onDelete }) => {
                   {(isAdmin() || user?.role === 'author') && (
                     <button
                       onClick={() => setShowAnalytics(poll.id || poll._id)}
-                      className="p-2 text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
+                      className="p-2 text-[var(--accent)] hover:bg-[var(--accent)]/10 rounded-lg transition-colors"
                       title="View Analytics"
                     >
-                      <BarChart className="w-4 h-4" />
+                      <NexusTrendingIcon className="w-4 h-4" />
                     </button>
                   )}
                   <Link
@@ -228,7 +235,7 @@ const PollList = ({ polls, searchQuery, setSearchQuery, onDelete }) => {
             }
           }}
         >
-          <div className="bg-[var(--surface-bg)] rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
+          <div className="bg-[var(--surface-bg)] rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative shadow-[0_24px_60px_var(--shadow-elevated)]">
             <button
               onClick={() => setShowAnalytics(null)}
               className="absolute top-4 right-4 z-10 p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-subtle)] rounded-lg transition-colors"
@@ -359,16 +366,21 @@ const CreatePoll = ({ onSuccess }) => {
       navigate('/admin/polls');
     } catch (error) {
       console.error('Error creating poll:', error);
-      toast.error(error.response?.data?.message || 'Failed to create poll');
+      toast.error(getApiErrorMessage(error, 'Failed to create poll'));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+    <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-[var(--text-primary)]">Create Poll</h2>
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] inline-flex items-center gap-2">
+          <span className="inline-flex rounded-xl bg-[var(--accent-soft)] p-2 text-[var(--accent)]">
+            <NexusTrendingIcon className="w-4 h-4" />
+          </span>
+          Create Poll
+        </h2>
         <Link
           to="/admin/polls"
           className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
@@ -645,7 +657,7 @@ const EditPoll = ({ onSuccess }) => {
       navigate('/admin/polls');
     } catch (error) {
       console.error('Error updating poll:', error);
-      toast.error(error.response?.data?.message || 'Failed to update poll');
+      toast.error(getApiErrorMessage(error, 'Failed to update poll'));
     } finally {
       setSubmitting(false);
     }
@@ -656,9 +668,14 @@ const EditPoll = ({ onSuccess }) => {
   }
 
   return (
-    <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
+    <div className="bg-[var(--surface-bg)] rounded-2xl shadow-sm border border-[var(--border-subtle)] p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-[var(--text-primary)]">Edit Poll</h2>
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] inline-flex items-center gap-2">
+          <span className="inline-flex rounded-xl bg-[var(--accent-soft)] p-2 text-[var(--accent)]">
+            <NexusTrendingIcon className="w-4 h-4" />
+          </span>
+          Edit Poll
+        </h2>
         <Link
           to="/admin/polls"
           className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"

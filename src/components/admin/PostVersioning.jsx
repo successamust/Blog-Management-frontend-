@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { History, RotateCcw, Eye, Calendar, X } from 'lucide-react';
+import { RotateCcw, Eye, Calendar, X } from 'lucide-react';
+import { NexusPostsIcon } from '../brand/NexusIcons';
 import { format } from 'date-fns';
 import DOMPurify from 'dompurify';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
@@ -55,7 +56,7 @@ const PostVersioning = ({ postId, currentContent, onRestore }) => {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h3 className="font-semibold text-primary flex items-center gap-2">
-          <History className="w-5 h-5" />
+          <NexusPostsIcon className="w-5 h-5 text-[var(--accent)]" />
           Version History
         </h3>
         <button
@@ -67,8 +68,8 @@ const PostVersioning = ({ postId, currentContent, onRestore }) => {
       </div>
 
       {versions.length === 0 ? (
-        <div className="p-6 bg-surface-subtle rounded-xl text-center">
-          <History className="w-12 h-12 mx-auto text-muted mb-3 opacity-50" />
+        <div className="p-6 bg-surface-subtle rounded-2xl border border-[var(--border-subtle)] text-center">
+          <NexusPostsIcon className="w-12 h-12 mx-auto text-[var(--accent)] mb-3 opacity-80" />
           <p className="text-sm text-muted">No versions saved yet</p>
         </div>
       ) : (
@@ -79,7 +80,7 @@ const PostVersioning = ({ postId, currentContent, onRestore }) => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className={`p-4 bg-surface-subtle rounded-lg border-2 transition-colors ${
+              className={`p-4 bg-surface-subtle rounded-2xl border-2 transition-colors ${
                 selectedVersion?.id === version.id
                   ? 'border-[var(--accent)]'
                   : 'border-transparent hover:border-[var(--border-subtle)]'
@@ -139,7 +140,7 @@ const PostVersioning = ({ postId, currentContent, onRestore }) => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[var(--surface-bg)] rounded-xl p-4 sm:p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-[var(--surface-bg)] rounded-2xl border border-[var(--border-subtle)] p-4 sm:p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-[0_24px_60px_var(--shadow-elevated)]"
           >
             <div className="flex items-center justify-between mb-4 gap-2">
               <h3 className="text-lg sm:text-xl font-bold text-primary break-words flex-1">

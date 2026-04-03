@@ -45,9 +45,16 @@ import PostTemplates from '../components/admin/PostTemplates';
 import PostScheduler from '../components/admin/PostScheduler';
 import SkeletonLoader from '../components/common/SkeletonLoader';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../utils/apiError.js';
 import Spinner from '../components/common/Spinner';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
 import PollAnalytics from '../components/admin/PollAnalytics';
+import {
+  NexusPostsIcon,
+  NexusCategoriesIcon,
+  NexusSubscribersIcon,
+  NexusTrendingIcon,
+} from '../components/brand/NexusIcons';
 
 const DASHBOARD_DESCRIPTION = 'Manage your Nexus profile, author tools, analytics, and saved posts from one workspace.';
 const DASHBOARD_TAB_LABELS = {
@@ -302,15 +309,15 @@ const Dashboard = () => {
       
       const getActionIcon = (title) => {
         const iconMap = {
-          'Browse Posts': <BookOpen className="w-5 h-5" />,
+          'Browse Posts': <NexusPostsIcon className="w-5 h-5" />,
           'Liked Posts': <Heart className="w-5 h-5" />,
           'Bookmarked Posts': <Bookmark className="w-5 h-5" />,
           'My Comments': <MessageCircle className="w-5 h-5" />,
           'Create Post': <Plus className="w-5 h-5" />,
-          'Manage Categories': <Folder className="w-5 h-5" />,
+          'Manage Categories': <NexusCategoriesIcon className="w-5 h-5" />,
           'Upload Image': <Upload className="w-5 h-5" />,
         };
-        return iconMap[title] || <FileText className="w-5 h-5" />;
+        return iconMap[title] || <NexusTrendingIcon className="w-5 h-5" />;
       };
 
       const transformedQuickActions = (response.data.quickActions || []).map(action => {
@@ -366,10 +373,8 @@ const Dashboard = () => {
         errorMessage = 'Unauthorized. Please log in again.';
       } else if (error.response?.status === 403) {
         errorMessage = 'Access forbidden. You may not have permission to view the dashboard.';
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      } else {
+        errorMessage = getApiErrorMessage(error, errorMessage);
       }
       
       setError(errorMessage);
@@ -489,15 +494,15 @@ const Dashboard = () => {
   }
 
   const tabs = [
-    { id: 'overview', label: 'Overview', mobileLabel: 'Overview', icon: <TrendingUp className="w-4 h-4" /> },
+    { id: 'overview', label: 'Overview', mobileLabel: 'Overview', icon: <NexusTrendingIcon className="w-4 h-4" /> },
     ...(user?.role === 'author' || user?.role === 'admin' ? [{ id: 'create-post', label: 'Create Post', mobileLabel: 'Create', icon: <Plus className="w-4 h-4" /> }] : []),
-    { id: 'posts', label: 'My Posts', mobileLabel: 'Posts', icon: <FileText className="w-4 h-4" /> },
+    { id: 'posts', label: 'My Posts', mobileLabel: 'Posts', icon: <NexusPostsIcon className="w-4 h-4" /> },
     { id: 'comments', label: 'My Comments', mobileLabel: 'Comments', icon: <MessageCircle className="w-4 h-4" /> },
     { id: 'likes', label: 'Liked Posts', mobileLabel: 'Liked', icon: <Heart className="w-4 h-4" /> },
     { id: 'bookmarks', label: 'Saved Posts', mobileLabel: 'Saved', icon: <Bookmark className="w-4 h-4" /> },
     { id: 'history', label: 'History', mobileLabel: 'History', icon: <History className="w-4 h-4" /> },
     // Show collaborations tab for all authenticated users (component handles visibility based on invitations)
-    { id: 'collaborations', label: 'Collaborations', mobileLabel: 'Collab', icon: <Users className="w-4 h-4" /> },
+    { id: 'collaborations', label: 'Collaborations', mobileLabel: 'Collab', icon: <NexusSubscribersIcon className="w-4 h-4" /> },
     ...(user?.role !== 'author' && user?.role !== 'admin' ? [{ id: 'author', label: 'Become Author', mobileLabel: 'Author', icon: <UserCheck className="w-4 h-4" /> }] : []),
     { id: 'settings', label: 'Profile Settings', mobileLabel: 'Settings', icon: <User className="w-4 h-4" /> },
   ];
@@ -506,21 +511,28 @@ const Dashboard = () => {
     <>
       {seoNode}
       <div className="bg-page">
+    <section className="page-hero-strip">
+      <div className="pointer-events-none absolute inset-0 hero-mesh" aria-hidden />
+      <div className="layout-container-wide py-10 md:py-12 relative z-[1]">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-3">
+            Workspace
+          </p>
+          <h1 className="font-display text-3xl sm:text-4xl text-primary mb-2">
+            Welcome back, <span className="text-[var(--accent)]">{user?.username || 'User'}</span>
+          </h1>
+          <p className="text-sm sm:text-base text-secondary">
+            Here&rsquo;s what&rsquo;s happening with your content and engagement.
+          </p>
+        </motion.div>
+      </div>
+    </section>
+    <div className="bg-content">
     <div className="layout-container-wide py-8">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-8"
-      >
-        <h1 className="text-3xl sm:text-4xl font-bold text-primary mb-2">
-          Welcome back, <span className="bg-gradient-to-r from-[var(--accent)] via-[#189112] to-[var(--accent-hover)] bg-clip-text text-transparent">{user?.username || 'User'}</span>!
-        </h1>
-        <p className="text-sm sm:text-base text-muted">
-          Here&rsquo;s what&rsquo;s happening with your content and engagement.
-        </p>
-      </motion.div>
 
       {/* Error Message */}
       {error && (
@@ -569,7 +581,7 @@ const Dashboard = () => {
                 whileTap={{ scale: 0.98 }}
                 className={`flex items-center space-x-1 sm:space-x-2 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl font-medium text-xs sm:text-sm transition-all whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'bg-[var(--accent)] text-white shadow-[0_16px_35px_rgba(26,137,23,0.25)] hover:text-white'
+                    ? 'bg-[var(--accent)] text-white shadow-[0_16px_35px_rgba(21,128,61,0.25)] hover:text-white'
                     : 'text-secondary hover:text-[var(--accent)] hover:bg-surface-subtle'
                 }`}
               >
@@ -601,6 +613,7 @@ const Dashboard = () => {
               change={`${postsPublished} published`}
               color="accent"
               trend={5}
+              sparklineData={[2, 3, 4, 4, 5, 6, 6, 7, postsPublished || 0, postsTotal || 0]}
             />
             <StatCard
               icon={<MessageSquare className="w-5 h-5" />}
@@ -609,6 +622,7 @@ const Dashboard = () => {
               change={`${commentsApproved} approved`}
               color="emerald"
               trend={12}
+              sparklineData={[1, 2, 2, 3, 4, 5, 6, commentsApproved || 0, commentsTotal || 0]}
             />
             <StatCard
               icon={<HeartHandshake className="w-5 h-5" />}
@@ -617,14 +631,16 @@ const Dashboard = () => {
               change="Across all posts"
               color="rose"
               trend={8}
+              sparklineData={[2, 3, 5, 7, 9, 12, 16, 19, totalLikes || 0]}
             />
             <StatCard
-              icon={<LineChart className="w-5 h-5" />}
+              icon={<NexusTrendingIcon className="w-5 h-5" />}
               title="Total Views"
               value={totalViews}
               change="All time"
-              color="purple"
+              color="teal"
               trend={15}
+              sparklineData={[20, 26, 31, 38, 45, 54, 63, 79, totalViews || 0]}
             />
           </div>
 
@@ -644,7 +660,7 @@ const Dashboard = () => {
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <button
                     onClick={() => setActiveTab('create-post')}
-                    className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
+                    className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(21,128,61,0.2)]"
                   >
                     <Plus className="w-4 h-4" />
                     <span>New Post</span>
@@ -847,7 +863,7 @@ const Dashboard = () => {
               <div className="flex items-center gap-3">
                 <Link
                   to="/admin/posts"
-                  className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(26,137,23,0.2)]"
+                  className="btn btn-primary !w-auto shadow-[0_12px_28px_rgba(21,128,61,0.2)]"
                 >
                   <FileText className="w-4 h-4" />
                   <span>Manage Posts</span>
@@ -1054,12 +1070,13 @@ const Dashboard = () => {
         </div>
       )}
     </div>
+    </div>
       </div>
     </>
   );
 };
 
-const StatCard = ({ icon, title, value, change, color, trend }) => {
+const StatCard = ({ icon, title, value, change, color, trend, sparklineData = [] }) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -1076,8 +1093,8 @@ const StatCard = ({ icon, title, value, change, color, trend }) => {
     accent: {
       bg: 'from-[#c8f0ce]/35 to-[#dff7e3]/25',
       icon: 'bg-[#c8f0ce]/60 text-[var(--accent)]',
-      gradient: 'from-[#1a8917] to-[#189112]',
-      sparkline: '#1a8917',
+      gradient: 'from-[var(--accent)] to-[#15803d]',
+      sparkline: '#15803d',
     },
     emerald: {
       bg: 'from-emerald-500/10 to-emerald-600/5',
@@ -1091,20 +1108,25 @@ const StatCard = ({ icon, title, value, change, color, trend }) => {
       gradient: 'from-rose-500 to-rose-600',
       sparkline: '#f43f5e',
     },
-    purple: {
-      bg: 'from-purple-500/10 to-purple-600/5',
-      icon: 'bg-purple-500/10 text-purple-600',
-      gradient: 'from-purple-500 to-purple-600',
-      sparkline: '#a855f7',
+    teal: {
+      bg: 'from-teal-500/12 to-emerald-600/7',
+      icon: 'bg-teal-500/15 text-teal-600',
+      gradient: 'from-teal-500 to-emerald-600',
+      sparkline: '#0d9488',
     },
   };
 
   const config = colorConfig[color] || colorConfig.accent;
   const isPositive = trend >= 0;
 
-  const sparklineData = Array.from({ length: 20 }, () => 
-    Math.random() * 100 + (isPositive ? 50 : 30)
-  );
+  const normalizedSparkline =
+    Array.isArray(sparklineData) && sparklineData.length > 1
+      ? sparklineData
+      : Array.from({ length: 20 }, (_, i) => {
+          const base = Number(value) || 0;
+          const drift = (isPositive ? 1 : -1) * i;
+          return Math.max(0, base * 0.15 + drift + 18);
+        });
 
   // Ensure value is a number and has a fallback
   const displayValue = typeof value === 'number' ? value : Number(value) || 0;
@@ -1151,7 +1173,7 @@ const StatCard = ({ icon, title, value, change, color, trend }) => {
 
         {/* Sparkline - responsive height for mobile */}
         <div className="mt-4 -mx-4 sm:-mx-6 -mb-4 sm:-mb-6">
-          <Sparkline data={sparklineData} color={config.sparkline} height={isMobile ? 40 : 50} />
+          <Sparkline data={normalizedSparkline} color={config.sparkline} height={isMobile ? 40 : 50} />
         </div>
       </div>
     </motion.div>
@@ -1349,7 +1371,7 @@ const CreatePostTab = () => {
     } catch (error) {
       console.error('Error fetching categories:', error);
       console.error('Error response:', error.response);
-      toast.error('Failed to load categories. Please try again.');
+      toast.error(getApiErrorMessage(error, 'Failed to load categories. Please try again.'));
       setCategories([]);
     } finally {
       setCategoriesLoading(false);
@@ -1426,7 +1448,7 @@ const CreatePostTab = () => {
       }));
       toast.success('Image uploaded successfully');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to upload image');
+      toast.error(getApiErrorMessage(error, 'Failed to upload image'));
     } finally {
       setUploadingImage(false);
     }
@@ -1553,7 +1575,7 @@ const CreatePostTab = () => {
       });
     } catch (error) {
       console.error('Error creating post:', error);
-      toast.error(error.response?.data?.message || 'Failed to create post');
+      toast.error(getApiErrorMessage(error, 'Failed to create post'));
     } finally {
       setSubmitting(false);
     }
@@ -1716,7 +1738,7 @@ const CreatePostTab = () => {
         <div className="border-t border-[var(--border-subtle)] pt-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-[var(--accent)]" />
+              <NexusTrendingIcon className="w-5 h-5 text-[var(--accent)]" />
               <h3 className="text-lg font-semibold text-[var(--text-primary)]">Poll (Optional)</h3>
             </div>
             {!showPollForm && (
@@ -1885,7 +1907,7 @@ const CreatePostTab = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="btn btn-primary disabled:opacity-50 shadow-[0_14px_30px_rgba(26,137,23,0.2)]"
+            className="btn btn-primary disabled:opacity-50 shadow-[0_14px_30px_rgba(21,128,61,0.2)]"
           >
             {submitting ? 'Creating...' : 'Create Post'}
           </button>
