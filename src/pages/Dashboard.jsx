@@ -29,7 +29,8 @@ import {
   Users,
   BarChart,
   BarChart3,
-  X
+  X,
+  UserPlus
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { dashboardAPI, postsAPI, categoriesAPI, imagesAPI, pollsAPI, adminAPI } from '../services/api';
@@ -38,6 +39,7 @@ import { useNotifications } from '../context/NotificationContext';
 import ProfileSettings from '../components/dashboard/ProfileSettings';
 import AuthorApplication from '../components/dashboard/AuthorApplication';
 import CollaborationsDashboard from '../components/dashboard/CollaborationsDashboard';
+import InviteCollaboratorModal from '../components/dashboard/InviteCollaboratorModal';
 import AnimatedCounter from '../components/common/AnimatedCounter';
 import Sparkline from '../components/common/Sparkline';
 import RichTextEditor from '../components/admin/RichTextEditor';
@@ -1182,10 +1184,10 @@ const StatCard = ({ icon, title, value, change, color, trend, sparklineData = []
 
 const PostItem = ({ post, onShowPollAnalytics }) => {
   const { user, isAdmin } = useAuth();
-  const { addNotification } = useNotifications();
   const [hasPoll, setHasPoll] = useState(false);
   const [pollId, setPollId] = useState(null);
   const [loadingPoll, setLoadingPoll] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const isAuthor = user?.role === 'author' || isAdmin();
   
   // Better author ID comparison - handle both object and string formats
@@ -1271,6 +1273,24 @@ const PostItem = ({ post, onShowPollAnalytics }) => {
       </Link>
       {canEdit && (
         <div className="ml-4 flex-shrink-0 flex items-center gap-2">
+          {isPostOwner && (
+            <>
+              <button
+                type="button"
+                onClick={() => setInviteOpen(true)}
+                className="btn-icon-square text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                title="Invite collaborator"
+              >
+                <UserPlus className="w-4 h-4" />
+              </button>
+              <InviteCollaboratorModal
+                isOpen={inviteOpen}
+                onClose={() => setInviteOpen(false)}
+                postId={post._id}
+                postTitle={post.title}
+              />
+            </>
+          )}
           {hasPoll && pollId && onShowPollAnalytics && (
             <button
               onClick={() => onShowPollAnalytics(pollId)}

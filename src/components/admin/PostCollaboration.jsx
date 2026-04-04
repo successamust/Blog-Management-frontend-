@@ -337,6 +337,14 @@ const PostCollaboration = ({ postId, currentAuthor, onCollaboratorsChange }) => 
                   <option value="editor">Editor</option>
                   <option value="reviewer">Reviewer</option>
                 </select>
+                <p className="text-xs text-muted mt-2 leading-relaxed">
+                  {inviteRole === 'co-author' &&
+                    'Edit content, publish/schedule with the team, polls — only the author can delete the post.'}
+                  {inviteRole === 'editor' &&
+                    'Edit title and body; cannot publish, schedule, or delete.'}
+                  {inviteRole === 'reviewer' &&
+                    'Read-only: review before publish — cannot edit or manage polls.'}
+                </p>
               </div>
 
               <div className="flex gap-2">

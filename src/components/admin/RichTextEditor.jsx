@@ -251,7 +251,7 @@ const getExtensions = (placeholderText) => {
   return cachedExtensions;
 };
 
-const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) => {
+const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...', readOnly = false }) => {
   const [isPreview, setIsPreview] = useState(false);
   const [isMarkdown, setIsMarkdown] = useState(false);
   const [isDark, setIsDark] = useState(false);
@@ -304,6 +304,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
 
   const editor = useEditor({
     extensions,
+    editable: !readOnly,
     content: value || '',
     immediatelyRender: false,
     onCreate: ({ editor }) => {
@@ -368,6 +369,11 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
       },
     },
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    editor.setEditable(!readOnly);
+  }, [editor, readOnly]);
 
   // Update editor content when value prop changes
   useEffect(() => {
@@ -1333,7 +1339,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Start writing...' }) =
 
   const editorCan = editor?.can?.();
   const isTableActive = editor?.isActive('table') ?? false;
-  const disableFormatting = !editor || !isWysiwygMode;
+  const disableFormatting = readOnly || !editor || !isWysiwygMode;
   const disableTableManipulation = disableFormatting || !isTableActive;
   const canIndent = Boolean(isWysiwygMode && editorCan?.sinkListItem?.('listItem'));
   const canOutdent = Boolean(isWysiwygMode && editorCan?.liftListItem?.('listItem'));

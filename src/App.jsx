@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
-import { CheckCircle2, AlertTriangle, Info } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Info, Loader2 } from 'lucide-react';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -11,7 +11,6 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import ReadingProgress from './components/common/ReadingProgress';
 import PageTransition from './components/common/PageTransition';
-import Spinner from './components/common/Spinner';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import KeyboardShortcuts from './components/common/KeyboardShortcuts';
 import { SkipToContent } from './components/common/Accessibility';
@@ -84,8 +83,7 @@ function AppContent() {
     }
   }, [location.pathname]);
 
-  const baseToastClasses = 'flex items-start gap-3 w-full max-w-sm rounded-2xl px-4 py-3 sm:px-5 sm:py-4 shadow-xl shadow-[rgba(21,128,61,0.14)] border border-white/30 bg-white/95 backdrop-blur-md text-slate-900';
-  const iconBadgeClasses = 'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold';
+  /* Toast chrome: globals.css (.nexus-toast, .nexus-toast__glyph) */
 
   return (
     <ErrorBoundary>
@@ -148,43 +146,41 @@ function AppContent() {
         <Footer />
         <Toaster
           position="top-right"
+          containerClassName="nexus-toast-portal"
+          containerStyle={{ zIndex: 10050 }}
+          gutter={14}
           toastOptions={{
             duration: 4200,
-            style: {
-              background: 'transparent',
-              boxShadow: 'none',
-              padding: 0,
-            },
-            className: `${baseToastClasses} border-l-4 border-[var(--accent)]/70`,
+            className: 'nexus-toast nexus-toast--accent',
             icon: (
-              <span className={`${iconBadgeClasses} bg-[var(--accent)]/20 text-[var(--accent)]`}>
-                <Info className="h-4 w-4" />
+              <span className="nexus-toast__glyph" aria-hidden>
+                <Info aria-hidden />
               </span>
             ),
             success: {
               duration: 3600,
-              className: `${baseToastClasses} border-l-4 border-emerald-400`,
+              className: 'nexus-toast nexus-toast--accent',
               icon: (
-                <span className={`${iconBadgeClasses} bg-emerald-100 text-emerald-600`}>
-                  <CheckCircle2 className="h-4 w-4" />
+                <span className="nexus-toast__glyph" aria-hidden>
+                  <CheckCircle2 aria-hidden />
                 </span>
               ),
             },
             error: {
               duration: 4800,
-              className: `${baseToastClasses} border-l-4 border-rose-500`,
+              className: 'nexus-toast nexus-toast--error',
               icon: (
-                <span className={`${iconBadgeClasses} bg-rose-100 text-rose-600`}>
-                  <AlertTriangle className="h-4 w-4" />
+                <span className="nexus-toast__glyph" aria-hidden>
+                  <AlertCircle aria-hidden />
                 </span>
               ),
             },
             loading: {
               duration: 6000,
-              className: `${baseToastClasses} border-l-4 border-amber-400`,
+              className: 'nexus-toast nexus-toast--loading',
               icon: (
-                <span className={`${iconBadgeClasses} bg-amber-100 text-amber-500`}>
-                  <Spinner size="sm" tone="warning" />
+                <span className="nexus-toast__glyph" aria-hidden>
+                  <Loader2 className="animate-spin" aria-hidden />
                 </span>
               ),
             },

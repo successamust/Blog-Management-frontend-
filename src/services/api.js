@@ -905,6 +905,8 @@ export const collaborationsAPI = {
   getSentInvitations: (postId) => api.get(`/collaborations/${postId}/invitations/sent`),
   getPostInvitations: (postId) => api.get(`/collaborations/${postId}/invitations`),
   getMySentInvitations: () => api.get('/collaborations/me/invitations/sent'),
+  postReviewMessage: (postId, data) => api.post(`/collaborations/${postId}/review-message`, data),
+  getReviewMessages: (postId) => api.get(`/collaborations/${postId}/review-messages`),
 };
 
 export const followsAPI = {

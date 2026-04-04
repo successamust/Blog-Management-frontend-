@@ -16,6 +16,7 @@ import PostScheduler from './PostScheduler';
 import PostCollaboration from './PostCollaboration';
 import PostTemplates from './PostTemplates';
 import PostVersioning from './PostVersioning';
+import ReviewerFeedbackPanel from './ReviewerFeedbackPanel';
 import { NexusPostsIcon, NexusTrendingIcon } from '../brand/NexusIcons';
 
 const PostManagement = () => {
@@ -1606,6 +1607,8 @@ const EditPost = ({ onSuccess }) => {
   });
   const [showTemplates, setShowTemplates] = useState(false);
   const [showVersioning, setShowVersioning] = useState(false);
+  /** null while loading; 'owner' = primary author or admin editing */
+  const [myCollabRole, setMyCollabRole] = useState(null);
 
   // Helper function to normalize posts response
   const normalizePostsResponse = (response) => {
@@ -1675,6 +1678,10 @@ const EditPost = ({ onSuccess }) => {
               console.log('[EditPost] Retrieved content from slug endpoint:', {
                 contentLength: post.content.length,
               });
+            }
+            // Dashboard list responses omit author; merge from slug fetch so ownership checks work.
+            if (fullPost?.author && !post.author) {
+              post.author = fullPost.author;
             }
           } catch (slugError) {
             // Security: Only log warnings in development
@@ -1844,6 +1851,23 @@ const EditPost = ({ onSuccess }) => {
       } else {
         setScheduledAt(null);
       }
+
+      const uid = user?._id || user?.id;
+      const aid = post.author?._id || post.author;
+      let resolvedRole = 'owner';
+      if (isAdmin() || (aid && uid && String(aid) === String(uid))) {
+        resolvedRole = 'owner';
+      } else {
+        try {
+          const cr = await collaborationsAPI.getCollaborators(id);
+          const list = cr.data?.collaborators || [];
+          const me = list.find((c) => String(c.user?._id || c.user) === String(uid));
+          resolvedRole = me?.role || null;
+        } catch {
+          resolvedRole = null;
+        }
+      }
+      setMyCollabRole(resolvedRole);
     } catch (error) {
       // Security: Only log errors in development to prevent information leakage
       if (import.meta.env.DEV) {
@@ -2108,9 +2132,37 @@ const EditPost = ({ onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (myCollabRole === 'reviewer') {
+      toast.error('Reviewers cannot save edits. Use “Message the author” to share feedback.');
+      return;
+    }
     setSubmitting(true);
 
     try {
+      if (myCollabRole === 'editor') {
+        const postData = {
+          title: formData.title || '',
+          excerpt: formData.excerpt || '',
+          content: formData.content || '',
+          tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
+        };
+        if (formData.category && formData.category.trim() !== '') {
+          postData.category = formData.category;
+        }
+        if (formData.featuredImage && formData.featuredImage.trim() !== '') {
+          postData.featuredImage = formData.featuredImage;
+        }
+        await postsAPI.update(id, postData);
+        clearCache('/posts');
+        clearCache(`/posts/${id}`);
+        toast.success('Post updated (content only — publication unchanged)');
+        if (onSuccess) {
+          onSuccess();
+        }
+        navigate('/admin/posts');
+        return;
+      }
+
       // Explicitly handle status to ensure draft status is properly saved
       const status = formData.status || 'draft';
       
@@ -2263,29 +2315,54 @@ const EditPost = ({ onSuccess }) => {
     setShowVersioning(false);
   };
 
+  const isReadOnlyReviewer = myCollabRole === 'reviewer';
+  const isEditorRole = myCollabRole === 'editor';
+  const canChangePublication = myCollabRole === 'owner' || myCollabRole === 'co-author';
+  const showReviewerThread =
+    myCollabRole === 'owner' || myCollabRole === 'co-author' || isEditorRole;
+
   return (
     <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-4 sm:p-6 overflow-x-hidden">
-      <div className="flex items-center justify-between mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Edit Post</h2>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowTemplates(true)}
-            className="btn btn-outline !w-auto text-sm"
-          >
-            <FileText className="w-4 h-4 mr-1" />
-            Templates
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowVersioning(true)}
-            className="btn btn-outline !w-auto text-sm"
-          >
-            <History className="w-4 h-4 mr-1" />
-            Versions
-          </button>
+      <div className="flex items-center justify-between mb-4 sm:mb-6 gap-3 flex-wrap">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Edit Post</h2>
+          {isReadOnlyReviewer && (
+            <p className="text-sm text-amber-700 dark:text-amber-300/90 mt-1">
+              Reviewer view — read only. Use the message box below to reach the author.
+            </p>
+          )}
+          {isEditorRole && (
+            <p className="text-sm text-[var(--text-secondary)] mt-1">
+              Editor — you can update content; publishing and scheduling stay with the author or co-authors.
+            </p>
+          )}
         </div>
+        {!isReadOnlyReviewer && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowTemplates(true)}
+              className="btn btn-outline !w-auto text-sm"
+            >
+              <FileText className="w-4 h-4 mr-1" />
+              Templates
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowVersioning(true)}
+              className="btn btn-outline !w-auto text-sm"
+            >
+              <History className="w-4 h-4 mr-1" />
+              Versions
+            </button>
+          </div>
+        )}
       </div>
+      {id && showReviewerThread && (
+        <div className="mb-6">
+          <ReviewerFeedbackPanel postId={id} mode="viewer" />
+        </div>
+      )}
       <form 
         onSubmit={(e) => {
           e.preventDefault();
@@ -2294,6 +2371,9 @@ const EditPost = ({ onSuccess }) => {
         className="space-y-4 sm:space-y-6"
         data-create-post-form
       >
+        {isReadOnlyReviewer && id && (
+          <ReviewerFeedbackPanel postId={id} mode="reviewer" />
+        )}
         <div>
           <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Title</label>
           <input
@@ -2302,7 +2382,8 @@ const EditPost = ({ onSuccess }) => {
             value={formData.title || ''}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+            disabled={isReadOnlyReviewer}
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)] disabled:opacity-70 disabled:cursor-not-allowed"
           />
         </div>
 
@@ -2313,7 +2394,8 @@ const EditPost = ({ onSuccess }) => {
             value={formData.excerpt || ''}
             onChange={handleChange}
             rows="3"
-            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+            disabled={isReadOnlyReviewer}
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)] disabled:opacity-70 disabled:cursor-not-allowed"
           />
         </div>
 
@@ -2322,6 +2404,7 @@ const EditPost = ({ onSuccess }) => {
           {typeof window !== 'undefined' && (
             <RichTextEditor
               key={`editor-${id || 'new'}-${loading ? 'loading' : 'loaded'}`}
+              readOnly={isReadOnlyReviewer}
               value={formData.content || ''}
               onChange={(value) => {
                 setFormData(prev => ({ ...prev, content: value }));
@@ -2365,7 +2448,8 @@ const EditPost = ({ onSuccess }) => {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+                disabled={isReadOnlyReviewer}
+                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)] disabled:opacity-70"
               >
                 <option value="">Select a category</option>
                 {categories.length > 0 ? (
@@ -2383,28 +2467,39 @@ const EditPost = ({ onSuccess }) => {
 
           <div>
             <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Status</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
-            >
-              <option value="published">Published</option>
-              <option value="draft">Draft</option>
-            </select>
-            {scheduledAt && formData.status !== 'draft' && (
+            {canChangePublication && !isReadOnlyReviewer ? (
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+              >
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+            ) : (
+              <p className="text-sm text-[var(--text-secondary)] px-1 py-2 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border-subtle)]">
+                <span className="font-medium text-[var(--text-primary)] capitalize">{formData.status || 'draft'}</span>
+                {isEditorRole || isReadOnlyReviewer
+                  ? ' — publication is controlled by the author or co-authors.'
+                  : ''}
+              </p>
+            )}
+            {scheduledAt && formData.status !== 'draft' && canChangePublication && !isReadOnlyReviewer && (
               <p className="mt-1 text-xs text-[var(--text-secondary)]">Note: Changing status will clear the scheduled date</p>
             )}
           </div>
         </div>
 
-        <div>
-          <PostScheduler
-            onSchedule={setScheduledAt}
-            initialDate={scheduledAt ? new Date(scheduledAt).toISOString().split('T')[0] : null}
-            initialTime={scheduledAt ? new Date(scheduledAt).toTimeString().slice(0, 5) : null}
-          />
-        </div>
+        {canChangePublication && !isReadOnlyReviewer && (
+          <div>
+            <PostScheduler
+              onSchedule={setScheduledAt}
+              initialDate={scheduledAt ? new Date(scheduledAt).toISOString().split('T')[0] : null}
+              initialTime={scheduledAt ? new Date(scheduledAt).toTimeString().slice(0, 5) : null}
+            />
+          </div>
+        )}
 
         {id && (
           <div>
@@ -2425,7 +2520,8 @@ const EditPost = ({ onSuccess }) => {
             value={formData.tags}
             onChange={handleChange}
             placeholder="tag1, tag2, tag3"
-            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)]"
+            disabled={isReadOnlyReviewer}
+            className="w-full px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-[var(--text-primary)] disabled:opacity-70"
           />
         </div>
 
@@ -2439,9 +2535,10 @@ const EditPost = ({ onSuccess }) => {
                 value={formData.featuredImage}
                 onChange={handleChange}
                 placeholder="Image URL or upload an image"
-                className="flex-1 px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-sm sm:text-base text-[var(--text-primary)]"
+                disabled={isReadOnlyReviewer}
+                className="flex-1 px-4 py-2 border border-[var(--border-subtle)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--surface-bg)] text-sm sm:text-base text-[var(--text-primary)] disabled:opacity-70"
               />
-              <label className="px-4 py-2 bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--surface-bg)] cursor-pointer transition-colors flex items-center justify-center text-sm sm:text-base whitespace-nowrap">
+              <label className={`px-4 py-2 bg-[var(--surface-subtle)] border border-[var(--border-subtle)] rounded-lg transition-colors flex items-center justify-center text-sm sm:text-base whitespace-nowrap ${isReadOnlyReviewer ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--surface-bg)] cursor-pointer'}`}>
                 <Upload className="w-4 h-4 mr-2" />
                 {uploadingImage ? 'Uploading...' : 'Upload'}
                 <input
@@ -2449,10 +2546,10 @@ const EditPost = ({ onSuccess }) => {
                   accept="image/*"
                   onChange={handleImageUpload}
                   className="hidden"
-                  disabled={uploadingImage}
+                  disabled={uploadingImage || isReadOnlyReviewer}
                 />
               </label>
-              {formData.featuredImage && (
+              {formData.featuredImage && !isReadOnlyReviewer && (
                 <button
                   type="button"
                   onClick={handleDeleteImage}
@@ -2489,7 +2586,7 @@ const EditPost = ({ onSuccess }) => {
               <NexusTrendingIcon className="w-5 h-5 text-[var(--accent)]" />
               <h3 className="text-lg font-semibold text-[var(--text-primary)]">Poll</h3>
             </div>
-            {poll && !showPollForm && (
+            {poll && !showPollForm && !isReadOnlyReviewer && (
               <button
                 type="button"
                 onClick={() => setShowPollForm(true)}
@@ -2498,7 +2595,7 @@ const EditPost = ({ onSuccess }) => {
                 Edit Poll
               </button>
             )}
-            {!poll && !showPollForm && (
+            {!poll && !showPollForm && !isReadOnlyReviewer && (
               <button
                 type="button"
                 onClick={() => setShowPollForm(true)}
@@ -2713,15 +2810,17 @@ const EditPost = ({ onSuccess }) => {
             to="/admin/posts"
             className="btn btn-outline w-full sm:w-auto"
           >
-            Cancel
+            {isReadOnlyReviewer ? 'Back to posts' : 'Cancel'}
           </Link>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(21,128,61,0.2)] w-full sm:w-auto"
-          >
-            {submitting ? 'Updating...' : 'Update Post'}
-          </button>
+          {!isReadOnlyReviewer && (
+            <button
+              type="submit"
+              disabled={submitting}
+              className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(21,128,61,0.2)] w-full sm:w-auto"
+            >
+              {submitting ? 'Updating...' : isEditorRole ? 'Save content' : 'Update Post'}
+            </button>
+          )}
         </div>
       </form>
 

@@ -577,6 +577,14 @@ const Home = () => {
                       Write for us
                     </Link>
                   )}
+                  {!isAuthenticated && (
+                    <Link
+                      to={`/login?redirect=${encodeURIComponent('/dashboard?tab=author')}`}
+                      className="btn btn-ghost text-[var(--text-secondary)] justify-center !w-full sm:!w-auto border border-[var(--border-subtle)]"
+                    >
+                      Apply to write
+                    </Link>
+                  )}
                 </div>
               </motion.div>
             </div>
