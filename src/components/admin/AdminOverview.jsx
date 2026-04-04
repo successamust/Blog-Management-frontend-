@@ -1,23 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  Sector,
-} from 'recharts';
 import {
   Users,
   PenLine,
@@ -34,7 +16,7 @@ import {
   BookOpen,
   Mail,
 } from 'lucide-react';
-import { adminAPI, postsAPI, categoriesAPI, newsletterAPI, dashboardAPI, pollsAPI, searchAPI, followsAPI } from '../../services/api';
+import { adminAPI, postsAPI, categoriesAPI, dashboardAPI, pollsAPI, searchAPI, followsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { getApiErrorMessage } from '../../utils/apiError.js';
 import AnimatedCard from '../common/AnimatedCard';
@@ -47,30 +29,8 @@ import {
   NexusSubscribersIcon,
   NexusTrendingIcon,
 } from '../brand/NexusIcons';
-import { NEXUS_CHART_COLORS, nexusTooltipProps } from '../../theme/chartTheme';
 
-const COLORS = NEXUS_CHART_COLORS;
-const ACTIVE_STROKE = 'var(--accent)';
-
-const renderActiveSector = (props) => {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
-  return (
-    <g>
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius + 4}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-        stroke={ACTIVE_STROKE}
-        strokeWidth={3}
-        opacity={0.9}
-      />
-    </g>
-  );
-};
+const AdminOverviewCharts = lazy(() => import('./AdminOverviewCharts.jsx'));
 
 const formatRoleLabel = (value) => {
   if (!value && value !== 0) return 'Unknown';
@@ -97,11 +57,33 @@ const AdminOverview = () => {
     follows: null,
     bookmarks: null,
     readingHistory: null,
+    postRollup: null,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
+
+  const PAGE_SIZE = 50;
+  const [overviewQuery, setOverviewQuery] = useState({
+    postsPage: 1,
+    postsLimit: PAGE_SIZE,
+    usersPage: 1,
+    usersLimit: PAGE_SIZE,
+    pollsPage: 1,
+    pollsLimit: PAGE_SIZE,
+    bookmarksPage: 1,
+    bookmarksLimit: PAGE_SIZE,
+    tagsPage: 1,
+    tagsLimit: 20,
+  });
+  const [overviewPagination, setOverviewPagination] = useState({
+    posts: null,
+    users: null,
+    polls: null,
+    bookmarks: null,
+    tags: null,
+  });
 
   // Helper function to normalize posts from various response structures
   const normalizePosts = useCallback((response) => {
@@ -175,6 +157,83 @@ const AdminOverview = () => {
     try {
       setLoading(true);
       setError(null);
+
+      const wrapBundle = (payload) =>
+        payload == null ? { error: new Error('Admin overview section missing') } : { data: payload };
+
+      let postsData;
+      let userStatsRes;
+      let usersRes;
+      let categoriesRes;
+      let categoryStatsRes;
+      let newsletterStatsRes;
+      let dashboardRes;
+      let pollsRes;
+      let popularTagsRes;
+      let bookmarksRes;
+      let postRollupFromBundle = null;
+
+      let usedBundle = false;
+      try {
+        const { data: b } = await adminAPI.getOverviewBundle({
+          usersPage: overviewQuery.usersPage,
+          usersLimit: overviewQuery.usersLimit,
+          bookmarksPage: overviewQuery.bookmarksPage,
+          bookmarksLimit: overviewQuery.bookmarksLimit,
+          postsPage: overviewQuery.postsPage,
+          postsLimit: overviewQuery.postsLimit,
+          pollsPage: overviewQuery.pollsPage,
+          pollsLimit: overviewQuery.pollsLimit,
+          tagsPage: overviewQuery.tagsPage,
+          tagsLimit: overviewQuery.tagsLimit,
+        });
+        if (b && b.posts && Array.isArray(b.posts.posts)) {
+          usedBundle = true;
+          postRollupFromBundle = b.postRollup ?? null;
+          setOverviewPagination({
+            posts: b.posts.pagination ?? null,
+            users: b.users?.pagination ?? null,
+            polls: b.polls?.pagination ?? null,
+            bookmarks: b.bookmarks?.pagination ?? null,
+            tags: b.popularTags?.pagination ?? null,
+          });
+
+          setOverviewQuery((prev) => {
+            const next = { ...prev };
+            let changed = false;
+            const align = (meta, pageKey) => {
+              if (!meta || meta.page == null) return;
+              const pg = Number(meta.page);
+              if (Number.isFinite(pg) && pg !== prev[pageKey]) {
+                next[pageKey] = pg;
+                changed = true;
+              }
+            };
+            align(b.posts?.pagination, 'postsPage');
+            align(b.users?.pagination, 'usersPage');
+            align(b.polls?.pagination, 'pollsPage');
+            align(b.bookmarks?.pagination, 'bookmarksPage');
+            align(b.popularTags?.pagination, 'tagsPage');
+            return changed ? next : prev;
+          });
+
+          postsData = b.posts.posts;
+          userStatsRes = wrapBundle(b.userStats);
+          usersRes = wrapBundle(b.users);
+          categoriesRes = wrapBundle(b.categories);
+          categoryStatsRes = wrapBundle(b.categoryStats);
+          newsletterStatsRes = wrapBundle(b.newsletterStats);
+          dashboardRes = wrapBundle(b.viewerDashboard);
+          pollsRes = wrapBundle(b.polls);
+          popularTagsRes = wrapBundle(b.popularTags);
+          bookmarksRes = wrapBundle(b.bookmarks);
+        }
+      } catch (bundleErr) {
+        console.warn('Admin overview bundle unavailable, using discrete API calls:', bundleErr);
+      }
+
+      if (!usedBundle) {
+        setOverviewPagination({ posts: null, users: null, polls: null, bookmarks: null, tags: null });
       const fetchComprehensivePosts = async () => {
 
         const dedupeById = (list) => {
@@ -295,27 +354,6 @@ const AdminOverview = () => {
 
       const postsPromise = fetchComprehensivePosts();
 
-      const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-      
-      // COMMENTED OUT FOR TESTING
-      /*
-      const makeRequestWithRetry = async (requestFn, retries = 2) => {
-        for (let i = 0; i <= retries; i++) {
-          try {
-            return await requestFn();
-          } catch (err) {
-            if (err.response?.status === 429 && i < retries) {
-              const waitTime = (i + 1) * 1000;
-              await delay(waitTime);
-              continue;
-            }
-            return { error: err };
-          }
-        }
-        return { error: new Error('Max retries exceeded') };
-      };
-      */
-
       const makeRequestWithRetry = async (requestFn) => {
         try {
           return await requestFn();
@@ -324,17 +362,36 @@ const AdminOverview = () => {
         }
       };
 
-      const userStatsRes = await Promise.resolve(makeRequestWithRetry(() => adminAPI.getUserStats()));
-      const usersRes = await Promise.resolve(makeRequestWithRetry(() => adminAPI.getUsers({ limit: 1000 })));
-      const categoriesRes = await Promise.resolve(makeRequestWithRetry(() => categoriesAPI.getAll()));
-      const categoryStatsRes = await Promise.resolve(makeRequestWithRetry(() => categoriesAPI.getStats()));
-      const newsletterStatsRes = await Promise.resolve(makeRequestWithRetry(() => adminAPI.getNewsletterStats()));
-      const dashboardRes = await Promise.resolve(makeRequestWithRetry(() => dashboardAPI.getOverview()));
-      const pollsRes = await Promise.resolve(makeRequestWithRetry(() => pollsAPI.getAll({ limit: 100 })));
-      const popularTagsRes = await Promise.resolve(makeRequestWithRetry(() => searchAPI.getPopularTags()));
-      // Security: Validate and sanitize limit parameter
-      const sanitizedBookmarksLimit = Math.min(Math.max(parseInt(1000) || 1000, 1), 1000); // Between 1 and 1000
-      const bookmarksRes = await Promise.resolve(makeRequestWithRetry(() => dashboardAPI.getBookmarks({ limit: sanitizedBookmarksLimit }).catch(() => ({ error: new Error('Bookmarks fetch failed') }))));
+      const sanitizedBookmarksLimit = Math.min(Math.max(parseInt(1000) || 1000, 1), 1000);
+
+      const [
+        postsData,
+        userStatsRes,
+        usersRes,
+        categoriesRes,
+        categoryStatsRes,
+        newsletterStatsRes,
+        dashboardRes,
+        pollsRes,
+        popularTagsRes,
+        bookmarksRes,
+      ] = await Promise.all([
+        postsPromise,
+        makeRequestWithRetry(() => adminAPI.getUserStats()),
+        makeRequestWithRetry(() => adminAPI.getUsers({ limit: 1000 })),
+        makeRequestWithRetry(() => categoriesAPI.getAll()),
+        makeRequestWithRetry(() => categoriesAPI.getStats()),
+        makeRequestWithRetry(() => adminAPI.getNewsletterStats()),
+        makeRequestWithRetry(() => dashboardAPI.getOverview()),
+        makeRequestWithRetry(() => pollsAPI.getAll({ limit: 100 })),
+        makeRequestWithRetry(() => searchAPI.getPopularTags()),
+        makeRequestWithRetry(() =>
+          dashboardAPI.getBookmarks({ limit: sanitizedBookmarksLimit }).catch(() => ({
+            error: new Error('Bookmarks fetch failed'),
+          }))
+        ),
+      ]);
+      }
 
       const getData = (res) => {
         if (res?.error) return null;
@@ -662,14 +719,10 @@ const AdminOverview = () => {
         setStats((prev) => ({ ...prev, users: normalizedUsers }));
       }
 
-      const postsData = await postsPromise;
       const normalizedPostsData = Array.isArray(postsData) ? postsData : [];
-      
-      // Process posts data
-      
+
       setPosts(normalizedPostsData);
 
-      // Always set posts stats, even if empty
       const normalizeStatus = (post) => {
         if (!post) return 'draft';
         
@@ -719,82 +772,107 @@ const AdminOverview = () => {
         return 'draft';
       };
 
-      const counts = normalizedPostsData.reduce(
-        (acc, post) => {
-          const status = normalizeStatus(post);
-          acc[status] = (acc[status] || 0) + 1;
-          return acc;
-        },
-        {}
-      );
+      if (
+        usedBundle &&
+        postRollupFromBundle &&
+        typeof postRollupFromBundle.total === 'number'
+      ) {
+        const bs = postRollupFromBundle.byStatus || {};
+        const statusCounts = {
+          draft: bs.draft || 0,
+          published: bs.published || 0,
+          scheduled: bs.scheduled || 0,
+          archived: bs.archived || 0,
+        };
+        setStats((prev) => ({
+          ...prev,
+          postRollup: postRollupFromBundle,
+          posts: {
+            total: postRollupFromBundle.total,
+            published: statusCounts.published,
+            drafts: statusCounts.draft,
+            scheduled: statusCounts.scheduled,
+            archived: statusCounts.archived,
+            totalViews: postRollupFromBundle.totalViews ?? 0,
+            totalLikes: postRollupFromBundle.totalLikes ?? 0,
+            totalComments: postRollupFromBundle.totalComments ?? 0,
+            statusCounts,
+            raw: normalizedPostsData,
+          },
+        }));
+      } else {
+        const counts = normalizedPostsData.reduce(
+          (acc, post) => {
+            const status = normalizeStatus(post);
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+          },
+          {}
+        );
 
-      // Since normalizeStatus already normalizes all variations, use the normalized counts directly
-      const published = counts.published || 0;
-      const drafts = counts.draft || 0;
-      const scheduled = counts.scheduled || 0;
-      const archived = counts.archived || 0;
-      
-      // Calculate total from array length (source of truth) and verify it matches status counts
-      const totalFromArray = normalizedPostsData.length;
-      const totalFromCounts = Object.values(counts).reduce((sum, count) => sum + (Number(count) || 0), 0);
-      
-      // Use array length as source of truth, but log warning if counts don't match
-      if (totalFromCounts !== totalFromArray) {
-        console.warn('AdminOverview: Status counts mismatch', {
-          totalFromCounts,
-          totalFromArray,
-          counts
-        });
-      }
-      
-      // Total should always equal the array length (one post = one count)
-      const totalPosts = totalFromArray;
-      
-      const totalViews = (Array.isArray(normalizedPostsData) ? normalizedPostsData : []).reduce((sum, p) => {
-        if (!p) return sum;
-        const views = Number(p?.viewCount) || Number(p?.views) || 0;
-        return sum + (Number.isFinite(views) ? views : 0);
-      }, 0);
-      const totalLikes = (Array.isArray(normalizedPostsData) ? normalizedPostsData : []).reduce((sum, p) => {
-        if (!p) return sum;
-        if (Array.isArray(p?.likes)) return sum + (p.likes.length || 0);
-        const likes = Number(p?.likeCount) || Number(p?.likes) || 0;
-        return sum + (Number.isFinite(likes) ? likes : 0);
-      }, 0);
-      const totalComments = (Array.isArray(normalizedPostsData) ? normalizedPostsData : []).reduce((sum, p) => {
-        if (!p) return sum;
-        // Count all comments including replies (consistent with Analytics)
-        if (Array.isArray(p?.comments) && p.comments.length > 0) {
-          const countAllComments = (comments) => {
-            if (!Array.isArray(comments) || comments.length === 0) return 0;
-            return comments.reduce((total, comment) => {
-              if (!comment) return total;
-              const replies = Array.isArray(comment.replies) ? comment.replies : [];
-              return total + 1 + countAllComments(replies);
-            }, 0);
-          };
-          return sum + countAllComments(p.comments);
+        const published = counts.published || 0;
+        const drafts = counts.draft || 0;
+        const scheduled = counts.scheduled || 0;
+        const archived = counts.archived || 0;
+
+        const totalFromArray = normalizedPostsData.length;
+        const totalFromCounts = Object.values(counts).reduce((sum, count) => sum + (Number(count) || 0), 0);
+
+        if (totalFromCounts !== totalFromArray) {
+          console.warn('AdminOverview: Status counts mismatch', {
+            totalFromCounts,
+            totalFromArray,
+            counts,
+          });
         }
-        const comments = Number(p?.commentCount) || Number(p?.comments) || 0;
-        return sum + (Number.isFinite(comments) ? comments : 0);
-      }, 0);
 
-      // Always update posts stats - the total should match the sum of all status counts
-      setStats((prev) => ({
-        ...prev,
-        posts: {
-          total: totalPosts,
-          published,
-          drafts,
-          scheduled,
-          archived,
-          totalViews,
-          totalLikes,
-          totalComments,
-          statusCounts: counts,
-          raw: normalizedPostsData,
-        },
-      }));
+        const totalPosts = totalFromArray;
+
+        const totalViews = (Array.isArray(normalizedPostsData) ? normalizedPostsData : []).reduce((sum, p) => {
+          if (!p) return sum;
+          const views = Number(p?.viewCount) || Number(p?.views) || 0;
+          return sum + (Number.isFinite(views) ? views : 0);
+        }, 0);
+        const totalLikes = (Array.isArray(normalizedPostsData) ? normalizedPostsData : []).reduce((sum, p) => {
+          if (!p) return sum;
+          if (Array.isArray(p?.likes)) return sum + (p.likes.length || 0);
+          const likes = Number(p?.likeCount) || Number(p?.likes) || 0;
+          return sum + (Number.isFinite(likes) ? likes : 0);
+        }, 0);
+        const totalComments = (Array.isArray(normalizedPostsData) ? normalizedPostsData : []).reduce((sum, p) => {
+          if (!p) return sum;
+          if (Array.isArray(p?.comments) && p.comments.length > 0) {
+            const countAllComments = (comments) => {
+              if (!Array.isArray(comments) || comments.length === 0) return 0;
+              return comments.reduce((total, comment) => {
+                if (!comment) return total;
+                const replies = Array.isArray(comment.replies) ? comment.replies : [];
+                return total + 1 + countAllComments(replies);
+              }, 0);
+            };
+            return sum + countAllComments(p.comments);
+          }
+          const comments = Number(p?.commentCount) || Number(p?.comments) || 0;
+          return sum + (Number.isFinite(comments) ? comments : 0);
+        }, 0);
+
+        setStats((prev) => ({
+          ...prev,
+          postRollup: null,
+          posts: {
+            total: totalPosts,
+            published,
+            drafts,
+            scheduled,
+            archived,
+            totalViews,
+            totalLikes,
+            totalComments,
+            statusCounts: counts,
+            raw: normalizedPostsData,
+          },
+        }));
+      }
 
       if (categoriesRes && !categoriesRes.error) {
         const rawCategories = getData(categoriesRes);
@@ -829,9 +907,14 @@ const AdminOverview = () => {
         const pollsData = getData(pollsRes);
         const pollsArray = pollsData?.polls || pollsData?.data || (Array.isArray(pollsData) ? pollsData : []) || [];
         const normalizedPolls = Array.isArray(pollsArray) ? pollsArray.filter(Boolean) : [];
-        
-        // Calculate poll statistics
-        const totalPolls = normalizedPolls.length;
+
+        const pollsMeta = pollsData?.pagination;
+        const totalFromPagination = Number(
+          pollsMeta?.total ?? pollsMeta?.totalPolls ?? pollsMeta?.totalItems
+        );
+        const totalPolls = Number.isFinite(totalFromPagination)
+          ? totalFromPagination
+          : normalizedPolls.length;
         const activePolls = normalizedPolls.filter(p => {
           if (!p) return false;
           if (p.isActive === false) return false;
@@ -900,26 +983,34 @@ const AdminOverview = () => {
         const tagsData = getData(popularTagsRes);
         const tagsArray = tagsData?.tags || tagsData?.data || tagsData?.popularTags || (Array.isArray(tagsData) ? tagsData : []) || [];
         const normalizedTags = Array.isArray(tagsArray) ? tagsArray.filter(Boolean) : [];
-        
+        const tagsMeta = tagsData?.pagination;
+        const totalTagsCount = Number(tagsMeta?.total);
+        const totalTags = Number.isFinite(totalTagsCount) ? totalTagsCount : normalizedTags.length;
+
         setStats((prev) => ({
           ...prev,
           search: {
             popularTags: normalizedTags,
-            totalTags: normalizedTags.length,
+            totalTags,
           },
         }));
       }
 
       // Process bookmarks - try multiple sources
       let bookmarksArray = [];
-      
+      let bookmarksTotalFromApi = null;
+
       // Method 1: From dedicated bookmarks API response
       if (bookmarksRes && !bookmarksRes.error) {
         const bookmarksData = getData(bookmarksRes);
+        const bm = bookmarksData?.pagination?.total;
+        if (bm != null && Number.isFinite(Number(bm))) {
+          bookmarksTotalFromApi = Number(bm);
+        }
         const bookmarksFromAPI = bookmarksData?.bookmarks || bookmarksData?.posts || bookmarksData?.data || (Array.isArray(bookmarksData) ? bookmarksData : []);
         // Security: Ensure it's an array and limit size to prevent DoS
         if (Array.isArray(bookmarksFromAPI) && bookmarksFromAPI.length > 0) {
-          bookmarksArray = bookmarksFromAPI.filter(b => b != null).slice(0, 1000); // Limit to 1000 items
+          bookmarksArray = bookmarksFromAPI.filter((b) => b != null).slice(0, 1000);
         }
       }
       
@@ -953,11 +1044,16 @@ const AdminOverview = () => {
       }).filter(Boolean)).size;
       
       // Always set bookmarks stats (even if 0)
+      const bookmarkTotal =
+        bookmarksTotalFromApi != null ? bookmarksTotalFromApi : sanitizedBookmarks.length;
+      const uniqueBookmarked =
+        bookmarksTotalFromApi != null ? bookmarksTotalFromApi : uniqueBookmarkedPosts;
+
       setStats((prev) => ({
         ...prev,
         bookmarks: {
-          totalBookmarks: sanitizedBookmarks.length,
-          uniquePostsBookmarked: Number.isFinite(uniqueBookmarkedPosts) ? uniqueBookmarkedPosts : 0,
+          totalBookmarks: bookmarkTotal,
+          uniquePostsBookmarked: Number.isFinite(uniqueBookmarked) ? uniqueBookmarked : 0,
           bookmarks: sanitizedBookmarks,
         },
       }));
@@ -1251,14 +1347,15 @@ const AdminOverview = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [overviewQuery]);
 
   useEffect(() => {
     fetchAllStats();
   }, [fetchAllStats]);
 
-  // Ensure total posts is always correct based on status counts
+  // Ensure total posts is always correct based on status counts (skip when server rollup owns totals)
   useEffect(() => {
+    if (stats.postRollup) return;
     if (stats.posts) {
       const totalFromCounts = stats.posts.statusCounts
         ? Object.values(stats.posts.statusCounts).reduce(
@@ -1296,9 +1393,18 @@ const AdminOverview = () => {
         }));
       }
     }
-  }, [stats.posts, posts.length]);
+  }, [stats.posts, stats.postRollup, posts.length]);
 
   const getPostsByCategoryData = () => {
+    if (Array.isArray(categories) && categories.length) {
+      const fromCounts = categories
+        .filter((c) => c != null && Number(c.postCount) > 0)
+        .map((c) => ({
+          name: c?.name || 'Unnamed',
+          posts: Number(c.postCount) || 0,
+        }));
+      if (fromCounts.length) return fromCounts;
+    }
     if (!Array.isArray(categories) || !categories.length || !Array.isArray(posts) || !posts.length) return [];
     return categories
       .filter(cat => cat != null)
@@ -1347,6 +1453,10 @@ const AdminOverview = () => {
   };
 
   const getPostsByMonthData = () => {
+    const rollupMonths = stats.postRollup?.monthlyPosts;
+    if (Array.isArray(rollupMonths) && rollupMonths.length > 0) {
+      return rollupMonths;
+    }
     if (!Array.isArray(posts) || !posts.length) return [];
     const monthMap = new Map();
 
@@ -1382,6 +1492,10 @@ const AdminOverview = () => {
   };
 
   const getTopPostsData = () => {
+    const rollupTop = stats.postRollup?.chartTopPosts;
+    if (Array.isArray(rollupTop) && rollupTop.length > 0) {
+      return rollupTop;
+    }
     if (!Array.isArray(posts) || !posts.length) return [];
     return [...posts]
       .filter((post) => post && post?.title && typeof post.title === 'string')
@@ -1754,6 +1868,47 @@ const AdminOverview = () => {
 
   const totalPosts = calculateTotalPosts();
 
+  const pagerBtn =
+    'px-3 py-1.5 text-sm rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)] text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-bg)] transition-colors';
+
+  const overviewPagerSections = [
+    {
+      id: 'posts',
+      label: 'Posts',
+      meta: overviewPagination.posts,
+      onPrev: () => setOverviewQuery((q) => ({ ...q, postsPage: Math.max(1, q.postsPage - 1) })),
+      onNext: () => setOverviewQuery((q) => ({ ...q, postsPage: q.postsPage + 1 })),
+    },
+    {
+      id: 'users',
+      label: 'Users',
+      meta: overviewPagination.users,
+      onPrev: () => setOverviewQuery((q) => ({ ...q, usersPage: Math.max(1, q.usersPage - 1) })),
+      onNext: () => setOverviewQuery((q) => ({ ...q, usersPage: q.usersPage + 1 })),
+    },
+    {
+      id: 'polls',
+      label: 'Polls',
+      meta: overviewPagination.polls,
+      onPrev: () => setOverviewQuery((q) => ({ ...q, pollsPage: Math.max(1, q.pollsPage - 1) })),
+      onNext: () => setOverviewQuery((q) => ({ ...q, pollsPage: q.pollsPage + 1 })),
+    },
+    {
+      id: 'bookmarks',
+      label: 'Your bookmarks',
+      meta: overviewPagination.bookmarks,
+      onPrev: () => setOverviewQuery((q) => ({ ...q, bookmarksPage: Math.max(1, q.bookmarksPage - 1) })),
+      onNext: () => setOverviewQuery((q) => ({ ...q, bookmarksPage: q.bookmarksPage + 1 })),
+    },
+    {
+      id: 'tags',
+      label: 'Popular tags',
+      meta: overviewPagination.tags,
+      onPrev: () => setOverviewQuery((q) => ({ ...q, tagsPage: Math.max(1, q.tagsPage - 1) })),
+      onNext: () => setOverviewQuery((q) => ({ ...q, tagsPage: q.tagsPage + 1 })),
+    },
+  ].filter((s) => s.meta && s.meta.totalPages > 1);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -1866,274 +2021,53 @@ const AdminOverview = () => {
         </AnimatedCard>
       )}
 
-      {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Roles Distribution */}
-        {roleData.length > 0 && (
-          <AnimatedCard delay={0.6}>
-            <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
-              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Roles Distribution</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={roleData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value, percent }) =>
-                      Number(value) > 0
-                        ? `${formatRoleLabel(name)}: ${(percent * 100).toFixed(0)}%`
-                        : ''
-                    }
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    activeShape={renderActiveSector}
-                  >
-                    {roleData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip {...nexusTooltipProps} />
-                  <Legend 
-                    wrapperStyle={{ color: 'var(--text-primary)' }}
-                    iconType="circle"
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </AnimatedCard>
-        )}
-
-        {/* Post Status Distribution */}
-        {statusData.length > 0 && (
-          <AnimatedCard delay={0.7}>
-            <div className="bg-[var(--surface-bg)] rounded-xl shadow-sm border border-[var(--border-subtle)] p-6">
-              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Post Status Distribution</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value, percent }) =>
-                      Number(value) > 0 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''
-                    }
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    activeShape={renderActiveSector}
-                  >
-                    {statusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip {...nexusTooltipProps} />
-                  <Legend 
-                    wrapperStyle={{ color: 'var(--text-primary)' }}
-                    iconType="circle"
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </AnimatedCard>
-        )}
-      </div>
-
-      {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Posts by Category */}
-        {postsByCategoryData.length > 0 && (
-          <AnimatedCard delay={0.8}>
-            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 relative overflow-hidden">
-              {/* Decorative background */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[var(--accent)]/15 to-teal-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
-              
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">Posts by Category</h3>
-                    <p className="text-sm text-[var(--text-muted)]">Distribution across categories</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-[var(--accent)]/20 to-[var(--accent-hover)]/20 border border-[var(--accent)]/30">
-                    <Boxes className="w-6 h-6 text-[var(--accent)]" />
-                  </div>
-                </div>
-                <ResponsiveContainer width="100%" height={320}>
-                  <BarChart data={postsByCategoryData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="categoryGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#15803d" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#14532d" stopOpacity={0.72} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" opacity={0.3} />
-                    <XAxis 
-                      dataKey="name" 
-                      tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
-                      axisLine={{ stroke: 'var(--border-subtle)' }}
-                      tickLine={{ stroke: 'var(--border-subtle)' }}
-                    />
-                    <YAxis 
-                      tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
-                      axisLine={{ stroke: 'var(--border-subtle)' }}
-                      tickLine={{ stroke: 'var(--border-subtle)' }}
-                    />
-                    <Tooltip
-                      {...nexusTooltipProps}
-                      cursor={{ fill: 'rgba(21,128,61,0.1)', stroke: '#15803d', strokeWidth: 1 }}
-                    />
-                    <Bar 
-                      dataKey="posts" 
-                      fill="url(#categoryGradient)"
-                      radius={[8, 8, 0, 0]}
-                      stroke="#15803d"
-                      strokeWidth={1}
-                      activeBar={{ fill: '#4ade80', stroke: '#15803d', strokeWidth: 2 }}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+      {overviewPagerSections.length > 0 && (
+        <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-bg)] p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Paginated lists</h3>
+          <p className="text-xs text-[var(--text-muted)]">
+            Global post and engagement totals use server rollups; these controls only change which rows are loaded for each list.
+          </p>
+          {overviewPagerSections.map((row) => (
+            <div
+              key={row.id}
+              className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between border-t border-[var(--border-subtle)] pt-3 first:border-t-0 first:pt-0"
+            >
+              <div className="text-sm text-[var(--text-secondary)]">
+                <span className="font-medium text-[var(--text-primary)]">{row.label}</span>
+                <span className="text-[var(--text-muted)]">
+                  {' '}
+                  · Page {row.meta.page} of {row.meta.totalPages} ({row.meta.total} total, {row.meta.limit} per page)
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <button type="button" className={pagerBtn} disabled={!row.meta.hasPrev} onClick={row.onPrev}>
+                  Previous
+                </button>
+                <button type="button" className={pagerBtn} disabled={!row.meta.hasNext} onClick={row.onNext}>
+                  Next
+                </button>
               </div>
             </div>
-          </AnimatedCard>
-        )}
-
-        {/* Posts Over Time */}
-        {postsByMonthData.length > 0 && (
-          <AnimatedCard delay={0.9}>
-            <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 relative overflow-hidden">
-              {/* Decorative background */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[var(--accent)]/18 to-teal-600/12 rounded-full blur-3xl -mr-16 -mt-16" />
-              
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">Posts Over Time</h3>
-                    <p className="text-sm text-[var(--text-muted)]">Last 6 months trend</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-[var(--accent)]/20 to-teal-600/15 border border-[var(--accent)]/35 text-[var(--accent)]">
-                    <NexusTrendingIcon className="w-6 h-6" />
-                  </div>
-                </div>
-                <ResponsiveContainer width="100%" height={320}>
-                  <AreaChart data={postsByMonthData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="timeGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#15803d" stopOpacity={0.88} />
-                        <stop offset="45%" stopColor="#0d9488" stopOpacity={0.38} />
-                        <stop offset="100%" stopColor="#15803d" stopOpacity={0.08} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" opacity={0.3} />
-                    <XAxis 
-                      dataKey="month" 
-                      tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
-                      axisLine={{ stroke: 'var(--border-subtle)' }}
-                      tickLine={{ stroke: 'var(--border-subtle)' }}
-                    />
-                    <YAxis 
-                      tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
-                      axisLine={{ stroke: 'var(--border-subtle)' }}
-                      tickLine={{ stroke: 'var(--border-subtle)' }}
-                    />
-                    <Tooltip
-                      {...nexusTooltipProps}
-                      cursor={{ stroke: '#15803d', strokeWidth: 2, strokeDasharray: '5 5' }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="posts" 
-                      stroke="#15803d"
-                      strokeWidth={2.5}
-                      fill="url(#timeGradient)"
-                      dot={{ fill: '#0d9488', strokeWidth: 2, r: 4, stroke: '#15803d' }}
-                      activeDot={{ r: 7, stroke: '#15803d', strokeWidth: 2, fill: '#4ade80' }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </AnimatedCard>
-        )}
-      </div>
-
-      {/* Top Posts */}
-      {topPostsData.length > 0 && (
-        <AnimatedCard delay={1.0}>
-          <div className="bg-gradient-to-br from-[var(--surface-bg)] to-[var(--surface-subtle)] rounded-2xl shadow-lg border border-[var(--border-subtle)] p-6 relative overflow-hidden">
-            {/* Decorative background */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
-            
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">Top 5 Posts by Views</h3>
-                  <p className="text-sm text-[var(--text-muted)]">Most viewed content</p>
-                </div>
-                <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
-                  <Eye className="w-6 h-6 text-emerald-500" />
-                </div>
-              </div>
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={topPostsData} layout="vertical" margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="viewsGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#059669" stopOpacity={0.7} />
-                    </linearGradient>
-                    <linearGradient id="likesGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#dc2626" stopOpacity={0.7} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" opacity={0.3} horizontal={true} />
-                  <XAxis 
-                    type="number" 
-                    tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
-                    axisLine={{ stroke: 'var(--border-subtle)' }}
-                    tickLine={{ stroke: 'var(--border-subtle)' }}
-                  />
-                  <YAxis 
-                    dataKey="name" 
-                    type="category" 
-                    width={180}
-                    tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
-                    axisLine={{ stroke: 'var(--border-subtle)' }}
-                    tickLine={{ stroke: 'var(--border-subtle)' }}
-                  />
-                  <Tooltip
-                    {...nexusTooltipProps}
-                    cursor={{ fill: 'rgba(16, 185, 129, 0.1)', stroke: '#10b981', strokeWidth: 1 }}
-                  />
-                  <Legend 
-                    wrapperStyle={{ paddingTop: '20px', color: 'var(--text-primary)' }}
-                    iconType="circle"
-                  />
-                  <Bar 
-                    dataKey="views" 
-                    fill="url(#viewsGradient)" 
-                    name="Views"
-                    radius={[0, 8, 8, 0]}
-                    stroke="#059669"
-                    strokeWidth={1}
-                    activeBar={{ fill: '#34d399', stroke: '#059669', strokeWidth: 2 }}
-                  />
-                  <Bar 
-                    dataKey="likes" 
-                    fill="url(#likesGradient)" 
-                    name="Likes"
-                    radius={[0, 8, 8, 0]}
-                    stroke="#dc2626"
-                    strokeWidth={1}
-                    activeBar={{ fill: '#f87171', stroke: '#dc2626', strokeWidth: 2 }}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </AnimatedCard>
+          ))}
+        </div>
       )}
+
+      <Suspense
+        fallback={
+          <div className="flex justify-center py-16 border border-[var(--border-subtle)] rounded-xl bg-[var(--surface-bg)]">
+            <Spinner />
+          </div>
+        }
+      >
+        <AdminOverviewCharts
+          formatRoleLabel={formatRoleLabel}
+          roleData={roleData}
+          statusData={statusData}
+          postsByCategoryData={postsByCategoryData}
+          postsByMonthData={postsByMonthData}
+          topPostsData={topPostsData}
+        />
+      </Suspense>
 
       {/* Additional Analytics Sections */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

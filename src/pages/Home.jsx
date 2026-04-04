@@ -821,7 +821,7 @@ const Home = () => {
                         return (
                           <Link
                             key={post._id || post.id || index}
-                            to={`/preview/posts/${postSlug}`}
+                            to={`/posts/${postSlug}`}
                             className="block group"
                           >
                             <div className="flex items-start space-x-3">

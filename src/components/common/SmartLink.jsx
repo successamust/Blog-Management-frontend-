@@ -18,7 +18,7 @@ const SmartLink = ({ to, children, prefetchType = 'auto', ...props }) => {
         // Determine what to prefetch based on the URL
         try {
             // 1. Data Prefetching
-            if (to.includes('/preview/posts/') || to.includes('/posts/')) {
+            if (to.includes('/posts/')) {
                 const slug = to.split('/').pop();
                 if (slug) {
                     console.debug(`[SmartLink] Predictive data+code pre-fetch for post: ${slug}`);

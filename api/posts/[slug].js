@@ -1,4 +1,5 @@
 import handler from '../social-preview.js';
+import { isOgCrawler } from '../lib/isOgCrawler.js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
@@ -6,39 +7,6 @@ import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-const CRAWLER_USER_AGENTS = [
-  'facebookexternalhit',
-  'Facebot',
-  'Twitterbot',
-  'LinkedInBot',
-  'WhatsApp',
-  'Slackbot',
-  'Applebot',
-  'Googlebot',
-  'Bingbot',
-  'YandexBot',
-  'Pinterest',
-  'redditbot',
-  'SkypeUriPreview',
-  'TelegramBot',
-  'Discordbot',
-  'Slurp',
-  'DuckDuckBot',
-  'Baiduspider',
-  'ia_archiver',
-  'Slack',
-  'Discord',
-  'Skype',
-  'MetaInspector',
-  'facebookcatalog',
-];
-
-const isCrawler = (userAgent) => {
-  if (!userAgent) return false;
-  const ua = userAgent.toLowerCase();
-  return CRAWLER_USER_AGENTS.some(crawler => ua.includes(crawler.toLowerCase()));
-};
 
 // Function to read the actual built index.html to get correct production asset paths
 // Read on each request to handle Vercel's file system correctly
@@ -197,11 +165,11 @@ export default async (req, res) => {
         'user-agent': userAgent ? userAgent.substring(0, 100) : 'none',
       },
       extractedSlug: slug || 'NOT_FOUND',
-      isCrawler: isCrawler(userAgent),
+      isOgCrawler: isOgCrawler(userAgent),
     });
     
     // If it's a crawler and we have a slug, serve the social preview
-    if (isCrawler(userAgent)) {
+    if (isOgCrawler(userAgent)) {
       if (slug) {
         // Pass slug to social preview handler
         req.query = { slug: slug };

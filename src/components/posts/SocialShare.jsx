@@ -59,7 +59,13 @@ const SocialShare = ({ post, shareUrl, onShare }) => {
     if (onShare) {
       onShare(platform.name);
     }
-    window.open(platform.url, '_blank', 'width=600,height=400');
+    // Absolute URL required for LinkedIn/Facebook share dialogs; noopener avoids opener issues
+    const w = window.open(
+      platform.url,
+      '_blank',
+      'width=600,height=520,scrollbars=yes,resizable=yes,noopener,noreferrer'
+    );
+    if (w) w.opener = null;
   };
 
   const copyToClipboard = async () => {

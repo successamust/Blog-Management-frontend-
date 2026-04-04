@@ -31,7 +31,7 @@ async function prerender() {
             <article>
                 <h2>${post.title}</h2>
                 <p>${post.excerpt || post.summary || ''}</p>
-                <a href="/preview/posts/${post.slug || post._id}">Read more</a>
+                <a href="/posts/${post.slug || post._id}">Read more</a>
             </article>
         `).join('\n');
 

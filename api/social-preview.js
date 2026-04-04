@@ -1,3 +1,5 @@
+import { isOgCrawler } from './lib/isOgCrawler.js';
+
 const DEFAULT_SITE_URL =
   process.env.SITE_URL ||
   process.env.NEXT_PUBLIC_SITE_URL ||
@@ -98,49 +100,6 @@ const fetchPostBySlug = async (slug) => {
   return post;
 };
 
-const isCrawler = (userAgent, headers = {}) => {
-  if (!userAgent) return false;
-  const ua = userAgent.toLowerCase();
-
-  // Check for common crawler user agents (more comprehensive)
-  const crawlers = [
-    'facebookexternalhit', 'facebot', 'twitterbot', 'linkedinbot',
-    'whatsapp', 'slackbot', 'applebot', 'googlebot', 'bingbot',
-    'yandexbot', 'pinterest', 'redditbot', 'skypeuripreview',
-    'telegrambot', 'discordbot', 'slurp', 'duckduckbot', 'baiduspider',
-    'ia_archiver', 'slack', 'discord', 'skype', 'metainspector', 'facebookcatalog',
-    'opengraph', 'linkpreview', 'bot', 'crawler', 'spider', 'fetch',
-    'preview', 'social', 'embed', 'share'
-  ];
-
-  // Check user agent for crawler keywords
-  if (crawlers.some(crawler => ua.includes(crawler.toLowerCase()))) {
-    return true;
-  }
-
-  // Check for specific social media patterns
-  const socialPatterns = [
-    /facebook/i, /twitter/i, /linkedin/i, /whatsapp/i, /telegram/i,
-    /discord/i, /slack/i, /pinterest/i, /instagram/i, /tiktok/i,
-    /snapchat/i, /reddit/i, /tumblr/i, /weibo/i, /vk/i
-  ];
-
-  if (socialPatterns.some(pattern => pattern.test(ua))) {
-    return true;
-  }
-
-  // Check for common crawler headers
-  const crawlerHeaders = [
-    headers['x-purpose'] === 'preview',
-    headers['x-requested-with'] === 'XMLHttpRequest' && ua.includes('bot'),
-    headers['accept'] && headers['accept'].includes('text/html') && (ua.includes('bot') || ua.includes('crawler')),
-    headers['user-agent'] && (headers['user-agent'].includes('bot') || headers['user-agent'].includes('crawler')),
-    headers['referer'] && (headers['referer'].includes('facebook.com') || headers['referer'].includes('twitter.com') || headers['referer'].includes('linkedin.com'))
-  ];
-
-  return crawlerHeaders.some(Boolean);
-};
-
 const handler = async (req, res) => {
   let slugValue;
   let decodedSlug;
@@ -154,7 +113,7 @@ const handler = async (req, res) => {
     console.log('[social-preview] Request details:', {
       slug: slugValue,
       userAgent: userAgent.substring(0, 200), // Truncate for readability
-      isCrawler: isCrawler(userAgent, headers),
+      isOgCrawler: isOgCrawler(userAgent),
       headers: {
         'x-purpose': headers['x-purpose'],
         'x-requested-with': headers['x-requested-with'],
@@ -188,7 +147,7 @@ const handler = async (req, res) => {
     } catch (fetchError) {
       console.error('[social-preview] Error fetching post:', fetchError);
       // If fetch fails or times out, redirect to post page for browsers
-      if (!isCrawler(userAgent, headers)) {
+      if (!isOgCrawler(userAgent)) {
         const postPath = `/posts/${decodedSlug}`;
         const canonicalUrl = `${DEFAULT_SITE_URL}${postPath}`;
         res.redirect(302, canonicalUrl);
@@ -220,7 +179,7 @@ const handler = async (req, res) => {
     const canonicalUrl = `${DEFAULT_SITE_URL}${postPath}`;
 
     // For regular browsers (not crawlers), redirect immediately to the actual post
-    if (!isCrawler(userAgent, headers)) {
+    if (!isOgCrawler(userAgent)) {
       res.redirect(302, canonicalUrl);
       return;
     }
@@ -328,9 +287,6 @@ const handler = async (req, res) => {
     <!-- Additional meta tags -->
     <meta name="theme-color" content="#1a8917" />
     <link rel="canonical" href="${canonicalUrl}" />
-
-    <!-- Refresh for browsers that somehow reach this page -->
-    <meta http-equiv="refresh" content="0; url=${canonicalUrl}" />
     <style>
       body {
         font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -370,7 +326,7 @@ const handler = async (req, res) => {
       const userAgent = req.headers['user-agent'] || '';
       const headers = req.headers || {};
       // For browsers, redirect to the post page even on error
-      if (!isCrawler(userAgent, headers)) {
+      if (!isOgCrawler(userAgent)) {
         try {
           const postPath = `/posts/${decodedSlug}`;
           const canonicalUrl = `${DEFAULT_SITE_URL}${postPath}`;

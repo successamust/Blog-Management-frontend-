@@ -1,10 +1,17 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "redirects": [
+    {
+      "source": "/preview/posts/:slug*",
+      "destination": "/posts/:slug*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
-      "source": "/preview/posts/(.*)",
-      "destination": "/api/social-preview?slug=$1"
+      "source": "/posts/:slug",
+      "destination": "/api/posts/:slug"
     },
     {
       "source": "/favicon.ico",

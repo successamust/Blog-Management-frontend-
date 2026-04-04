@@ -32,8 +32,7 @@ const QuickActions = ({ post, onEdit, onDelete, onShare, onBookmark, onFullscree
   }, [isOpen]);
 
   const handleCopyLink = async () => {
-    // Use preview URL for sharing to ensure proper meta tags for social media previews
-    const url = `${window.location.origin}/preview/posts/${post.slug || post._id}`;
+    const url = `${window.location.origin}/posts/${post.slug || post._id}`;
     try {
       await navigator.clipboard.writeText(url);
       toast.success('Link copied to clipboard');
@@ -208,7 +207,7 @@ const QuickActions = ({ post, onEdit, onDelete, onShare, onBookmark, onFullscree
               </button>
             </div>
             <QRCodeGenerator
-              url={`${window.location.origin}/preview/posts/${post.slug || post._id}`}
+              url={`${window.location.origin}/posts/${post.slug || post._id}`}
               title={post.title}
             />
           </motion.div>

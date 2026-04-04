@@ -838,6 +838,8 @@ export const dashboardAPI = {
 };
 
 export const adminAPI = {
+  /** Single round-trip for Admin overview (stats + lists). Falls back to discrete endpoints on older APIs. */
+  getOverviewBundle: (params) => api.get('/admin/overview', { params }),
   getUsers: (params) => api.get('/auth/allusers', { params }),
   getUserStats: () => api.get('/auth/stats'),
   promoteUser: (userId) => api.post(`/admin/promote/${userId}`),

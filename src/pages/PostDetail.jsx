@@ -52,6 +52,7 @@ import PostRecommendations from '../components/posts/PostRecommendations';
 import Poll from '../components/posts/Poll';
 import { useReadingHistory } from '../hooks/useReadingHistory';
 import CommentThread from '../components/posts/CommentThread';
+import { getSiteOrigin } from '../config/site.js';
 
 const DEFAULT_POST_DESCRIPTION = 'The central hub for diverse voices, where every perspective is shared and every idea is explored. Join our community of readers and writers.';
 const REPORTED_COMMENTS_KEY = 'nexus_reported_comments';
@@ -166,21 +167,19 @@ const PostDetail = () => {
 
   const seoUrl = useMemo(() => {
     if (!post) return undefined;
-    const origin = (typeof window !== 'undefined' && window.location?.origin) || 'https://www.nexusblog.xyz';
+    const origin = getSiteOrigin();
     const identifier = post.slug || post._id;
-    return `${origin}/preview/posts/${identifier}`;
+    return `${origin}/posts/${identifier}`;
   }, [post]);
 
   const shareUrl = useMemo(() => {
-    const origin =
-      (typeof window !== 'undefined' && window.location.origin) ||
-      'https://thenexusblog.vercel.app';
+    const origin = getSiteOrigin();
     if (!post) {
       return origin;
     }
     const identifier = post.slug || post._id || post.id;
-    // Use preview URL for sharing to ensure proper meta tags for social media previews
-    return `${origin}/preview/posts/${identifier}`;
+    // Canonical post URL; edge serves OG HTML to crawlers (LinkedIn, etc.) on this path
+    return `${origin}/posts/${identifier}`;
   }, [post]);
 
   useEffect(() => {

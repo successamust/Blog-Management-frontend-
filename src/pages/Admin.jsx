@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Users, Mail, LayoutDashboard, UserCheck } from 'lucide-react';
-import UserManagement from '../components/admin/UserManagement';
-import PostManagement from '../components/admin/PostManagement';
-import NewsletterManagement from '../components/admin/NewsletterManagement';
-import CategoryManagement from '../components/admin/CategoryManagement';
-import AuthorManagement from '../components/admin/AuthorManagement';
-import PollManagement from '../components/admin/PollManagement';
-import AnalyticsPage from '../components/admin/AnalyticsPage';
-import AdminOverview from '../components/admin/AdminOverview';
+import { Mail, LayoutDashboard, UserCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Seo, { DEFAULT_OG_IMAGE } from '../components/common/Seo';
+import Spinner from '../components/common/Spinner';
+
+const AdminOverview = lazy(() => import('../components/admin/AdminOverview'));
+const UserManagement = lazy(() => import('../components/admin/UserManagement'));
+const PostManagement = lazy(() => import('../components/admin/PostManagement'));
+const NewsletterManagement = lazy(() => import('../components/admin/NewsletterManagement'));
+const CategoryManagement = lazy(() => import('../components/admin/CategoryManagement'));
+const AuthorManagement = lazy(() => import('../components/admin/AuthorManagement'));
+const PollManagement = lazy(() => import('../components/admin/PollManagement'));
+const AnalyticsPage = lazy(() => import('../components/admin/AnalyticsPage'));
 import {
   NexusPostsIcon,
   NexusCategoriesIcon,
@@ -120,20 +122,29 @@ const Admin = () => {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content — each tab is lazy-loaded so first paint only pulls the shell + active panel */}
       <div>
-        <Routes>
-          {!isAuthorOnly && <Route index element={<AdminOverview />} />}
-          {isAuthorOnly && <Route index element={<Navigate to="/admin/posts" replace />} />}
-          {!isAuthorOnly && <Route path="users" element={<UserManagement />} />}
-          <Route path="posts/*" element={<PostManagement />} />
-          {!isAuthorOnly && <Route path="categories/*" element={<CategoryManagement />} />}
-          {!isAuthorOnly && <Route path="polls/*" element={<PollManagement />} />}
-          {!isAuthorOnly && <Route path="analytics" element={<AnalyticsPage />} />}
-          {!isAuthorOnly && <Route path="newsletter" element={<NewsletterManagement />} />}
-          {!isAuthorOnly && <Route path="authors" element={<AuthorManagement />} />}
-          {isAuthorOnly && <Route path="*" element={<Navigate to="/admin/posts" replace />} />}
-        </Routes>
+        <Suspense
+          fallback={
+            <div className="flex min-h-[280px] flex-col items-center justify-center gap-3 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-bg)] py-16">
+              <Spinner />
+              <p className="text-sm text-[var(--text-muted)]">Loading dashboard…</p>
+            </div>
+          }
+        >
+          <Routes>
+            {!isAuthorOnly && <Route index element={<AdminOverview />} />}
+            {isAuthorOnly && <Route index element={<Navigate to="/admin/posts" replace />} />}
+            {!isAuthorOnly && <Route path="users" element={<UserManagement />} />}
+            <Route path="posts/*" element={<PostManagement />} />
+            {!isAuthorOnly && <Route path="categories/*" element={<CategoryManagement />} />}
+            {!isAuthorOnly && <Route path="polls/*" element={<PollManagement />} />}
+            {!isAuthorOnly && <Route path="analytics" element={<AnalyticsPage />} />}
+            {!isAuthorOnly && <Route path="newsletter" element={<NewsletterManagement />} />}
+            {!isAuthorOnly && <Route path="authors" element={<AuthorManagement />} />}
+            {isAuthorOnly && <Route path="*" element={<Navigate to="/admin/posts" replace />} />}
+          </Routes>
+        </Suspense>
       </div>
     </div>
     </div>
