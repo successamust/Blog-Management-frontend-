@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
-import { authAPI } from '../services/api';
+import api, { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { getAuthToken, setAuthToken, clearAuthToken } from '../utils/tokenStorage.js';
 import {
@@ -160,7 +160,7 @@ export const AuthProvider = ({ children }) => {
             // But don't immediately logout - try to refresh first
             // Only logout if refresh also fails
             try {
-              const newToken = await refreshAccessToken(authAPI);
+              const newToken = await refreshAccessToken(api);
               if (newToken) {
                 // Refresh succeeded - update token and retry verification
                 setAuthToken(newToken);
