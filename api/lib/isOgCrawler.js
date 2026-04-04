@@ -9,6 +9,11 @@ export function isOgCrawler(userAgent = '') {
   const knownBots = [
     'facebookexternalhit',
     'facebot',
+    // Meta (2025+): link previews and external fetches often use these instead of facebookexternalhit
+    'meta-externalagent',
+    'meta-externalfetcher',
+    'meta-webindexer',
+    'meta-externalads',
     'twitterbot',
     'linkedinbot',
     'whatsapp',
@@ -40,6 +45,11 @@ export function isOgCrawler(userAgent = '') {
 
   // Google rich results / inspection tools sometimes omit "Googlebot" but include this
   if (ua.includes('google-inspectiontool')) return true;
+
+  // Meta catalog / future meta-* link fetchers (UA contains "meta-<name>/1.1")
+  if (/meta-[a-z0-9-]+\//i.test(userAgent)) return true;
+
+  if (ua.includes('facebookcatalog')) return true;
 
   return false;
 }

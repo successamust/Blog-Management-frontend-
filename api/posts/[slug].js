@@ -10,6 +10,65 @@ const __dirname = dirname(__filename);
 
 // Function to read the actual built index.html to get correct production asset paths
 // Read on each request to handle Vercel's file system correctly
+const varyUserAgent = (res) => {
+  res.setHeader('Vary', 'User-Agent');
+};
+
+const headerValue = (req, name) => {
+  const v = req.headers?.[name] ?? req.headers?.[name.toLowerCase()];
+  if (v == null) return '';
+  return (Array.isArray(v) ? v[0] : v).toString();
+};
+
+/** Slug from query, Vercel/path headers, or URL (rewrites differ by runtime). */
+const extractPostSlug = (req) => {
+  let slug = null;
+  if (req.query?.slug) {
+    slug = Array.isArray(req.query.slug) ? req.query.slug[0] : req.query.slug;
+  }
+  if (!slug) {
+    for (const pathLike of [
+      headerValue(req, 'x-matched-path'),
+      headerValue(req, 'x-invoke-path'),
+      headerValue(req, 'x-original-url'),
+      headerValue(req, 'x-url'),
+    ]) {
+      if (!pathLike) continue;
+      const clean = pathLike.split('?')[0].split('#')[0];
+      const m = clean.match(/\/(?:api\/)?posts\/([^/]+)/);
+      if (m?.[1]) {
+        slug = decodeURIComponent(m[1]);
+        break;
+      }
+    }
+  }
+  const urlPath = req.url || '';
+  if (!slug && urlPath) {
+    const cleanPath = urlPath.split('?')[0].split('#')[0];
+    const patterns = [
+      /\/api\/posts\/([^/]+)/,
+      /\/posts\/([^/]+)/,
+      /^\/([^/]+)$/,
+      /^([^/]+)$/,
+    ];
+    for (const pattern of patterns) {
+      const match = cleanPath.match(pattern);
+      if (match?.[1]) {
+        slug = decodeURIComponent(match[1]);
+        break;
+      }
+    }
+  }
+  if (!slug && urlPath) {
+    const pathParts = urlPath.split('/').filter(Boolean);
+    const postsIndex = pathParts.indexOf('posts');
+    if (postsIndex >= 0 && pathParts[postsIndex + 1]) {
+      slug = decodeURIComponent(pathParts[postsIndex + 1].split('?')[0]);
+    }
+  }
+  return slug || null;
+};
+
 const getIndexHtml = () => {
   const possiblePaths = [
     join(process.cwd(), '.vercel/output/static/index.html'),  // Vercel production
@@ -115,46 +174,7 @@ export default async (req, res) => {
       return;
     }
     
-    // Extract slug - in Vercel, [slug].js makes the slug available in different ways
-    // Try multiple methods to extract it
-    let slug = null;
-    
-    // Method 1: Check req.query.slug (standard Vercel dynamic route)
-    if (req.query?.slug) {
-      slug = Array.isArray(req.query.slug) ? req.query.slug[0] : req.query.slug;
-    }
-    
-    // Method 2: Extract from URL path
-    if (!slug && urlPath) {
-      // Remove query string and hash
-      const cleanPath = urlPath.split('?')[0].split('#')[0];
-      
-      // Try to match /api/posts/slug or /posts/slug or just slug
-      const patterns = [
-        /\/api\/posts\/([^/]+)/,
-        /\/posts\/([^/]+)/,
-        /^\/([^/]+)$/,
-        /^([^/]+)$/
-      ];
-      
-      for (const pattern of patterns) {
-        const match = cleanPath.match(pattern);
-        if (match && match[1]) {
-          slug = decodeURIComponent(match[1]);
-          break;
-        }
-      }
-    }
-    
-    // Method 3: Check if slug is in the pathname (some Vercel setups)
-    if (!slug && urlPath) {
-      // Sometimes Vercel provides the path differently
-      const pathParts = urlPath.split('/').filter(Boolean);
-      const postsIndex = pathParts.indexOf('posts');
-      if (postsIndex >= 0 && pathParts[postsIndex + 1]) {
-        slug = decodeURIComponent(pathParts[postsIndex + 1].split('?')[0]);
-      }
-    }
+    const slug = extractPostSlug(req);
     
     // Always log for debugging
     console.log('[posts/slug] Request details:', {
@@ -171,27 +191,36 @@ export default async (req, res) => {
     // If it's a crawler and we have a slug, serve the social preview
     if (isOgCrawler(userAgent)) {
       if (slug) {
-        // Pass slug to social preview handler
-        req.query = { slug: slug };
+        req.previewSlug = slug;
         try {
-          return await handler(req, res);
+          await handler(req, res);
+          return;
         } catch (error) {
           console.error('[posts/slug] Error in social preview handler:', error);
-          // Fall through to serve regular HTML if preview fails
+          if (!res.headersSent) {
+            varyUserAgent(res);
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            res.status(500).send('Preview unavailable');
+          }
+          return;
         }
-      } else {
-        // Crawler but no slug found - this is a problem
-        console.error('[posts/slug] ERROR: Crawler detected but slug extraction failed:', {
-          url: urlPath,
-          query: req.query,
-          userAgent: userAgent,
-        });
-        // Fall through to serve regular HTML
       }
+      console.error('[posts/slug] ERROR: Crawler detected but slug extraction failed:', {
+        url: urlPath,
+        query: req.query,
+        userAgent: userAgent,
+      });
+      if (!res.headersSent) {
+        varyUserAgent(res);
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.status(404).send('Not found');
+      }
+      return;
     }
-    
-    // For regular users (browsers) or if crawler handling failed, serve the React app
+
+    // Browsers: SPA shell (never use this HTML for link previews — crawlers handled above)
     const indexHtml = getIndexHtml();
+    varyUserAgent(res);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');

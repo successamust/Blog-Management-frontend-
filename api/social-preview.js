@@ -105,7 +105,8 @@ const handler = async (req, res) => {
   let decodedSlug;
 
   try {
-    const slugParam = req.query?.slug;
+    // posts/[slug] sets previewSlug so we do not rely on mutating req.query on all runtimes
+    const slugParam = req.previewSlug ?? req.query?.slug;
     slugValue = Array.isArray(slugParam) ? slugParam[0] : slugParam;
     const userAgent = req.headers['user-agent'] || '';
     const headers = req.headers || {};
@@ -217,8 +218,13 @@ const handler = async (req, res) => {
       usingFallback: description === FALLBACK_DESCRIPTION
     });
     
+    const featuredFromPost =
+      typeof post.featuredImage === 'string'
+        ? post.featuredImage
+        : post.featuredImage?.url || post.featuredImage?.secure_url || '';
+
     // Try multiple possible image field names (most common first)
-    const imageSource = post.featuredImage ||
+    const imageSource = featuredFromPost ||
                        post.featured_image ||
                        post.coverImage ||
                        post.cover_image ||
@@ -312,6 +318,7 @@ const handler = async (req, res) => {
 </html>`;
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Vary', 'User-Agent');
     res.setHeader('Cache-Control', `public, s-maxage=${CACHE_TTL}, stale-while-revalidate=86400`);
     res.status(200).send(html);
   } catch (error) {
