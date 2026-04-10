@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
@@ -18,6 +18,8 @@ const Unsubscribe = () => {
   const [error, setError] = useState(null);
   const emailParam = searchParams.get('email');
   const seoUrl = emailParam ? `/unsubscribe?email=${encodeURIComponent(emailParam)}` : '/unsubscribe';
+  /** Per-email: avoids duplicate API calls when Strict Mode runs the effect twice (same `email` query). */
+  const lastAutoUnsubscribeEmailRef = useRef(null);
 
   const handleUnsubscribe = async (emailToUnsubscribe = null) => {
     const emailValue = emailToUnsubscribe || email;
@@ -50,10 +52,11 @@ const Unsubscribe = () => {
   };
 
   useEffect(() => {
-    if (emailParam) {
-      setEmail(emailParam);
-      handleUnsubscribe(emailParam);
-    }
+    if (!emailParam) return;
+    if (lastAutoUnsubscribeEmailRef.current === emailParam) return;
+    lastAutoUnsubscribeEmailRef.current = emailParam;
+    setEmail(emailParam);
+    handleUnsubscribe(emailParam);
   }, [emailParam]);
 
   const handleSubmit = (e) => {
